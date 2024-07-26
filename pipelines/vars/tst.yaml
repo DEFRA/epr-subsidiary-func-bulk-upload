@@ -3,4 +3,4 @@ variables:
   docker.imageName: 'subsidiaryupload'
   acr.azureContainerRegistryName: 'tstrwdinfac1401'
   acr.repositoryName: 'subsidiaryuploadrepository'
-  serviceName: ''
+  serviceName: '' # need to update
