@@ -13,7 +13,7 @@
     "storage2": {
       "secretStore": "LocalSecretsFile",
       "type": "storage.emulator",
-      "connectionId": "SubsidiaryBlobStorageConnectionString",
+      "connectionId": "BlobStorage__ConnectionString",
       "dynamicId": null
     }
   }

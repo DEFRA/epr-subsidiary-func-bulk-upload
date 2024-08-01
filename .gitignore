@@ -413,4 +413,3 @@ FodyWeavers.xsd
 
 # AppSettings Development file
 **/appSettings.Development.json
-/src/EPR.ProducerContentValidation.FunctionApp/localSettings.json
