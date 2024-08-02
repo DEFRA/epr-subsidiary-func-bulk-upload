@@ -3,11 +3,11 @@ using Microsoft.Extensions.Logging;
 
 namespace EPR.SubsidiaryBulkUpload.DataImportScheduler.Function;
 
-public class CompaniesHouseDownloadFunction
+public class CompaniesHouseDownloadFunction_OLD
 {
     private readonly ILogger _logger;
 
-    public CompaniesHouseDownloadFunction(ILoggerFactory loggerFactory)
+    public CompaniesHouseDownloadFunction_OLD(ILoggerFactory loggerFactory)
     {
         _logger = loggerFactory.CreateLogger<CompaniesHouseDownloadFunction>();
     }

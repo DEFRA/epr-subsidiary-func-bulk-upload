@@ -15,7 +15,9 @@ To run locally, create a file `local.settings.json`. This file is in .gitignore.
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
     "BlobStorage__ConnectionString": "UseDevelopmentStorage=true",
-    "BlobStorage__SubsidiaryContainerName": "subsidiaries-upload-container"
+    "BlobStorage__SubsidiaryContainerName": "subsidiary-upload-container",
+    "BlobStorage__CompaniesHouseContainerName": "subsidiary-companies-house-upload-container",
+    "CompaniesHouseDownload__Schedule": "0 */5 * * * *"
   }
 }
 ```
