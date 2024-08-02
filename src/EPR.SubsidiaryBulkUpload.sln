@@ -13,9 +13,17 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EPR.SubsidiaryBulkUpload.Fu
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EPR.SubsidiaryBulkUpload.Function.UnitTests", "EPR.SubsidiaryBulkUpload.Function.UnitTests\EPR.SubsidiaryBulkUpload.Function.UnitTests.csproj", "{219653F3-9752-4E3E-98EC-12EB05B88638}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EPR.SubsidiaryBulkUpload.CompaniesHouseDataImport.Function", "EPR.SubsidiaryBulkUpload.CompaniesHouseDataImport.Function\EPR.SubsidiaryBulkUpload.CompaniesHouseDataImport.Function.csproj", "{38F443B8-2DA0-4419-A871-D7FA5CB4FE4A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EPR.SubsidiaryBulkUpload.CompaniesHouseDataImport.Function", "EPR.SubsidiaryBulkUpload.CompaniesHouseDataImport.Function\EPR.SubsidiaryBulkUpload.CompaniesHouseDataImport.Function.csproj", "{38F443B8-2DA0-4419-A871-D7FA5CB4FE4A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EPR.SubsidiaryBulkUpload.CompaniesHouseDataImport.Function.UnitTests", "EPR.SubsidiaryBulkUpload.CompaniesHouseDataImport.Function.UnitTests\EPR.SubsidiaryBulkUpload.CompaniesHouseDataImport.Function.UnitTests.csproj", "{70980E4B-EA4B-4512-8AEA-C5423DAB4BD1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EPR.SubsidiaryBulkUpload.CompaniesHouseDataImport.Function.UnitTests", "EPR.SubsidiaryBulkUpload.CompaniesHouseDataImport.Function.UnitTests\EPR.SubsidiaryBulkUpload.CompaniesHouseDataImport.Function.UnitTests.csproj", "{70980E4B-EA4B-4512-8AEA-C5423DAB4BD1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EPR.SubsidiaryBulkUpload.DataImportScheduler.Function", "EPR.SubsidiaryBulkUpload.DataImportScheduler.Function\EPR.SubsidiaryBulkUpload.DataImportScheduler.Function.csproj", "{0C83933E-D6A9-40E6-A7D4-78F386A1DA76}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EPR.SubsidiaryBulkUpload.DataImportScheduler.Function.UnitTests", "EPR.SubsidiaryBulkUpload.DataImportScheduler.Function.UnitTests\EPR.SubsidiaryBulkUpload.DataImportScheduler.Function.UnitTests.csproj", "{33ADFFF8-0FD2-466B-9B90-91B42211E9CE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EPR.SubsidiaryBulkUpload.Application", "EPR.SubsidiaryBulkUpload.Application\EPR.SubsidiaryBulkUpload.Application.csproj", "{B83F3B8B-2D3F-427C-BB0C-667586E6C6B1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EPR.SubsidiaryBulkUpload.Application.UnitTests", "EPR.SubsidiaryBulkUpload.Application.UnitTests\EPR.SubsidiaryBulkUpload.Application.UnitTests.csproj", "{219960B4-F84C-4303-B6B0-B19373FC68EC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +47,22 @@ Global
 		{70980E4B-EA4B-4512-8AEA-C5423DAB4BD1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{70980E4B-EA4B-4512-8AEA-C5423DAB4BD1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{70980E4B-EA4B-4512-8AEA-C5423DAB4BD1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0C83933E-D6A9-40E6-A7D4-78F386A1DA76}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0C83933E-D6A9-40E6-A7D4-78F386A1DA76}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0C83933E-D6A9-40E6-A7D4-78F386A1DA76}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0C83933E-D6A9-40E6-A7D4-78F386A1DA76}.Release|Any CPU.Build.0 = Release|Any CPU
+		{33ADFFF8-0FD2-466B-9B90-91B42211E9CE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{33ADFFF8-0FD2-466B-9B90-91B42211E9CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{33ADFFF8-0FD2-466B-9B90-91B42211E9CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{33ADFFF8-0FD2-466B-9B90-91B42211E9CE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B83F3B8B-2D3F-427C-BB0C-667586E6C6B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B83F3B8B-2D3F-427C-BB0C-667586E6C6B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B83F3B8B-2D3F-427C-BB0C-667586E6C6B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B83F3B8B-2D3F-427C-BB0C-667586E6C6B1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{219960B4-F84C-4303-B6B0-B19373FC68EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{219960B4-F84C-4303-B6B0-B19373FC68EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{219960B4-F84C-4303-B6B0-B19373FC68EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{219960B4-F84C-4303-B6B0-B19373FC68EC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
