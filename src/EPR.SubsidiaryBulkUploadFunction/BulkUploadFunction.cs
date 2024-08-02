@@ -14,7 +14,7 @@ public class BulkUploadFunction
 
     [Function(nameof(BulkUploadFunction))]
     public async Task Run(
-        [BlobTrigger("%BlobStorage:SubsidiaryContainerName%/{name}", Connection = "BlobStorage:ConnectionString")]
+        [BlobTrigger("%BlobStorage:SubsidiaryContainerName%/{name}", Connection = "BlobCompaniesHouseDataIngestConnString")]
         Stream stream,
         string name)
     {

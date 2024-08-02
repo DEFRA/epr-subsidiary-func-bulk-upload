@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\EPR.SubsidiaryBulkUploadFunction\EPR.SubsidiaryBulkUploadFunction.csproj" />
+    <ProjectReference Include="..\EPR.SubsidiaryBulkUploadFunction\EPR.SubsidiaryBulkUpload.Function.csproj" />
   </ItemGroup>
 
   <ItemGroup>

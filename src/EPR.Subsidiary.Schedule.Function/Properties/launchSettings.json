@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "EPR.Subsidiary.Schedule.Function": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7197",
+      "launchBrowser": false
+    }
+  }
+}
