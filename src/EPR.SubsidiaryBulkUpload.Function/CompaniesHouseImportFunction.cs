@@ -1,7 +1,7 @@
 ﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 
-namespace EPR.SubsidiaryBulkUpload.CompaniesHouseDataImport.Function;
+namespace EPR.SubsidiaryBulkUpload.Function;
 
 public class CompaniesHouseImportFunction
 {
@@ -14,7 +14,7 @@ public class CompaniesHouseImportFunction
 
     [Function(nameof(CompaniesHouseImportFunction))]
     public async Task Run(
-        [BlobTrigger("%BlobStorage:SubsidiaryContainerName%/{name}", Connection = "BlobStorage:ConnectionString")]
+        [BlobTrigger("%BlobStorage:CompaniesHouseContainerName%/{name}", Connection = "BlobStorage:ConnectionString")]
         Stream stream,
         string name)
     {
