@@ -1,18 +1,18 @@
 ﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 
-namespace EPR.SubsidiaryBulkUploadFunction;
+namespace EPR.SubsidiaryBulkUpload.CompaniesHouseDataImport.Function;
 
-public class BulkUploadFunction
+public class CompaniesHouseImportFunction
 {
-    private readonly ILogger<BulkUploadFunction> _logger;
+    private readonly ILogger<CompaniesHouseImportFunction> _logger;
 
-    public BulkUploadFunction(ILogger<BulkUploadFunction> logger)
+    public CompaniesHouseImportFunction(ILogger<CompaniesHouseImportFunction> logger)
     {
         _logger = logger;
     }
 
-    [Function(nameof(BulkUploadFunction))]
+    [Function(nameof(CompaniesHouseImportFunction))]
     public async Task Run(
         [BlobTrigger("%BlobStorage:SubsidiaryContainerName%/{name}", Connection = "BlobStorage:ConnectionString")]
         Stream stream,

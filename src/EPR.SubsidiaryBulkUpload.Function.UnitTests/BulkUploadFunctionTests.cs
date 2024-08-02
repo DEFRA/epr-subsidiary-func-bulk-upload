@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Moq;
 
-namespace EPR.SubsidiaryBulkUploadFunction.UnitTests;
+namespace EPR.SubsidiaryBulkUpload.Function.UnitTests;
 
 [TestClass]
 public class BulkUploadFunctionTests
