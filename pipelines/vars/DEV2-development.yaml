@@ -3,4 +3,4 @@ variables:
   docker.imageName: 'subsidiaryupload'
   acr.azureContainerRegistryName: 'devrwdinfac1401'
   acr.repositoryName: 'subsidiaryuploadrepository'
-  serviceName: '' # need to update
+  serviceName: 'devrwdwebsa2408'
