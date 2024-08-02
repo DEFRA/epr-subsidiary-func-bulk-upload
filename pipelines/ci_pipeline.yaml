@@ -31,9 +31,9 @@ variables:
   - name: solutionFolder
     value: src 
   - name: projectFolder
-    value: EPR.SubsidiaryBulkUpload.Function  #updated
+    value: EPR.SubsidiaryBulkUpload.Function
   - name: testProjectFolder
-    value: EPR.SubsidiaryBulkUpload.Function.UnitTests #updated
+    value: EPR.SubsidiaryBulkUpload.Function.UnitTests
   - name: sonarQubeProjectKey
     value: epr-subsidiary-func-bulk-upload
   - name: sonarQubeProjectName
