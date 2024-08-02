@@ -8,15 +8,15 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["Directory.Build.props", "."]
-COPY ["EPR.SubsidiaryBulkUploadFunction/EPR.SubsidiaryBulkUploadFunction.csproj", "EPR.SubsidiaryBulkUploadFunction/"]
-RUN dotnet restore "./EPR.SubsidiaryBulkUploadFunction/EPR.SubsidiaryBulkUploadFunction.csproj"
+COPY ["EPR.SubsidiaryBulkUpload.Function/EPR.SubsidiaryBulkUpload.Function.csproj", "EPR.SubsidiaryBulkUpload.Function/"]
+RUN dotnet restore "./EPR.SubsidiaryBulkUpload.Function/EPR.SubsidiaryBulkUpload.Function.csproj"
 COPY . .
-WORKDIR "/src/EPR.SubsidiaryBulkUploadFunction"
-RUN dotnet build "./EPR.SubsidiaryBulkUploadFunction.csproj" -c $BUILD_CONFIGURATION -o /app/build
+WORKDIR "/src/EPR.SubsidiaryBulkUpload.Function"
+RUN dotnet build "./EPR.SubsidiaryBulkUpload.Function.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./EPR.SubsidiaryBulkUploadFunction.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./EPR.SubsidiaryBulkUpload.Function.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /home/site/wwwroot

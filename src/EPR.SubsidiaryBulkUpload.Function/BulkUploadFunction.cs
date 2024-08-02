@@ -1,7 +1,7 @@
 ﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 
-namespace EPR.SubsidiaryBulkUploadFunction;
+namespace EPR.SubsidiaryBulkUpload.Function;
 
 public class BulkUploadFunction
 {

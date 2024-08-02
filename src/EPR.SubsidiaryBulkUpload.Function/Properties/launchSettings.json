@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "EPR.SubsidiaryBulkUploadFunction": {
+    "EPR.SubsidiaryBulkUpload.Function": {
       "commandName": "Project",
       "commandLineArgs": "--port 7245"
     },
