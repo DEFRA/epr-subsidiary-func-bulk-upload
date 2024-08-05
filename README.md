@@ -21,3 +21,10 @@ To run locally, create a file `local.settings.json`. This file is in .gitignore.
   }
 }
 ```
+
+## Changes
+- `Directory.Build.props` should have `<TargetFramework>net8.0</TargetFramework>`
+- Add `NuGet.Config` and add package `EPR.Common.Logging`
+- Call `.ConfigureLogging` in `Program`
+
+
