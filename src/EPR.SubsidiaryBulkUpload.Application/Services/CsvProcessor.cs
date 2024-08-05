@@ -46,7 +46,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                 var field = csv.GetField(0);
 
                 // var rec = csv.GetRecord<X>();
-                _logger.LogInformation("Found csv field {Value}", field);
+                _logger.LogInformation("Found csv field {RowCount}\t{Value}", rowCount, field);
             }
 
             return rowCount;
