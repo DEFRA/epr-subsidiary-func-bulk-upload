@@ -1,5 +1,4 @@
-﻿using System.Text;
-using Microsoft.Azure.Functions.Worker;
+﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -8,31 +7,34 @@ namespace EPR.SubsidiaryBulkUpload.Function.UnitTests;
 [TestClass]
 public class CompaniesHouseDownloadFunctionTests
 {
-    private Mock<ILogger<CompaniesHouseDownloadFunction>> _logger = null;
+    private Mock<ILogger<CompaniesHouseDownloadFunction>> _loggerMock;
     private CompaniesHouseDownloadFunction _systemUnderTest;
 
     [TestInitialize]
     public void TestInitialize()
     {
-        _logger = new Mock<ILogger<CompaniesHouseDownloadFunction>>();
-        _systemUnderTest = new CompaniesHouseDownloadFunction(_logger.Object);
+        _loggerMock = new Mock<ILogger<CompaniesHouseDownloadFunction>>();
+        _systemUnderTest = new CompaniesHouseDownloadFunction(_loggerMock.Object);
     }
 
     [TestMethod]
-    public async Task CompaniesHouseDownloadFunction_Accepts_Blob()
+    public async Task CompaniesHouseDownloadFunction_Logs_Result()
     {
-        var content = "header1,header2\nval1,val2";
-        var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
-
+        // Arrange
+        var nextScheduledTime = DateTime.UtcNow.AddHours(1);
         var timerInfo = new TimerInfo()
         {
             IsPastDue = false,
             ScheduleStatus = new ScheduleStatus
             {
-                Next = DateTime.UtcNow.AddHours(1)
+                Next = nextScheduledTime
             }
         };
 
+        // Act
         await _systemUnderTest.Run(timerInfo);
+
+        // Assert
+        _loggerMock.VerifyLog(x => x.LogInformation("Next timer schedule at: {NextTime}", nextScheduledTime), Times.Once);
     }
 }
