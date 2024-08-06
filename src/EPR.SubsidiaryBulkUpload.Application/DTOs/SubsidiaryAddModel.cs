@@ -1,0 +1,13 @@
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace EPR.SubsidiaryBulkUpload.Application.DTOs;
+
+[ExcludeFromCodeCoverage]
+public class SubsidiaryAddModel
+{
+    public string? ParentOrganisationId { get; init; }
+
+    public string? ChildOrganisationId { get; init; }
+
+    public Guid? UserId { get; set; }
+}

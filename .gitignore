@@ -1,0 +1,12 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/src/EPR.SubsidiaryBulkUpload.Application/obj
+/src/EPR.SubsidiaryBulkUpload.Application.UnitTests/bin/Debug/net8.0
+/src/EPR.SubsidiaryBulkUpload.Application.UnitTests/obj/Debug/net8.0
+/src/EPR.SubsidiaryBulkUpload.Application.UnitTests/obj
+/src/EPR.SubsidiaryBulkUpload.Function/bin/Debug/net8.0/.azurefunctions/runtimes/win/lib/netstandard2.0
+/src/EPR.SubsidiaryBulkUpload.Function/bin/Debug/net8.0
+/src/EPR.SubsidiaryBulkUpload.Function/obj/Debug/net8.0/WorkerExtensions/buildout
+/src/EPR.SubsidiaryBulkUpload.Function/obj/Debug/net8.0/WorkerExtensions/obj
