@@ -1,13 +1,20 @@
-﻿using Microsoft.Azure.Functions.Worker;
+﻿using EPR.Common.Logging.Extensions;
+using EPR.SubsidiaryBulkUpload.Function.Extensions;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
-    .ConfigureServices(services =>
+    .ConfigureServices((hostingContext, services) =>
     {
-        services.AddApplicationInsightsTelemetryWorkerService();
-        services.ConfigureFunctionsApplicationInsights();
+        services.AddApplicationInsightsTelemetryWorkerService()
+            .ConfigureFunctionsApplicationInsights()
+            .ConfigureOptions(hostingContext.Configuration)
+            .AddServices()
+            .AddAzureClients()
+            .AddHttpClients()
+            .ConfigureLogging();
     })
     .Build();
 
