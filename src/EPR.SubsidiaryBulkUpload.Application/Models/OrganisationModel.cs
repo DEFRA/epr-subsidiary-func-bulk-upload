@@ -21,4 +21,8 @@ public class OrganisationModel
     // [Required]
     // public AddressModel Address { get; set; } = null!;
     public bool ValidatedWithCompaniesHouse { get; set; }
+
+    public string ParentChild { get; set; }
+
+    public string FranchiseeLicenseeTenant { get; set; }
 }

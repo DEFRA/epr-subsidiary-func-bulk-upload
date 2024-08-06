@@ -6,11 +6,11 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
 {
     public CompaniesHouseCompanyMap()
     {
-        Map(c => c.Organisation_Id).Index(0);
-        Map(c => c.Subsidiary_Id).Index(1);
-        Map(c => c.Organisation_Name).Index(2);
-        Map(c => c.Companies_House_Number).Index(3);
-        Map(c => c.Parent_child).Index(4);
-        Map(c => c.Franchisee_licensee_tenant).Index(5);
+        Map(c => c.organisation_id).Name("organisation_id");
+        Map(c => c.subsidiary_id).Name("subsidiary_id");
+        Map(c => c.organisation_name).Name("organisation_name");
+        Map(c => c.companies_house_number).Name("companies_house_number");
+        Map(c => c.parent_child).Name("parent_child");
+        Map(c => c.franchisee_licensee_tenant).Name("franchisee_licensee_tenant");
     }
 }
