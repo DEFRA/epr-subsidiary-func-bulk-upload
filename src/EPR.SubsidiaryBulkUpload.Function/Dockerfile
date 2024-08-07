@@ -7,7 +7,7 @@ EXPOSE 8080
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY NuGet.Config .
+COPY NuGet.Config ./
 COPY ["Directory.Build.props", "."]
 COPY ["EPR.SubsidiaryBulkUpload.Function/EPR.SubsidiaryBulkUpload.Function.csproj", "EPR.SubsidiaryBulkUpload.Function/"]
 RUN dotnet restore "./EPR.SubsidiaryBulkUpload.Function/EPR.SubsidiaryBulkUpload.Function.csproj"
