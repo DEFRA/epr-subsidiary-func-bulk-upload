@@ -6,23 +6,22 @@ namespace EPR.SubsidiaryBulkUpload.Application.Models;
 [ExcludeFromCodeCoverage]
 public class OrganisationModel
 {
-    [Required]
-    public string? OrganisationId { get; set; } = null!;
+    public OrganisationType OrganisationType { get; set; }
 
-    public string SubsidiaryId { get; set; }
+    public ProducerType? ProducerType { get; set; }
 
-    [Required]
     public string? CompaniesHouseNumber { get; set; }
 
-    [Required]
     [MaxLength(100)]
-    public string OrganisationName { get; set; } = null!;
+    public string Name { get; set; } = null!;
 
-    // [Required]
-    // public AddressModel Address { get; set; } = null!;
+    public Address Address { get; set; } = null!;
+
     public bool ValidatedWithCompaniesHouse { get; set; }
 
-    public string ParentChild { get; set; }
+    public bool IsComplianceScheme { get; set; }
 
-    public string FranchiseeLicenseeTenant { get; set; }
+    public string? ReferenceNumber { get; set; }
+
+    public Nation? Nation { get; set; }
 }

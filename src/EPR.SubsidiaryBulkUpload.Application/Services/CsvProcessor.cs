@@ -36,7 +36,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                     // check if the parent company exists in the database
                     if (!string.IsNullOrEmpty(record.companies_house_number))
                     {
-                        var response = await organisationService.GetCompanyByOrgId(record);
+                        var response = await organisationService.GetCompanyByCompaniesHouseNumber(record.companies_house_number);
 
                         if (response == null)
                         {
@@ -57,16 +57,13 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                         {
                             OrganisationModel subsidiary = new OrganisationModel()
                             {
-                                OrganisationId = record.organisation_id,
-                                SubsidiaryId = record.subsidiary_id,
-                                OrganisationName = record.organisation_name,
-                                CompaniesHouseNumber = record.companies_house_number,
-                                ParentChild = record.parent_child,
-                                FranchiseeLicenseeTenant = record.franchisee_licensee_tenant
+                                ReferenceNumber = record.organisation_id,
+                                Name = record.organisation_name,
+                                CompaniesHouseNumber = record.companies_house_number
                             };
 
                             // check if the subsidiary company exists in the database
-                            var subsidiaryResponse = await organisationService.GetCompanyByOrgId(record);
+                            var subsidiaryResponse = await organisationService.GetCompanyByCompaniesHouseNumber(record.companies_house_number);
 
                             if (subsidiaryResponse != null)
                             {
@@ -127,12 +124,9 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                         {
                             OrganisationModel franchisee = new OrganisationModel()
                             {
-                                OrganisationId = record.organisation_id,
-                                SubsidiaryId = record.subsidiary_id,
-                                OrganisationName = record.organisation_name,
-                                CompaniesHouseNumber = record.companies_house_number,
-                                ParentChild = record.parent_child,
-                                FranchiseeLicenseeTenant = record.franchisee_licensee_tenant
+                                ReferenceNumber = record.organisation_id,
+                                Name = record.organisation_name,
+                                CompaniesHouseNumber = record.companies_house_number
                             };
 
                             LinkOrganisationModel franchiseeToCreate = new LinkOrganisationModel()
@@ -146,8 +140,8 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                             if (franchiseeCreateResponse == null)
                             {
                                 // return Problem("Failed to create and add franchisee", statusCode: StatusCodes.Status500InternalServerError);
-                                _logger.LogInformation("Franchisee Company added to the database : {OrganisationId} {Organisation_Name}.", franchisee.OrganisationId, franchisee.OrganisationName);
-                                _logger.LogInformation("Subsidiary Company {OrganisationId} {Organisation_Name} linked to {CompanyName} in the database.", franchisee.OrganisationId, franchisee.OrganisationName, record.organisation_name);
+                                _logger.LogInformation("Franchisee Company added to the database : {OrganisationId} {Organisation_Name}.", franchisee.ReferenceNumber, franchisee.Name);
+                                _logger.LogInformation("Subsidiary Company {OrganisationId} {Organisation_Name} linked to {CompanyName} in the database.", franchisee.ReferenceNumber, franchisee.Name, record.organisation_name);
                             }
                         }
                     }
