@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using EPR.SubsidiaryBulkUpload.Application.Configs;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
@@ -19,6 +20,9 @@ public static class ConfigurationExtensions
         /*
         services.Configure<AntivirusApiOptions>(configuration.GetSection(AntivirusApiOptions.Section));
         */
+
+        services.Configure<ApiConfig>(configuration.GetSection(ApiConfig.SectionName));
+
         return services;
     }
 
@@ -82,26 +86,26 @@ public static class ConfigurationExtensions
             c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         });
 
-       /*     const string CompaniesHouseClient = "CompaniesHouse";
-            const string CompaniesHouseBaseUri = "https://api.company-information.service.gov.uk/";  // configuration.GetValue<string>("CompaniesHouseApi__BaseUri");
-            const string CompaniesHouseApiKey = ""; // configuration.GetSection("CompaniesHouseApi.ApiKey").Value;
+        const string CompaniesHouseClient = "CompaniesHouse";
+        const string CompaniesHouseBaseUri = "https://api.company-information.service.gov.uk/";  // configuration.GetValue<string>("CompaniesHouseApi__BaseUri");
+        const string CompaniesHouseApiKey = ""; // configuration.GetSection("CompaniesHouseApi.ApiKey").Value;
 
-            services.AddHttpClient(CompaniesHouseClient, client =>
-            {
-                client.BaseAddress = new Uri(CompaniesHouseBaseUri);
-                var apiKey = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{CompaniesHouseApiKey}:"));
-                client.DefaultRequestHeaders.Add("Authorization", $"BASIC {apiKey}");
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            });
+        services.AddHttpClient(CompaniesHouseClient, client =>
+        {
+            client.BaseAddress = new Uri(CompaniesHouseBaseUri);
+            var apiKey = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{CompaniesHouseApiKey}:"));
+            client.DefaultRequestHeaders.Add("Authorization", $"BASIC {apiKey}");
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        });
 
-            services.AddHttpClient<ICompaniesHouseLookupService, CompaniesHouseLookupService>((sp, client) =>
-            {
-                var config = sp.GetRequiredService<IOptions<ApiConfig>>().Value;
+     /*   services.AddHttpClient<ICompaniesHouseLookupService, CompaniesHouseLookupService>((sp, client) =>
+        {
+            var config = sp.GetRequiredService<IOptions<ApiConfig>>().Value;
 
-                client.BaseAddress = new Uri(config.CompaniesHouseLookupBaseUrl);
-                client.Timeout = TimeSpan.FromSeconds(config.Timeout);
-            })
-            .ConfigurePrimaryHttpMessageHandler(GetClientCertificateHandler);*/
+            client.BaseAddress = new Uri(config.CompaniesHouseLookupBaseUrl);
+            client.Timeout = TimeSpan.FromSeconds(config.Timeout);
+        })
+        .ConfigurePrimaryHttpMessageHandler(GetClientCertificateHandler);*/
 
         return services;
     }

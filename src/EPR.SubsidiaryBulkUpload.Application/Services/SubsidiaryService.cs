@@ -12,6 +12,9 @@ using Newtonsoft.Json;
 
 public class SubsidiaryService : ISubsidiaryService
 {
+    private const string CompaniesHouseNumber = "07073807";
+    private const string BaseAddress = "http://localhost:5000";
+    private const string ExpectedUrl = $"{BaseAddress}/{OrganisationByCompanyHouseNumberUri}?companiesHouseNumber={CompaniesHouseNumber}";
     private const string OrganisationByCompanyHouseNumberUri = "api/organisations/";
     private const string OrganisationByTableStorageUri = "api/organisations/organisation-by-tablestorage";
     private const string OrganisationUri = "api/organisations/organisation-by-externalId";
@@ -34,7 +37,7 @@ public class SubsidiaryService : ISubsidiaryService
 
     public async Task<Company?> GetCompanyByOrgId(CompaniesHouseCompany company)
     {
-        var response = await _httpClient.GetAsync($"{OrganisationByCompanyHouseNumberUri}?organisationId={company.organisation_id}");
+        var response = await _httpClient.GetAsync($"{OrganisationByCompanyHouseNumberUri}?companiesHouseNumber={company.companies_house_number}");
         if (response.StatusCode == HttpStatusCode.NoContent)
         {
             return null;
