@@ -1,9 +1,11 @@
 ﻿namespace EPR.SubsidiaryBulkUpload.Application.Services;
+
 using System.Net;
 using System.Net.Http.Json;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Exceptions;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
+using EPR.SubsidiaryBulkUpload.Application.Models;
 using Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -35,9 +37,9 @@ public class SubsidiaryService : ISubsidiaryService
         _config = config;
     }
 
-    public async Task<Company?> GetCompanyByOrgId(CompaniesHouseCompany company)
+    public async Task<OrganisationModel?> GetCompanyByOrgId(CompaniesHouseCompany company)
     {
-        var response = await _httpClient.GetAsync($"{OrganisationByCompanyHouseNumberUri}?companiesHouseNumber={company.companies_house_number}");
+        var response = await _httpClient.GetAsync($"{OrganisationByCompanyHouseNumberUri}?organisation_id={company.organisation_id}");
         if (response.StatusCode == HttpStatusCode.NoContent)
         {
             return null;
@@ -55,10 +57,10 @@ public class SubsidiaryService : ISubsidiaryService
 
         response.EnsureSuccessStatusCode();
 
-        return await response.Content.ReadFromJsonWithEnumsAsync<Company>();
+        return await response.Content.ReadFromJsonWithEnumsAsync<OrganisationModel>();
     }
 
-    public async Task<Company?> GetCompanyByCompaniesHouseNumber(string companiesHouseNumber)
+    public async Task<OrganisationResponseModel?> GetCompanyByCompaniesHouseNumber(string companiesHouseNumber)
     {
         var response = await _httpClient.GetAsync($"{OrganisationByCompanyHouseNumberUri}?companiesHouseNumber={companiesHouseNumber}");
         if (response.StatusCode == HttpStatusCode.NoContent)
@@ -78,7 +80,11 @@ public class SubsidiaryService : ISubsidiaryService
 
         response.EnsureSuccessStatusCode();
 
-        return await response.Content.ReadFromJsonWithEnumsAsync<Company>();
+        var orgResponse = response.Content.ReadFromJsonAsync<OrganisationResponseModel[]>();
+
+        // OrganisationResponseModel orgResponse = JsonConvert.DeserializeObject(response.Content.ToString);
+        // return await response.Content.ReadFromJsonWithEnumsAsync<OrganisationResponseModel>().Result.ToList().FirstOrDefault();
+        return orgResponse.Result.ToList().FirstOrDefault();
     }
 
     public async Task<Company> GetCompanyByOrgIdFromTableStorage(string companiesHouseNumber)
@@ -106,7 +112,7 @@ public class SubsidiaryService : ISubsidiaryService
 
     public async Task<string?> CreateAndAddSubsidiaryAsync(LinkOrganisationModel linkOrganisationModel)
     {
-        string json = JsonConvert.SerializeObject(linkOrganisationModel);
+        string json = Newtonsoft.Json.JsonConvert.SerializeObject(linkOrganisationModel);
         StringContent httpContent = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
         var response = await _httpClient.PostAsync(OrganisationCreateAddSubsidiaryUri, httpContent);
@@ -122,9 +128,7 @@ public class SubsidiaryService : ISubsidiaryService
         }
 
         response.EnsureSuccessStatusCode();
-
         var result = await response.Content.ReadAsStringAsync();
-
         return result;
     }
 

@@ -13,7 +13,7 @@ var host = new HostBuilder()
             .ConfigureOptions(hostingContext.Configuration)
             .AddServices()
             .AddAzureClients()
-            .AddHttpClients()
+            .AddHttpClients(hostingContext.Configuration)
             .ConfigureLogging();
     })
     .Build();

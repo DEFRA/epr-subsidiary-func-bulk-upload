@@ -26,7 +26,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             using (var csv = new CsvReader(reader, configuration))
             {
                 csv.Context.RegisterClassMap<CompaniesHouseCompanyMap>();
-                var records = csv.GetRecords<CompaniesHouseCompany>();
+                var records = csv.GetRecords<CompaniesHouseCompany>().ToList();
 
                 // question. in one CSV will organisationId (1st column) will already be same? i.e parentID
                 var parentRecords = records.Where(c => c.parent_child == "Parent").ToList();
@@ -45,15 +45,12 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                             continue;
                         }
 
-                        if (response != null)
-                        {
-                            // populdate any object for parent org
-                        }
+                        OrganisationResponseModel parentOrg = response;
+                        var childRecords = records.Where(c => c.parent_child == "Child" && c.organisation_id == parentOrg.referenceNumber && string.IsNullOrEmpty(c.franchisee_licensee_tenant)).ToList();
 
                         // question. in one CSV will organisationId (1st column) will already be same? i.e parentID
-                        var childRecords = records.Where(c => c.organisation_id == record.organisation_id).ToList();
-
-                        foreach (var subsidiaryRecord in childRecords.Where(c => c.parent_child.ToUpper() == "CHILD" && string.IsNullOrEmpty(c.franchisee_licensee_tenant)).ToList())
+                        // var childRecords = records.Where(c => c.organisation_id.Equals(record.organisation_id)).ToList();
+                        foreach (var subsidiaryRecord in childRecords)
                         {
                             OrganisationModel subsidiary = new OrganisationModel()
                             {
@@ -63,19 +60,21 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                             };
 
                             // check if the subsidiary company exists in the database
-                            var subsidiaryResponse = await organisationService.GetCompanyByCompaniesHouseNumber(record.companies_house_number);
+                            var subsidiaryResponse = await organisationService.GetCompanyByCompaniesHouseNumber(subsidiaryRecord.companies_house_number);
 
                             if (subsidiaryResponse != null)
                             {
                                 // Question for mike. why the org ids are defined as GUID and is this ever tested?
-                                // company already exists in the database
+                                // child company already exists in the database
+                                OrganisationResponseModel childOrg = subsidiaryResponse;
                                 SubsidiaryAddModel existingSubsidiary = new SubsidiaryAddModel()
                                 {
                                     UserId = Guid.NewGuid(),
-                                    ParentOrganisationId = subsidiaryRecord.organisation_id,
-                                    ChildOrganisationId = record.organisation_id
+                                    ParentOrganisationId = parentOrg.referenceNumber,
+                                    ChildOrganisationId = childOrg.referenceNumber
                                 };
 
+                                // add new relationship for the child-parent
                                 var localCreateResponse = await organisationService.AddSubsidiaryRelationshipAsync(existingSubsidiary);
                                 _logger.LogInformation("Subsidiary Company {OrganisationId} {Organisation_Name} linked to {CompanyName} in the database.", record.organisation_id, record.organisation_name, record.organisation_name);
                                 continue;

@@ -3,7 +3,7 @@ using System.Net.Http.Json;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 
-namespace FrontendSchemeRegistration.Application.Services;
+namespace EPR.SubsidiaryBulkUpload.Application.Services;
 public class CompaniesHouseLookupService : ICompaniesHouseLookupService
 {
     private const string CompaniesHouseEndpoint = "CompaniesHouse/companies";
