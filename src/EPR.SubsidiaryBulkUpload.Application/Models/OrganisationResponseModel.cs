@@ -9,6 +9,8 @@ public class OrganisationResponseModel
 
     public int id { get; set; }
 
+    public Guid? ExternalId { get; set; }
+
     public string organisationType { get; set; }
 
     public object producerType { get; set; }

@@ -1,6 +1,7 @@
 ﻿namespace EPR.SubsidiaryBulkUpload.Application.Services;
 
 using System.Net;
+using System.Net.Http;
 using System.Net.Http.Json;
 using Azure;
 using Azure.Data.Tables;

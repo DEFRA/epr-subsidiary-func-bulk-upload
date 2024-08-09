@@ -12,6 +12,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
         ILogger<CsvProcessor> logger) : ICsvProcessor
     {
         private readonly ILogger<CsvProcessor> _logger = logger;
+        private readonly string _user = "E138C7A1-49B2-402B-B9B4-AD60A2282530";
 
         public async Task<int> ProcessStream(Stream stream, ISubsidiaryService organisationService, ICompaniesHouseLookupService companiesHouseLookupService)
         {
@@ -54,60 +55,64 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                         {
                             OrganisationModel subsidiary = new OrganisationModel()
                             {
-                                ReferenceNumber = record.organisation_id,
-                                Name = record.organisation_name,
-                                CompaniesHouseNumber = record.companies_house_number
+                                ReferenceNumber = subsidiaryRecord.organisation_id,
+                                Name = subsidiaryRecord.organisation_name,
+                                CompaniesHouseNumber = subsidiaryRecord.companies_house_number
                             };
 
                             // check if the subsidiary company exists in the database
-                            var subsidiaryResponse = await organisationService.GetCompanyByCompaniesHouseNumber(subsidiaryRecord.companies_house_number);
+                            var subsidiaryResponse = await organisationService.GetCompanyByCompaniesHouseNumber(subsidiary.CompaniesHouseNumber);
 
+                            // child company already exists in the database
                             if (subsidiaryResponse != null)
                             {
                                 // Question for mike. why the org ids are defined as GUID and is this ever tested?
-                                // child company already exists in the database
-                                OrganisationResponseModel childOrg = subsidiaryResponse;
                                 SubsidiaryAddModel existingSubsidiary = new SubsidiaryAddModel()
                                 {
-                                    UserId = Guid.NewGuid(),
+                                    UserId = Guid.Parse(_user),
                                     ParentOrganisationId = parentOrg.referenceNumber,
-                                    ChildOrganisationId = childOrg.referenceNumber
+                                    ChildOrganisationId = subsidiaryResponse.referenceNumber,
+                                    ParentOrganisationExternalId = parentOrg.ExternalId,
+                                    ChildOrganisationExternalId = subsidiaryResponse.ExternalId
                                 };
 
                                 // add new relationship for the child-parent
                                 var localCreateResponse = await organisationService.AddSubsidiaryRelationshipAsync(existingSubsidiary);
-                                _logger.LogInformation("Subsidiary Company {OrganisationId} {Organisation_Name} linked to {CompanyName} in the database.", record.organisation_id, record.organisation_name, record.organisation_name);
+                                _logger.LogInformation("Subsidiary Company {OrganisationId} {Organisation_Name} linked to {CompanyName} in the database.", subsidiaryRecord.organisation_id, subsidiaryRecord.organisation_name, record.organisation_name);
                                 continue;
                             }
 
                             // company does not exist in org database. check if subsidiary company exists in the table storage (temp data)
-                            var tableStorageResponse = await organisationService.GetCompanyByOrgIdFromTableStorage(record.companies_house_number);
+                            var tableStorageResponse = await organisationService.GetCompanyByOrgIdFromTableStorage(subsidiary.CompaniesHouseNumber);
                             if (tableStorageResponse != null)
                             {
                                 // company exists in temp storage (table storage)
-                                LinkOrganisationModel newSubsidiary = new LinkOrganisationModel()
+                                LinkOrganisationModel newSubsidiaryFromTS = new LinkOrganisationModel()
                                 {
-                                    UserId = Guid.NewGuid(),
-                                    Subsidiary = subsidiary
+                                    UserId = Guid.Parse(_user),
+                                    Subsidiary = subsidiary,
+                                    ParentOrganisationId = parentOrg.ExternalId.Value
                                 };
-                                var tableStorageCreateResponse = await organisationService.CreateAndAddSubsidiaryAsync(newSubsidiary);
-                                _logger.LogInformation("Subsidiary Company added to the database : {OrganisationId} {Organisation_Name}.", record.organisation_id, record.organisation_name);
-                                _logger.LogInformation("Subsidiary Company {OrganisationId} {Organisation_Name} linked to {CompanyName} in the database.", record.organisation_id, record.organisation_name, record.organisation_name);
+                                var tableStorageCreateResponse = await organisationService.CreateAndAddSubsidiaryAsync(newSubsidiaryFromTS);
+                                _logger.LogInformation("Subsidiary Company added to the database : {OrganisationId} {Organisation_Name}.", subsidiaryRecord.organisation_id, subsidiaryRecord.organisation_name);
+                                _logger.LogInformation("Subsidiary Company {OrganisationId} {Organisation_Name} linked to {CompanyName} in the database.", subsidiaryRecord.organisation_id, subsidiaryRecord.organisation_name, record.organisation_name);
                                 continue;
                             }
 
                             // Company does not exist in table storage. make call to comapanies house API
-                            var companyHouseResponse = await companiesHouseLookupService.GetCompaniesHouseResponseAsync(record.companies_house_number);
+                            var companyHouseResponse = await companiesHouseLookupService.GetCompaniesHouseResponseAsync(subsidiary.CompaniesHouseNumber);
                             if (companyHouseResponse != null)
                             {
                                 // company exists in companies hosue database
-                                LinkOrganisationModel newSubsidiary = new LinkOrganisationModel()
+                                LinkOrganisationModel newSubsidiaryFromCH = new LinkOrganisationModel()
                                 {
-                                    UserId = Guid.NewGuid(),
+                                    UserId = Guid.Parse(_user),
                                     Subsidiary = subsidiary
                                 };
 
-                                var createFromCompaniesHouseDaaResponse = await organisationService.CreateAndAddSubsidiaryAsync(newSubsidiary);
+                                var createFromCompaniesHouseDaaResponse = await organisationService.CreateAndAddSubsidiaryAsync(newSubsidiaryFromCH);
+                                _logger.LogInformation("Subsidiary Company added to the database : {OrganisationId} {Organisation_Name}.", subsidiaryRecord.organisation_id, subsidiaryRecord.organisation_name);
+                                _logger.LogInformation("Subsidiary Company {OrganisationId} {Organisation_Name} linked to {CompanyName} in the database.", subsidiaryRecord.organisation_id, subsidiaryRecord.organisation_name, record.organisation_name);
                                 continue;
                             }
                             else
@@ -130,7 +135,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
 
                             LinkOrganisationModel franchiseeToCreate = new LinkOrganisationModel()
                             {
-                                UserId = Guid.NewGuid(),
+                                UserId = Guid.Parse(_user),
                                 Subsidiary = franchisee
                             };
 

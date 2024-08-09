@@ -9,5 +9,9 @@ public class SubsidiaryAddModel
 
     public string? ChildOrganisationId { get; init; }
 
+    public Guid? ParentOrganisationExternalId { get; init; }
+
+    public Guid? ChildOrganisationExternalId { get; init; }
+
     public Guid? UserId { get; set; }
 }

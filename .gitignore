@@ -24,3 +24,4 @@
 /.vs
 /src/.vs/EPR.SubsidiaryBulkUpload/DesignTimeBuild
 /src/EPR.SubsidiaryBulkUpload.Application/bin/Debug/net8.0
+/src/EPR.SubsidiaryBulkUpload.Function/local.settings.json

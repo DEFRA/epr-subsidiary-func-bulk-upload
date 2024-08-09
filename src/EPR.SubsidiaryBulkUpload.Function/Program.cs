@@ -11,7 +11,7 @@ var host = new HostBuilder()
         services.AddApplicationInsightsTelemetryWorkerService()
             .ConfigureFunctionsApplicationInsights()
             .ConfigureOptions(hostingContext.Configuration)
-            .AddServices()
+            .AddServices(hostingContext.Configuration)
             .AddAzureClients()
             .AddHttpClients(hostingContext.Configuration)
             .ConfigureLogging();
