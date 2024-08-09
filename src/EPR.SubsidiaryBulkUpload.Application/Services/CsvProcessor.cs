@@ -63,8 +63,10 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                             // check if the subsidiary company exists in the database
                             var subsidiaryResponse = await organisationService.GetCompanyByCompaniesHouseNumber(subsidiary.CompaniesHouseNumber);
 
+                            var isRelationshipExists = await organisationService.GetSubsidiaryRelationshipAysnc(parentOrg.companiesHouseNumber, subsidiary.CompaniesHouseNumber);
+
                             // child company already exists in the database
-                            if (subsidiaryResponse != null)
+                            if (subsidiaryResponse != null && isRelationshipExists == false)
                             {
                                 // Question for mike. why the org ids are defined as GUID and is this ever tested?
                                 SubsidiaryAddModel existingSubsidiary = new SubsidiaryAddModel()
@@ -86,6 +88,12 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                             var tableStorageResponse = await organisationService.GetCompanyByOrgIdFromTableStorage(subsidiary.CompaniesHouseNumber);
                             if (tableStorageResponse != null)
                             {
+                                subsidiary.OrganisationType = OrganisationType.NotSet;
+                                subsidiary.ProducerType = ProducerType.Other;
+                                subsidiary.Address = tableStorageResponse.Address;
+                                subsidiary.IsComplianceScheme = false;
+                                subsidiary.Nation = Nation.NotSet;
+
                                 // company exists in temp storage (table storage)
                                 LinkOrganisationModel newSubsidiaryFromTS = new LinkOrganisationModel()
                                 {

@@ -64,7 +64,7 @@ public class SubsidiaryService : ISubsidiaryService
         return await response.Content.ReadFromJsonWithEnumsAsync<OrganisationModel>();
     }
 
-    public async Task<OrganisationResponseModel?> GetSubsidiaryRelationshipAysnc(string parentCHNumber, string subsidiaryCHNumber)
+    public async Task<bool?> GetSubsidiaryRelationshipAysnc(string parentCHNumber, string subsidiaryCHNumber)
     {
         var response = await _httpClient.GetAsync($"{OrganisationByCompanyHouseNumberUri}?companynumber1={parentCHNumber}&companynumber2={subsidiaryCHNumber}");
         if (response.StatusCode == HttpStatusCode.NoContent)
@@ -84,9 +84,8 @@ public class SubsidiaryService : ISubsidiaryService
 
         response.EnsureSuccessStatusCode();
         var orgResponse = response.Content.ReadFromJsonAsync<OrganisationResponseModel[]>();
-        return orgResponse.Result.ToList().FirstOrDefault();
+        return true;
     }
-
 
     public async Task<OrganisationResponseModel?> GetCompanyByCompaniesHouseNumber(string companiesHouseNumber)
     {

@@ -15,7 +15,7 @@ public class CompaniesHouseLookupService : ICompaniesHouseLookupService
         _httpClient = httpClient;
     }
 
-    public async Task<CompaniesHouseResponse?> GetCompaniesHouseResponseAsync(string id, ICompaniesHouseLookupService companiesHouseLookupService)
+    public async Task<CompaniesHouseResponse?> GetCompaniesHouseResponseAsync(string id)
     {
         var response = await _httpClient.GetAsync($"{CompaniesHouseEndpoint}/{id}");
         if (response.StatusCode == HttpStatusCode.BadRequest)
@@ -30,10 +30,5 @@ public class CompaniesHouseLookupService : ICompaniesHouseLookupService
         response.EnsureSuccessStatusCode();
 
         return await response.Content.ReadFromJsonAsync<CompaniesHouseResponse>();
-    }
-
-    public Task<CompaniesHouseResponse?> GetCompaniesHouseResponseAsync(string id)
-    {
-        throw new NotImplementedException();
     }
 }
