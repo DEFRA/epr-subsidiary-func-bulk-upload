@@ -88,13 +88,10 @@ public static class ConfigurationExtensions
         });
 
         const string CompaniesHouseClient = "CompaniesHouse";
-        const string CompaniesHouseBaseUri = "https://api.company-information.service.gov.uk/";  // configuration.GetValue<string>("CompaniesHouseApi__BaseUri");
-        const string CompaniesHouseApiKey = ""; // configuration.GetSection("CompaniesHouseApi.ApiKey").Value;
-
-        services.AddHttpClient(CompaniesHouseClient, client =>
+        services.AddHttpClient<ICompaniesHouseLookupService, CompaniesHouseLookupService>(CompaniesHouseClient, client =>
         {
-            client.BaseAddress = new Uri(CompaniesHouseBaseUri);
-            var apiKey = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{CompaniesHouseApiKey}:"));
+            client.BaseAddress = new Uri(configuration["CompaniesHouseApi:BaseUri"]);
+            var apiKey = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{configuration["CompaniesHouseApi:ApiKey"]}:"));
             client.DefaultRequestHeaders.Add("Authorization", $"BASIC {apiKey}");
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         });
