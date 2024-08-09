@@ -8,6 +8,7 @@ using System.Text;
 using EPR.SubsidiaryBulkUpload.Application.Configs;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -98,7 +99,7 @@ public static class ConfigurationExtensions
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         });
 
-     /*   services.AddHttpClient<ICompaniesHouseLookupService, CompaniesHouseLookupService>((sp, client) =>
+        /*   services.AddHttpClient<ICompaniesHouseLookupService, CompaniesHouseLookupService>((sp, client) =>
         {
             var config = sp.GetRequiredService<IOptions<ApiConfig>>().Value;
 
@@ -110,11 +111,16 @@ public static class ConfigurationExtensions
         return services;
     }
 
-    public static IServiceCollection AddServices(this IServiceCollection services)
+    public static IServiceCollection AddServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddTransient<ICsvProcessor, CsvProcessor>();
         services.AddTransient<ICompaniesHouseLookupService, CompaniesHouseLookupService>();
         services.AddTransient<ISubsidiaryService, SubsidiaryService>();
+        services.AddAzureClients(clientBuilder =>
+        {
+            clientBuilder.AddTableServiceClient(configuration["ConnectionStrings:tablestorage"]);
+            clientBuilder.AddBlobServiceClient(configuration["ConnectionStrings:blob"]);
+        });
         return services;
     }
 
