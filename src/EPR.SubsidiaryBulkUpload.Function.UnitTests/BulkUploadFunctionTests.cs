@@ -66,7 +66,7 @@ public class BulkUploadFunctionTests
     public async Task BulkUploadFunction_Calls_CsvService()
     {
         // Act
-        await _systemUnderTest.Run(null, string.Empty);
+        await _systemUnderTest.Run(null);
 
         // Assert
         _csvProcessorMock.Verify(x => x.ProcessStream(It.IsAny<Stream>()), Times.Once);
@@ -76,7 +76,7 @@ public class BulkUploadFunctionTests
     public async Task BulkUploadFunction_Logs_Result()
     {
         // Act
-        await _systemUnderTest.Run(null, string.Empty);
+        await _systemUnderTest.Run(null);
 
         // Assert
         _loggerMock.VerifyLog(x => x.LogInformation("C# Blob trigger processed {Count} records from csv blob {Name}", CsvRowCount, CsvBlobName), Times.Once);

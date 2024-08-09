@@ -15,4 +15,6 @@ public class ApiConfig
     public int Timeout { get; set; }
 
     public string SubsidiaryServiceBaseUrl { get; set; } = null!;
+
+    public string StorageConnectionString { get; set; } = null!;
 }

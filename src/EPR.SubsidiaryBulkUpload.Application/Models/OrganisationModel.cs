@@ -15,7 +15,7 @@ public class OrganisationModel
     [MaxLength(100)]
     public string Name { get; set; } = null!;
 
-    public Address Address { get; set; } = null!;
+    public AddressModel Address { get; set; } = null!;
 
     public bool ValidatedWithCompaniesHouse { get; set; }
 

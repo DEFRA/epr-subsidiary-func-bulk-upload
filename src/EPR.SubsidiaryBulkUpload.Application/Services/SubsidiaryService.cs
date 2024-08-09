@@ -1,11 +1,11 @@
 ﻿namespace EPR.SubsidiaryBulkUpload.Application.Services;
 
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using Azure;
 using Azure.Data.Tables;
-using Azure.Storage.Blobs;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Exceptions;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
@@ -64,6 +64,30 @@ public class SubsidiaryService : ISubsidiaryService
         return await response.Content.ReadFromJsonWithEnumsAsync<OrganisationModel>();
     }
 
+    public async Task<OrganisationResponseModel?> GetSubsidiaryRelationshipAysnc(string parentCHNumber, string subsidiaryCHNumber)
+    {
+        var response = await _httpClient.GetAsync($"{OrganisationByCompanyHouseNumberUri}?companynumber1={parentCHNumber}&companynumber2={subsidiaryCHNumber}");
+        if (response.StatusCode == HttpStatusCode.NoContent)
+        {
+            return null;
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+
+            if (problemDetails != null)
+            {
+                throw new ProblemResponseException(problemDetails, response.StatusCode);
+            }
+        }
+
+        response.EnsureSuccessStatusCode();
+        var orgResponse = response.Content.ReadFromJsonAsync<OrganisationResponseModel[]>();
+        return orgResponse.Result.ToList().FirstOrDefault();
+    }
+
+
     public async Task<OrganisationResponseModel?> GetCompanyByCompaniesHouseNumber(string companiesHouseNumber)
     {
         var response = await _httpClient.GetAsync($"{OrganisationByCompanyHouseNumberUri}?companiesHouseNumber={companiesHouseNumber}");
@@ -87,42 +111,40 @@ public class SubsidiaryService : ISubsidiaryService
         return orgResponse.Result.ToList().FirstOrDefault();
     }
 
-    public async Task<Company> GetCompanyByOrgIdFromTableStorage(string companiesHouseNumber)
+    public async Task<OrganisationModel> GetCompanyByOrgIdFromTableStorage(string companiesHouseNumber)
     {
-        List<Company> companies = new List<Company>();
-        var companytemp = new Company()
-        {
-            Organisation_Name = "W23 GLOBAL GP LLP",
-            Companies_House_Number = "OC450849",
-        };
-        companies.Add(companytemp);
+        List<OrganisationModel> companies = new List<OrganisationModel>();
 
-        return companies.FirstOrDefault();
-
+        // TO DO to switch to service call
         // AzureStorageTableService tableService = new AzureStorageTableService("");
         // var tsResponse = await tableService.GetAll();
         // return tsResponse;
-
-        // var storageAccount = CloudStorageAccount.Parse("UseDevelopmentStorage=true");
-        string connectionString = "AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;DefaultEndpointsProtocol=http;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;";
-        string tableName = "testdata";
-        string pkey = "e311a8c9-e163-4e65-b02c-cf71fa439072";
-
-        BlobContainerClient blobContainerClient = new BlobContainerClient("UseDevelopmentStorage=true", "devstoreaccount1");
-        blobContainerClient.CreateIfNotExists();
-        var tableClient = new TableClient(connectionString, tableName);
-        Pageable<TableEntity> results = tableClient.Query<TableEntity>(entity => entity.PartitionKey == pkey);
-        Pageable<TableEntity> oDataQueryEntities = tableClient.Query<TableEntity>(filter: TableClient.CreateQueryFilter($"CompanyName eq {"!NSPIRED INVESTMENTS LTD"}"));
+        string tableName = "testdatatable";
+        var tableClient = new TableClient(_config["ApiConfig:StorageConnectionString"], tableName);
+        Pageable<TableEntity> oDataQueryEntities = tableClient.Query<TableEntity>(filter: TableClient.CreateQueryFilter($"CompanyNumber eq {companiesHouseNumber}"));
 
         foreach (TableEntity entity in oDataQueryEntities)
         {
-            var company = new Company()
+            var company = new OrganisationModel()
             {
-                Organisation_Name = entity.GetString("CompanyName"),
-                Companies_House_Number = entity.GetString("CompanyNumber"),
+                Name = entity.GetString("CompanyName"),
+                CompaniesHouseNumber = entity.GetString("CompanyNumber"),
             };
+
+            AddressModel address = new AddressModel()
+            {
+                County = entity.GetString("RegAddressCounty"),
+                Postcode = entity.GetString("RegAddressPostCode"),
+                Country = entity.GetString("RegAddressCountry"),
+                Town = entity.GetString("RegAddressPostTown"),
+                Street = entity.GetString("RegAddressAddressLine1")
+            };
+
+            company.Address = address;
             companies.Add(company);
         }
+
+        return companies.FirstOrDefault();
     }
 
     public async Task<string?> CreateAndAddSubsidiaryAsync(LinkOrganisationModel linkOrganisationModel)
