@@ -1,25 +1,28 @@
-#See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS installer-env
 
-FROM mcr.microsoft.com/azure-functions/dotnet-isolated:4-dotnet-isolated8.0 AS base
-WORKDIR /home/site/wwwroot
-EXPOSE 8080
+# Copy everything
+COPY NuGet.Config ./
+COPY stylecop.ruleset ./
+COPY Directory.Build.props ./
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-ARG BUILD_CONFIGURATION=Release
-WORKDIR /src
-COPY ["Directory.Build.props", "."]
-COPY ["EPR.SubsidiaryBulkUpload.Function/EPR.SubsidiaryBulkUpload.Function.csproj", "EPR.SubsidiaryBulkUpload.Function/"]
-RUN dotnet restore "./EPR.SubsidiaryBulkUpload.Function/EPR.SubsidiaryBulkUpload.Function.csproj"
-COPY . .
-WORKDIR "/src/EPR.SubsidiaryBulkUpload.Function"
-RUN dotnet build "./EPR.SubsidiaryBulkUpload.Function.csproj" -c $BUILD_CONFIGURATION -o /app/build
+COPY EPR.SubsidiaryBulkUpload.Application/. ./EPR.SubsidiaryBulkUpload.Application/.
+COPY EPR.SubsidiaryBulkUpload.Function/. ./EPR.SubsidiaryBulkUpload.Function/.
 
-FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./EPR.SubsidiaryBulkUpload.Function.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+# Publish 
+RUN dotnet publish EPR.SubsidiaryBulkUpload.Function/*.csproj --output /home/site/wwwroot
 
-FROM base AS final
-WORKDIR /home/site/wwwroot
-COPY --from=publish /app/publish .
+# Use the Azure Functions image as the final image
+FROM mcr.microsoft.com/azure-functions/dotnet-isolated:4-dotnet-isolated8.0
+
+# Create a non-root user and set permissions
+RUN groupadd -r dotnet && \
+    useradd -r -g dotnet dotnet && \
+    chown -R dotnet /home
+
+# Switch to the non-root user for the final image
+USER dotnet
+
 ENV AzureWebJobsScriptRoot=/home/site/wwwroot \
     AzureFunctionsJobHost__Logging__Console__IsEnabled=true
+
+COPY --from=installer-env --chown=dotnet ["/home/site/wwwroot", "/home/site/wwwroot"]

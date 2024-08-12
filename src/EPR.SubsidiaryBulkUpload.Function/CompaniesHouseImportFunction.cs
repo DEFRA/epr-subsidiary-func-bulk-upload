@@ -24,7 +24,7 @@ public class CompaniesHouseImportFunction
 
     [Function(nameof(CompaniesHouseImportFunction))]
     public async Task Run(
-        [BlobTrigger("%BlobStorage:CompaniesHouseContainerName%", Connection = "BlobStorage:ConnectionString")]
+        [BlobTrigger("%BlobStorage:CompaniesHouseContainerName%", Connection = "TableStorage__ConnectionString")]
         BlobClient client)
     {
         var downloadStreamingResult = await client.DownloadStreamingAsync();
@@ -44,13 +44,14 @@ public class CompaniesHouseImportFunction
 
             var content = downloadStreamingResult.Value.Content;
 
-            var storageConnectionString = Environment.GetEnvironmentVariable("BlobStorage__ConnectionString");
+            var storageConnectionString = Environment.GetEnvironmentVariable("TableStorage__ConnectionString");
+            var tableName = Environment.GetEnvironmentVariable("CompaniesHouseOfflineData__TableName");
 
             var records = await _csvProcessor.ProcessStreamToObject(content, new CompanyHouseTableEntity());
 
-            if(records.Any())
+            if (records.Any())
             {
-                await _tableStorageProcessor.WriteToAzureTableStorage(records, "CompaniesHouseData", partitionKey, storageConnectionString, BatchSize);
+                await _tableStorageProcessor.WriteToAzureTableStorage(records, tableName, partitionKey, storageConnectionString, BatchSize);
             }
 
             _logger.LogInformation("C# Blob trigger processed {Count} records from csv blob {Name}", records.Count(), client.Name);
