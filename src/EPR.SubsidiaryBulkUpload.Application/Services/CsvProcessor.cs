@@ -112,14 +112,28 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                             }
 
                             // Company does not exist in table storage. make call to comapanies house API
-                            var companyHouseResponse = await companiesHouseLookupService.GetCompaniesHouseResponseAsync(subsidiary.CompaniesHouseNumber);
+                            var companyHouseResponse = await companiesHouseLookupService.GetCompaniesHouseResponseAsync(subsidiary.CompaniesHouseNumber, true);
                             if (companyHouseResponse != null)
                             {
                                 // company exists in companies hosue database
+                                subsidiary.Name = companyHouseResponse.company_name;
+                                subsidiary.OrganisationType = OrganisationType.NotSet;
+                                subsidiary.ProducerType = ProducerType.Other;
+                                subsidiary.IsComplianceScheme = false;
+                                subsidiary.Nation = Nation.NotSet;
+                                subsidiary.Address = new AddressModel()
+                                {
+                                    Street = companyHouseResponse.registered_office_address.address_line_1,
+                                    Country = companyHouseResponse.registered_office_address.country,
+                                    Locality = companyHouseResponse.registered_office_address.locality,
+                                    Postcode = companyHouseResponse.registered_office_address.postal_code
+                                };
+
                                 LinkOrganisationModel newSubsidiaryFromCH = new LinkOrganisationModel()
                                 {
                                     UserId = Guid.Parse(_user),
-                                    Subsidiary = subsidiary
+                                    Subsidiary = subsidiary,
+                                    ParentOrganisationId = parentOrg.ExternalId.Value
                                 };
 
                                 var createFromCompaniesHouseDaaResponse = await organisationService.CreateAndAddSubsidiaryAsync(newSubsidiaryFromCH);
@@ -136,7 +150,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                         }
 
                         // this for none companies house companies or franchisee etc. where to store these? and what information to store and where the information will come from
-                        foreach (var franchiseeRecord in childRecords.Where(c => c.parent_child.ToUpper() == "CHILD" && !string.IsNullOrEmpty(c.franchisee_licensee_tenant) && c.franchisee_licensee_tenant.ToUpper() == "Y").ToList())
+                        foreach (var franchiseeRecord in childRecords.Where(c => c.parent_child == "Child" && !string.IsNullOrEmpty(c.franchisee_licensee_tenant) && c.franchisee_licensee_tenant.ToUpper() == "Y").ToList())
                         {
                             OrganisationModel franchisee = new OrganisationModel()
                             {

@@ -21,8 +21,8 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             {
                 var company = new Company()
                 {
-                    Organisation_Name = entity.CompanyName,
-                    Companies_House_Number = entity.CompanyNumber
+                    Name = entity.CompanyName,
+                    CompaniesHouseNumber = entity.CompanyNumber
                 };
                 companies.Add(company);
             }
@@ -37,8 +37,8 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             var tableResult = await _tableClient.GetEntityAsync<TableEntity>(partitionKey, id);
             var company = new Company()
             {
-                Organisation_Name = tableResult.Value.GetString("CompanyName"),
-                Companies_House_Number = tableResult.Value.GetString("CompanyNumber"),
+                Name = tableResult.Value.GetString("CompanyName"),
+                CompaniesHouseNumber = tableResult.Value.GetString("CompanyNumber"),
             };
 
             return company;
