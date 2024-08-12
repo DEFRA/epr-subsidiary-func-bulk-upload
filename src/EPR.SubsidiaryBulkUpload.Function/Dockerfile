@@ -1,10 +1,4 @@
-#See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
-
-FROM mcr.microsoft.com/azure-functions/dotnet-isolated:4-dotnet-isolated8.0 AS base
-WORKDIR /home/site/wwwroot
-EXPOSE 8080
-
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS installer-env
 
 # Copy everything
 COPY NuGet.Config ./
@@ -14,7 +8,11 @@ COPY Directory.Build.props ./
 COPY EPR.SubsidiaryBulkUpload.Application/. ./EPR.SubsidiaryBulkUpload.Application/.
 COPY EPR.SubsidiaryBulkUpload.Function/. ./EPR.SubsidiaryBulkUpload.Function/.
 
+# Publish 
 RUN dotnet publish EPR.SubsidiaryBulkUpload.Function/*.csproj --output /home/site/wwwroot
+
+# Use the Azure Functions image as the final image
+FROM mcr.microsoft.com/azure-functions/dotnet-isolated:4-dotnet-isolated8.0
 
 # Create a non-root user and set permissions
 RUN groupadd -r dotnet && \
@@ -27,4 +25,4 @@ USER dotnet
 ENV AzureWebJobsScriptRoot=/home/site/wwwroot \
     AzureFunctionsJobHost__Logging__Console__IsEnabled=true
 
-
+COPY --from=installer-env --chown=dotnet ["/home/site/wwwroot", "/home/site/wwwroot"]
