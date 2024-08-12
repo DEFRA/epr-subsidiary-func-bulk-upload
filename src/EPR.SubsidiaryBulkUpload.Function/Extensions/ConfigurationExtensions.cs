@@ -64,6 +64,7 @@ public static class ConfigurationExtensions
     public static IServiceCollection AddServices(this IServiceCollection services)
     {
         services.AddTransient<ICsvProcessor, CsvProcessor>();
+        services.AddTransient<ITableStorageProcessor, TableStorageProcessor>();
 
         return services;
     }
