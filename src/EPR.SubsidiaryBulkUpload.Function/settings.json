@@ -1,14 +1,3 @@
-# EPR Subsidiary Bulk Upload
-
-## Overview
-
-Functions to handle bulk upload of subsidiary data.
-
-
-## Running on a developer machine
-To run locally, create a file `local.settings.json`. This file is in .gitignore.
-
-```
 {
   "IsEncrypted": false,
   "Values": {
@@ -20,4 +9,3 @@ To run locally, create a file `local.settings.json`. This file is in .gitignore.
     "CompaniesHouseDownload__Schedule": "0 */5 * * * *"
   }
 }
-```
