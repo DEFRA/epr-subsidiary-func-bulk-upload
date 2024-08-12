@@ -27,6 +27,7 @@ public class SubsidiaryService : ISubsidiaryService
     private const string OrganisationNameUri = "api/organisations/organisation-by-invite-token";
     private const string OrganisationCreateAddSubsidiaryUri = "api/organisations/create-and-add-subsidiary";
     private const string OrganisationAddSubsidiaryUri = "api/organisations/add-subsidiary";
+    private const string OrganisationRelationshipsByIdUri = "api/organisations/organisation-by-relationship";
     private readonly ILogger<SubsidiaryService> _logger;
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _config;
@@ -64,9 +65,9 @@ public class SubsidiaryService : ISubsidiaryService
         return await response.Content.ReadFromJsonWithEnumsAsync<OrganisationModel>();
     }
 
-    public async Task<bool?> GetSubsidiaryRelationshipAysnc(string parentCHNumber, string subsidiaryCHNumber)
+    public async Task<bool?> GetSubsidiaryRelationshipAysnc(int parentOrganisationId, int subsidiaryOrganisationId)
     {
-        var response = await _httpClient.GetAsync($"{OrganisationByCompanyHouseNumberUri}?companynumber1={parentCHNumber}&companynumber2={subsidiaryCHNumber}");
+        var response = await _httpClient.GetAsync($"{OrganisationRelationshipsByIdUri}?parentId={parentOrganisationId}&subsidiaryId={subsidiaryOrganisationId}");
         if (response.StatusCode == HttpStatusCode.NoContent)
         {
             return null;
@@ -83,7 +84,13 @@ public class SubsidiaryService : ISubsidiaryService
         }
 
         response.EnsureSuccessStatusCode();
-        var orgResponse = response.Content.ReadFromJsonAsync<OrganisationResponseModel[]>();
+        var orgResponse = response.Content.ReadFromJsonAsync<bool>();
+
+        if (orgResponse == null || orgResponse.Result == false)
+        {
+            return false;
+        }
+
         return true;
     }
 
