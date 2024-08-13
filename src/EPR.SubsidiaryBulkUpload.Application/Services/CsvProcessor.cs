@@ -59,6 +59,8 @@ public class CsvProcessor(
             records = csv.GetRecords<T>().ToList();
         }
 
+        _logger.LogInformation("Found csv records {RecordsCount}", records.Count);
+
         return records;
     }
 }
