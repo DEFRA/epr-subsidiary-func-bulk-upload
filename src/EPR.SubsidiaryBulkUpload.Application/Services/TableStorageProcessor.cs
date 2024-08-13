@@ -87,7 +87,7 @@ public class TableStorageProcessor(
             var deleteOperation = TableOperation.Delete(currentIngestion);
             await table.ExecuteAsync(deleteOperation);
 
-            _logger.LogInformation("C# Tabel storage processed {Count} records from csv storage table {Name}", records.Count(), tableName);
+            _logger.LogInformation("C# Table storage processed {Count} records from csv storage table {Name}", records.Count(), tableName);
         }
         catch (Exception ex)
         {

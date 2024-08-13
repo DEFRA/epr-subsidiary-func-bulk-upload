@@ -24,7 +24,7 @@ public class CompaniesHouseImportFunction
 
     [Function(nameof(CompaniesHouseImportFunction))]
     public async Task Run(
-        [BlobTrigger("%BlobStorage:CompaniesHouseContainerName%", Connection = "TableStorage:ConnectionString")]
+        [BlobTrigger("%BlobStorage:CompaniesHouseContainerName%", Connection = "BlobStorage:ConnectionString")]
         BlobClient client)
     {
         var downloadStreamingResult = await client.DownloadStreamingAsync();
