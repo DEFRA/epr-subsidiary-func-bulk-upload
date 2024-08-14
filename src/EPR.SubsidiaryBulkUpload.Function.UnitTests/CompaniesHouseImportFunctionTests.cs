@@ -6,6 +6,7 @@ using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using EPR.SubsidiaryBulkUpload.Application.Services.Models;
 using EPR.SubsidiaryBulkUpload.Function.UnitTests.TestHelpers;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 
 namespace EPR.SubsidiaryBulkUpload.Function.UnitTests;
@@ -14,7 +15,7 @@ namespace EPR.SubsidiaryBulkUpload.Function.UnitTests;
 public class CompaniesHouseImportFunctionTests
 {
     private const string BlobContainerName = "test_container";
-    private const string CsvBlobName = "test.csv";
+    private const string CsvBlobName = "test-2024-07-01.csv";
     private const int CsvRowCount = 2;
     private const string CsvContent =
         """
@@ -27,6 +28,7 @@ public class CompaniesHouseImportFunctionTests
     private Mock<ICsvProcessor> _csvProcessorMock;
     private Mock<ITableStorageProcessor> _tableStorageProcessor;
     private Mock<ILogger<CompaniesHouseImportFunction>> _loggerMock;
+    private Mock<IOptions<ConfigOptions>> _configOptionsMock;
     private CompaniesHouseImportFunction _systemUnderTest;
 
     [TestInitialize]
@@ -60,7 +62,14 @@ public class CompaniesHouseImportFunctionTests
         _tableStorageProcessor = new Mock<ITableStorageProcessor>();
 
         _loggerMock = new Mock<ILogger<CompaniesHouseImportFunction>>();
-        _systemUnderTest = new CompaniesHouseImportFunction(_loggerMock.Object, _csvProcessorMock.Object, _tableStorageProcessor.Object);
+        _configOptionsMock = new Mock<IOptions<ConfigOptions>>();
+        var options = new ConfigOptions
+        {
+            TableStorageConnectionString = "UseDevelopmentStorage=true",
+            CompaniesHouseOfflineDataTableName = "CompaniesHouseData"
+        };
+        _configOptionsMock.Setup(x => x.Value).Returns(options);
+        _systemUnderTest = new CompaniesHouseImportFunction(_loggerMock.Object, _csvProcessorMock.Object, _tableStorageProcessor.Object, _configOptionsMock.Object);
     }
 
     [TestMethod]
@@ -94,17 +103,17 @@ public class CompaniesHouseImportFunctionTests
     }
 
     [TestMethod]
-    public async Task CompaniesHouseImportFunctionn_Logs_Result_When_NotCsvFile()
+    public async Task CompaniesHouseImportFunctionn_Logs_Result_When_NoPartitionKeyInFileName()
     {
         // Arrange
         _blobClientMock
             .SetupGet(m => m.Name)
-            .Returns("test.txt");
+            .Returns("test.csv");
 
         // Act
         await _systemUnderTest.Run(_blobClientMock.Object);
 
         // Assert
-        _loggerMock.VerifyLog(x => x.LogInformation("C# Blob trigger function did not processed non-csv blob {Name}", "test.txt"), Times.Once);
+        _loggerMock.VerifyLog(x => x.LogInformation("C# Blob trigger function did not processed file name doesn't contain partition key {Name}", "test.csv"), Times.Once);
     }
 }

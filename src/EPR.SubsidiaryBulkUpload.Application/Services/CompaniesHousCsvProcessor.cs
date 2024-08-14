@@ -6,10 +6,10 @@ using Microsoft.Extensions.Logging;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services;
 
-public class CsvProcessor(
-    ILogger<CsvProcessor> logger) : ICsvProcessor
+public class CompaniesHousCsvProcessor(
+    ILogger<CompaniesHousCsvProcessor> logger) : ICsvProcessor
 {
-    private readonly ILogger<CsvProcessor> _logger = logger;
+    private readonly ILogger<CompaniesHousCsvProcessor> _logger = logger;
 
     public async Task<int> ProcessStream(Stream stream)
     {
@@ -30,7 +30,6 @@ public class CsvProcessor(
         {
             rowCount++;
 
-            // var rec = csv.GetRecord<X>(); // TODO: Add a class map and use it here instead of X
             var field = csv.GetField(0);
             if (rowCount % 1000 == 0)
             {

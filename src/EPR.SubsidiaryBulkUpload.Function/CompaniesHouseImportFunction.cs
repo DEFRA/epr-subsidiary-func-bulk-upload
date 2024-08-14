@@ -4,6 +4,7 @@ using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using EPR.SubsidiaryBulkUpload.Application.Services.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace EPR.SubsidiaryBulkUpload.Function;
 
@@ -14,12 +15,14 @@ public class CompaniesHouseImportFunction
     private readonly ICsvProcessor _csvProcessor;
     private readonly ITableStorageProcessor _tableStorageProcessor;
     private readonly ILogger<CompaniesHouseImportFunction> _logger;
+    private readonly ConfigOptions _configOptions;
 
-    public CompaniesHouseImportFunction(ILogger<CompaniesHouseImportFunction> logger, ICsvProcessor csvProcessor, ITableStorageProcessor tableStorageProcessor)
+    public CompaniesHouseImportFunction(ILogger<CompaniesHouseImportFunction> logger, ICsvProcessor csvProcessor, ITableStorageProcessor tableStorageProcessor, IOptions<ConfigOptions> configOptions)
     {
         _logger = logger;
         _csvProcessor = csvProcessor;
         _tableStorageProcessor = tableStorageProcessor;
+        _configOptions = configOptions.Value;
     }
 
     [Function(nameof(CompaniesHouseImportFunction))]
@@ -38,14 +41,14 @@ public class CompaniesHouseImportFunction
             }
         }
 
-        if (Path.GetExtension(client.Name) == ".csv")
-        {
-            var partitionKey = client.Name.ToPartitionKeyFormat();
+        var partitionKey = client.Name.ToPartitionKeyFormat();
 
+        if (!string.IsNullOrEmpty(partitionKey))
+        {
             var content = downloadStreamingResult.Value.Content;
 
-            var storageConnectionString = Environment.GetEnvironmentVariable("TableStorage__ConnectionString");
-            var tableName = Environment.GetEnvironmentVariable("CompaniesHouseOfflineData__TableName");
+            var storageConnectionString = _configOptions.TableStorageConnectionString;
+            var tableName = _configOptions.CompaniesHouseOfflineDataTableName;
 
             var records = await _csvProcessor.ProcessStreamToObject(content, new CompanyHouseTableEntity());
 
@@ -58,7 +61,7 @@ public class CompaniesHouseImportFunction
         }
         else
         {
-            _logger.LogInformation("C# Blob trigger function did not processed non-csv blob {Name}", client.Name);
+            _logger.LogInformation("C# Blob trigger function did not processed file name doesn't contain partition key {Name}", client.Name);
         }
     }
 }
