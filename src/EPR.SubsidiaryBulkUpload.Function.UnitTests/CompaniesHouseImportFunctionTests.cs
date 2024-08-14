@@ -3,6 +3,7 @@ using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
+using EPR.SubsidiaryBulkUpload.Application.Services.Models;
 using EPR.SubsidiaryBulkUpload.Function.UnitTests.TestHelpers;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -65,23 +66,45 @@ public class CompaniesHouseImportFunctionTests
     [TestMethod]
     public async Task CompaniesHouseImportFunction_Calls_CsvService()
     {
+        // Arrange
+        _csvProcessorMock.Setup(x => x.ProcessStreamToObject(It.IsAny<Stream>(), It.IsAny<CompanyHouseTableEntity>()))
+            .ReturnsAsync(new List<CompanyHouseTableEntity> { new CompanyHouseTableEntity { CompanyName = "test" }, new CompanyHouseTableEntity { CompanyName = "test2" } });
+
         // Act
         await _systemUnderTest.Run(_blobClientMock.Object);
 
         // Assert
-        // _csvProcessorMock.Verify(x => x.ProcessStream(It.IsAny<Stream>()), Times.Once);
+        _csvProcessorMock.Verify(x => x.ProcessStreamToObject(It.IsAny<Stream>(), It.IsAny<CompanyHouseTableEntity>()), Times.Once);
+        _tableStorageProcessor.Verify(x => x.WriteToAzureTableStorage(It.IsAny<List<CompanyHouseTableEntity>>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Once);
     }
 
     [TestMethod]
     public async Task CompaniesHouseImportFunctionn_Logs_Result()
     {
         // Arrange
-        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(CsvContent));
+        _csvProcessorMock.Setup(x => x.ProcessStreamToObject(It.IsAny<Stream>(), It.IsAny<CompanyHouseTableEntity>()))
+            .ReturnsAsync(new List<CompanyHouseTableEntity> { new CompanyHouseTableEntity { CompanyName = "test" }, new CompanyHouseTableEntity { CompanyName = "test2" } });
 
         // Act
         await _systemUnderTest.Run(_blobClientMock.Object);
 
         // Assert
-        // _loggerMock.VerifyLog(x => x.LogInformation("C# Blob trigger processed {Count} records from csv blob {Name}", CsvRowCount, CsvBlobName), Times.Once);
+        _loggerMock.VerifyLog(x => x.LogInformation("Blob {Name} has metadata {Key} {Value}", CsvBlobName, "test", "test"), Times.Once);
+        _loggerMock.VerifyLog(x => x.LogInformation("C# Blob trigger processed {Count} records from csv blob {Name}", CsvRowCount, CsvBlobName), Times.Once);
+    }
+
+    [TestMethod]
+    public async Task CompaniesHouseImportFunctionn_Logs_Result_When_NotCsvFile()
+    {
+        // Arrange
+        _blobClientMock
+            .SetupGet(m => m.Name)
+            .Returns("test.txt");
+
+        // Act
+        await _systemUnderTest.Run(_blobClientMock.Object);
+
+        // Assert
+        _loggerMock.VerifyLog(x => x.LogInformation("C# Blob trigger function did not processed non-csv blob {Name}", "test.txt"), Times.Once);
     }
 }
