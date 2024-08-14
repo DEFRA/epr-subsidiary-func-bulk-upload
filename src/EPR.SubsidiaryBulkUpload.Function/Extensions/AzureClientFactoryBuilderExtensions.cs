@@ -4,8 +4,7 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Queues;
 using Microsoft.Extensions.Azure;
 
-namespace EPR.SubsidiaryBulkUpload.Application.Extensions;
-
+namespace EPR.SubsidiaryBulkUpload.Function.Extensions;
 internal static class AzureClientFactoryBuilderExtensions
 {
     public static IAzureClientBuilder<TableServiceClient, TableClientOptions> AddTableServiceClient(this AzureClientFactoryBuilder builder, string serviceUriOrConnectionString, bool preferMsi)

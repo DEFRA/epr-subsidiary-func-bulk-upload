@@ -26,6 +26,22 @@ public class Address
         IsManualAddress = false;
     }
 
+    public Address(AddressModel? office)
+      : this()
+    {
+        SubBuildingName = office?.SubBuildingName;
+        BuildingName = office?.BuildingName;
+        BuildingNumber = office?.BuildingNumber;
+        Street = office?.Street;
+        Town = office?.Town;
+        County = office?.County;
+        Country = office?.Country;
+        Postcode = office?.Postcode;
+        Locality = office?.Locality;
+        DependentLocality = office?.DependentLocality;
+        IsManualAddress = false;
+    }
+
     public string? AddressSingleLine { get; set; }
 
     public string? SubBuildingName { get; set; }

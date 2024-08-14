@@ -8,6 +8,8 @@ public class ApiConfig
 
     public string CompaniesHouseLookupBaseUrl { get; set; } = null!;
 
+    public string CompaniesHouseDownstreamScope { get; set; }
+
     public string AccountServiceClientId { get; set; } = null!;
 
     public string Certificate { get; set; } = null!;

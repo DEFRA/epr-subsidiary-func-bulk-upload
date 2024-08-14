@@ -87,23 +87,38 @@ public static class ConfigurationExtensions
             c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         });
 
-        const string CompaniesHouseClient = "CompaniesHouse";
-        services.AddHttpClient<ICompaniesHouseLookupService, CompaniesHouseLookupService>(CompaniesHouseClient, client =>
+        var isDevMode = configuration["ApiConfig:DeveloperMode"]; // configuration.GetValue<bool>("DeveloperMode");
+        if (isDevMode == "true")
         {
-            client.BaseAddress = new Uri(configuration["CompaniesHouseApi:BaseUri"]);
-            var apiKey = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{configuration["CompaniesHouseApi:ApiKey"]}:"));
-            client.DefaultRequestHeaders.Add("Authorization", $"BASIC {apiKey}");
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        });
-
-        /*   services.AddHttpClient<ICompaniesHouseLookupService, CompaniesHouseLookupService>((sp, client) =>
+            const string CompaniesHouseClient = "CompaniesHouse";
+            services.AddHttpClient(CompaniesHouseClient, client =>
+            {
+                client.BaseAddress = new Uri(configuration["CompaniesHouseApi:BaseUri"]);
+                var apiKey = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{configuration["CompaniesHouseApi:ApiKey"]}:"));
+                client.DefaultRequestHeaders.Add("Authorization", $"BASIC {apiKey}");
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            });
+        }
+        else
         {
-            var config = sp.GetRequiredService<IOptions<ApiConfig>>().Value;
+            services.AddHttpClient<IIntegrationServiceApiClient, IntegrationServiceApiClient>((sp, client) =>
+            {
+                var facadeApiOptions = sp.GetRequiredService<IOptions<ApiConfig>>().Value;
+                var httpClientOptions = sp.GetRequiredService<IOptions<HttpClientOptions>>().Value;
 
-            client.BaseAddress = new Uri(config.CompaniesHouseLookupBaseUrl);
-            client.Timeout = TimeSpan.FromSeconds(config.Timeout);
-        })
-        .ConfigurePrimaryHttpMessageHandler(GetClientCertificateHandler);*/
+                client.BaseAddress = new Uri(facadeApiOptions.CompaniesHouseLookupBaseUrl);
+                client.Timeout = TimeSpan.FromSeconds(httpClientOptions.TimeoutSeconds);
+            });
+
+        /* services.AddHttpClient<ICompaniesHouseLookupService, CompaniesHouseLookupService>((sp, client) =>
+                     {
+                         var config = sp.GetRequiredService<IOptions<ApiConfig>>().Value;
+
+                         client.BaseAddress = new Uri(config.CompaniesHouseLookupBaseUrl);
+                         client.Timeout = TimeSpan.FromSeconds(config.Timeout);
+                     })
+                     .ConfigurePrimaryHttpMessageHandler(GetClientCertificateHandler);*/
+        }
 
         return services;
     }
@@ -111,12 +126,12 @@ public static class ConfigurationExtensions
     public static IServiceCollection AddServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddTransient<ICsvProcessor, CsvProcessor>();
-        services.AddTransient<ICompaniesHouseLookupService, CompaniesHouseLookupService>();
+        services.AddScoped<ICompaniesHouseLookupService, CompaniesHouseLookupService>();
         services.AddTransient<ISubsidiaryService, SubsidiaryService>();
         services.AddAzureClients(clientBuilder =>
         {
-            clientBuilder.AddTableServiceClient(configuration["ConnectionStrings:tablestorage"]);
-            clientBuilder.AddBlobServiceClient(configuration["ConnectionStrings:blob"]);
+            clientBuilder.AddTableServiceClient(configuration["ConnectionStrings:tablestorage"]!, preferMsi: true);
+            clientBuilder.AddBlobServiceClient(configuration["ConnectionStrings:blob"]!, preferMsi: true);
         });
         return services;
     }
