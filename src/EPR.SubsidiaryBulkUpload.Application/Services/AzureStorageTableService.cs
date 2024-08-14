@@ -1,5 +1,6 @@
 ﻿using Azure.Data.Tables;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
+using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services
 {

@@ -20,14 +20,14 @@ public class SubsidiaryService : ISubsidiaryService
 {
     private const string CompaniesHouseNumber = "07073807";
     private const string BaseAddress = "http://localhost:5000";
+    private const string OrganisationByCompanyHouseNumberUri = "api/bulkuploadorganisations/";
     private const string ExpectedUrl = $"{BaseAddress}/{OrganisationByCompanyHouseNumberUri}?companiesHouseNumber={CompaniesHouseNumber}";
-    private const string OrganisationByCompanyHouseNumberUri = "api/organisations/";
-    private const string OrganisationByTableStorageUri = "api/organisations/organisation-by-tablestorage";
-    private const string OrganisationUri = "api/organisations/organisation-by-externalId";
-    private const string OrganisationNameUri = "api/organisations/organisation-by-invite-token";
-    private const string OrganisationCreateAddSubsidiaryUri = "api/organisations/create-and-add-subsidiary";
-    private const string OrganisationAddSubsidiaryUri = "api/organisations/add-subsidiary";
-    private const string OrganisationRelationshipsByIdUri = "api/organisations/organisation-by-relationship";
+    private const string OrganisationByTableStorageUri = "api/bulkuploadorganisations/organisation-by-tablestorage";
+    private const string OrganisationUri = "api/bulkuploadorganisations/organisation-by-externalId";
+    private const string OrganisationNameUri = "api/bulkuploadorganisations/organisation-by-invite-token";
+    private const string OrganisationCreateAddSubsidiaryUri = "api/bulkuploadorganisations/create-subsidiary-and-add-relationship";
+    private const string OrganisationAddSubsidiaryUri = "api/bulkuploadorganisations/add-subsidiary-relationship";
+    private const string OrganisationRelationshipsByIdUri = "api/bulkuploadorganisations/organisation-by-relationship";
     private readonly ILogger<SubsidiaryService> _logger;
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _config;

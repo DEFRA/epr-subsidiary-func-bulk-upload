@@ -112,21 +112,21 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                             }
 
                             // Company does not exist in table storage. make call to comapanies house API
-                            var companyHouseResponse = await companiesHouseLookupService.GetCompaniesHouseResponseAsync(subsidiary.CompaniesHouseNumber, true);
+                            var companyHouseResponse = await companiesHouseLookupService.GetCompaniesHouseResponseAsync(subsidiary.CompaniesHouseNumber);
                             if (companyHouseResponse != null)
                             {
                                 // company exists in companies hosue database
-                                subsidiary.Name = companyHouseResponse.company_name;
+                                subsidiary.Name = companyHouseResponse.Name;
                                 subsidiary.OrganisationType = OrganisationType.NotSet;
                                 subsidiary.ProducerType = ProducerType.Other;
                                 subsidiary.IsComplianceScheme = false;
                                 subsidiary.Nation = Nation.NotSet;
                                 subsidiary.Address = new AddressModel()
                                 {
-                                    Street = companyHouseResponse.registered_office_address.address_line_1,
-                                    Country = companyHouseResponse.registered_office_address.country,
-                                    Locality = companyHouseResponse.registered_office_address.locality,
-                                    Postcode = companyHouseResponse.registered_office_address.postal_code
+                                    Street = companyHouseResponse.BusinessAddress.AddressSingleLine,
+                                    Country = companyHouseResponse.BusinessAddress.Country,
+                                    Locality = companyHouseResponse.BusinessAddress.Locality,
+                                    Postcode = companyHouseResponse.BusinessAddress.Postcode
                                 };
 
                                 LinkOrganisationModel newSubsidiaryFromCH = new LinkOrganisationModel()
