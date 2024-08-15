@@ -17,7 +17,7 @@ public static class ConfigurationExtensions
 
         services.Configure<ConfigOptions>(options =>
          {
-             options.TableStorageConnectionString = configuration["BlobStorage:ConnectionString"];
+             options.TableStorageConnectionString = configuration["TableStorage:ConnectionString"];
              options.CompaniesHouseOfflineDataTableName = configuration["CompaniesHouseOfflineData:TableName"];
          });
 
