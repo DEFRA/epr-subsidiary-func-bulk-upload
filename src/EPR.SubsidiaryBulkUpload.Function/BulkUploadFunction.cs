@@ -8,7 +8,11 @@ using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;*/
 
+using System.Globalization;
 using Azure.Storage.Blobs;
+using CsvHelper.Configuration;
+using EPR.SubsidiaryBulkUpload.Application.DTOs;
+using EPR.SubsidiaryBulkUpload.Application.Services;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
@@ -21,13 +25,15 @@ public class BulkUploadFunction
     private readonly ISubsidiaryService _organisationService;
     private readonly ICompaniesHouseLookupService _companiesHouseLookupService;
     private readonly ICsvProcessor _csvProcessor;
+    private readonly IBulkUploadOrchestration orchestration;
 
-    public BulkUploadFunction(ISubsidiaryService organisationService, ICompaniesHouseLookupService companiesHouseLookupService, ILogger<BulkUploadFunction> logger, ICsvProcessor csvProcessor)
+    public BulkUploadFunction(ISubsidiaryService organisationService, ICompaniesHouseLookupService companiesHouseLookupService, ILogger<BulkUploadFunction> logger, ICsvProcessor csvProcessor, IBulkUploadOrchestration orchestration)
     {
         _organisationService = organisationService;
         _companiesHouseLookupService = companiesHouseLookupService;
         _logger = logger;
         _csvProcessor = csvProcessor;
+        this.orchestration = orchestration;
     }
 
     [Function(nameof(BulkUploadFunction))]
@@ -40,8 +46,15 @@ public class BulkUploadFunction
 
         if (Path.GetExtension(client.Name) == ".csv")
         {
-            var recordsProcessed = await _csvProcessor.ProcessStream(content, _organisationService, _companiesHouseLookupService);
-            _logger.LogInformation("Blob trigger processed {Count} records from Client {Name}", recordsProcessed, client.Name);
+            var configuration = new CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                HasHeaderRecord = true,
+            };
+
+            var records = await _csvProcessor.ProcessStream<CompaniesHouseCompany, CompaniesHouseCompanyMap>(content, configuration);
+            await orchestration.Orchestrate(records);
+
+            _logger.LogInformation("Blob trigger processed {Count} records from Client {Name}", records.Count(), client.Name);
         }
         else
         {

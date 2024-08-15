@@ -4,6 +4,7 @@ using CsvHelper.Configuration;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services
@@ -13,6 +14,19 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
     {
         private readonly ILogger<CsvProcessor> _logger = logger;
         private readonly string _user = "E138C7A1-49B2-402B-B9B4-AD60A2282530";
+
+
+        public async Task<IEnumerable<TD>> ProcessStream<TD, TM>(Stream stream, IReaderConfiguration configuration)
+            where TM : ClassMap
+        {
+            using (var reader = new StreamReader(stream))
+            using (var csv = new CsvReader(reader, configuration))
+            {
+                csv.Context.RegisterClassMap<TM>();
+                return csv.GetRecords<TD>().ToList();
+            }
+        }
+
 
         public async Task<int> ProcessStream(Stream stream, ISubsidiaryService organisationService, ICompaniesHouseLookupService companiesHouseLookupService)
         {
@@ -31,9 +45,6 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
 
                 // question. in one CSV will organisationId (1st column) will already be same? i.e parentID
                 var parentRecords = records.Where(c => c.parent_child == "Parent").ToList();
-
-
-
 
                 foreach (var record in parentRecords)
                 {
