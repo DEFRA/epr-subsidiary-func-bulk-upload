@@ -15,7 +15,6 @@ public class TableStorageProcessor(
 
     public async Task WriteToAzureTableStorage(IEnumerable<CompanyHouseTableEntity> records, string tableName, string partitionKey, string connectionString, int batchSize)
     {
-        // Connect to the local Azure Table Storage
         var storageAccount = CloudStorageAccount.Parse(connectionString);
         var tableClient = storageAccount.CreateCloudTableClient(new TableClientConfiguration());
         var table = tableClient.GetTableReference(tableName);
@@ -27,7 +26,6 @@ public class TableStorageProcessor(
             partitionKey = "EmptyParttionKey";
         }
 
-        // Step 2: Set the Latest CH Data -> Current Ingestion
         var currentIngestion = new CompanyHouseTableEntity
         {
             PartitionKey = partitionKey,
@@ -41,14 +39,12 @@ public class TableStorageProcessor(
 
             var batchOperation = new TableBatchOperation();
 
-            // Insert records into the table
             foreach (var record in records)
             {
                 record.PartitionKey = partitionKey;
                 record.RowKey = record.CompanyNumber;
                 batchOperation.InsertOrReplace(record);
 
-                // Execute batch when it reaches the batch size limit
                 if (batchOperation.Count >= batchSize)
                 {
                     await table.ExecuteBatchAsync(batchOperation);
@@ -56,13 +52,11 @@ public class TableStorageProcessor(
                 }
             }
 
-            // Execute any remaining entities in the batch
             if (batchOperation.Count > 0)
             {
                 await table.ExecuteBatchAsync(batchOperation);
             }
 
-            // Step 5: Update Latest CH Data -> Latest and Clean Up
             var latestData = new CompanyHouseTableEntity
             {
                 PartitionKey = LatestCHData,
@@ -72,7 +66,6 @@ public class TableStorageProcessor(
             var updateOperation = TableOperation.InsertOrReplace(latestData);
             await table.ExecuteAsync(updateOperation);
 
-            // Clean up Current Ingestion entry
             var deleteOperation = TableOperation.Delete(currentIngestion);
             await table.ExecuteAsync(deleteOperation);
 
@@ -82,7 +75,6 @@ public class TableStorageProcessor(
         {
             _logger.LogError(ex, "An error occurred during ingestion.");
 
-            // Clean up Current Ingestion entry in case of error
             var deleteOperation = TableOperation.Delete(currentIngestion);
             await table.ExecuteAsync(deleteOperation);
             throw;
