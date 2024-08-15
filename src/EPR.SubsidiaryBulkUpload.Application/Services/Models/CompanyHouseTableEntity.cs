@@ -34,4 +34,6 @@ public class CompanyHouseTableEntity : TableEntity
 
     [Name("IncorporationDate")]
     public string IncorporationDate { get; set; }
+
+    public string Data { get; set; }
 }

@@ -9,7 +9,6 @@ public class TableStorageProcessor(
     ILogger<CompaniesHousCsvProcessor> logger) : ITableStorageProcessor
 {
     private const string CurrentIngestion = "Current Ingestion";
-    private const string CSVHeader = "CSV Header";
     private const string LatestCHData = "Latest CH Data";
     private const string Latest = "Latest";
     private readonly ILogger<CompaniesHousCsvProcessor> _logger = logger;
@@ -40,31 +39,20 @@ public class TableStorageProcessor(
             var insertOperation = TableOperation.InsertOrReplace(currentIngestion);
             await table.ExecuteAsync(insertOperation);
 
-            bool isHeader = true;
             var batchOperation = new TableBatchOperation();
 
             // Insert records into the table
             foreach (var record in records)
             {
-                if (isHeader)
-                {
-                    record.PartitionKey = partitionKey;
-                    record.RowKey = CSVHeader;
-                    batchOperation.InsertOrReplace(record);
-                    isHeader = false;
-                }
-                else
-                {
-                    record.PartitionKey = partitionKey;
-                    record.RowKey = record.CompanyNumber;
-                    batchOperation.InsertOrReplace(record);
+                record.PartitionKey = partitionKey;
+                record.RowKey = record.CompanyNumber;
+                batchOperation.InsertOrReplace(record);
 
-                    // Execute batch when it reaches the batch size limit
-                    if (batchOperation.Count >= batchSize)
-                    {
-                        await table.ExecuteBatchAsync(batchOperation);
-                        batchOperation.Clear();
-                    }
+                // Execute batch when it reaches the batch size limit
+                if (batchOperation.Count >= batchSize)
+                {
+                    await table.ExecuteBatchAsync(batchOperation);
+                    batchOperation.Clear();
                 }
             }
 
@@ -78,7 +66,8 @@ public class TableStorageProcessor(
             var latestData = new CompanyHouseTableEntity
             {
                 PartitionKey = LatestCHData,
-                RowKey = Latest
+                RowKey = Latest,
+                Data = partitionKey
             };
             var updateOperation = TableOperation.InsertOrReplace(latestData);
             await table.ExecuteAsync(updateOperation);
