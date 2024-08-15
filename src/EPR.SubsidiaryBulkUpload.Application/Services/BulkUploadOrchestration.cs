@@ -28,11 +28,11 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
         // this filters the parents will valid data in RPD
         parentsandOrgs = parentsandOrgs.Where(pao => pao.ParentOrgData != null);
 
-        // this call will process the collection of subs(orgs) 
+        // this call will process the collection of subs(orgs)
         parentsandOrgs.ToList().ForEach(m => childProcessor.Process(m.RawCsvData.Children, m.RawCsvData.Parent, m.ParentOrgData));
     }
 
-    public (ParentWithChildren RawCsvData, OrganisationResponseModel ParentOrgData) RetrieveParentOrgData(ParentWithChildren source)
+    public (ParentAndSubsidiaries RawCsvData, OrganisationResponseModel ParentOrgData) RetrieveParentOrgData(ParentAndSubsidiaries source)
     {
         return (source, organisationService.GetCompanyByCompaniesHouseNumber(source.Parent.companies_house_number).Result);
     }
