@@ -87,8 +87,8 @@ public static class ConfigurationExtensions
             c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         });
 
-        var isDevMode = configuration["ApiConfig:DeveloperMode"]; // configuration.GetValue<bool>("DeveloperMode");
-        if (isDevMode == "true")
+        var isDevMode = configuration.GetValue<bool>("ApiConfig:DeveloperMode"); // configuration["ApiConfig:DeveloperMode"];
+        if (isDevMode)
         {
             const string CompaniesHouseClient = "CompaniesHouse";
             services.AddHttpClient<ICompaniesHouseLookupService, CompaniesHouseLookupDirectService>(CompaniesHouseClient, client =>
@@ -103,11 +103,11 @@ public static class ConfigurationExtensions
         {
             services.AddHttpClient<ICompaniesHouseLookupService, CompaniesHouseLookupService>((sp, client) =>
             {
-            var facadeApiOptions = sp.GetRequiredService<IOptions<ApiConfig>>().Value;
+            var apiOptions = sp.GetRequiredService<IOptions<ApiConfig>>().Value;
             var httpClientOptions = sp.GetRequiredService<IOptions<HttpClientOptions>>().Value;
 
-            client.BaseAddress = new Uri(facadeApiOptions.CompaniesHouseLookupBaseUrl);
-            client.Timeout = TimeSpan.FromSeconds(httpClientOptions.TimeoutSeconds);
+            client.BaseAddress = new Uri(apiOptions.CompaniesHouseLookupBaseUrl);
+            client.Timeout = TimeSpan.FromSeconds(apiOptions.Timeout);
             });
 
             /* services.AddHttpClient<ICompaniesHouseLookupService, CompaniesHouseLookupService>((sp, client) =>

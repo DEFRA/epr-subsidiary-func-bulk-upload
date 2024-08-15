@@ -32,6 +32,9 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                 // question. in one CSV will organisationId (1st column) will already be same? i.e parentID
                 var parentRecords = records.Where(c => c.parent_child == "Parent").ToList();
 
+
+
+
                 foreach (var record in parentRecords)
                 {
                     // check if the parent company exists in the database
@@ -84,60 +87,6 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
 
                                 // add new relationship for the child-parent
                                 var localCreateResponse = await organisationService.AddSubsidiaryRelationshipAsync(existingSubsidiary);
-                                _logger.LogInformation("Subsidiary Company {OrganisationId} {Organisation_Name} linked to {CompanyName} in the database.", subsidiaryRecord.organisation_id, subsidiaryRecord.organisation_name, record.organisation_name);
-                                continue;
-                            }
-
-                            // company does not exist in org database. check if subsidiary company exists in the table storage (temp data)
-                            var tableStorageResponse = await organisationService.GetCompanyByOrgIdFromTableStorage(subsidiary.CompaniesHouseNumber);
-                            if (tableStorageResponse != null)
-                            {
-                                subsidiary.OrganisationType = OrganisationType.NotSet;
-                                subsidiary.ProducerType = ProducerType.Other;
-                                subsidiary.Address = tableStorageResponse.Address;
-                                subsidiary.IsComplianceScheme = false;
-                                subsidiary.Nation = Nation.NotSet;
-
-                                // company exists in temp storage (table storage)
-                                LinkOrganisationModel newSubsidiaryFromTS = new LinkOrganisationModel()
-                                {
-                                    UserId = Guid.Parse(_user),
-                                    Subsidiary = subsidiary,
-                                    ParentOrganisationId = parentOrg.ExternalId.Value
-                                };
-                                var tableStorageCreateResponse = await organisationService.CreateAndAddSubsidiaryAsync(newSubsidiaryFromTS);
-                                _logger.LogInformation("Subsidiary Company added to the database : {OrganisationId} {Organisation_Name}.", subsidiaryRecord.organisation_id, subsidiaryRecord.organisation_name);
-                                _logger.LogInformation("Subsidiary Company {OrganisationId} {Organisation_Name} linked to {CompanyName} in the database.", subsidiaryRecord.organisation_id, subsidiaryRecord.organisation_name, record.organisation_name);
-                                continue;
-                            }
-
-                            // Company does not exist in table storage. make call to comapanies house API
-                            var companyHouseResponse = await companiesHouseLookupService.GetCompaniesHouseResponseAsync(subsidiary.CompaniesHouseNumber);
-                            if (companyHouseResponse != null)
-                            {
-                                // company exists in companies hosue database
-                                subsidiary.Name = companyHouseResponse.Name;
-                                subsidiary.OrganisationType = OrganisationType.NotSet;
-                                subsidiary.ProducerType = ProducerType.Other;
-                                subsidiary.IsComplianceScheme = false;
-                                subsidiary.Nation = Nation.NotSet;
-                                subsidiary.Address = new AddressModel()
-                                {
-                                    Street = companyHouseResponse.BusinessAddress.AddressSingleLine,
-                                    Country = companyHouseResponse.BusinessAddress.Country,
-                                    Locality = companyHouseResponse.BusinessAddress.Locality,
-                                    Postcode = companyHouseResponse.BusinessAddress.Postcode
-                                };
-
-                                LinkOrganisationModel newSubsidiaryFromCH = new LinkOrganisationModel()
-                                {
-                                    UserId = Guid.Parse(_user),
-                                    Subsidiary = subsidiary,
-                                    ParentOrganisationId = parentOrg.ExternalId.Value
-                                };
-
-                                var createFromCompaniesHouseDaaResponse = await organisationService.CreateAndAddSubsidiaryAsync(newSubsidiaryFromCH);
-                                _logger.LogInformation("Subsidiary Company added to the database : {OrganisationId} {Organisation_Name}.", subsidiaryRecord.organisation_id, subsidiaryRecord.organisation_name);
                                 _logger.LogInformation("Subsidiary Company {OrganisationId} {Organisation_Name} linked to {CompanyName} in the database.", subsidiaryRecord.organisation_id, subsidiaryRecord.organisation_name, record.organisation_name);
                                 continue;
                             }
