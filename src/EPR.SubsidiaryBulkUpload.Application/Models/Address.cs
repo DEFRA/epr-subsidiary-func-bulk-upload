@@ -26,19 +26,22 @@ public class Address
         IsManualAddress = false;
     }
 
-    public Address(AddressModel? office)
+    public Address(RegisteredOfficeAddress? office)
       : this()
     {
-        SubBuildingName = office?.SubBuildingName;
-        BuildingName = office?.BuildingName;
-        BuildingNumber = office?.BuildingNumber;
-        Street = office?.Street;
-        Town = office?.Town;
-        County = office?.County;
-        Country = office?.Country;
-        Postcode = office?.Postcode;
-        Locality = office?.Locality;
-        DependentLocality = office?.DependentLocality;
+        AddressSingleLine = office?.address_line_1;
+
+        // SubBuildingName = office?.subBuildingName;
+        // BuildingName = office?.buildingName;
+        // BuildingNumber = office?.BuildingNumber;
+        // Street = office?.Street;
+        // Town = office?.Town;
+        County = office?.locality;
+        Country = office?.country;
+        Postcode = office?.postal_code;
+        Locality = office?.locality;
+
+        // DependentLocality = office?.DependentLocality;
         IsManualAddress = false;
     }
 

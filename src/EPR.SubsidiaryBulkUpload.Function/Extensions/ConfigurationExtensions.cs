@@ -23,7 +23,7 @@ public static class ConfigurationExtensions
         */
 
         services.Configure<ApiConfig>(configuration.GetSection(ApiConfig.SectionName));
-
+        services.Configure<HttpClientOptions>(configuration.GetSection(HttpClientOptions.ConfigSection));
         return services;
     }
 
@@ -91,7 +91,7 @@ public static class ConfigurationExtensions
         if (isDevMode == "true")
         {
             const string CompaniesHouseClient = "CompaniesHouse";
-            services.AddHttpClient(CompaniesHouseClient, client =>
+            services.AddHttpClient<ICompaniesHouseLookupService, CompaniesHouseLookupDirectService>(CompaniesHouseClient, client =>
             {
                 client.BaseAddress = new Uri(configuration["CompaniesHouseApi:BaseUri"]);
                 var apiKey = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{configuration["CompaniesHouseApi:ApiKey"]}:"));
@@ -101,23 +101,23 @@ public static class ConfigurationExtensions
         }
         else
         {
-            services.AddHttpClient<IIntegrationServiceApiClient, IntegrationServiceApiClient>((sp, client) =>
+            services.AddHttpClient<ICompaniesHouseLookupService, CompaniesHouseLookupService>((sp, client) =>
             {
-                var facadeApiOptions = sp.GetRequiredService<IOptions<ApiConfig>>().Value;
-                var httpClientOptions = sp.GetRequiredService<IOptions<HttpClientOptions>>().Value;
+            var facadeApiOptions = sp.GetRequiredService<IOptions<ApiConfig>>().Value;
+            var httpClientOptions = sp.GetRequiredService<IOptions<HttpClientOptions>>().Value;
 
-                client.BaseAddress = new Uri(facadeApiOptions.CompaniesHouseLookupBaseUrl);
-                client.Timeout = TimeSpan.FromSeconds(httpClientOptions.TimeoutSeconds);
+            client.BaseAddress = new Uri(facadeApiOptions.CompaniesHouseLookupBaseUrl);
+            client.Timeout = TimeSpan.FromSeconds(httpClientOptions.TimeoutSeconds);
             });
 
-        /* services.AddHttpClient<ICompaniesHouseLookupService, CompaniesHouseLookupService>((sp, client) =>
-                     {
-                         var config = sp.GetRequiredService<IOptions<ApiConfig>>().Value;
+            /* services.AddHttpClient<ICompaniesHouseLookupService, CompaniesHouseLookupService>((sp, client) =>
+            {
+            var config = sp.GetRequiredService<IOptions<ApiConfig>>().Value;
 
-                         client.BaseAddress = new Uri(config.CompaniesHouseLookupBaseUrl);
-                         client.Timeout = TimeSpan.FromSeconds(config.Timeout);
-                     })
-                     .ConfigurePrimaryHttpMessageHandler(GetClientCertificateHandler);*/
+            client.BaseAddress = new Uri(config.CompaniesHouseLookupBaseUrl);
+            client.Timeout = TimeSpan.FromSeconds(config.Timeout);
+            })
+            .ConfigurePrimaryHttpMessageHandler(GetClientCertificateHandler);*/
         }
 
         return services;
@@ -126,7 +126,16 @@ public static class ConfigurationExtensions
     public static IServiceCollection AddServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddTransient<ICsvProcessor, CsvProcessor>();
-        services.AddScoped<ICompaniesHouseLookupService, CompaniesHouseLookupService>();
+        var isDevMode = configuration["ApiConfig:DeveloperMode"]; // configuration.GetValue<bool>("DeveloperMode");
+        if (isDevMode == "true")
+        {
+            services.AddTransient<ICompaniesHouseLookupService, CompaniesHouseLookupDirectService>();
+        }
+        else
+        {
+            services.AddTransient<ICompaniesHouseLookupService, CompaniesHouseLookupService>();
+        }
+
         services.AddTransient<ISubsidiaryService, SubsidiaryService>();
         services.AddAzureClients(clientBuilder =>
         {

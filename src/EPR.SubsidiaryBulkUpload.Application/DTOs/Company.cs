@@ -34,7 +34,7 @@ public class Company
 
         CompaniesHouseNumber = organisationResponse.company_number ?? string.Empty;
         Name = organisationResponse.company_name ?? string.Empty;
-        BusinessAddress = new Address(organisationResponse.Address);
+        BusinessAddress = new Address(organisationResponse.registered_office_address);
     }
 
     public string Organisation_Id { get; set; }

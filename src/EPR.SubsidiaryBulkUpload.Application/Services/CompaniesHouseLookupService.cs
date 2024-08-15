@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
+using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 
 // using Microsoft.Extensions.Logging;
@@ -10,77 +11,32 @@ public class CompaniesHouseLookupService : ICompaniesHouseLookupService
     private const string CompaniesHouseEndpoint = "CompaniesHouse/companies";
 
     // private readonly ILogger<CompaniesHouseService> _logger;
-    private readonly IIntegrationServiceApiClient _integrationServiceApiClient;
+    private readonly HttpClient _httpClient;
 
-    public CompaniesHouseLookupService(IIntegrationServiceApiClient integrationServiceApiClient) // , ILogger<CompaniesHouseService> logger)
+    public CompaniesHouseLookupService(HttpClient httpClient)
     {
-        // _logger = logger;
-        _integrationServiceApiClient = integrationServiceApiClient;
+        _httpClient = httpClient;
     }
 
-    public async Task<Company?> GetCompaniesHouseResponseAsync(string companiesHouseNumber)
+    public async Task<Company?> GetCompaniesHouseResponseAsync(string id)
     {
-        var path = $"companies-house?id={companiesHouseNumber}";
-
-        var response = await _integrationServiceApiClient.SendGetRequest(path);
-
+        var response = await _httpClient.GetAsync($"{CompaniesHouseEndpoint}/{id}");
         if (response.StatusCode == HttpStatusCode.NoContent)
         {
             return null;
         }
 
+        if (response.StatusCode == HttpStatusCode.BadRequest)
+        {
+            var errorResponse = await response.Content.ReadFromJsonAsync<CompaniesHouseErrorResponse>();
+            if (errorResponse?.InnerException?.StatusCode == HttpStatusCode.NotFound)
+            {
+                return null;
+            }
+        }
+
         response.EnsureSuccessStatusCode();
-
         var company = await response.Content.ReadFromJsonAsync<CompaniesHouseCompany>();
-
         return new Company(company);
     }
-
-    /* public async Task<Company?> GetCompaniesHouseResponseAsync(string id)
-        {
-            var response = await _httpClient.GetAsync($"{CompaniesHouseEndpoint}/{id}");
-            if (response.StatusCode == HttpStatusCode.NoContent)
-            {
-                return null;
-            }
-
-            if (response.StatusCode == HttpStatusCode.BadRequest)
-            {
-                var errorResponse = await response.Content.ReadFromJsonAsync<CompaniesHouseErrorResponse>();
-                if (errorResponse?.InnerException?.StatusCode == HttpStatusCode.NotFound)
-                {
-                    return null;
-                }
-            }
-
-            response.EnsureSuccessStatusCode();
-            var company = await response.Content.ReadFromJsonAsync<CompaniesHouseCompany>();
-            return new Company(company);
-        }*/
-
-    /*   public async Task<Company?> GetCompaniesHouseResponseAsync(string id)
-        {
-            var path = $"companies-house?id={id}";
-            var response = await _httpClient.GetAsync($"{CompaniesHouseEndpoint}/{path}");
-
-            if (response.StatusCode == HttpStatusCode.NoContent)
-            {
-                return null;
-            }
-
-            if (response.StatusCode == HttpStatusCode.BadRequest)
-            {
-                var errorResponse = await response.Content.ReadFromJsonAsync<CompaniesHouseErrorResponse>();
-                if (errorResponse?.InnerException?.StatusCode == HttpStatusCode.NotFound)
-                {
-                    return null;
-                }
-            }
-
-            response.EnsureSuccessStatusCode();
-
-            var company = await response.Content.ReadFromJsonAsync<CompaniesHouseCompany>();
-
-            return new Company(company);
-        }*/
 }

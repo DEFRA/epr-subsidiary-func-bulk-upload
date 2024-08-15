@@ -125,7 +125,7 @@ public class SubsidiaryService : ISubsidiaryService
         // AzureStorageTableService tableService = new AzureStorageTableService("");
         // var tsResponse = await tableService.GetAll();
         // return tsResponse;
-        string tableName = "testdatatable";
+        string tableName = "testdata";
         var tableClient = new TableClient(_config["ApiConfig:StorageConnectionString"], tableName);
         Pageable<TableEntity> oDataQueryEntities = tableClient.Query<TableEntity>(filter: TableClient.CreateQueryFilter($"CompanyNumber eq {companiesHouseNumber}"));
 
