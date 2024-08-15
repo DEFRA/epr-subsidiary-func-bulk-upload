@@ -41,7 +41,7 @@ public class CompaniesHouseImportFunction
             }
         }
 
-        var partitionKey = client.Name.ToPartitionKeyFormat();
+        var partitionKey = client.Name.ToFindPartitionKey();
 
         if (!string.IsNullOrEmpty(partitionKey))
         {
