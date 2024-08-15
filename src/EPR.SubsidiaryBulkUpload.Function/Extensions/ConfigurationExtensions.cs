@@ -15,6 +15,12 @@ public static class ConfigurationExtensions
         services.Configure<AntivirusApiOptions>(configuration.GetSection(AntivirusApiOptions.Section));
         */
 
+        services.Configure<ConfigOptions>(options =>
+         {
+             options.TableStorageConnectionString = configuration["TableStorage:ConnectionString"];
+             options.CompaniesHouseOfflineDataTableName = configuration["CompaniesHouseOfflineData:TableName"];
+         });
+
         return services;
     }
 
@@ -63,7 +69,8 @@ public static class ConfigurationExtensions
 
     public static IServiceCollection AddServices(this IServiceCollection services)
     {
-        services.AddTransient<ICsvProcessor, CsvProcessor>();
+        services.AddTransient<ICsvProcessor, CompaniesHousCsvProcessor>();
+        services.AddTransient<ITableStorageProcessor, TableStorageProcessor>();
 
         return services;
     }
