@@ -1,7 +1,7 @@
-﻿using EPR.SubsidiaryBulkUpload.Application.Services.Extensions;
+﻿using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using FluentAssertions;
 
-namespace EPR.SubsidiaryBulkUpload.Application.UnitTests;
+namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Extensions;
 
 [TestClass]
 public class StringExtensionsTests

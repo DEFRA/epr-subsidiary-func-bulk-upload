@@ -1,4 +1,4 @@
-﻿namespace EPR.SubsidiaryBulkUpload.Application.UnitTests;
+﻿namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 
 [TestClass]
 public class CompaniesHouseCsvProcessorTests

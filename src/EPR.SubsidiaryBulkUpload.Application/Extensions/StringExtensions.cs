@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace EPR.SubsidiaryBulkUpload.Application.Services.Extensions;
+namespace EPR.SubsidiaryBulkUpload.Application.Extensions;
 
 public static class StringExtensions
 {
