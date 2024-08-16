@@ -7,6 +7,18 @@ public class RecordExtraction : IRecordExtraction
 {
     public IEnumerable<ParentAndSubsidiaries> ExtractParentsAndChildren(IEnumerable<CompaniesHouseCompany> source)
     {
-        return Enumerable.Empty<ParentAndSubsidiaries>();
+        var groups = source.GroupBy(s => s.organisation_id);
+
+        foreach (var group in groups)
+        {
+            var parent = group.SingleOrDefault(g => g.parent_child == "Parent");
+
+            var children = group.Where(g => g.parent_child != "Parent");
+
+            if (parent != null && children.Any())
+            {
+                yield return new ParentAndSubsidiaries { Parent = parent, Children = children.ToList() };
+            }
+        }
     }
 }

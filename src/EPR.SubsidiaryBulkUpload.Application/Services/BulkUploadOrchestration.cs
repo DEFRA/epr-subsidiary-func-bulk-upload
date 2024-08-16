@@ -1,5 +1,4 @@
 ﻿using EPR.SubsidiaryBulkUpload.Application.DTOs;
-using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services;
@@ -19,21 +18,20 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
 
     public async Task Orchestrate(IEnumerable<CompaniesHouseCompany> data)
     {
-        // this holds all the parents and their children records from cvs
-        var parensAndhildrenRawCsv = recordExtraction.ExtractParentsAndChildren(data);
+        // this holds all the parents and their children records from csv
+        var subsidiaryGroups = recordExtraction.ExtractParentsAndChildren(data).ToAsyncEnumerable();
 
-        // this will fectch data from the org database for all the parents
-        var parentsandOrgs = parensAndhildrenRawCsv.Select(raw => RetrieveParentOrgData(raw));
+        // this will fectch data from the org database for all the parents and filter to keep the valid ones (org exists in RPD)
+        var subsidiaryGroupsAndParentOrg = subsidiaryGroups.SelectAwait(
+            async sg => (SubsidiaryGroup: sg, Org: await organisationService.GetCompanyByCompaniesHouseNumber(sg.Parent.companies_house_number)))
+            .Where(sg => sg.Org != null);
 
-        // this filters the parents will valid data in RPD
-        parentsandOrgs = parentsandOrgs.Where(pao => pao.ParentOrgData != null);
-
-        // this call will process the collection of subs(orgs)
-        parentsandOrgs.ToList().ForEach(m => childProcessor.Process(m.RawCsvData.Children, m.RawCsvData.Parent, m.ParentOrgData));
-    }
-
-    public (ParentAndSubsidiaries RawCsvData, OrganisationResponseModel ParentOrgData) RetrieveParentOrgData(ParentAndSubsidiaries source)
-    {
-        return (source, organisationService.GetCompanyByCompaniesHouseNumber(source.Parent.companies_house_number).Result);
+        await foreach(var subsidiaryGroupAndParentOrg in subsidiaryGroupsAndParentOrg)
+        {
+            childProcessor.Process(
+                subsidiaryGroupAndParentOrg.SubsidiaryGroup.Children,
+                subsidiaryGroupAndParentOrg.SubsidiaryGroup.Parent,
+                subsidiaryGroupAndParentOrg.Org);
+        }
     }
 }
