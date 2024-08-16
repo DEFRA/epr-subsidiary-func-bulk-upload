@@ -28,7 +28,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
 
         await foreach(var subsidiaryGroupAndParentOrg in subsidiaryGroupsAndParentOrg)
         {
-            childProcessor.Process(
+            await childProcessor.Process(
                 subsidiaryGroupAndParentOrg.SubsidiaryGroup.Children,
                 subsidiaryGroupAndParentOrg.SubsidiaryGroup.Parent,
                 subsidiaryGroupAndParentOrg.Org);
