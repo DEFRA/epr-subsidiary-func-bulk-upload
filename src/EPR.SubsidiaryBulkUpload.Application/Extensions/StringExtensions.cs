@@ -13,10 +13,8 @@ public static class StringExtensions
 
         var firstDashIndex = str.IndexOf('-');
 
-        // Find the position of the last '.'
         var dotIndex = str.LastIndexOf('.');
 
-        // Extract the substring between the first dash and the dot
         if (firstDashIndex >= 0 && dotIndex > firstDashIndex)
         {
             str = str.Substring(firstDashIndex + 1, dotIndex - firstDashIndex - 1);
@@ -38,8 +36,7 @@ public static class StringExtensions
 
         string pattern = @"\d{4}-\d{2}-\d{2}";
 
-        // Find match using Regex.Match
-        Match match = Regex.Match(str, pattern);
+        var match = Regex.Match(str, pattern, RegexOptions.None, TimeSpan.FromSeconds(2));
 
         if (match.Success)
         {

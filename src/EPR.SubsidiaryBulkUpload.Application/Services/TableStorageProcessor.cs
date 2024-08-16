@@ -47,14 +47,14 @@ public class TableStorageProcessor(
 
                 if (batch.Count >= batchSize)
                 {
-                    var batchResult = await tableClient.SubmitTransactionAsync(batch);
+                    await tableClient.SubmitTransactionAsync(batch);
                     batch.Clear();
                 }
             }
 
             if (batch.Count > 0)
             {
-                var batchResult = await tableClient.SubmitTransactionAsync(batch);
+                await tableClient.SubmitTransactionAsync(batch);
             }
 
             var latestData = new CompanyHouseTableEntity
