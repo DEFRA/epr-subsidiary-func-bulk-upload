@@ -6,12 +6,12 @@ using Microsoft.Extensions.Logging;
 namespace EPR.SubsidiaryBulkUpload.Application.Services;
 
 public class TableStorageProcessor(
-    ILogger<CompaniesHousCsvProcessor> logger) : ITableStorageProcessor
+    ILogger<TableStorageProcessor> logger) : ITableStorageProcessor
 {
     private const string CurrentIngestion = "Current Ingestion";
     private const string LatestCHData = "Latest CH Data";
     private const string Latest = "Latest";
-    private readonly ILogger<CompaniesHousCsvProcessor> _logger = logger;
+    private readonly ILogger<TableStorageProcessor> _logger = logger;
 
     public async Task WriteToAzureTableStorage(IEnumerable<CompanyHouseTableEntity> records, string tableName, string partitionKey, string connectionString, int batchSize)
     {
@@ -23,7 +23,7 @@ public class TableStorageProcessor(
 
         if (string.IsNullOrEmpty(partitionKey))
         {
-            partitionKey = "EmptyParttionKey";
+            partitionKey = "EmptyPartitionKey";
         }
 
         var currentIngestion = new CompanyHouseTableEntity

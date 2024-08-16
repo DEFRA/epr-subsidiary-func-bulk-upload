@@ -69,7 +69,7 @@ public static class ConfigurationExtensions
 
     public static IServiceCollection AddServices(this IServiceCollection services)
     {
-        services.AddTransient<ICsvProcessor, CompaniesHousCsvProcessor>();
+        services.AddTransient<ICompaniesHouseCsvProcessor, CompaniesHouseCsvProcessor>();
         services.AddTransient<ITableStorageProcessor, TableStorageProcessor>();
 
         return services;

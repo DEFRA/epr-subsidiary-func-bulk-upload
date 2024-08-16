@@ -88,7 +88,7 @@ public class CompaniesHouseImportFunctionTests
     }
 
     [TestMethod]
-    public async Task CompaniesHouseImportFunctionn_Logs_Result()
+    public async Task CompaniesHouseImportFunction_Logs_Result()
     {
         // Arrange
         _csvProcessorMock.Setup(x => x.ProcessStreamToObject(It.IsAny<Stream>(), It.IsAny<CompanyHouseTableEntity>()))
@@ -103,7 +103,7 @@ public class CompaniesHouseImportFunctionTests
     }
 
     [TestMethod]
-    public async Task CompaniesHouseImportFunctionn_Logs_Result_When_NoPartitionKeyInFileName()
+    public async Task CompaniesHouseImportFunction_Logs_Result_When_NoPartitionKeyInFileName()
     {
         // Arrange
         _blobClientMock

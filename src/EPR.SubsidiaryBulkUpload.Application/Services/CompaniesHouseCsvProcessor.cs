@@ -6,10 +6,10 @@ using Microsoft.Extensions.Logging;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services;
 
-public class CompaniesHousCsvProcessor(
-    ILogger<CompaniesHousCsvProcessor> logger) : ICsvProcessor
+public class CompaniesHouseCsvProcessor(
+    ILogger<CompaniesHouseCsvProcessor> logger) : ICompaniesHouseCsvProcessor
 {
-    private readonly ILogger<CompaniesHousCsvProcessor> _logger = logger;
+    private readonly ILogger<CompaniesHouseCsvProcessor> _logger = logger;
 
     public async Task<int> ProcessStream(Stream stream)
     {
