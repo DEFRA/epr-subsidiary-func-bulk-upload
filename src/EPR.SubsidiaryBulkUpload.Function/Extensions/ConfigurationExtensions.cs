@@ -107,7 +107,8 @@ public static class ConfigurationExtensions
 
                 client.BaseAddress = new Uri(apiOptions.CompaniesHouseLookupBaseUrl);
                 client.Timeout = TimeSpan.FromSeconds(apiOptions.Timeout);
-            });
+            })
+                .ConfigurePrimaryHttpMessageHandler(GetClientCertificateHandler);
 
             /* services.AddHttpClient<ICompaniesHouseLookupService, CompaniesHouseLookupService>((sp, client) =>
             {
