@@ -23,7 +23,7 @@ public class StringExtensionsTests
     [DataRow("", "")]
     [DataRow("CompanyDataFile.csv", "")]
     [DataRow("CompanyDataFile-2024-07-01.csv", "2024-07-01")]
-    public void TToPartitionKeyFormat_ShouldFormatCorrectly(string input, string expectedResult)
+    public void ToPartitionKeyFormat_ShouldFormatCorrectly(string input, string expectedResult)
     {
         var result = input.ToPartitionKeyFormat();
 

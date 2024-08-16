@@ -77,7 +77,7 @@ public class CompaniesHouseImportFunctionTests
     {
         // Arrange
         _csvProcessorMock.Setup(x => x.ProcessStreamToObject(It.IsAny<Stream>(), It.IsAny<CompanyHouseTableEntity>()))
-            .ReturnsAsync(new List<CompanyHouseTableEntity> { new CompanyHouseTableEntity { CompanyName = "test" }, new CompanyHouseTableEntity { CompanyName = "test2" } });
+            .ReturnsAsync(new List<CompanyHouseTableEntity> { new() { CompanyName = "test" }, new() { CompanyName = "test2" } });
 
         // Act
         await _systemUnderTest.Run(_blobClientMock.Object);
@@ -92,7 +92,7 @@ public class CompaniesHouseImportFunctionTests
     {
         // Arrange
         _csvProcessorMock.Setup(x => x.ProcessStreamToObject(It.IsAny<Stream>(), It.IsAny<CompanyHouseTableEntity>()))
-            .ReturnsAsync(new List<CompanyHouseTableEntity> { new CompanyHouseTableEntity { CompanyName = "test" }, new CompanyHouseTableEntity { CompanyName = "test2" } });
+            .ReturnsAsync(new List<CompanyHouseTableEntity> { new() { CompanyName = "test" }, new() { CompanyName = "test2" } });
 
         // Act
         await _systemUnderTest.Run(_blobClientMock.Object);
