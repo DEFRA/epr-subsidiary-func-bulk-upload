@@ -11,7 +11,6 @@ using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 [ExcludeFromCodeCoverage]
@@ -151,18 +150,6 @@ public static class ConfigurationExtensions
         if (sp == null)
         {
             throw new ArgumentException("ServiceProvider must not be null");
-        }
-
-        var logger = sp.GetRequiredService<ILogger>();
-        if(logger is not null)
-        {
-            var c = sp.GetRequiredService<IOptions<ApiConfig>>().Value?.Certificate;
-
-            logger.LogInformation("Has certificate? {Has}", !string.IsNullOrEmpty(c));
-            if (c is not null)
-            {
-                logger.LogInformation("Has certificate? {Len}", c.Length);
-            }
         }
 
         var handler = new HttpClientHandler();
