@@ -25,7 +25,7 @@ public class CompaniesHouseImportFunctionTests
         """;
 
     private Mock<BlobClient> _blobClientMock;
-    private Mock<ICsvProcessor> _csvProcessorMock;
+    private Mock<ICompaniesHouseCsvProcessor> _csvProcessorMock;
     private Mock<ITableStorageProcessor> _tableStorageProcessor;
     private Mock<ILogger<CompaniesHouseImportFunction>> _loggerMock;
     private Mock<IOptions<ConfigOptions>> _configOptionsMock;
@@ -55,7 +55,7 @@ public class CompaniesHouseImportFunctionTests
         _blobClientMock.Setup(client => client.DownloadStreamingAsync(It.IsAny<BlobDownloadOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(response);
 
-        _csvProcessorMock = new Mock<ICsvProcessor>();
+        _csvProcessorMock = new Mock<ICompaniesHouseCsvProcessor>();
         _csvProcessorMock.Setup(x => x.ProcessStream(It.IsAny<Stream>()))
         .ReturnsAsync(CsvRowCount);
 
