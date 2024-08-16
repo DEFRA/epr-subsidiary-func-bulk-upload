@@ -3,8 +3,10 @@
 using System.Diagnostics.CodeAnalysis;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 [ExcludeFromCodeCoverage]
 public static class ConfigurationExtensions
@@ -28,14 +30,12 @@ public static class ConfigurationExtensions
     {
         var sp = services.BuildServiceProvider();
 
-        /*
-        var blobStorageOptions = sp.GetRequiredService<IOptions<BlobStorageOptions>>();
+        var configOptions = sp.GetRequiredService<IOptions<ConfigOptions>>();
 
         services.AddAzureClients(cb =>
         {
-            cb.AddBlobServiceClient(blobStorageOptions.Value.ConnectionString);
+            cb.AddTableServiceClient(configOptions.Value.TableStorageConnectionString);
         });
-        */
 
         return services;
     }

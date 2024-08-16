@@ -1,25 +1,25 @@
-﻿using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
+﻿using Azure.Data.Tables;
+using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using EPR.SubsidiaryBulkUpload.Application.Services.Models;
-using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Extensions.Logging;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services;
 
 public class TableStorageProcessor(
+    TableServiceClient tableServiceClient,
     ILogger<TableStorageProcessor> logger) : ITableStorageProcessor
 {
     private const string CurrentIngestion = "Current Ingestion";
     private const string LatestCHData = "Latest CH Data";
     private const string Latest = "Latest";
+
+    private readonly TableServiceClient _tableServiceClient = tableServiceClient;
     private readonly ILogger<TableStorageProcessor> _logger = logger;
 
     public async Task WriteToAzureTableStorage(IEnumerable<CompanyHouseTableEntity> records, string tableName, string partitionKey, string connectionString, int batchSize)
     {
-        var storageAccount = CloudStorageAccount.Parse(connectionString);
-        var tableClient = storageAccount.CreateCloudTableClient(new TableClientConfiguration());
-        var table = tableClient.GetTableReference(tableName);
-
-        await table.CreateIfNotExistsAsync();
+        var tableClient = _tableServiceClient.GetTableClient(tableName);
+        await tableClient.CreateIfNotExistsAsync();
 
         if (string.IsNullOrEmpty(partitionKey))
         {
@@ -34,27 +34,27 @@ public class TableStorageProcessor(
 
         try
         {
-            var insertOperation = TableOperation.InsertOrReplace(currentIngestion);
-            await table.ExecuteAsync(insertOperation);
+            await tableClient.UpsertEntityAsync(currentIngestion);
 
-            var batchOperation = new TableBatchOperation();
+            var batch = new List<TableTransactionAction>();
 
             foreach (var record in records)
             {
                 record.PartitionKey = partitionKey;
                 record.RowKey = record.CompanyNumber;
-                batchOperation.InsertOrReplace(record);
 
-                if (batchOperation.Count >= batchSize)
+                batch.Add(new TableTransactionAction(TableTransactionActionType.UpdateReplace, record));
+
+                if (batch.Count >= batchSize)
                 {
-                    await table.ExecuteBatchAsync(batchOperation);
-                    batchOperation.Clear();
+                    var batchResult = await tableClient.SubmitTransactionAsync(batch);
+                    batch.Clear();
                 }
             }
 
-            if (batchOperation.Count > 0)
+            if (batch.Count > 0)
             {
-                await table.ExecuteBatchAsync(batchOperation);
+                var batchResult = await tableClient.SubmitTransactionAsync(batch);
             }
 
             var latestData = new CompanyHouseTableEntity
@@ -63,11 +63,10 @@ public class TableStorageProcessor(
                 RowKey = Latest,
                 Data = partitionKey
             };
-            var updateOperation = TableOperation.InsertOrReplace(latestData);
-            await table.ExecuteAsync(updateOperation);
 
-            var deleteOperation = TableOperation.Delete(currentIngestion);
-            await table.ExecuteAsync(deleteOperation);
+            await tableClient.UpsertEntityAsync(latestData);
+
+            await tableClient.DeleteEntityAsync(currentIngestion);
 
             _logger.LogInformation("C# Table storage processed {Count} records from csv storage table {Name}", records.Count(), tableName);
         }
@@ -75,8 +74,8 @@ public class TableStorageProcessor(
         {
             _logger.LogError(ex, "An error occurred during ingestion.");
 
-            var deleteOperation = TableOperation.Delete(currentIngestion);
-            await table.ExecuteAsync(deleteOperation);
+            await tableClient.DeleteEntityAsync(currentIngestion);
+
             throw;
         }
     }
