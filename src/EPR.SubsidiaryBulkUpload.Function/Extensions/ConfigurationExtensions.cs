@@ -103,11 +103,10 @@ public static class ConfigurationExtensions
         {
             services.AddHttpClient<ICompaniesHouseLookupService, CompaniesHouseLookupService>((sp, client) =>
             {
-            var facadeApiOptions = sp.GetRequiredService<IOptions<ApiConfig>>().Value;
-            var httpClientOptions = sp.GetRequiredService<IOptions<HttpClientOptions>>().Value;
+                var apiOptions = sp.GetRequiredService<IOptions<ApiConfig>>().Value;
 
-            client.BaseAddress = new Uri(facadeApiOptions.CompaniesHouseLookupBaseUrl);
-            client.Timeout = TimeSpan.FromSeconds(httpClientOptions.TimeoutSeconds);
+                client.BaseAddress = new Uri(apiOptions.CompaniesHouseLookupBaseUrl);
+                client.Timeout = TimeSpan.FromSeconds(apiOptions.Timeout);
             });
 
             /* services.AddHttpClient<ICompaniesHouseLookupService, CompaniesHouseLookupService>((sp, client) =>

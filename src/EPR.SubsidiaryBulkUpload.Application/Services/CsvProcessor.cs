@@ -89,9 +89,11 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                             }
 
                             // company does not exist in org database. check if subsidiary company exists in the table storage (temp data)
+                            _logger.LogInformation("Looking up companies house number in table {CompaniesHouseNumber}", subsidiary.CompaniesHouseNumber);
                             var tableStorageResponse = await organisationService.GetCompanyByOrgIdFromTableStorage(subsidiary.CompaniesHouseNumber);
                             if (tableStorageResponse != null)
                             {
+                                _logger.LogInformation("Found companies house number in table {CompaniesHouseNumber}", subsidiary.CompaniesHouseNumber);
                                 subsidiary.OrganisationType = OrganisationType.NotSet;
                                 subsidiary.ProducerType = ProducerType.Other;
                                 subsidiary.Address = tableStorageResponse.Address;
@@ -112,9 +114,12 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                             }
 
                             // Company does not exist in table storage. make call to comapanies house API
+                            _logger.LogInformation("Looking up companies house number {CompaniesHouseNumber}", subsidiary.CompaniesHouseNumber);
                             var companyHouseResponse = await companiesHouseLookupService.GetCompaniesHouseResponseAsync(subsidiary.CompaniesHouseNumber);
                             if (companyHouseResponse != null)
                             {
+                                _logger.LogInformation("Found companies house number {CompaniesHouseNumber}", subsidiary.CompaniesHouseNumber);
+
                                 // company exists in companies hosue database
                                 subsidiary.Name = companyHouseResponse.Name;
                                 subsidiary.OrganisationType = OrganisationType.NotSet;

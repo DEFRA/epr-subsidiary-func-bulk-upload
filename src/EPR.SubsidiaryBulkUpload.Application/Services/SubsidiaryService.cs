@@ -125,9 +125,12 @@ public class SubsidiaryService : ISubsidiaryService
         // AzureStorageTableService tableService = new AzureStorageTableService("");
         // var tsResponse = await tableService.GetAll();
         // return tsResponse;
-        string tableName = "testdata";
-        var tableClient = new TableClient(_config["ApiConfig:StorageConnectionString"], tableName);
-        Pageable<TableEntity> oDataQueryEntities = tableClient.Query<TableEntity>(filter: TableClient.CreateQueryFilter($"CompanyNumber eq {companiesHouseNumber}"));
+        string tableName = _config["CompaniesHouseOfflineData:TableName"];
+        var tableClient = new TableClient(_config["TableStorage:ConnectionString"], tableName);
+
+        // TODO: Use RowKey to filter, also need latest partition key
+        // Pageable<TableEntity> oDataQueryEntities = tableClient.Query<TableEntity>(filter: TableClient.CreateQueryFilter($"CompanyNumber eq '{companiesHouseNumber}'"));
+        Pageable<TableEntity> oDataQueryEntities = tableClient.Query<TableEntity>(e => e.RowKey == companiesHouseNumber);
 
         foreach (TableEntity entity in oDataQueryEntities)
         {
