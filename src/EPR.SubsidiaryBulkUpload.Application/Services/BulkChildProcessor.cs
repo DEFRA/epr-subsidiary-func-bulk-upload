@@ -9,11 +9,10 @@ public class BulkChildProcessor(ISubsidiaryService organisationService, ICompani
     : IChildProcessor
 {
     private readonly ILogger<BulkChildProcessor> _logger = logger;
-    private readonly string _user = "E138C7A1-49B2-402B-B9B4-AD60A2282530";
     private readonly ISubsidiaryService organisationService = organisationService;
     private readonly ICompaniesHouseLookupService companiesHouseLookupService = companiesHouseLookupService;
 
-    public async Task Process(IEnumerable<CompaniesHouseCompany> children, CompaniesHouseCompany parent, OrganisationResponseModel parentOrg)
+    public async Task Process(IEnumerable<CompaniesHouseCompany> children, CompaniesHouseCompany parent, OrganisationResponseModel parentOrg, string userName)
     {
         foreach (var subsidiaryRecord in children)
         {
@@ -34,7 +33,7 @@ public class BulkChildProcessor(ISubsidiaryService organisationService, ICompani
                     // Question for mike. why the org ids are defined as GUID and is this ever tested?
                     var existingSubsidiary = new SubsidiaryAddModel()
                     {
-                        UserId = Guid.Parse(_user),
+                        UserId = Guid.Parse(userName),
                         ParentOrganisationId = parentOrg.referenceNumber,
                         ChildOrganisationId = subsidiaryResponse.referenceNumber,
                         ParentOrganisationExternalId = parentOrg.ExternalId,
@@ -63,7 +62,7 @@ public class BulkChildProcessor(ISubsidiaryService organisationService, ICompani
                    // company exists in temp storage (table storage)
                    var newSubsidiaryFromTS = new LinkOrganisationModel()
                     {
-                        UserId = Guid.Parse(_user),
+                        UserId = Guid.Parse(userName),
                         Subsidiary = new OrganisationModel()
                         {
                             ReferenceNumber = subsidiaryRecord.organisation_id,
@@ -97,7 +96,7 @@ public class BulkChildProcessor(ISubsidiaryService organisationService, ICompani
                 {
                     var newSubsidiaryFromCH = new LinkOrganisationModel()
                     {
-                        UserId = Guid.Parse(_user),
+                        UserId = Guid.Parse(userName),
                         Subsidiary = new OrganisationModel()
                         {
                             Name = companyHouseResponse.Name,

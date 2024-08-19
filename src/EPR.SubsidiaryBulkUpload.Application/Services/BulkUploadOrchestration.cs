@@ -15,7 +15,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
         this.childProcessor = childProcessor;
     }
 
-    public async Task Orchestrate(IEnumerable<CompaniesHouseCompany> data)
+    public async Task Orchestrate(IEnumerable<CompaniesHouseCompany> data, IDictionary<string, string> metadata)
     {
         // this holds all the parents and their children records from csv
         var subsidiaryGroups = recordExtraction.ExtractParentsAndChildren(data).ToAsyncEnumerable();
@@ -25,12 +25,16 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
             async sg => (SubsidiaryGroup: sg, Org: await organisationService.GetCompanyByCompaniesHouseNumber(sg.Parent.companies_house_number)))
             .Where(sg => sg.Org != null);
 
+        var userName = metadata.Where(pair => pair.Key.Contains("username"))
+                         .Select(pair => pair.Value).FirstOrDefault();
+
         await foreach(var subsidiaryGroupAndParentOrg in subsidiaryGroupsAndParentOrg)
         {
             await childProcessor.Process(
                 subsidiaryGroupAndParentOrg.SubsidiaryGroup.Children,
                 subsidiaryGroupAndParentOrg.SubsidiaryGroup.Parent,
-                subsidiaryGroupAndParentOrg.Org);
+                subsidiaryGroupAndParentOrg.Org,
+                userName);
         }
     }
 }

@@ -5,5 +5,5 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 
 public interface IChildProcessor
 {
-    Task Process(IEnumerable<CompaniesHouseCompany> children, CompaniesHouseCompany parent, OrganisationResponseModel parentorg);
+    Task Process(IEnumerable<CompaniesHouseCompany> children, CompaniesHouseCompany parent, OrganisationResponseModel parentorg, string userName);
 }

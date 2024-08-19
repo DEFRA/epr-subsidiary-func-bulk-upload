@@ -4,5 +4,5 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services;
 
 public interface IBulkUploadOrchestration
 {
-    public Task Orchestrate(IEnumerable<CompaniesHouseCompany> data);
+    public Task Orchestrate(IEnumerable<CompaniesHouseCompany> data, IDictionary<string, string> metadat);
 }

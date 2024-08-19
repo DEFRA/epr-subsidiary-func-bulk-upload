@@ -103,21 +103,13 @@ public static class ConfigurationExtensions
         {
             services.AddHttpClient<ICompaniesHouseLookupService, CompaniesHouseLookupService>((sp, client) =>
             {
-            var facadeApiOptions = sp.GetRequiredService<IOptions<ApiConfig>>().Value;
+            var apiOptions = sp.GetRequiredService<IOptions<ApiConfig>>().Value;
             var httpClientOptions = sp.GetRequiredService<IOptions<HttpClientOptions>>().Value;
 
-            client.BaseAddress = new Uri(facadeApiOptions.CompaniesHouseLookupBaseUrl);
-            client.Timeout = TimeSpan.FromSeconds(httpClientOptions.TimeoutSeconds);
-            });
-
-            /* services.AddHttpClient<ICompaniesHouseLookupService, CompaniesHouseLookupService>((sp, client) =>
-            {
-            var config = sp.GetRequiredService<IOptions<ApiConfig>>().Value;
-
-            client.BaseAddress = new Uri(config.CompaniesHouseLookupBaseUrl);
-            client.Timeout = TimeSpan.FromSeconds(config.Timeout);
+            client.BaseAddress = new Uri(apiOptions.CompaniesHouseLookupBaseUrl);
+            client.Timeout = TimeSpan.FromSeconds(apiOptions.Timeout);
             })
-            .ConfigurePrimaryHttpMessageHandler(GetClientCertificateHandler);*/
+                .ConfigurePrimaryHttpMessageHandler(GetClientCertificateHandler);
         }
 
         return services;
