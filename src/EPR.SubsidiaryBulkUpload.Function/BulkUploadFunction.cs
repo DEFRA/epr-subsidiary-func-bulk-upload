@@ -34,30 +34,21 @@ public class BulkUploadFunction
         var downloadStreamingResult = await client.DownloadStreamingAsync();
         var metaData = downloadStreamingResult.Value.Details?.Metadata;
 
-        var userGuid = metaData.Where(pair => pair.Key.Contains("username"))
+        var userGuid = metaData.Where(pair => pair.Key.Contains("userId"))
                         .Select(pair => pair.Value).FirstOrDefault();
 
         var userId = Guid.Parse(userGuid);
 
         var content = downloadStreamingResult.Value.Content;
 
-        if (Path.GetExtension(client.Name) == ".csv")
+        var configuration = new CsvConfiguration(CultureInfo.InvariantCulture)
         {
-            var configuration = new CsvConfiguration(CultureInfo.InvariantCulture)
-            {
-                HasHeaderRecord = true,
-            };
+            HasHeaderRecord = true,
+        };
 
-            var records = await _csvProcessor.ProcessStream<CompaniesHouseCompany, CompaniesHouseCompanyMap>(content, configuration);
-            await orchestration.Orchestrate(records, userId);
+        var records = await _csvProcessor.ProcessStream<CompaniesHouseCompany, CompaniesHouseCompanyMap>(content, configuration);
+        await orchestration.Orchestrate(records, userId);
 
-            _logger.LogInformation("Blob trigger processed {Count} records from Client {Name}", records.Count(), client.Name);
-        }
-        else
-        {
-            _logger.LogInformation("Blob trigger function did not processed non-csv Client {Name}", client.Name);
-        }
-
-        _logger.LogInformation("Client process completed : {Name}", client.Name);
+        _logger.LogInformation("Blob trigger processed {Count} records from Client {Name}", records.Count(), client.Name);
     }
 }

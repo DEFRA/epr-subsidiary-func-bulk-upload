@@ -1,11 +1,8 @@
 ﻿namespace EPR.SubsidiaryBulkUpload.Application.Services;
-
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
-using Azure;
-using Azure.Data.Tables;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Exceptions;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
@@ -28,15 +25,18 @@ public class SubsidiaryService : ISubsidiaryService
     private readonly ILogger<SubsidiaryService> _logger;
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _config;
+    private readonly IAzureStorageTableService _azureTableStorageService;
 
     public SubsidiaryService(
         HttpClient httpClient,
         ILogger<SubsidiaryService> logger,
-        IConfiguration config)
+        IConfiguration config,
+        IAzureStorageTableService azureTableStorageService)
     {
         _httpClient = httpClient;
         _logger = logger;
         _config = config;
+        _azureTableStorageService = azureTableStorageService;
     }
 
     public async Task<OrganisationModel?> GetCompanyByOrgId(CompaniesHouseCompany company)
@@ -117,37 +117,7 @@ public class SubsidiaryService : ISubsidiaryService
     public async Task<OrganisationModel?> GetCompanyByOrgIdFromTableStorage(string companiesHouseNumber)
     {
         List<OrganisationModel> companies = new List<OrganisationModel>();
-
-        // TO DO to switch to service call
-        // AzureStorageTableService tableService = new AzureStorageTableService("");
-        // var tsResponse = await tableService.GetAll();
-        // return tsResponse;
-        string tableName = "testdata";
-        var tableClient = new TableClient(_config["ApiConfig:StorageConnectionString"], tableName);
-        Pageable<TableEntity> oDataQueryEntities = tableClient.Query<TableEntity>(filter: TableClient.CreateQueryFilter($"CompanyNumber eq {companiesHouseNumber}"));
-
-        foreach (TableEntity entity in oDataQueryEntities)
-        {
-            var company = new OrganisationModel()
-            {
-                Name = entity.GetString("CompanyName"),
-                CompaniesHouseNumber = entity.GetString("CompanyNumber"),
-            };
-
-            AddressModel address = new AddressModel()
-            {
-                County = entity.GetString("RegAddressCounty"),
-                Postcode = entity.GetString("RegAddressPostCode"),
-                Country = entity.GetString("RegAddressCountry"),
-                Town = entity.GetString("RegAddressPostTown"),
-                Street = entity.GetString("RegAddressAddressLine1")
-            };
-
-            company.Address = address;
-            companies.Add(company);
-        }
-
-        return companies.FirstOrDefault();
+        return await _azureTableStorageService.GetByCompanyNumber(companiesHouseNumber);
     }
 
     public async Task<string?> CreateAndAddSubsidiaryAsync(LinkOrganisationModel linkOrganisationModel)
