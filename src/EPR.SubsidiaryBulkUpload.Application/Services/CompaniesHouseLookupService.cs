@@ -39,4 +39,9 @@ public class CompaniesHouseLookupService : ICompaniesHouseLookupService
         var company = await response.Content.ReadFromJsonAsync<CompaniesHouseCompany>();
         return new Company(company);
     }
+
+    public Task<CompaniesHouseResponse?> GetCompaniesHouseResponseAsync(string id, bool isDevMode)
+    {
+        throw new NotImplementedException();
+    }
 }

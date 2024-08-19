@@ -59,7 +59,7 @@ public class BulkUploadFunctionTests
 
         _loggerMock = new Mock<ILogger<BulkUploadFunction>>();
 
-        _systemUnderTest = new BulkUploadFunction(null, null, _loggerMock.Object, _csvProcessorMock.Object);
+        _systemUnderTest = new BulkUploadFunction(null, null, _loggerMock.Object, _csvProcessorMock.Object, null);
     }
 
     [TestMethod]

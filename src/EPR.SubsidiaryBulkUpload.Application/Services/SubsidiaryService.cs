@@ -18,10 +18,7 @@ using Newtonsoft.Json;
 
 public class SubsidiaryService : ISubsidiaryService
 {
-    private const string CompaniesHouseNumber = "07073807";
-    private const string BaseAddress = "http://localhost:5000";
     private const string OrganisationByCompanyHouseNumberUri = "api/bulkuploadorganisations/";
-    private const string ExpectedUrl = $"{BaseAddress}/{OrganisationByCompanyHouseNumberUri}?companiesHouseNumber={CompaniesHouseNumber}";
     private const string OrganisationByTableStorageUri = "api/bulkuploadorganisations/organisation-by-tablestorage";
     private const string OrganisationUri = "api/bulkuploadorganisations/organisation-by-externalId";
     private const string OrganisationNameUri = "api/bulkuploadorganisations/organisation-by-invite-token";

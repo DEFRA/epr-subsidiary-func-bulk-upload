@@ -33,15 +33,5 @@ public class CompaniesHouseImportFunction
         }
 
         var content = downloadStreamingResult.Value.Content;
-
-        if (Path.GetExtension(client.Name) == ".csv")
-        {
-            var recordsProcessed = await _csvProcessor.ProcessStream(content);
-            _logger.LogInformation("C# Blob trigger processed {Count} records from csv blob {Name}", recordsProcessed, client.Name);
-        }
-        else
-        {
-            _logger.LogInformation("C# Blob trigger function did not processed non-csv blob {Name}", client.Name);
-        }
     }
 }
