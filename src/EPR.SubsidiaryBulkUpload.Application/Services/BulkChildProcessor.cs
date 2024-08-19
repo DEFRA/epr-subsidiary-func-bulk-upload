@@ -12,7 +12,7 @@ public class BulkChildProcessor(ISubsidiaryService organisationService, ICompani
     private readonly ISubsidiaryService organisationService = organisationService;
     private readonly ICompaniesHouseLookupService companiesHouseLookupService = companiesHouseLookupService;
 
-    public async Task Process(IEnumerable<CompaniesHouseCompany> children, CompaniesHouseCompany parent, OrganisationResponseModel parentOrg, string userName)
+    public async Task Process(IEnumerable<CompaniesHouseCompany> children, CompaniesHouseCompany parent, OrganisationResponseModel parentOrg, Guid userId)
     {
         foreach (var subsidiaryRecord in children)
         {
@@ -33,7 +33,7 @@ public class BulkChildProcessor(ISubsidiaryService organisationService, ICompani
                     // Question for mike. why the org ids are defined as GUID and is this ever tested?
                     var existingSubsidiary = new SubsidiaryAddModel()
                     {
-                        UserId = Guid.Parse(userName),
+                        UserId = userId,
                         ParentOrganisationId = parentOrg.referenceNumber,
                         ChildOrganisationId = subsidiaryResponse.referenceNumber,
                         ParentOrganisationExternalId = parentOrg.ExternalId,
@@ -62,7 +62,7 @@ public class BulkChildProcessor(ISubsidiaryService organisationService, ICompani
                    // company exists in temp storage (table storage)
                    var newSubsidiaryFromTS = new LinkOrganisationModel()
                     {
-                        UserId = Guid.Parse(userName),
+                        UserId = userId,
                         Subsidiary = new OrganisationModel()
                         {
                             ReferenceNumber = subsidiaryRecord.organisation_id,
@@ -96,7 +96,7 @@ public class BulkChildProcessor(ISubsidiaryService organisationService, ICompani
                 {
                     var newSubsidiaryFromCH = new LinkOrganisationModel()
                     {
-                        UserId = Guid.Parse(userName),
+                        UserId = userId,
                         Subsidiary = new OrganisationModel()
                         {
                             Name = companyHouseResponse.Name,

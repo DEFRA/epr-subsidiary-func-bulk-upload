@@ -6,6 +6,4 @@ public interface ICsvProcessor
 {
     Task<IEnumerable<TD>> ProcessStream<TD, TM>(Stream stream, IReaderConfiguration configuration)
         where TM : ClassMap;
-
-    Task<int> ProcessStream(Stream stream);
 }

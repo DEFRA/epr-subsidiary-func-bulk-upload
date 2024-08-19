@@ -1,7 +1,10 @@
-﻿using System.Text;
+﻿using System.Globalization;
+using System.Text;
 using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using CsvHelper.Configuration;
+using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using EPR.SubsidiaryBulkUpload.Function.UnitTests.TestHelpers;
 using Microsoft.Extensions.Logging;
@@ -54,8 +57,14 @@ public class BulkUploadFunctionTests
             .ReturnsAsync(response);
 
         _csvProcessorMock = new Mock<ICsvProcessor>();
-        _csvProcessorMock.Setup(x => x.ProcessStream(It.IsAny<Stream>()))
-            .ReturnsAsync(CsvRowCount);
+
+        var configuration = new CsvConfiguration(CultureInfo.InvariantCulture)
+        {
+            HasHeaderRecord = true,
+        };
+
+        _csvProcessorMock.Setup(x => x.ProcessStream<CompaniesHouseCompany, CompaniesHouseCompanyMap>(It.IsAny<Stream>(), configuration))
+        .ReturnsAsync(Enumerable.Empty<CompaniesHouseCompany>());
 
         _loggerMock = new Mock<ILogger<BulkUploadFunction>>();
 
@@ -68,8 +77,13 @@ public class BulkUploadFunctionTests
         // Act
         await _systemUnderTest.Run(_blobClientMock.Object);
 
+        var configuration = new CsvConfiguration(CultureInfo.InvariantCulture)
+        {
+            HasHeaderRecord = true,
+        };
+
         // Assert
-        _csvProcessorMock.Verify(x => x.ProcessStream(It.IsAny<Stream>()), Times.Once);
+        _csvProcessorMock.Verify(x => x.ProcessStream<CompaniesHouseCompany, CompaniesHouseCompanyMap>(It.IsAny<Stream>(), configuration), Times.Once);
     }
 
     [TestMethod]

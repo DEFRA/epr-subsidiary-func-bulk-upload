@@ -20,10 +20,5 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                 return csv.GetRecords<TD>().ToList();
             }
         }
-
-        Task<int> ICsvProcessor.ProcessStream(Stream stream)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

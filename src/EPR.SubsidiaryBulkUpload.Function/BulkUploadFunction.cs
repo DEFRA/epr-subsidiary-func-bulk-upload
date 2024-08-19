@@ -34,6 +34,11 @@ public class BulkUploadFunction
         var downloadStreamingResult = await client.DownloadStreamingAsync();
         var metaData = downloadStreamingResult.Value.Details?.Metadata;
 
+        var userGuid = metaData.Where(pair => pair.Key.Contains("username"))
+                        .Select(pair => pair.Value).FirstOrDefault();
+
+        var userId = Guid.Parse(userGuid);
+
         var content = downloadStreamingResult.Value.Content;
 
         if (Path.GetExtension(client.Name) == ".csv")
@@ -44,7 +49,7 @@ public class BulkUploadFunction
             };
 
             var records = await _csvProcessor.ProcessStream<CompaniesHouseCompany, CompaniesHouseCompanyMap>(content, configuration);
-            await orchestration.Orchestrate(records, metaData);
+            await orchestration.Orchestrate(records, userId);
 
             _logger.LogInformation("Blob trigger processed {Count} records from Client {Name}", records.Count(), client.Name);
         }
