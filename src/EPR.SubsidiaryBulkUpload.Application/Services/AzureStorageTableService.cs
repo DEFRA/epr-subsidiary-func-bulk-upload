@@ -9,9 +9,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
     public class AzureStorageTableService : IAzureStorageTableService
     {
         private readonly TableClient _tableClient;
-        private readonly string tableName = "testdata";
 
-        // var tableClient = new TableClient(_config["ApiConfig:StorageConnectionString"], tableName);
         public AzureStorageTableService(TableServiceClient tableServiceClient, IConfiguration config)
         {
             _tableClient = tableServiceClient.GetTableClient(config["ApiConfig:StorageConnectionString"]);
