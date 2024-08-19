@@ -117,7 +117,13 @@ public static class ConfigurationExtensions
 
     public static IServiceCollection AddServices(this IServiceCollection services, IConfiguration configuration)
     {
+        // Add subsidiary bulk upload services...
+        services.AddTransient<IBulkUploadOrchestration, BulkUploadOrchestration>();
+        services.AddTransient<IBulkSubsidiaryProcessor, BulkSubsidiaryProcessor>();
+        services.AddTransient<ICompaniesHouseDataProvider, CompaniesHouseDataProvider>();
+        services.AddTransient<IRecordExtraction, RecordExtraction>();
         services.AddTransient<ICsvProcessor, CsvProcessor>();
+
         var isDevMode = configuration["ApiConfig:DeveloperMode"]; // configuration.GetValue<bool>("DeveloperMode");
         if (isDevMode == "true")
         {
@@ -134,6 +140,7 @@ public static class ConfigurationExtensions
             clientBuilder.AddTableServiceClient(configuration["ConnectionStrings:tablestorage"]!, preferMsi: true);
             clientBuilder.AddBlobServiceClient(configuration["ConnectionStrings:blob"]!, preferMsi: true);
         });
+
         return services;
     }
 
