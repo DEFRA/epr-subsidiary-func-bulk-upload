@@ -31,6 +31,41 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         {
             await AddSubsidiary(parentOrg, subsidiaryAddModel!.SubsidiaryOrg, userId);
         }
+
+        // Subsidiaries which do not exist in the RPD
+        var newSubsidiariesToAdd = subsidiariesAndOrg.Where(co => co.SubsidiaryOrg == null)
+            .SelectAwait(async subsidiary =>
+                (Subsidiary: subsidiary.Subsidiary, LinkModel: await GetLinkModelForCompaniesHouseData(subsidiary.Subsidiary, parentOrg, userId)))
+            .Where(subAndLink => subAndLink.LinkModel != null);
+
+        // Create and add subsidiaries where the companies house data has been provided
+        await foreach(var subsidiaryandLink in newSubsidiariesToAdd)
+        {
+            await organisationService.CreateAndAddSubsidiaryAsync(subsidiaryandLink.LinkModel);
+        }
+    }
+
+    private async Task<LinkOrganisationModel?> GetLinkModelForCompaniesHouseData(CompaniesHouseCompany subsidiary, OrganisationResponseModel parentOrg, Guid userId)
+    {
+        var newSubsidiaryModel = new LinkOrganisationModel()
+        {
+            UserId = userId,
+            Subsidiary = new OrganisationModel()
+            {
+                ReferenceNumber = subsidiary.organisation_id,
+                Name = subsidiary.organisation_name,
+                CompaniesHouseNumber = subsidiary.companies_house_number,
+                OrganisationType = OrganisationType.NotSet,
+                ProducerType = ProducerType.Other,
+                IsComplianceScheme = false,
+                Nation = Nation.NotSet
+            },
+            ParentOrganisationId = parentOrg.ExternalId.Value
+        };
+
+        var modelLoaded = await companiesHouseDataProvider.SetCompaniesHouseData(newSubsidiaryModel.Subsidiary);
+
+        return modelLoaded ? newSubsidiaryModel : null;
     }
 
     private async Task AddSubsidiary(OrganisationResponseModel parent, OrganisationResponseModel subsidiary, Guid userId)
