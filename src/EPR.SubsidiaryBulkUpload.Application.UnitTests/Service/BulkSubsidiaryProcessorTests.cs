@@ -1,11 +1,9 @@
-﻿using System.Runtime.CompilerServices;
-using EPR.SubsidiaryBulkUpload.Application.DTOs;
+﻿using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Service;
 
@@ -50,11 +48,13 @@ public class BulkSubsidiaryProcessorTests
 
         // Assert
         updates.Should().HaveCount(2);
+
         updates.Should().Contain(model => model.UserId == userId &&
                                   model.ParentOrganisationId == parentOrganisation.referenceNumber &&
                                   model.ChildOrganisationId == subsidiaryOrganisations[0].referenceNumber &&
                                   model.ParentOrganisationExternalId == parentOrganisation.ExternalId &&
                                   model.ChildOrganisationExternalId == subsidiaryOrganisations[0].ExternalId);
+
         updates.Should().Contain(model => model.UserId == userId &&
                                   model.ParentOrganisationId == parentOrganisation.referenceNumber &&
                                   model.ChildOrganisationId == subsidiaryOrganisations[1].referenceNumber &&
@@ -90,13 +90,15 @@ public class BulkSubsidiaryProcessorTests
 
         // Assert
         inserts.Should().HaveCount(2);
+
         inserts.Should().Contain(insert => insert.UserId == userId &&
-                                    insert.ParentOrganisationId == parentOrganisation.ExternalId &&
-                                    insert.Subsidiary.ReferenceNumber == subsidiaries[0].organisation_id &&
-                                    insert.Subsidiary.Name == subsidiaries[0].organisation_name &&
-                                    insert.Subsidiary.CompaniesHouseNumber == subsidiaries[0].companies_house_number &&
-                                    insert.Subsidiary.OrganisationType == OrganisationType.NotSet &&
-                                    insert.Subsidiary.ProducerType == ProducerType.Other);
+                            insert.ParentOrganisationId == parentOrganisation.ExternalId &&
+                            insert.Subsidiary.ReferenceNumber == subsidiaries[0].organisation_id &&
+                            insert.Subsidiary.Name == subsidiaries[0].organisation_name &&
+                            insert.Subsidiary.CompaniesHouseNumber == subsidiaries[0].companies_house_number &&
+                            insert.Subsidiary.OrganisationType == OrganisationType.NotSet &&
+                            insert.Subsidiary.ProducerType == ProducerType.Other);
+
         inserts.Should().Contain(insert => insert.UserId == userId &&
                             insert.ParentOrganisationId == parentOrganisation.ExternalId &&
                             insert.Subsidiary.ReferenceNumber == subsidiaries[1].organisation_id &&
