@@ -34,17 +34,15 @@ public class BulkUploadOrchestrationTests
 
         var orchestrator = new BulkUploadOrchestration(recordExtraction.Object, subsidiaryService.Object, childProcessor.Object);
 
-        var metadata = new Dictionary<string, string>();
-        var userName = metadata.Where(pair => pair.Key.Contains("username"))
-                         .Select(pair => pair.Value).FirstOrDefault();
+        var userId = Guid.NewGuid();
 
         // Act
-        await orchestrator.Orchestrate(companyData, metadata);
+        await orchestrator.Orchestrate(companyData, userId);
 
         // Assert
         foreach(var set in parentAndSubsidiaries)
         {
-            childProcessor.Verify(cp => cp.Process(set.Children, set.Parent, orgModel, userName));
+            childProcessor.Verify(cp => cp.Process(set.Children, set.Parent, orgModel, userId));
         }
     }
 }
