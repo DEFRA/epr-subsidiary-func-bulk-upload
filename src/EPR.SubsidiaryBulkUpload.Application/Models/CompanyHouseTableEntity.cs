@@ -2,6 +2,8 @@
 using Azure.Data.Tables;
 using CsvHelper.Configuration.Attributes;
 
+namespace EPR.SubsidiaryBulkUpload.Application.Models;
+
 public class CompanyHouseTableEntity : ITableEntity
 {
     [Name("CompanyName")]
@@ -33,6 +35,8 @@ public class CompanyHouseTableEntity : ITableEntity
 
     [Name("IncorporationDate")]
     public string IncorporationDate { get; set; }
+
+    public string Data { get; set; }
 
     public string PartitionKey { get; set; }
 

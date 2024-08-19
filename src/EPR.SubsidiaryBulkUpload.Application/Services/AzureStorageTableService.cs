@@ -12,7 +12,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
 
         public AzureStorageTableService(TableServiceClient tableServiceClient, IConfiguration config)
         {
-            _tableClient = tableServiceClient.GetTableClient(config["ApiConfig:StorageConnectionString"]);
+            _tableClient = tableServiceClient.GetTableClient(config["CompaniesHouseOfflineData:TableName"]);
         }
 
         public async Task<List<Company>> GetAll()

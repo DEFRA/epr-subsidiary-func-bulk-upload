@@ -21,6 +21,11 @@ public static class ConfigurationExtensions
         /*
         services.Configure<AntivirusApiOptions>(configuration.GetSection(AntivirusApiOptions.Section));
         */
+        services.Configure<ConfigOptions>(options =>
+        {
+            options.TableStorageConnectionString = configuration["TableStorage:ConnectionString"];
+            options.CompaniesHouseOfflineDataTableName = configuration["CompaniesHouseOfflineData:TableName"];
+        });
 
         services.Configure<ApiConfig>(configuration.GetSection(ApiConfig.SectionName));
         services.Configure<HttpClientOptions>(configuration.GetSection(HttpClientOptions.ConfigSection));
@@ -39,6 +44,13 @@ public static class ConfigurationExtensions
             cb.AddBlobServiceClient(blobStorageOptions.Value.ConnectionString);
         });
         */
+
+        var configOptions = sp.GetRequiredService<IOptions<ConfigOptions>>();
+
+        services.AddAzureClients(cb =>
+        {
+            cb.AddTableServiceClient(configOptions.Value.TableStorageConnectionString);
+        });
 
         return services;
     }
@@ -123,6 +135,9 @@ public static class ConfigurationExtensions
         services.AddTransient<ICompaniesHouseDataProvider, CompaniesHouseDataProvider>();
         services.AddTransient<IRecordExtraction, RecordExtraction>();
         services.AddTransient<ICsvProcessor, CsvProcessor>();
+        services.AddTransient<ICompaniesHouseCsvProcessor, CompaniesHouseCsvProcessor>();
+        services.AddTransient<ITableStorageProcessor, TableStorageProcessor>();
+        services.AddTransient<IAzureStorageTableService, AzureStorageTableService>();
 
         var isDevMode = configuration["ApiConfig:DeveloperMode"]; // configuration.GetValue<bool>("DeveloperMode");
         if (isDevMode == "true")
@@ -135,12 +150,12 @@ public static class ConfigurationExtensions
         }
 
         services.AddTransient<ISubsidiaryService, SubsidiaryService>();
-        services.AddAzureClients(clientBuilder =>
-        {
-            clientBuilder.AddTableServiceClient(configuration["ConnectionStrings:tablestorage"]!, preferMsi: true);
-            clientBuilder.AddBlobServiceClient(configuration["ConnectionStrings:blob"]!, preferMsi: true);
-        });
 
+        // services.AddAzureClients(clientBuilder =>
+        // {
+        //    clientBuilder.AddTableServiceClient(configuration["ConnectionStrings:tablestorage"]!, preferMsi: true);
+        //    clientBuilder.AddBlobServiceClient(configuration["ConnectionStrings:blob"]!, preferMsi: true);
+        // });
         return services;
     }
 

@@ -12,18 +12,14 @@ namespace EPR.SubsidiaryBulkUpload.Function;
 public class BulkUploadFunction
 {
     private readonly ILogger<BulkUploadFunction> _logger;
-    private readonly ISubsidiaryService _organisationService;
-    private readonly ICompaniesHouseLookupService _companiesHouseLookupService;
     private readonly ICsvProcessor _csvProcessor;
-    private readonly IBulkUploadOrchestration orchestration;
+    private readonly IBulkUploadOrchestration _orchestration;
 
-    public BulkUploadFunction(ISubsidiaryService organisationService, ICompaniesHouseLookupService companiesHouseLookupService, ILogger<BulkUploadFunction> logger, ICsvProcessor csvProcessor, IBulkUploadOrchestration orchestration)
+    public BulkUploadFunction(ILogger<BulkUploadFunction> logger, ICsvProcessor csvProcessor, IBulkUploadOrchestration orchestration)
     {
-        _organisationService = organisationService;
-        _companiesHouseLookupService = companiesHouseLookupService;
         _logger = logger;
         _csvProcessor = csvProcessor;
-        this.orchestration = orchestration;
+        _orchestration = orchestration;
     }
 
     [Function(nameof(BulkUploadFunction))]
@@ -47,8 +43,8 @@ public class BulkUploadFunction
         };
 
         var records = await _csvProcessor.ProcessStream<CompaniesHouseCompany, CompaniesHouseCompanyMap>(content, configuration);
-        await orchestration.Orchestrate(records, userId);
+        await _orchestration.Orchestrate(records, userId);
 
-        _logger.LogInformation("Blob trigger processed {Count} records from Client {Name}", records.Count(), client.Name);
+        _logger.LogInformation("Blob trigger processed {Count} records from csv blob {Name}", records.Count(), client.Name);
     }
 }
