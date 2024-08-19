@@ -71,6 +71,7 @@ public static class ConfigurationExtensions
     {
         services.AddTransient<ICsvProcessor, CompaniesHousCsvProcessor>();
         services.AddTransient<ITableStorageProcessor, TableStorageProcessor>();
+        services.AddTransient<IRedisNotificationService, RedisNotificationService>();
 
         return services;
     }
