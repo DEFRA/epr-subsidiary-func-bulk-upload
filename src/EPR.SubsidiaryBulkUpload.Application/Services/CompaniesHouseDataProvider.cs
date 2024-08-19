@@ -30,7 +30,7 @@ public class CompaniesHouseDataProvider(ICompaniesHouseLookupService companiesHo
                 dataRetrieved = true;
                 subsidiaryModel.Address = new AddressModel()
                 {
-                    BuildingNumber = companyHouseResponse.BusinessAddress.AddressSingleLine,
+                    BuildingNumber = companyHouseResponse.BusinessAddress.BuildingNumber,
                     Street = companyHouseResponse.BusinessAddress.Street,
                     Country = companyHouseResponse.BusinessAddress.Country,
                     Locality = companyHouseResponse.BusinessAddress.Locality,
