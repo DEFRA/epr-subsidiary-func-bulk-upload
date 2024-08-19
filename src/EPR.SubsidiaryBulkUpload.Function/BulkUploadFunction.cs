@@ -32,7 +32,7 @@ public class BulkUploadFunction
         BlobClient client)
     {
         var downloadStreamingResult = await client.DownloadStreamingAsync();
-        var metaData = downloadStreamingResult.Value.Details.Metadata;
+        var metaData = downloadStreamingResult.Value.Details?.Metadata;
 
         var content = downloadStreamingResult.Value.Content;
 
@@ -44,7 +44,7 @@ public class BulkUploadFunction
             };
 
             var records = await _csvProcessor.ProcessStream<CompaniesHouseCompany, CompaniesHouseCompanyMap>(content, configuration);
-            await orchestration.Orchestrate(records);
+            await orchestration.Orchestrate(records, metaData);
 
             _logger.LogInformation("Blob trigger processed {Count} records from Client {Name}", records.Count(), client.Name);
         }
