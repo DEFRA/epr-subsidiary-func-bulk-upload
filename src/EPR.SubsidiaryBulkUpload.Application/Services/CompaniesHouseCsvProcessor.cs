@@ -6,10 +6,10 @@ using Microsoft.Extensions.Logging;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services;
 
-public class CompaniesHousCsvProcessor(
-    ILogger<CompaniesHousCsvProcessor> logger) : ICsvProcessor
+public class CompaniesHouseCsvProcessor(
+    ILogger<CompaniesHouseCsvProcessor> logger) : ICompaniesHouseCsvProcessor
 {
-    private readonly ILogger<CompaniesHousCsvProcessor> _logger = logger;
+    private readonly ILogger<CompaniesHouseCsvProcessor> _logger = logger;
 
     public async Task<int> ProcessStream(Stream stream)
     {
@@ -42,10 +42,6 @@ public class CompaniesHousCsvProcessor(
 
     public async Task<IEnumerable<T>> ProcessStreamToObject<T>(Stream stream, T streamObj)
     {
-        List<T> records;
-
-        using var streamReader = new StreamReader(stream);
-
         var config = new CsvConfiguration(CultureInfo.InvariantCulture)
         {
             PrepareHeaderForMatch = args => args.Header.Trim(),
@@ -53,12 +49,12 @@ public class CompaniesHousCsvProcessor(
             MissingFieldFound = null
         };
 
-        using (var csv = new CsvReader(streamReader, config))
-        {
-            records = csv.GetRecords<T>().ToList();
-        }
+        using var streamReader = new StreamReader(stream);
+        using var csv = new CsvReader(streamReader, config);
 
-        _logger.LogInformation("Found csv records {RecordsCount}", records.Count);
+        var records = csv.GetRecords<T>().ToList();
+
+        _logger.LogInformation("Found {RowCount} csv rows", records.Count);
 
         return records;
     }

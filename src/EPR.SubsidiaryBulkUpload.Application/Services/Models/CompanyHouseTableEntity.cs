@@ -1,9 +1,10 @@
-﻿using CsvHelper.Configuration.Attributes;
-using Microsoft.Azure.Cosmos.Table;
+﻿using Azure;
+using Azure.Data.Tables;
+using CsvHelper.Configuration.Attributes;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services.Models;
 
-public class CompanyHouseTableEntity : TableEntity
+public class CompanyHouseTableEntity : ITableEntity
 {
     [Name("CompanyName")]
     public string CompanyName { get; set; }
@@ -36,4 +37,12 @@ public class CompanyHouseTableEntity : TableEntity
     public string IncorporationDate { get; set; }
 
     public string Data { get; set; }
+
+    public string PartitionKey { get; set; }
+
+    public string RowKey { get; set; }
+
+    public DateTimeOffset? Timestamp { get; set; }
+
+    public ETag ETag { get; set; }
 }
