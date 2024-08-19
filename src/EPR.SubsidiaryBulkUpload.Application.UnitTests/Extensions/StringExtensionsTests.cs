@@ -13,7 +13,7 @@ public class StringExtensionsTests
     [DataRow("CompanyDataFile-2024-08-01.csv", "2024-08-01")]
     public void ToFindPartitionKey_ShouldFormatCorrectly(string input, string expectedResult)
     {
-        var result = input.ToPartitionKeyFormat();
+        var result = input.ToFindPartitionKey();
 
         result.Should().Be(expectedResult);
     }
