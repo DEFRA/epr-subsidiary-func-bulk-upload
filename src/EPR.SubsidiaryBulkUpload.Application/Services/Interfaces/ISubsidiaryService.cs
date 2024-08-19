@@ -8,11 +8,11 @@ public interface ISubsidiaryService
 
     Task<OrganisationModel?> GetCompanyByOrgId(CompaniesHouseCompany company);
 
-    Task<OrganisationModel> GetCompanyByOrgIdFromTableStorage(string companiesHouseNumber);
+    Task<OrganisationModel?> GetCompanyByOrgIdFromTableStorage(string companiesHouseNumber);
 
     Task<string?> CreateAndAddSubsidiaryAsync(LinkOrganisationModel linkOrganisationModel);
 
     Task<string?> AddSubsidiaryRelationshipAsync(SubsidiaryAddModel subsidiaryAddModel);
 
-    Task<bool?> GetSubsidiaryRelationshipAysnc(int parentOrganisationId, int subsidiaryOrganisationId);
+    Task<bool> GetSubsidiaryRelationshipAysnc(int parentOrganisationId, int subsidiaryOrganisationId);
 }

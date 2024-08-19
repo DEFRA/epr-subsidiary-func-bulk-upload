@@ -6,9 +6,9 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
 {
     private readonly IRecordExtraction recordExtraction;
     private readonly ISubsidiaryService organisationService;
-    private readonly IChildProcessor childProcessor;
+    private readonly IBulkSubsidiaryProcessor childProcessor;
 
-    public BulkUploadOrchestration(IRecordExtraction recordExtraction, ISubsidiaryService organisationService, IChildProcessor childProcessor)
+    public BulkUploadOrchestration(IRecordExtraction recordExtraction, ISubsidiaryService organisationService, IBulkSubsidiaryProcessor childProcessor)
     {
         this.recordExtraction = recordExtraction;
         this.organisationService = organisationService;
@@ -18,7 +18,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
     public async Task Orchestrate(IEnumerable<CompaniesHouseCompany> data, Guid userId)
     {
         // this holds all the parents and their children records from csv
-        var subsidiaryGroups = recordExtraction.ExtractParentsAndChildren(data).ToAsyncEnumerable();
+        var subsidiaryGroups = recordExtraction.ExtractParentsAndSubsidiaries(data).ToAsyncEnumerable();
 
         // this will fectch data from the org database for all the parents and filter to keep the valid ones (org exists in RPD)
         var subsidiaryGroupsAndParentOrg = subsidiaryGroups.SelectAwait(
@@ -28,7 +28,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
         await foreach(var subsidiaryGroupAndParentOrg in subsidiaryGroupsAndParentOrg)
         {
             await childProcessor.Process(
-                subsidiaryGroupAndParentOrg.SubsidiaryGroup.Children,
+                subsidiaryGroupAndParentOrg.SubsidiaryGroup.Subsidiaries,
                 subsidiaryGroupAndParentOrg.SubsidiaryGroup.Parent,
                 subsidiaryGroupAndParentOrg.Org,
                 userId);

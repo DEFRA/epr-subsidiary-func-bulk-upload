@@ -62,12 +62,12 @@ public class SubsidiaryService : ISubsidiaryService
         return await response.Content.ReadFromJsonWithEnumsAsync<OrganisationModel>();
     }
 
-    public async Task<bool?> GetSubsidiaryRelationshipAysnc(int parentOrganisationId, int subsidiaryOrganisationId)
+    public async Task<bool> GetSubsidiaryRelationshipAysnc(int parentOrganisationId, int subsidiaryOrganisationId)
     {
         var response = await _httpClient.GetAsync($"{OrganisationRelationshipsByIdUri}?parentId={parentOrganisationId}&subsidiaryId={subsidiaryOrganisationId}");
         if (response.StatusCode == HttpStatusCode.NoContent)
         {
-            return null;
+            return false;
         }
 
         if (!response.IsSuccessStatusCode)
@@ -114,7 +114,7 @@ public class SubsidiaryService : ISubsidiaryService
         return orgResponse.Result.ToList().FirstOrDefault();
     }
 
-    public async Task<OrganisationModel> GetCompanyByOrgIdFromTableStorage(string companiesHouseNumber)
+    public async Task<OrganisationModel?> GetCompanyByOrgIdFromTableStorage(string companiesHouseNumber)
     {
         List<OrganisationModel> companies = new List<OrganisationModel>();
 

@@ -5,7 +5,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services;
 
 public class RecordExtraction : IRecordExtraction
 {
-    public IEnumerable<ParentAndSubsidiaries> ExtractParentsAndChildren(IEnumerable<CompaniesHouseCompany> source)
+    public IEnumerable<ParentAndSubsidiaries> ExtractParentsAndSubsidiaries(IEnumerable<CompaniesHouseCompany> source)
     {
         var groups = source.GroupBy(s => s.organisation_id);
 
@@ -13,11 +13,11 @@ public class RecordExtraction : IRecordExtraction
         {
             var parent = group.SingleOrDefault(g => g.parent_child == "Parent");
 
-            var children = group.Where(g => g.parent_child != "Parent");
+            var subsidiaries = group.Where(g => g.parent_child != "Parent");
 
-            if (parent != null && children.Any())
+            if (parent != null && subsidiaries.Any())
             {
-                yield return new ParentAndSubsidiaries { Parent = parent, Children = children.ToList() };
+                yield return new ParentAndSubsidiaries { Parent = parent, Subsidiaries = subsidiaries.ToList() };
             }
         }
     }

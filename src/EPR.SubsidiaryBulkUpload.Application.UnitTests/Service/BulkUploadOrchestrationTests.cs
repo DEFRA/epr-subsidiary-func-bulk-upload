@@ -26,13 +26,13 @@ public class BulkUploadOrchestrationTests
 
         var recordExtraction = new Mock<IRecordExtraction>();
         var subsidiaryService = new Mock<ISubsidiaryService>();
-        var childProcessor = new Mock<IChildProcessor>();
+        var bulkSubsidiaryProcessor = new Mock<IBulkSubsidiaryProcessor>();
 
-        recordExtraction.Setup(re => re.ExtractParentsAndChildren(companyData)).Returns(parentAndSubsidiaries);
+        recordExtraction.Setup(re => re.ExtractParentsAndSubsidiaries(companyData)).Returns(parentAndSubsidiaries);
 
         subsidiaryService.Setup(se => se.GetCompanyByCompaniesHouseNumber(It.IsAny<string>())).ReturnsAsync(orgModel);
 
-        var orchestrator = new BulkUploadOrchestration(recordExtraction.Object, subsidiaryService.Object, childProcessor.Object);
+        var orchestrator = new BulkUploadOrchestration(recordExtraction.Object, subsidiaryService.Object, bulkSubsidiaryProcessor.Object);
 
         var userId = Guid.NewGuid();
 
@@ -42,7 +42,7 @@ public class BulkUploadOrchestrationTests
         // Assert
         foreach(var set in parentAndSubsidiaries)
         {
-            childProcessor.Verify(cp => cp.Process(set.Children, set.Parent, orgModel, userId));
+            bulkSubsidiaryProcessor.Verify(cp => cp.Process(set.Subsidiaries, set.Parent, orgModel, userId));
         }
     }
 }
