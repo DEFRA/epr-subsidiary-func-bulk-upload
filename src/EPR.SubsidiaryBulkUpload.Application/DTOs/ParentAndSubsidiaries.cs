@@ -4,5 +4,5 @@ public class ParentAndSubsidiaries
 {
     public CompaniesHouseCompany Parent { get; set; }
 
-    public List<CompaniesHouseCompany> Children { get; set; }
+    public List<CompaniesHouseCompany> Subsidiaries { get; set; }
 }

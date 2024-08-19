@@ -1,14 +1,4 @@
-﻿/*using System.Globalization;
-using Azure.Storage.Blobs;
-using CsvHelper;
-using CsvHelper.Configuration;
-using EPR.SubsidiaryBulkUpload.Application.DTOs;
-using EPR.SubsidiaryBulkUpload.Application.Models;
-using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
-using Microsoft.Azure.Functions.Worker;
-using Microsoft.Extensions.Logging;*/
-
-using System.Globalization;
+﻿using System.Globalization;
 using Azure.Storage.Blobs;
 using CsvHelper.Configuration;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
@@ -52,7 +42,7 @@ public class BulkUploadFunction
             };
 
             var records = await _csvProcessor.ProcessStream<CompaniesHouseCompany, CompaniesHouseCompanyMap>(content, configuration);
-            await orchestration.Orchestrate(records);
+            await orchestration.Orchestrate(records, Guid.NewGuid());
 
             _logger.LogInformation("Blob trigger processed {Count} records from Client {Name}", records.Count(), client.Name);
         }
