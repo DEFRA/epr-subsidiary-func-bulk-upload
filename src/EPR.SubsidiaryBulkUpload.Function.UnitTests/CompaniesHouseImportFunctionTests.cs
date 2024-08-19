@@ -25,7 +25,7 @@ public class CompaniesHouseImportFunctionTests
         """;
 
     private Mock<BlobClient> _blobClientMock;
-    private Mock<ICsvProcessor> _csvProcessorMock;
+    private Mock<ICompaniesHouseCsvProcessor> _csvProcessorMock;
     private Mock<ITableStorageProcessor> _tableStorageProcessor;
     private Mock<ILogger<CompaniesHouseImportFunction>> _loggerMock;
     private Mock<IOptions<ConfigOptions>> _configOptionsMock;
@@ -55,7 +55,7 @@ public class CompaniesHouseImportFunctionTests
         _blobClientMock.Setup(client => client.DownloadStreamingAsync(It.IsAny<BlobDownloadOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(response);
 
-        _csvProcessorMock = new Mock<ICsvProcessor>();
+        _csvProcessorMock = new Mock<ICompaniesHouseCsvProcessor>();
         _csvProcessorMock.Setup(x => x.ProcessStream(It.IsAny<Stream>()))
         .ReturnsAsync(CsvRowCount);
 
@@ -77,7 +77,7 @@ public class CompaniesHouseImportFunctionTests
     {
         // Arrange
         _csvProcessorMock.Setup(x => x.ProcessStreamToObject(It.IsAny<Stream>(), It.IsAny<CompanyHouseTableEntity>()))
-            .ReturnsAsync(new List<CompanyHouseTableEntity> { new CompanyHouseTableEntity { CompanyName = "test" }, new CompanyHouseTableEntity { CompanyName = "test2" } });
+            .ReturnsAsync(new List<CompanyHouseTableEntity> { new() { CompanyName = "test" }, new() { CompanyName = "test2" } });
 
         // Act
         await _systemUnderTest.Run(_blobClientMock.Object);
@@ -88,11 +88,11 @@ public class CompaniesHouseImportFunctionTests
     }
 
     [TestMethod]
-    public async Task CompaniesHouseImportFunctionn_Logs_Result()
+    public async Task CompaniesHouseImportFunction_Logs_Result()
     {
         // Arrange
         _csvProcessorMock.Setup(x => x.ProcessStreamToObject(It.IsAny<Stream>(), It.IsAny<CompanyHouseTableEntity>()))
-            .ReturnsAsync(new List<CompanyHouseTableEntity> { new CompanyHouseTableEntity { CompanyName = "test" }, new CompanyHouseTableEntity { CompanyName = "test2" } });
+            .ReturnsAsync(new List<CompanyHouseTableEntity> { new() { CompanyName = "test" }, new() { CompanyName = "test2" } });
 
         // Act
         await _systemUnderTest.Run(_blobClientMock.Object);
@@ -103,7 +103,7 @@ public class CompaniesHouseImportFunctionTests
     }
 
     [TestMethod]
-    public async Task CompaniesHouseImportFunctionn_Logs_Result_When_NoPartitionKeyInFileName()
+    public async Task CompaniesHouseImportFunction_Logs_Result_When_NoPartitionKeyInFileName()
     {
         // Arrange
         _blobClientMock

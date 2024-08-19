@@ -6,7 +6,7 @@ Functions to handle bulk upload of subsidiary data.
 
 
 ## Running on a developer machine
-To run locally, create a file `local.settings.json`. This file is in .gitignore.
+To run locally, create a file `local.settings.json`. This file is in `.gitignore`.
 
 ```
 {
@@ -17,6 +17,8 @@ To run locally, create a file `local.settings.json`. This file is in .gitignore.
     "BlobStorage__ConnectionString": "UseDevelopmentStorage=true",
     "BlobStorage__SubsidiaryContainerName": "subsidiary-upload-container",
     "BlobStorage__CompaniesHouseContainerName": "subsidiary-companies-house-upload-container",
+    "TableStorage__ConnectionString": "UseDevelopmentStorage=true",
+    "CompaniesHouseOfflineData__TableName": "CompaniesHouseData",
     "CompaniesHouseDownload__Schedule": "0 */5 * * * *"
   }
 }

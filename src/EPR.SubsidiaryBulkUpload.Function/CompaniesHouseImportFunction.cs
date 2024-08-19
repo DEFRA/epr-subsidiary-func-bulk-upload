@@ -1,5 +1,5 @@
 ﻿using Azure.Storage.Blobs;
-using EPR.SubsidiaryBulkUpload.Application.Services.Extensions;
+using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using EPR.SubsidiaryBulkUpload.Application.Services.Models;
 using Microsoft.Azure.Functions.Worker;
@@ -12,12 +12,12 @@ public class CompaniesHouseImportFunction
 {
     private const int BatchSize = 100; // Maximum batch size for Azure Table Storage
 
-    private readonly ICsvProcessor _csvProcessor;
+    private readonly ICompaniesHouseCsvProcessor _csvProcessor;
     private readonly ITableStorageProcessor _tableStorageProcessor;
     private readonly ILogger<CompaniesHouseImportFunction> _logger;
     private readonly ConfigOptions _configOptions;
 
-    public CompaniesHouseImportFunction(ILogger<CompaniesHouseImportFunction> logger, ICsvProcessor csvProcessor, ITableStorageProcessor tableStorageProcessor, IOptions<ConfigOptions> configOptions)
+    public CompaniesHouseImportFunction(ILogger<CompaniesHouseImportFunction> logger, ICompaniesHouseCsvProcessor csvProcessor, ITableStorageProcessor tableStorageProcessor, IOptions<ConfigOptions> configOptions)
     {
         _logger = logger;
         _csvProcessor = csvProcessor;
