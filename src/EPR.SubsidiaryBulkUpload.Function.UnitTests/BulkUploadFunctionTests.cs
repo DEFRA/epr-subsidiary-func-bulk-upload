@@ -1,7 +1,12 @@
-﻿using System.Text;
+﻿using System.Globalization;
+using System.Text;
 using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using CsvHelper.Configuration;
+using EPR.SubsidiaryBulkUpload.Application.DTOs;
+using EPR.SubsidiaryBulkUpload.Application.Models;
+using EPR.SubsidiaryBulkUpload.Application.Services;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using EPR.SubsidiaryBulkUpload.Function.UnitTests.TestHelpers;
 using Microsoft.Extensions.Logging;
@@ -26,6 +31,7 @@ public class BulkUploadFunctionTests
     private Mock<BlobClient> _blobClientMock;
     private Mock<ICsvProcessor> _csvProcessorMock;
     private Mock<ILogger<BulkUploadFunction>> _loggerMock;
+    private Mock<IBulkUploadOrchestration> _bulkUploadOrchestrationMock;
 
     private BulkUploadFunction _systemUnderTest;
 
@@ -45,7 +51,7 @@ public class BulkUploadFunctionTests
 
         var downloadStreamingDetails = BlobsModelBuilder.CreateBlobDownloadDetails(
             CsvContent.Length,
-            new Dictionary<string, string> { { "test", "test" } });
+            new Dictionary<string, string> { { "userId", Guid.NewGuid().ToString() } });
 
         var downloadStreamingResult = BlobsModelFactory.BlobDownloadStreamingResult(stream, downloadStreamingDetails);
 
@@ -54,12 +60,15 @@ public class BulkUploadFunctionTests
             .ReturnsAsync(response);
 
         _csvProcessorMock = new Mock<ICsvProcessor>();
-        _csvProcessorMock.Setup(x => x.ProcessStream(It.IsAny<Stream>()))
-            .ReturnsAsync(CsvRowCount);
+
+        _bulkUploadOrchestrationMock = new Mock<IBulkUploadOrchestration>();
+
+        _csvProcessorMock.Setup(x => x.ProcessStream<CompaniesHouseCompany, CompaniesHouseCompanyMap>(It.IsAny<Stream>(), It.IsAny<CsvConfiguration>()))
+        .ReturnsAsync(new List<CompaniesHouseCompany> { new() { companies_house_number = "test" }, new() { organisation_name = "test" } });
 
         _loggerMock = new Mock<ILogger<BulkUploadFunction>>();
 
-        _systemUnderTest = new BulkUploadFunction(_loggerMock.Object, _csvProcessorMock.Object);
+        _systemUnderTest = new BulkUploadFunction(_loggerMock.Object, _csvProcessorMock.Object, _bulkUploadOrchestrationMock.Object);
     }
 
     [TestMethod]
@@ -69,7 +78,7 @@ public class BulkUploadFunctionTests
         await _systemUnderTest.Run(_blobClientMock.Object);
 
         // Assert
-        _csvProcessorMock.Verify(x => x.ProcessStream(It.IsAny<Stream>()), Times.Once);
+        _csvProcessorMock.Verify(x => x.ProcessStream<CompaniesHouseCompany, CompaniesHouseCompanyMap>(It.IsAny<Stream>(), It.IsAny<CsvConfiguration>()), Times.Once);
     }
 
     [TestMethod]
@@ -79,6 +88,6 @@ public class BulkUploadFunctionTests
         await _systemUnderTest.Run(_blobClientMock.Object);
 
         // Assert
-        _loggerMock.VerifyLog(x => x.LogInformation("C# Blob trigger processed {Count} records from csv blob {Name}", CsvRowCount, CsvBlobName), Times.Once);
+        _loggerMock.VerifyLog(x => x.LogInformation("Blob trigger processed {Count} records from csv blob {Name}", CsvRowCount, CsvBlobName), Times.Once);
     }
 }

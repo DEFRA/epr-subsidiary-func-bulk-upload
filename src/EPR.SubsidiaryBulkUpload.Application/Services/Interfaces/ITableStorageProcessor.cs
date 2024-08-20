@@ -1,4 +1,4 @@
-﻿using EPR.SubsidiaryBulkUpload.Application.Services.Models;
+﻿using EPR.SubsidiaryBulkUpload.Application.Models;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 
