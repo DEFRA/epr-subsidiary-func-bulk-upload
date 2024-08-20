@@ -1,4 +1,4 @@
-﻿namespace EPR.SubsidiaryBulkUpload.Function;
+﻿namespace EPR.SubsidiaryBulkUpload.Application.Configs;
 
 public class ConfigOptions
 {

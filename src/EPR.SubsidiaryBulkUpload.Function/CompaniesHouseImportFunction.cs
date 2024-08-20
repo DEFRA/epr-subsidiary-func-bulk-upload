@@ -1,4 +1,5 @@
 ﻿using Azure.Storage.Blobs;
+using EPR.SubsidiaryBulkUpload.Application.Configs;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;

@@ -33,7 +33,11 @@ public class BulkUploadFunction
         var userGuid = metaData.Where(pair => pair.Key.Contains("userId"))
                         .Select(pair => pair.Value).FirstOrDefault();
 
-        var userId = Guid.Parse(userGuid);
+        var hasUserId = Guid.TryParse(userGuid, out var userId);
+        if (!hasUserId)
+        {
+            _logger.LogWarning("Missing userId metadata for blob {Name}", client.Name);
+        }
 
         var content = downloadStreamingResult.Value.Content;
 

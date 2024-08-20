@@ -129,7 +129,6 @@ public static class ConfigurationExtensions
 
     public static IServiceCollection AddServices(this IServiceCollection services, IConfiguration configuration)
     {
-        // Add subsidiary bulk upload services...
         services.AddTransient<IBulkUploadOrchestration, BulkUploadOrchestration>();
         services.AddTransient<IBulkSubsidiaryProcessor, BulkSubsidiaryProcessor>();
         services.AddTransient<ICompaniesHouseDataProvider, CompaniesHouseDataProvider>();
@@ -138,6 +137,7 @@ public static class ConfigurationExtensions
         services.AddTransient<ICompaniesHouseCsvProcessor, CompaniesHouseCsvProcessor>();
         services.AddTransient<ITableStorageProcessor, TableStorageProcessor>();
         services.AddTransient<IAzureStorageTableService, AzureStorageTableService>();
+        services.AddTransient<ISubsidiaryService, SubsidiaryService>();
 
         var isDevMode = configuration["ApiConfig:DeveloperMode"]; // configuration.GetValue<bool>("DeveloperMode");
         if (isDevMode == "true")
@@ -149,13 +149,6 @@ public static class ConfigurationExtensions
             services.AddTransient<ICompaniesHouseLookupService, CompaniesHouseLookupService>();
         }
 
-        services.AddTransient<ISubsidiaryService, SubsidiaryService>();
-
-        // services.AddAzureClients(clientBuilder =>
-        // {
-        //    clientBuilder.AddTableServiceClient(configuration["ConnectionStrings:tablestorage"]!, preferMsi: true);
-        //    clientBuilder.AddBlobServiceClient(configuration["ConnectionStrings:blob"]!, preferMsi: true);
-        // });
         return services;
     }
 
@@ -170,8 +163,8 @@ public static class ConfigurationExtensions
         handler.ClientCertificateOptions = ClientCertificateOption.Manual;
         handler.SslProtocols = SslProtocols.Tls12;
         handler.ClientCertificates
-        .Add(new X509Certificate2(
-        Convert.FromBase64String(sp.GetRequiredService<IOptions<ApiConfig>>().Value.Certificate)));
+            .Add(new X509Certificate2(
+                Convert.FromBase64String(sp.GetRequiredService<IOptions<ApiConfig>>().Value.Certificate)));
 
         return handler;
     }

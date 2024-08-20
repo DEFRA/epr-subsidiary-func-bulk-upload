@@ -1,9 +1,11 @@
-﻿using Azure;
+﻿using System.Diagnostics.CodeAnalysis;
+using Azure;
 using Azure.Data.Tables;
 using CsvHelper.Configuration.Attributes;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Models;
 
+[ExcludeFromCodeCoverage]
 public class CompanyHouseTableEntity : ITableEntity
 {
     [Name("CompanyName")]
