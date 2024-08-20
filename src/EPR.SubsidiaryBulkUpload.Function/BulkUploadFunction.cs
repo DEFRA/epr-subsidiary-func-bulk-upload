@@ -1,4 +1,8 @@
-﻿using Azure.Storage.Blobs;
+﻿using System.Globalization;
+using Azure.Storage.Blobs;
+using CsvHelper.Configuration;
+using EPR.SubsidiaryBulkUpload.Application.DTOs;
+using EPR.SubsidiaryBulkUpload.Application.Services;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
@@ -7,41 +11,44 @@ namespace EPR.SubsidiaryBulkUpload.Function;
 
 public class BulkUploadFunction
 {
+    private readonly ILogger<BulkUploadFunction> _logger;
     private readonly ICsvProcessor _csvProcessor;
-    private readonly ILogger<BulkUploadFunction> _loggerMock;
+    private readonly IBulkUploadOrchestration _orchestration;
 
-    public BulkUploadFunction(ILogger<BulkUploadFunction> logger, ICsvProcessor csvProcessor)
+    public BulkUploadFunction(ILogger<BulkUploadFunction> logger, ICsvProcessor csvProcessor, IBulkUploadOrchestration orchestration)
     {
-        _loggerMock = logger;
+        _logger = logger;
         _csvProcessor = csvProcessor;
+        _orchestration = orchestration;
     }
 
     [Function(nameof(BulkUploadFunction))]
     public async Task Run(
-       [BlobTrigger("%BlobStorage:SubsidiaryContainerName%", Connection = "BlobStorage:ConnectionString")]
-       BlobClient client)
+        [BlobTrigger("%BlobStorage:SubsidiaryContainerName%/{name}", Connection = "BlobStorage:ConnectionString")]
+        BlobClient client)
     {
         var downloadStreamingResult = await client.DownloadStreamingAsync();
+        var metaData = downloadStreamingResult.Value.Details?.Metadata;
 
-        var metadata = downloadStreamingResult.Value.Details.Metadata;
-        if (metadata is not null && metadata.Count > 0)
+        var userGuid = metaData.Where(pair => pair.Key.Contains("userId"))
+                        .Select(pair => pair.Value).FirstOrDefault();
+
+        var hasUserId = Guid.TryParse(userGuid, out var userId);
+        if (!hasUserId)
         {
-            foreach (var metadataItem in metadata)
-            {
-                _loggerMock.LogInformation("Blob {Name} has metadata {Key} {Value}", client.Name, metadataItem.Key, metadataItem.Value);
-            }
+            _logger.LogWarning("Missing userId metadata for blob {Name}", client.Name);
         }
 
         var content = downloadStreamingResult.Value.Content;
 
-        if (Path.GetExtension(client.Name) == ".csv")
+        var configuration = new CsvConfiguration(CultureInfo.InvariantCulture)
         {
-            var recordsProcessed = await _csvProcessor.ProcessStream(content);
-            _loggerMock.LogInformation("C# Blob trigger processed {Count} records from csv blob {Name}", recordsProcessed, client.Name);
-        }
-        else
-        {
-            _loggerMock.LogInformation("C# Blob trigger function did not processed non-csv blob {Name}", client.Name);
-        }
+            HasHeaderRecord = true,
+        };
+
+        var records = await _csvProcessor.ProcessStream<CompaniesHouseCompany, CompaniesHouseCompanyMap>(content, configuration);
+        await _orchestration.Orchestrate(records, userId);
+
+        _logger.LogInformation("Blob trigger processed {Count} records from csv blob {Name}", records.Count(), client.Name);
     }
 }

@@ -1,14 +1,24 @@
-﻿namespace EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
+﻿using CsvHelper;
+using CsvHelper.Configuration;
+using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
+using Microsoft.Extensions.Logging;
 
-public class CsvProcessor : ICsvProcessor
+namespace EPR.SubsidiaryBulkUpload.Application.Services
 {
-    public async Task<int> ProcessStream(Stream stream)
+    public class CsvProcessor(
+        ILogger<CsvProcessor> logger) : ICsvProcessor
     {
-        return 0;
-    }
+        private readonly ILogger<CsvProcessor> _logger = logger;
 
-    public async Task<IEnumerable<T>> ProcessStreamToObject<T>(Stream stream, T streamObj)
-    {
-        return null;
+        public async Task<IEnumerable<TD>> ProcessStream<TD, TM>(Stream stream, IReaderConfiguration configuration)
+            where TM : ClassMap
+        {
+            using (var reader = new StreamReader(stream))
+            using (var csv = new CsvReader(reader, configuration))
+            {
+                csv.Context.RegisterClassMap<TM>();
+                return csv.GetRecords<TD>().ToList();
+            }
+        }
     }
 }
