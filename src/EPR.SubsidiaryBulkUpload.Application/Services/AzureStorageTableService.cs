@@ -17,12 +17,12 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
 
         public async Task<List<Company>> GetAll()
         {
-            List<Company> companies = new List<Company>();
+            var companies = new List<Company>();
             var tableResult = _tableClient.QueryAsync<CompanyHouseTableEntity>();
 
             await foreach (var entity in tableResult)
             {
-                var company = new Company()
+                var company = new Company
                 {
                     Name = entity.CompanyName,
                     CompaniesHouseNumber = entity.CompanyNumber
@@ -37,14 +37,20 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
         {
             string partitionKey = string.Empty;
 
+            // TODO: await this and use the value directly
             var tableResult = _tableClient.QueryAsync<CompanyHouseTableEntity>(filter: e => e.CompanyNumber == companiesHouseNumber).FirstOrDefaultAsync();
+            if(tableResult.Result is null)
+            {
+                return null;
+            }
+
             var company = new OrganisationModel()
             {
                 Name = tableResult.Result.CompanyName,
                 CompaniesHouseNumber = tableResult.Result.CompanyNumber,
             };
 
-            AddressModel address = new AddressModel()
+            var address = new AddressModel
             {
                 Street = tableResult.Result.RegAddressAddressLine1,
                 County = tableResult.Result.RegAddressCounty,
@@ -62,7 +68,12 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             string partitionKey = string.Empty;
 
             var tableResult = await _tableClient.GetEntityAsync<TableEntity>(partitionKey, id);
-            var company = new Company()
+            if (tableResult.Value is null)
+            {
+                return null;
+            }
+
+            var company = new Company
             {
                 Name = tableResult.Value.GetString("CompanyName"),
                 CompaniesHouseNumber = tableResult.Value.GetString("CompanyNumber"),
