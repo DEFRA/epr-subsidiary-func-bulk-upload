@@ -1,10 +1,13 @@
-﻿using System.Net;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Net;
 using System.Net.Http.Json;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services;
+
+[ExcludeFromCodeCoverage(Justification = "Intended for use by developers because the cloud solution cannot be run from local developer systems")]
 public class CompaniesHouseLookupDirectService : ICompaniesHouseLookupService
 {
     private const string CompaniesHouseEndpoint = "/company";

@@ -80,7 +80,6 @@ public class SubsidiaryService : ISubsidiaryService
             }
         }
 
-        response.EnsureSuccessStatusCode();
         var orgResponse = response.Content.ReadFromJsonAsync<bool>();
 
         if (orgResponse == null || orgResponse.Result == false)

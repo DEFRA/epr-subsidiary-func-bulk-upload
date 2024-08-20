@@ -1,10 +1,12 @@
-﻿using System.Net;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Net;
 using System.Runtime.Serialization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Exceptions;
 
 [Serializable]
+[ExcludeFromCodeCoverage(Justification ="Exceptions are not tested; Their use is confirmed in service tests")]
 public class ProblemResponseException : Exception
 {
     public ProblemResponseException(ProblemDetails problemDetailsDetails, HttpStatusCode statusCode)
