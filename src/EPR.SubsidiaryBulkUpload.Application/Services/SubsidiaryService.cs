@@ -1,8 +1,8 @@
 ﻿namespace EPR.SubsidiaryBulkUpload.Application.Services;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
+using EPR.SubsidiaryBulkUpload.Application.Configs;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Exceptions;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
@@ -11,6 +11,7 @@ using Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
 public class SubsidiaryService : ISubsidiaryService
@@ -25,18 +26,21 @@ public class SubsidiaryService : ISubsidiaryService
     private readonly ILogger<SubsidiaryService> _logger;
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _config;
-    private readonly IAzureStorageTableService _azureTableStorageService;
+    private readonly IOptions<ConfigOptions> _configOptions;
+    private readonly ITableStorageProcessor _tableStorageService;
 
     public SubsidiaryService(
         HttpClient httpClient,
         ILogger<SubsidiaryService> logger,
         IConfiguration config,
-        IAzureStorageTableService azureTableStorageService)
+        IOptions<ConfigOptions> configOptions,
+        ITableStorageProcessor azureTableStorageService)
     {
         _httpClient = httpClient;
         _logger = logger;
         _config = config;
-        _azureTableStorageService = azureTableStorageService;
+        _configOptions = configOptions;
+        _tableStorageService = azureTableStorageService;
     }
 
     public async Task<OrganisationModel?> GetCompanyByOrgId(CompaniesHouseCompany company)
@@ -115,8 +119,29 @@ public class SubsidiaryService : ISubsidiaryService
 
     public async Task<OrganisationModel?> GetCompanyByOrgIdFromTableStorage(string companiesHouseNumber)
     {
-        List<OrganisationModel> companies = new List<OrganisationModel>();
-        return await _azureTableStorageService.GetByCompanyNumber(companiesHouseNumber);
+        OrganisationModel? orgModel = null;
+
+        var tableName = _configOptions.Value.CompaniesHouseOfflineDataTableName;
+        var companiesHouseCompany = await _tableStorageService.GetByCompanyNumber(companiesHouseNumber, tableName);
+
+        if (companiesHouseCompany != null)
+        {
+            orgModel = new OrganisationModel()
+            {
+                Name = companiesHouseCompany.CompanyName,
+                CompaniesHouseNumber = companiesHouseCompany.CompanyNumber,
+                Address = new AddressModel
+                {
+                    Street = companiesHouseCompany.RegAddressAddressLine1,
+                    County = companiesHouseCompany.RegAddressCounty,
+                    Postcode = companiesHouseCompany.RegAddressPostCode,
+                    Town = companiesHouseCompany.RegAddressPostTown,
+                    Country = companiesHouseCompany.RegAddressCountry
+                }
+            };
+        }
+
+        return orgModel;
     }
 
     public async Task<string?> CreateAndAddSubsidiaryAsync(LinkOrganisationModel linkOrganisationModel)

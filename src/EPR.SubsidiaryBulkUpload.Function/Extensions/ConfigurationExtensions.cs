@@ -135,7 +135,6 @@ public static class ConfigurationExtensions
         services.AddTransient<IRecordExtraction, RecordExtraction>();
         services.AddTransient<ICsvProcessor, CsvProcessor>();
         services.AddTransient<ITableStorageProcessor, TableStorageProcessor>();
-        services.AddTransient<IAzureStorageTableService, AzureStorageTableService>();
         services.AddTransient<ISubsidiaryService, SubsidiaryService>();
 
         var isDevMode = configuration["ApiConfig:DeveloperMode"]; // configuration.GetValue<bool>("DeveloperMode");

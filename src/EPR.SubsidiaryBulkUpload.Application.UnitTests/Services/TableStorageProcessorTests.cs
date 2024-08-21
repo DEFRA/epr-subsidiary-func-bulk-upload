@@ -1,4 +1,5 @@
-﻿using Azure;
+﻿using System;
+using Azure;
 using Azure.Data.Tables;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services;
@@ -13,6 +14,7 @@ public class TableStorageProcessorTests
     private Mock<TableClient> _mockTableClient;
     private Mock<ILogger<TableStorageProcessor>> _mockLogger;
     private TableStorageProcessor _processor;
+    private Fixture _fixture;
 
     [TestInitialize]
     public void Setup()
@@ -25,6 +27,8 @@ public class TableStorageProcessorTests
             .Returns(_mockTableClient.Object);
 
         _processor = new TableStorageProcessor(_mockTableServiceClient.Object, _mockLogger.Object);
+
+        _fixture = new Fixture();
     }
 
     [TestMethod]
@@ -46,8 +50,6 @@ public class TableStorageProcessorTests
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(Mock.Of<Response>());
 
-        _mockTableClient.Setup(x => x.SubmitTransactionAsync(It.IsAny<IEnumerable<TableTransactionAction>>(), default));
-
         _mockTableClient.Setup(x => x.DeleteEntityAsync(
             It.IsAny<string>(),
             It.IsAny<string>(),
@@ -68,17 +70,10 @@ public class TableStorageProcessorTests
             Times.Once);
         _mockTableClient.Verify(x => x.SubmitTransactionAsync(It.IsAny<IEnumerable<TableTransactionAction>>(), default), Times.Exactly(1));
         _mockTableClient.Verify(x => x.UpsertEntityAsync(It.Is<CompanyHouseTableEntity>(e => e.RowKey == "Latest"), TableUpdateMode.Merge, default), Times.Once);
-        ////_mockTableClient.Verify(
-        ////    x => x.DeleteEntityAsync(
-        ////    It.IsAny<string>(),
-        ////    It.IsAny<string>(),
-        ////    It.IsAny<ETag>(),
-        ////    default),
-        ////    Times.Once);
     }
 
     [TestMethod]
-    public async Task WriteToAzureTableStorage_ShouldLogErrorAndRethrowException_OnFailure()
+    public async Task WriteToAzureTableStorage_ShouldDEleteEntityLogErrorAndRethrowException_OnFailure()
     {
         // Arrange
         var records = new List<CompanyHouseTableEntity>
@@ -87,9 +82,6 @@ public class TableStorageProcessorTests
             };
 
         var exception = new Exception("Test Exception");
-
-        _mockTableClient.Setup(x => x.CreateIfNotExistsAsync(default));
-        ////.ReturnsAsync(Mock.Of<Response>());
 
         _mockTableClient.Setup(x => x.UpsertEntityAsync(It.IsAny<CompanyHouseTableEntity>(), TableUpdateMode.Merge, default))
             .ThrowsAsync(exception);
@@ -127,5 +119,50 @@ public class TableStorageProcessorTests
 
         // Assert
         _mockTableClient.Verify(x => x.UpsertEntityAsync(It.Is<CompanyHouseTableEntity>(e => e.PartitionKey == "EmptyPartitionKey" && e.RowKey == "Current Ingestion"), TableUpdateMode.Merge, default), Times.Once);
+    }
+
+    [TestMethod]
+    public async Task ShouldGetCompaniesFromStorage()
+    {
+        // Arrange
+        var companyData = _fixture.Create<CompanyHouseTableEntity>();
+        var partitionData = _fixture.Create<CompanyHouseTableEntity>();
+
+        var companyResponse = new Mock<Response<CompanyHouseTableEntity>>();
+        var partitionResponse = new Mock<Response<CompanyHouseTableEntity>>();
+
+        companyResponse.Setup(x => x.Value).Returns(companyData);
+        partitionResponse.Setup(x => x.Value).Returns(partitionData);
+
+        _mockTableClient.Setup(tc =>
+            tc.GetEntityAsync<CompanyHouseTableEntity>(TableStorageProcessor.LatestCHData, TableStorageProcessor.Latest, null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(partitionResponse.Object);
+
+        _mockTableClient.Setup(tc =>
+            tc.GetEntityAsync<CompanyHouseTableEntity>(partitionData.Data, companyData.CompanyNumber, null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(companyResponse.Object);
+
+        // Act
+        var actual = await _processor.GetByCompanyNumber(companyData.CompanyNumber, "table");
+
+        // Assert
+        actual.Should().BeEquivalentTo(companyData);
+    }
+
+    [TestMethod]
+    public async Task ShouldNotGetCompaniesWhenCannotGetPartition()
+    {
+        // Arrange
+        var exception = new Exception("error");
+
+        _mockTableClient.Setup(tc =>
+            tc.GetEntityAsync<CompanyHouseTableEntity>(TableStorageProcessor.LatestCHData, TableStorageProcessor.Latest, null, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(exception);
+
+        // Act
+        var actual = await _processor.GetByCompanyNumber("companyNumber", "table");
+
+        // Assert
+        actual.Should().BeNull();
     }
 }
