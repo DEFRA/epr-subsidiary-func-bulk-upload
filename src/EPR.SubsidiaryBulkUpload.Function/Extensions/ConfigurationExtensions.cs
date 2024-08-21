@@ -12,6 +12,7 @@ using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using StackExchange.Redis;
 
 [ExcludeFromCodeCoverage]
 public static class ConfigurationExtensions
@@ -28,6 +29,7 @@ public static class ConfigurationExtensions
         });
 
         services.Configure<ApiConfig>(configuration.GetSection(ApiConfig.SectionName));
+        services.Configure<RedisConfig>(configuration.GetSection(RedisConfig.SectionName));
         services.Configure<HttpClientOptions>(configuration.GetSection(HttpClientOptions.ConfigSection));
         return services;
     }
@@ -129,6 +131,8 @@ public static class ConfigurationExtensions
 
     public static IServiceCollection AddServices(this IServiceCollection services, IConfiguration configuration)
     {
+        var sp = services.BuildServiceProvider();
+        var redisConfig = sp.GetRequiredService<IOptions<RedisConfig>>().Value;
         services.AddTransient<IBulkUploadOrchestration, BulkUploadOrchestration>();
         services.AddTransient<IBulkSubsidiaryProcessor, BulkSubsidiaryProcessor>();
         services.AddTransient<ICompaniesHouseDataProvider, CompaniesHouseDataProvider>();
@@ -138,7 +142,8 @@ public static class ConfigurationExtensions
         services.AddTransient<ITableStorageProcessor, TableStorageProcessor>();
         services.AddTransient<IAzureStorageTableService, AzureStorageTableService>();
         services.AddTransient<ISubsidiaryService, SubsidiaryService>();
-        services.AddTransient<IRedisNotificationService, RedisNotificationService>();
+        services.AddTransient<INotificationService, NotificationService>();
+        services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConfig.ConnectionString));
 
         var isDevMode = configuration["ApiConfig:DeveloperMode"]; // configuration.GetValue<bool>("DeveloperMode");
         if (isDevMode == "true")
