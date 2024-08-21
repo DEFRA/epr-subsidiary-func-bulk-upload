@@ -47,7 +47,7 @@ public class BulkUploadFunction
         };
 
         var records = await _csvProcessor.ProcessStream<CompaniesHouseCompany, CompaniesHouseCompanyMap>(content, configuration);
-        await _orchestration.Orchestrate(records, userId);
+        await _orchestration.Orchestrate(records, userId, metaData);
 
         _logger.LogInformation("Blob trigger processed {Count} records from csv blob {Name}", records.Count(), client.Name);
     }
