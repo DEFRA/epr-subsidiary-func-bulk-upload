@@ -1,6 +1,5 @@
 ﻿using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Models;
-using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services;

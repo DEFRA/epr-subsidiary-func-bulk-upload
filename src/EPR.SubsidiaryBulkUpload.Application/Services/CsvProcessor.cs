@@ -1,6 +1,5 @@
 ﻿using CsvHelper;
 using CsvHelper.Configuration;
-using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services

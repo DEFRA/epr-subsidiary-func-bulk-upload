@@ -4,7 +4,7 @@ using CsvHelper.Configuration;
 using EPR.SubsidiaryBulkUpload.Application.Configs;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Models;
-using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
+using EPR.SubsidiaryBulkUpload.Application.Services;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

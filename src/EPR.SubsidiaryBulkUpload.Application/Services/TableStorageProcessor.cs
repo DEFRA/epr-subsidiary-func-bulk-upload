@@ -1,6 +1,5 @@
 ﻿using Azure.Data.Tables;
 using EPR.SubsidiaryBulkUpload.Application.Models;
-using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services;
@@ -90,6 +89,7 @@ public class TableStorageProcessor(
             if (partitionKey != null)
             {
                 var tableClient = _tableServiceClient.GetTableClient(tableName);
+                await tableClient.CreateIfNotExistsAsync();
 
                 var result = await tableClient.GetEntityAsync<CompanyHouseTableEntity>(
                     partitionKey: partitionKey,

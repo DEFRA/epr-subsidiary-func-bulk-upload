@@ -3,7 +3,6 @@ using Azure.Storage.Blobs;
 using CsvHelper.Configuration;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Services;
-using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 

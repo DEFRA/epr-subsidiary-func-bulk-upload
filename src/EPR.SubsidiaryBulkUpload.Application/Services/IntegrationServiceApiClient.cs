@@ -1,12 +1,11 @@
-﻿namespace EPR.SubsidiaryBulkUpload.Application.Services;
-
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
 using EPR.SubsidiaryBulkUpload.Application.Configs;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
-using Interfaces;
 using Microsoft.Extensions.Options;
 using Microsoft.Identity.Web;
+
+namespace EPR.SubsidiaryBulkUpload.Application.Services;
 
 [ExcludeFromCodeCoverage]
 public class IntegrationServiceApiClient : IIntegrationServiceApiClient

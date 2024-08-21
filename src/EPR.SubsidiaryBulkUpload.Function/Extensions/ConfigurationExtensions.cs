@@ -7,7 +7,6 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using EPR.SubsidiaryBulkUpload.Application.Configs;
 using EPR.SubsidiaryBulkUpload.Application.Services;
-using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

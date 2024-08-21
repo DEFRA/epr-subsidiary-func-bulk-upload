@@ -6,7 +6,7 @@ using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Service;
+namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 
 [TestClass]
 [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1010:Opening square brackets should be spaced correctly", Justification = "Style cop rules dont yet support collection expressions")]
@@ -29,7 +29,7 @@ public class CsvProcessorTests
         var header = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
         var rawSource = source.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
 
-        string[] all = [header, ..rawSource];
+        string[] all = [header, .. rawSource];
 
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
 

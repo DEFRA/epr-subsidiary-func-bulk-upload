@@ -1,6 +1,6 @@
 ﻿using EPR.SubsidiaryBulkUpload.Application.Models;
 
-namespace EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
+namespace EPR.SubsidiaryBulkUpload.Application.Services;
 
 public interface ITableStorageProcessor
 {

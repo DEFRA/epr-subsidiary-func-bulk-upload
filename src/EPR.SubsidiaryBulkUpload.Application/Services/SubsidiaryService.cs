@@ -1,18 +1,17 @@
-﻿namespace EPR.SubsidiaryBulkUpload.Application.Services;
-using System.Net;
-using System.Net.Http;
+﻿using System.Net;
 using System.Net.Http.Json;
 using EPR.SubsidiaryBulkUpload.Application.Configs;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Exceptions;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Models;
-using Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+
+namespace EPR.SubsidiaryBulkUpload.Application.Services;
 
 public class SubsidiaryService : ISubsidiaryService
 {
@@ -27,7 +26,6 @@ public class SubsidiaryService : ISubsidiaryService
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _config;
     private readonly IOptions<ConfigOptions> _configOptions;
-    private readonly ITableStorageProcessor _tableStorageService;
 
     public SubsidiaryService(
         HttpClient httpClient,
@@ -40,7 +38,6 @@ public class SubsidiaryService : ISubsidiaryService
         _logger = logger;
         _config = config;
         _configOptions = configOptions;
-        _tableStorageService = azureTableStorageService;
     }
 
     public async Task<OrganisationModel?> GetCompanyByOrgId(CompaniesHouseCompany company)
@@ -115,33 +112,6 @@ public class SubsidiaryService : ISubsidiaryService
         response.EnsureSuccessStatusCode();
         var orgResponse = response.Content.ReadFromJsonAsync<OrganisationResponseModel[]>();
         return orgResponse.Result.ToList().FirstOrDefault();
-    }
-
-    public async Task<OrganisationModel?> GetCompanyByOrgIdFromTableStorage(string companiesHouseNumber)
-    {
-        OrganisationModel? orgModel = null;
-
-        var tableName = _configOptions.Value.CompaniesHouseOfflineDataTableName;
-        var companiesHouseCompany = await _tableStorageService.GetByCompanyNumber(companiesHouseNumber, tableName);
-
-        if (companiesHouseCompany != null)
-        {
-            orgModel = new OrganisationModel()
-            {
-                Name = companiesHouseCompany.CompanyName,
-                CompaniesHouseNumber = companiesHouseCompany.CompanyNumber,
-                Address = new AddressModel
-                {
-                    Street = companiesHouseCompany.RegAddressAddressLine1,
-                    County = companiesHouseCompany.RegAddressCounty,
-                    Postcode = companiesHouseCompany.RegAddressPostCode,
-                    Town = companiesHouseCompany.RegAddressPostTown,
-                    Country = companiesHouseCompany.RegAddressCountry
-                }
-            };
-        }
-
-        return orgModel;
     }
 
     public async Task<string?> CreateAndAddSubsidiaryAsync(LinkOrganisationModel linkOrganisationModel)
