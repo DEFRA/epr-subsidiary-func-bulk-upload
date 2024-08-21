@@ -14,6 +14,7 @@ public class BulkUploadFunction
     private readonly ILogger<BulkUploadFunction> _logger;
     private readonly ICsvProcessor _csvProcessor;
     private readonly IBulkUploadOrchestration _orchestration;
+    private string? filePath = string.Empty;
 
     public BulkUploadFunction(ILogger<BulkUploadFunction> logger, ICsvProcessor csvProcessor, IBulkUploadOrchestration orchestration)
     {
@@ -41,12 +42,38 @@ public class BulkUploadFunction
 
         var content = downloadStreamingResult.Value.Content;
 
+        if (content == null)
+        {
+            throw new ArgumentNullException("stream");
+        }
+
+        // Check if file exists
+        if (content == null && !File.Exists(filePath))
+        {
+            // File not exits
+            throw new FileNotFoundException("data file not found");
+        }
+
         var configuration = new CsvConfiguration(CultureInfo.InvariantCulture)
         {
+            PrepareHeaderForMatch = args => args.Header.ToLower(),
             HasHeaderRecord = true,
+            HeaderValidated = (args) =>
+            {
+                ConfigurationFunctions.HeaderValidated(args);
+            },
+            IgnoreBlankLines = false
         };
 
         var records = await _csvProcessor.ProcessStream<CompaniesHouseCompany, CompaniesHouseCompanyMap>(content, configuration);
+        foreach (var company in records)
+        {
+            if (company.Errors != null && company.Errors.Count() > 0)
+            {
+                _logger.LogError("Invalid data in the row {count}", company.Errors);
+            }
+        }
+
         await _orchestration.Orchestrate(records, userId);
 
         _logger.LogInformation("Blob trigger processed {Count} records from csv blob {Name}", records.Count(), client.Name);

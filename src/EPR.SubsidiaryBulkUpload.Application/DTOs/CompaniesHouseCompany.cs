@@ -22,4 +22,6 @@ public class CompaniesHouseCompany
     public bool AccountExists { get; set; }
 
     public DateTimeOffset? AccountCreatedOn { get; set; }
+
+    public string Errors { get; set; }
 }
