@@ -1,6 +1,5 @@
 ﻿using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Services;
-using FluentAssertions;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Service;
 

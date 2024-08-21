@@ -10,7 +10,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
     {
         private readonly ILogger<CsvProcessor> _logger = logger;
 
-        public async Task<IEnumerable<TD>> ProcessStream<TD, TM>(Stream stream, IReaderConfiguration configuration)
+        public async Task<IEnumerable<TD>> ProcessStreamWithMapping<TD, TM>(Stream stream, IReaderConfiguration configuration)
             where TM : ClassMap
         {
             using (var reader = new StreamReader(stream))
@@ -19,6 +19,18 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                 csv.Context.RegisterClassMap<TM>();
                 return csv.GetRecords<TD>().ToList();
             }
+        }
+
+        public async Task<IEnumerable<T>> ProcessStream<T>(Stream stream, IReaderConfiguration configuration)
+        {
+            using var streamReader = new StreamReader(stream);
+            using var csv = new CsvReader(streamReader, configuration);
+
+            var records = csv.GetRecords<T>().ToList();
+
+            _logger.LogInformation("Found {RowCount} csv rows", records.Count);
+
+            return records;
         }
     }
 }

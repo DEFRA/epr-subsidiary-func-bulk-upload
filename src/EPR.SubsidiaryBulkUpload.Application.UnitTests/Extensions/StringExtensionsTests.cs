@@ -1,5 +1,4 @@
 ﻿using EPR.SubsidiaryBulkUpload.Application.Extensions;
-using FluentAssertions;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Extensions;
 

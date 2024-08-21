@@ -134,7 +134,6 @@ public static class ConfigurationExtensions
         services.AddTransient<ICompaniesHouseDataProvider, CompaniesHouseDataProvider>();
         services.AddTransient<IRecordExtraction, RecordExtraction>();
         services.AddTransient<ICsvProcessor, CsvProcessor>();
-        services.AddTransient<ICompaniesHouseCsvProcessor, CompaniesHouseCsvProcessor>();
         services.AddTransient<ITableStorageProcessor, TableStorageProcessor>();
         services.AddTransient<IAzureStorageTableService, AzureStorageTableService>();
         services.AddTransient<ISubsidiaryService, SubsidiaryService>();

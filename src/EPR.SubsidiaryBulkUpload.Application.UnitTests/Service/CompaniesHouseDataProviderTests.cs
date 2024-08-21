@@ -2,7 +2,6 @@
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
-using FluentAssertions;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Service;
 

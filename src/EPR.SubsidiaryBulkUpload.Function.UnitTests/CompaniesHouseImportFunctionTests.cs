@@ -2,6 +2,7 @@
 using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using CsvHelper.Configuration;
 using EPR.SubsidiaryBulkUpload.Application.Configs;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
@@ -26,7 +27,7 @@ public class CompaniesHouseImportFunctionTests
         """;
 
     private Mock<BlobClient> _blobClientMock;
-    private Mock<ICompaniesHouseCsvProcessor> _csvProcessorMock;
+    private Mock<ICsvProcessor> _csvProcessorMock;
     private Mock<ITableStorageProcessor> _tableStorageProcessor;
     private Mock<ILogger<CompaniesHouseImportFunction>> _loggerMock;
     private Mock<IOptions<ConfigOptions>> _configOptionsMock;
@@ -56,9 +57,11 @@ public class CompaniesHouseImportFunctionTests
         _blobClientMock.Setup(client => client.DownloadStreamingAsync(It.IsAny<BlobDownloadOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(response);
 
-        _csvProcessorMock = new Mock<ICompaniesHouseCsvProcessor>();
-        _csvProcessorMock.Setup(x => x.ProcessStream(It.IsAny<Stream>()))
-        .ReturnsAsync(CsvRowCount);
+        _csvProcessorMock = new Mock<ICsvProcessor>();
+
+        /* _csvProcessorMock.Setup(x => x.ProcessStream(It.IsAny<Stream>()))
+         .ReturnsAsync(CsvRowCount);
+        */
 
         _tableStorageProcessor = new Mock<ITableStorageProcessor>();
 
@@ -77,14 +80,14 @@ public class CompaniesHouseImportFunctionTests
     public async Task CompaniesHouseImportFunction_Calls_CsvService()
     {
         // Arrange
-        _csvProcessorMock.Setup(x => x.ProcessStreamToObject(It.IsAny<Stream>(), It.IsAny<CompanyHouseTableEntity>()))
+        _csvProcessorMock.Setup(x => x.ProcessStream<CompanyHouseTableEntity>(It.IsAny<Stream>(), It.IsAny<CsvConfiguration>()))
             .ReturnsAsync(new List<CompanyHouseTableEntity> { new() { CompanyName = "test" }, new() { CompanyName = "test2" } });
 
         // Act
         await _systemUnderTest.Run(_blobClientMock.Object);
 
         // Assert
-        _csvProcessorMock.Verify(x => x.ProcessStreamToObject(It.IsAny<Stream>(), It.IsAny<CompanyHouseTableEntity>()), Times.Once);
+        _csvProcessorMock.Verify(x => x.ProcessStream<CompanyHouseTableEntity>(It.IsAny<Stream>(), It.IsAny<CsvConfiguration>()), Times.Once);
         _tableStorageProcessor.Verify(x => x.WriteToAzureTableStorage(It.IsAny<List<CompanyHouseTableEntity>>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Once);
     }
 
@@ -92,7 +95,7 @@ public class CompaniesHouseImportFunctionTests
     public async Task CompaniesHouseImportFunction_Logs_Result()
     {
         // Arrange
-        _csvProcessorMock.Setup(x => x.ProcessStreamToObject(It.IsAny<Stream>(), It.IsAny<CompanyHouseTableEntity>()))
+        _csvProcessorMock.Setup(x => x.ProcessStream<CompanyHouseTableEntity>(It.IsAny<Stream>(), It.IsAny<CsvConfiguration>()))
             .ReturnsAsync(new List<CompanyHouseTableEntity> { new() { CompanyName = "test" }, new() { CompanyName = "test2" } });
 
         // Act
