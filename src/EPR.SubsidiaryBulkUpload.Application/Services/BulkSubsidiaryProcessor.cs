@@ -23,7 +23,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
                 (Subsidiary: co.Subsidiary,
                  SubsidiaryOrg: co.SubsidiaryOrg,
                  RelationshipExists: await organisationService.GetSubsidiaryRelationshipAsync(parentOrg.id, co.SubsidiaryOrg.id)))
-            .Where(co => co.RelationshipExists == false);
+            .Where(co => !co.RelationshipExists);
 
         // Add relationships for for the children already in RPD...
         await foreach (var subsidiaryAddModel in knownSubsidiariesToAdd)
