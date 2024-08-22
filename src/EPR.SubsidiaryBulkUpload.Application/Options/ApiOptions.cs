@@ -9,8 +9,6 @@ public class ApiOptions
 
     public string CompaniesHouseLookupBaseUrl { get; set; } = null!;
 
-    public string CompaniesHouseDownstreamScope { get; set; }
-
     public string CompaniesHouseDirectBaseUri { get; set; }
 
     public string CompaniesHouseDirectApiKey { get; set; }

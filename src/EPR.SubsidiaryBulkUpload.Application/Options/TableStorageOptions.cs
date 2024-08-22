@@ -1,5 +1,8 @@
-﻿namespace EPR.SubsidiaryBulkUpload.Application.Options;
+﻿using System.Diagnostics.CodeAnalysis;
 
+namespace EPR.SubsidiaryBulkUpload.Application.Options;
+
+[ExcludeFromCodeCoverage]
 public class TableStorageOptions
 {
     public const string SectionName = "TableStorage";
