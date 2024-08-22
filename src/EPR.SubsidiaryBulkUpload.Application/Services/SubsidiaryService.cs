@@ -1,14 +1,11 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
-using EPR.SubsidiaryBulkUpload.Application.Configs;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Exceptions;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services;
@@ -24,20 +21,13 @@ public class SubsidiaryService : ISubsidiaryService
     private const string OrganisationRelationshipsByIdUri = "api/bulkuploadorganisations/organisation-by-relationship";
     private readonly ILogger<SubsidiaryService> _logger;
     private readonly HttpClient _httpClient;
-    private readonly IConfiguration _config;
-    private readonly IOptions<ConfigOptions> _configOptions;
 
     public SubsidiaryService(
         HttpClient httpClient,
-        ILogger<SubsidiaryService> logger,
-        IConfiguration config,
-        IOptions<ConfigOptions> configOptions,
-        ITableStorageProcessor azureTableStorageService)
+        ILogger<SubsidiaryService> logger)
     {
         _httpClient = httpClient;
         _logger = logger;
-        _config = config;
-        _configOptions = configOptions;
     }
 
     public async Task<OrganisationModel?> GetCompanyByOrgId(CompaniesHouseCompany company)

@@ -1,16 +1,16 @@
-﻿using EPR.SubsidiaryBulkUpload.Application.Configs;
-using EPR.SubsidiaryBulkUpload.Application.Models;
+﻿using EPR.SubsidiaryBulkUpload.Application.Models;
+using EPR.SubsidiaryBulkUpload.Application.Options;
 using Microsoft.Extensions.Options;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services;
 
 public class CompaniesHouseDataProvider(ICompaniesHouseLookupService companiesHouseLookupService,
     ITableStorageProcessor tableStorageService,
-    IOptions<ConfigOptions> configOptions) : ICompaniesHouseDataProvider
+    IOptions<TableStorageOptions> tableStorageOptions) : ICompaniesHouseDataProvider
 {
     private readonly ICompaniesHouseLookupService companiesHouseLookupService = companiesHouseLookupService;
     private readonly ITableStorageProcessor tableStorageService = tableStorageService;
-    private readonly IOptions<ConfigOptions> configOptions = configOptions;
+    private readonly TableStorageOptions tableStorageOptions = tableStorageOptions.Value;
 
     public async Task<bool> SetCompaniesHouseData(OrganisationModel subsidiaryModel)
     {
@@ -53,7 +53,7 @@ public class CompaniesHouseDataProvider(ICompaniesHouseLookupService companiesHo
     {
         OrganisationModel? orgModel = null;
 
-        var tableName = configOptions.Value.CompaniesHouseOfflineDataTableName;
+        var tableName = tableStorageOptions.CompaniesHouseOfflineDataTableName;
         var companiesHouseCompany = await tableStorageService.GetByCompanyNumber(companiesHouseNumber, tableName);
 
         if (companiesHouseCompany != null)

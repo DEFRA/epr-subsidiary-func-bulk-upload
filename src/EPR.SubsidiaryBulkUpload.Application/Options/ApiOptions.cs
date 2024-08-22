@@ -1,14 +1,19 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
-namespace EPR.SubsidiaryBulkUpload.Application.Configs;
+namespace EPR.SubsidiaryBulkUpload.Application.Options;
+
 [ExcludeFromCodeCoverage]
-public class ApiConfig
+public class ApiOptions
 {
     public const string SectionName = "ApiConfig";
 
     public string CompaniesHouseLookupBaseUrl { get; set; } = null!;
 
     public string CompaniesHouseDownstreamScope { get; set; }
+
+    public string CompaniesHouseDirectBaseUri { get; set; }
+
+    public string CompaniesHouseDirectApiKey { get; set; }
 
     public string AccountServiceClientId { get; set; } = null!;
 
@@ -17,6 +22,4 @@ public class ApiConfig
     public int Timeout { get; set; }
 
     public string SubsidiaryServiceBaseUrl { get; set; } = null!;
-
-    public string StorageConnectionString { get; set; } = null!;
 }

@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
-using EPR.SubsidiaryBulkUpload.Application.Configs;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
+using EPR.SubsidiaryBulkUpload.Application.Options;
 using Microsoft.Extensions.Options;
 using Microsoft.Identity.Web;
 
@@ -14,7 +14,7 @@ public class IntegrationServiceApiClient : IIntegrationServiceApiClient
     private readonly string[] _scopes;
     private readonly ITokenAcquisition _tokenAcquisition;
 
-    public IntegrationServiceApiClient(HttpClient httpClient, ITokenAcquisition tokenAcquisition, IOptions<ApiConfig> options)
+    public IntegrationServiceApiClient(HttpClient httpClient, ITokenAcquisition tokenAcquisition, IOptions<ApiOptions> options)
     {
         _httpClient = httpClient;
         _tokenAcquisition = tokenAcquisition;

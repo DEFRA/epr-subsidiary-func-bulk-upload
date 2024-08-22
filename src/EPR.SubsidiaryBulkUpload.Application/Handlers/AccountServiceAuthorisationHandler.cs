@@ -2,7 +2,7 @@
 using System.Net.Http.Headers;
 using Azure.Core;
 using Azure.Identity;
-using EPR.SubsidiaryBulkUpload.Application.Configs;
+using EPR.SubsidiaryBulkUpload.Application.Options;
 using Microsoft.Extensions.Options;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Handlers;
@@ -14,7 +14,7 @@ public class AccountServiceAuthorisationHandler : DelegatingHandler
 
     private readonly DefaultAzureCredential? _credentials;
 
-    public AccountServiceAuthorisationHandler(IOptions<ApiConfig> options)
+    public AccountServiceAuthorisationHandler(IOptions<ApiOptions> options)
     {
         if (string.IsNullOrEmpty(options.Value.AccountServiceClientId))
         {

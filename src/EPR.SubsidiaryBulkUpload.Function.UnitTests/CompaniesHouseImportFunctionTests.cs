@@ -3,8 +3,8 @@ using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using CsvHelper.Configuration;
-using EPR.SubsidiaryBulkUpload.Application.Configs;
 using EPR.SubsidiaryBulkUpload.Application.Models;
+using EPR.SubsidiaryBulkUpload.Application.Options;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using EPR.SubsidiaryBulkUpload.Function.UnitTests.TestHelpers;
 using Microsoft.Extensions.Logging;
@@ -30,7 +30,7 @@ public class CompaniesHouseImportFunctionTests
     private Mock<ICsvProcessor> _csvProcessorMock;
     private Mock<ITableStorageProcessor> _tableStorageProcessor;
     private Mock<ILogger<CompaniesHouseImportFunction>> _loggerMock;
-    private Mock<IOptions<ConfigOptions>> _configOptionsMock;
+    private Mock<IOptions<TableStorageOptions>> _configOptionsMock;
     private CompaniesHouseImportFunction _systemUnderTest;
 
     [TestInitialize]
@@ -66,10 +66,10 @@ public class CompaniesHouseImportFunctionTests
         _tableStorageProcessor = new Mock<ITableStorageProcessor>();
 
         _loggerMock = new Mock<ILogger<CompaniesHouseImportFunction>>();
-        _configOptionsMock = new Mock<IOptions<ConfigOptions>>();
-        var options = new ConfigOptions
+        _configOptionsMock = new Mock<IOptions<TableStorageOptions>>();
+        var options = new TableStorageOptions
         {
-            TableStorageConnectionString = "UseDevelopmentStorage=true",
+            ConnectionString = "UseDevelopmentStorage=true",
             CompaniesHouseOfflineDataTableName = "CompaniesHouseData"
         };
         _configOptionsMock.Setup(x => x.Value).Returns(options);

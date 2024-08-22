@@ -1,9 +1,9 @@
 ﻿using System.Globalization;
 using Azure.Storage.Blobs;
 using CsvHelper.Configuration;
-using EPR.SubsidiaryBulkUpload.Application.Configs;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Models;
+using EPR.SubsidiaryBulkUpload.Application.Options;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
@@ -11,14 +11,14 @@ using Microsoft.Extensions.Options;
 
 namespace EPR.SubsidiaryBulkUpload.Function;
 
-public class CompaniesHouseImportFunction(ILogger<CompaniesHouseImportFunction> logger, ICsvProcessor csvProcessor, ITableStorageProcessor tableStorageProcessor, IOptions<ConfigOptions> configOptions)
+public class CompaniesHouseImportFunction(ILogger<CompaniesHouseImportFunction> logger, ICsvProcessor csvProcessor, ITableStorageProcessor tableStorageProcessor, IOptions<TableStorageOptions> configOptions)
 {
     private const int BatchSize = 100; // Maximum batch size for Azure Table Storage
 
     private readonly ICsvProcessor _csvProcessor = csvProcessor;
     private readonly ITableStorageProcessor _tableStorageProcessor = tableStorageProcessor;
     private readonly ILogger<CompaniesHouseImportFunction> _logger = logger;
-    private readonly ConfigOptions _configOptions = configOptions.Value;
+    private readonly TableStorageOptions _configOptions = configOptions.Value;
 
     [Function(nameof(CompaniesHouseImportFunction))]
     public async Task Run(
@@ -42,7 +42,7 @@ public class CompaniesHouseImportFunction(ILogger<CompaniesHouseImportFunction> 
         {
             var content = downloadStreamingResult.Value.Content;
 
-            var storageConnectionString = _configOptions.TableStorageConnectionString;
+            var storageConnectionString = _configOptions.ConnectionString;
             var tableName = _configOptions.CompaniesHouseOfflineDataTableName;
 
             var config = new CsvConfiguration(CultureInfo.InvariantCulture)

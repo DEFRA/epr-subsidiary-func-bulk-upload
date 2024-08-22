@@ -1,6 +1,6 @@
-﻿using EPR.SubsidiaryBulkUpload.Application.Configs;
-using EPR.SubsidiaryBulkUpload.Application.DTOs;
+﻿using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Models;
+using EPR.SubsidiaryBulkUpload.Application.Options;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using Microsoft.Extensions.Options;
 
@@ -23,8 +23,8 @@ public class CompaniesHouseDataProviderTests
         // Arrange
         var organisationModel = fixture.Create<OrganisationModel>();
         var companyHouseEntity = fixture.Create<CompanyHouseTableEntity>();
-        var config = fixture.Create<ConfigOptions>();
-        var options = new Mock<IOptions<ConfigOptions>>();
+        var config = fixture.Create<TableStorageOptions>();
+        var options = new Mock<IOptions<TableStorageOptions>>();
         options.Setup(o => o.Value).Returns(config);
 
         var companiesHouseLookup = new Mock<ICompaniesHouseLookupService>();
@@ -53,8 +53,8 @@ public class CompaniesHouseDataProviderTests
         // Arrange
         var organisationModel = fixture.Create<OrganisationModel>();
         var companiesHouseResponse = fixture.Create<Company>();
-        var config = fixture.Create<ConfigOptions>();
-        var options = new Mock<IOptions<ConfigOptions>>();
+        var config = fixture.Create<TableStorageOptions>();
+        var options = new Mock<IOptions<TableStorageOptions>>();
         options.Setup(o => o.Value).Returns(config);
 
         var companiesHouseLookup = new Mock<ICompaniesHouseLookupService>();
