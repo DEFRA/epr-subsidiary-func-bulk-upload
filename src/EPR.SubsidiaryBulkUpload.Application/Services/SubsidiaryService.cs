@@ -13,9 +13,6 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services;
 public class SubsidiaryService : ISubsidiaryService
 {
     private const string OrganisationByCompanyHouseNumberUri = "api/bulkuploadorganisations/";
-    private const string OrganisationByTableStorageUri = "api/bulkuploadorganisations/organisation-by-tablestorage";
-    private const string OrganisationUri = "api/bulkuploadorganisations/organisation-by-externalId";
-    private const string OrganisationNameUri = "api/bulkuploadorganisations/organisation-by-invite-token";
     private const string OrganisationCreateAddSubsidiaryUri = "api/bulkuploadorganisations/create-subsidiary-and-add-relationship";
     private const string OrganisationAddSubsidiaryUri = "api/bulkuploadorganisations/add-subsidiary-relationship";
     private const string OrganisationRelationshipsByIdUri = "api/bulkuploadorganisations/organisation-by-relationship";
@@ -73,12 +70,7 @@ public class SubsidiaryService : ISubsidiaryService
 
         var orgResponse = response.Content.ReadFromJsonAsync<bool>();
 
-        if (orgResponse == null || orgResponse.Result == false)
-        {
-            return false;
-        }
-
-        return true;
+        return orgResponse != null && orgResponse.Result;
     }
 
     public async Task<OrganisationResponseModel?> GetCompanyByCompaniesHouseNumber(string companiesHouseNumber)
@@ -101,7 +93,7 @@ public class SubsidiaryService : ISubsidiaryService
 
         response.EnsureSuccessStatusCode();
         var orgResponse = response.Content.ReadFromJsonAsync<OrganisationResponseModel[]>();
-        return orgResponse.Result.ToList().FirstOrDefault();
+        return orgResponse.Result.FirstOrDefault();
     }
 
     public async Task<string?> CreateAndAddSubsidiaryAsync(LinkOrganisationModel linkOrganisationModel)
@@ -118,6 +110,8 @@ public class SubsidiaryService : ISubsidiaryService
 
             if (problemDetails != null)
             {
+                _logger.LogError("Failed to create and add subsidiary for Parent: {Parent} Subsidiary: {Subsidiary}", linkOrganisationModel.ParentOrganisationId, linkOrganisationModel.Subsidiary.Name);
+
                 throw new ProblemResponseException(problemDetails, response.StatusCode);
             }
         }
@@ -140,6 +134,8 @@ public class SubsidiaryService : ISubsidiaryService
 
             if (problemDetails != null)
             {
+                _logger.LogError("Failed to add subsidiary relationship for Parent: {Parent} Subsidiary: {Subsidiary}", subsidiaryAddModel.ParentOrganisationId, subsidiaryAddModel.ChildOrganisationId);
+
                 throw new ProblemResponseException(problemDetails, response.StatusCode);
             }
         }
