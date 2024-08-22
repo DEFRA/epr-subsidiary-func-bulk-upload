@@ -27,17 +27,18 @@ public class BulkUploadOrchestrationTests
         var recordExtraction = new Mock<IRecordExtraction>();
         var subsidiaryService = new Mock<ISubsidiaryService>();
         var bulkSubsidiaryProcessor = new Mock<IBulkSubsidiaryProcessor>();
+        var notificationService = new Mock<INotificationService>();
 
         recordExtraction.Setup(re => re.ExtractParentsAndSubsidiaries(companyData)).Returns(parentAndSubsidiaries);
 
         subsidiaryService.Setup(se => se.GetCompanyByCompaniesHouseNumber(It.IsAny<string>())).ReturnsAsync(orgModel);
 
-        var orchestrator = new BulkUploadOrchestration(recordExtraction.Object, subsidiaryService.Object, bulkSubsidiaryProcessor.Object);
+        var orchestrator = new BulkUploadOrchestration(recordExtraction.Object, subsidiaryService.Object, bulkSubsidiaryProcessor.Object, notificationService.Object);
 
         var userId = Guid.NewGuid();
 
         // Act
-        await orchestrator.Orchestrate(companyData, userId);
+        await orchestrator.Orchestrate(companyData, userId, new UserRequestModel { UserId = userId.ToString(), OrganisationId = "TestorgId" });
 
         // Assert
         foreach(var set in parentAndSubsidiaries)
