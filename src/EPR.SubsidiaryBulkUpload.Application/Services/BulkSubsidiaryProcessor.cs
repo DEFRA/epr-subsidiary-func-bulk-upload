@@ -18,7 +18,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             .SelectAwait(async subsidiary => (Subsidiary: subsidiary, SubsidiaryOrg: await organisationService.GetCompanyByCompaniesHouseNumber(subsidiary.companies_house_number)));
 
         // All subsidiaries with an org id, where no relationship already exists
-        var knownSubsidairiesToAdd = subsidiariesAndOrg.Where(co => co.SubsidiaryOrg != null)
+        var knownSubsidiariesToAdd = subsidiariesAndOrg.Where(co => co.SubsidiaryOrg != null)
             .SelectAwait(async co =>
                 (Subsidiary: co.Subsidiary,
                  SubsidiaryOrg: co.SubsidiaryOrg,
@@ -26,7 +26,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             .Where(co => co.RelationshipExists == false);
 
         // Add relationships for for the children already in RPD...
-        await foreach (var subsidiaryAddModel in knownSubsidairiesToAdd)
+        await foreach (var subsidiaryAddModel in knownSubsidiariesToAdd)
         {
             await AddSubsidiary(parentOrg, subsidiaryAddModel!.SubsidiaryOrg, userId);
         }
