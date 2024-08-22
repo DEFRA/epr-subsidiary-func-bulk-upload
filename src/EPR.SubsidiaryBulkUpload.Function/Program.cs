@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using EPR.SubsidiaryBulkUpload.Function.Extensions;
+﻿using EPR.SubsidiaryBulkUpload.Function.Extensions;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -18,8 +17,3 @@ var host = new HostBuilder()
     .Build();
 
 await host.RunAsync();
-
-[ExcludeFromCodeCoverage]
-public partial class Program
-{
-}
