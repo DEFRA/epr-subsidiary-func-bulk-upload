@@ -2,6 +2,7 @@
 using Azure.Storage.Blobs;
 using CsvHelper.Configuration;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
+using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Azure.Functions.Worker;
@@ -46,9 +47,18 @@ public class BulkUploadFunction
             HasHeaderRecord = true,
         };
 
-        var records = await _csvProcessor.ProcessStream<CompaniesHouseCompany, CompaniesHouseCompanyMap>(content, configuration);
-        await _orchestration.Orchestrate(records, userId, metaData);
+        var userRequestModel = metaData.ToUserRequestModel();
 
-        _logger.LogInformation("Blob trigger processed {Count} records from csv blob {Name}", records.Count(), client.Name);
+        if (userRequestModel != null)
+        {
+            var records = await _csvProcessor.ProcessStream<CompaniesHouseCompany, CompaniesHouseCompanyMap>(content, configuration);
+            await _orchestration.Orchestrate(records, userId, userRequestModel);
+
+            _logger.LogInformation("Blob trigger processed {Count} records from csv blob {Name}", records.Count(), client.Name);
+        }
+        else
+        {
+            _logger.LogInformation("Blob trigger stopped, Missing userId or organisationId in the metadata for blob {Name}", client.Name);
+        }
     }
 }
