@@ -12,5 +12,5 @@ public interface ISubsidiaryService
 
     Task<string?> AddSubsidiaryRelationshipAsync(SubsidiaryAddModel subsidiaryAddModel);
 
-    Task<bool> GetSubsidiaryRelationshipAysnc(int parentOrganisationId, int subsidiaryOrganisationId);
+    Task<bool> GetSubsidiaryRelationshipAsync(int parentOrganisationId, int subsidiaryOrganisationId);
 }
