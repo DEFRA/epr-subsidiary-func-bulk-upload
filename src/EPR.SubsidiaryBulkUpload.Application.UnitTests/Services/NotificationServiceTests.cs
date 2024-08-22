@@ -1,6 +1,8 @@
 ﻿using System.Text.Json;
+using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using Microsoft.Extensions.Logging;
+using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
 using StackExchange.Redis;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
@@ -44,7 +46,6 @@ public class NotificationServiceTests
         // Assert
         _redisDatabaseMock.Verify(db => db.StringSetAsync(key, status, null, false, When.Always, CommandFlags.None), Times.Once);
         _loggerMock.VerifyLog(x => x.LogInformation("Redis updated key: {key} status: {status}", key, status), Times.Once);
-        ////_redisConnectionMultiplexerMock.Verify(x => x.Close(true), Times.Once);
     }
 
     [TestMethod]
@@ -52,7 +53,7 @@ public class NotificationServiceTests
     {
         // Arrange
         var key = "testKey";
-        var errorsModel = new List<string> { "Error1", "Error2" };
+        var errorsModel = new List<UploadFileErrorModel> { new UploadFileErrorModel() { FileLineNumber = 1, Message = "testMessage", IsError = true } };
         var serializedErrors = JsonSerializer.Serialize(new { Errors = errorsModel });
 
         _redisDatabaseMock.Setup(db => db.StringSetAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<When>()))
@@ -64,6 +65,5 @@ public class NotificationServiceTests
         // Assert
         _redisDatabaseMock.Verify(db => db.StringSetAsync(key, serializedErrors, null, false, When.Always, CommandFlags.None), Times.Once);
         _loggerMock.VerifyLog(x => x.LogInformation("Redis updated key: {key} errors: {value}", key, serializedErrors), Times.Once);
-        ////_redisConnectionMultiplexerMock.Verify(x => x.Close(true), Times.Once);
     }
 }

@@ -5,5 +5,5 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services;
 
 public interface IBulkUploadOrchestration
 {
-    public Task Orchestrate(IEnumerable<CompaniesHouseCompany> data, Guid userId, UserRequestModel userRequestModel);
+    public Task Orchestrate(IEnumerable<CompaniesHouseCompany> data, UserRequestModel userRequestModel);
 }

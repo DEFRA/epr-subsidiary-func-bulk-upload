@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
@@ -18,7 +19,7 @@ public class NotificationService(
         _logger.LogInformation("Redis updated key: {key} status: {status}", key, status);
     }
 
-    public async Task SetErrorStatus<T>(string key, List<T> errorsModel)
+    public async Task SetErrorStatus(string key, List<UploadFileErrorModel> errorsModel)
     {
         var value = SerializeErrorsToJson(errorsModel);
 
@@ -27,7 +28,7 @@ public class NotificationService(
         _logger.LogInformation("Redis updated key: {key} errors: {value}", key, value);
     }
 
-    private string SerializeErrorsToJson<T>(List<T> errors)
+    private string SerializeErrorsToJson(List<UploadFileErrorModel> errors)
     {
         return JsonSerializer.Serialize(new { Errors = errors });
     }

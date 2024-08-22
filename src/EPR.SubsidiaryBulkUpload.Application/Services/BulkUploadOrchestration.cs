@@ -20,7 +20,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
         _notificationService = notificationService;
     }
 
-    public async Task Orchestrate(IEnumerable<CompaniesHouseCompany> data, Guid userId, UserRequestModel userRequestModel)
+    public async Task Orchestrate(IEnumerable<CompaniesHouseCompany> data, UserRequestModel userRequestModel)
     {
         _notificationService.SetStatus($"{userRequestModel.UserId}{userRequestModel.OrganisationId}{SubsidiaryBulkUploadProgress}", "Uploading");
 
@@ -38,7 +38,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
                 subsidiaryGroupAndParentOrg.SubsidiaryGroup.Subsidiaries,
                 subsidiaryGroupAndParentOrg.SubsidiaryGroup.Parent,
                 subsidiaryGroupAndParentOrg.Org,
-                userId);
+                Guid.Parse(userRequestModel.UserId));
         }
 
         _notificationService.SetStatus($"{userRequestModel.UserId}{userRequestModel.OrganisationId}{SubsidiaryBulkUploadProgress}", "Finished");
