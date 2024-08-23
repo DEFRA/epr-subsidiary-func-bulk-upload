@@ -18,12 +18,14 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
             if (!isValid)
             {
                 logger.AppendLine($"Field '{args.Field}' is not valid!");
+                return false;
             }
 
             var isNumeric = int.TryParse(args.Field, out int n);
             if (!isNumeric)
             {
                 logger.AppendLine($"Field '{args.Field}' is not number!");
+                return false;
             }
 
             return true;
@@ -36,6 +38,7 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
             if (!isValid)
             {
                 logger.AppendLine($"Field '{args.Field}' is not valid!");
+                return false;
             }
 
             return true;
@@ -46,6 +49,7 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
             if (!isValid)
             {
                 logger.AppendLine($"Field '{args.Field}' is not valid!");
+                return false;
             }
 
             return true;
@@ -56,6 +60,7 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
             if (!isValid)
             {
                 logger.AppendLine($"Field '{args.Field}' is not valid!");
+                return false;
             }
 
             return true;

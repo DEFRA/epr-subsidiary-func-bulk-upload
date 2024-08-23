@@ -98,6 +98,11 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                     logger = null;
                     try
                     {
+                        if (logger == null)
+                        {
+                            logger = new StringBuilder();
+                        }
+
                         var map = new CompaniesHouseCompanyMap(logger);
                         csv.Context.RegisterClassMap(map);
 
@@ -117,15 +122,16 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                         _logger.LogError(ex, "-Error occured while processing CSV File. {error}", ex.Message);
 
                         _logger.LogError(ex, "-Total number of Rows in the file {fileRowsCount}", ex.Context.Parser.Count);
+                        logger.AppendLine($"-Total number of Rows in the file '{ex.Context.Parser.Count.ToString()}' is not valid!");
 
                         _logger.LogError(ex, "-Error row number in the file {rownumber}", ex.Context.Parser.Row);
-                        logger.AppendLine($"Row Number '{ex.Context.Parser.Row}' is not valid!");
+                        logger.AppendLine($"Row Number '{ex.Context.Parser.Row.ToString()}' is not valid!");
 
                         _logger.LogError(ex, "-Error field in the file {rownumber}", ex.Context.Reader.HeaderRecord[headerIndex].ToLower());
-                        logger.AppendLine($"field '{ex.Context.Parser.Row}' is not valid!");
+                        logger.AppendLine($"field '{ex.Context.Reader.HeaderRecord[headerIndex].ToLower()}' is not valid!");
 
                         _logger.LogError(ex, "-Error occured while processing Row : {error}", ex.Context.Parser.RawRecord);
-                        logger.AppendLine($"Full row '{ex.Context.Parser.Row}' is not valid!");
+                        logger.AppendLine($"Full row '{ex.Context.Parser.RawRecord}' is not valid!");
                     }
                     catch (Exception ex)
                     {
