@@ -3,7 +3,7 @@
 namespace EPR.SubsidiaryBulkUpload.Application.DTOs;
 
 [ExcludeFromCodeCoverage]
-public class CompaniesHouseCompany
+public class CompaniesHouseCompanySmart
 {
     public string organisation_id { get; set; }
 
@@ -16,12 +16,4 @@ public class CompaniesHouseCompany
     public string parent_child { get; set; }
 
     public string franchisee_licensee_tenant { get; set; }
-
-    public OrganisationDto? Organisation { get; init; }
-
-    public bool AccountExists { get; set; }
-
-    public DateTimeOffset? AccountCreatedOn { get; set; }
-
-    public string Errors { get; set; }
 }
