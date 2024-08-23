@@ -1,19 +1,23 @@
 ﻿using EPR.SubsidiaryBulkUpload.Application.Models;
-using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
+using EPR.SubsidiaryBulkUpload.Application.Options;
+using Microsoft.Extensions.Options;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services;
 
-public class CompaniesHouseDataProvider(ICompaniesHouseLookupService companiesHouseLookupService, ISubsidiaryService subsidiaryService) : ICompaniesHouseDataProvider
+public class CompaniesHouseDataProvider(ICompaniesHouseLookupService companiesHouseLookupService,
+    ITableStorageProcessor tableStorageService,
+    IOptions<TableStorageOptions> tableStorageOptions) : ICompaniesHouseDataProvider
 {
     private readonly ICompaniesHouseLookupService companiesHouseLookupService = companiesHouseLookupService;
-    private readonly ISubsidiaryService subsidiaryService = subsidiaryService;
+    private readonly ITableStorageProcessor tableStorageService = tableStorageService;
+    private readonly TableStorageOptions tableStorageOptions = tableStorageOptions.Value;
 
     public async Task<bool> SetCompaniesHouseData(OrganisationModel subsidiaryModel)
     {
         var dataRetrieved = false;
 
         // Try get locally...
-        var response = await subsidiaryService.GetCompanyByOrgIdFromTableStorage(subsidiaryModel.CompaniesHouseNumber);
+        var response = await GetCompanyFromTableStorage(subsidiaryModel.CompaniesHouseNumber);
 
         if (response != null)
         {
@@ -43,5 +47,32 @@ public class CompaniesHouseDataProvider(ICompaniesHouseLookupService companiesHo
         }
 
         return dataRetrieved;
+    }
+
+    public async Task<OrganisationModel?> GetCompanyFromTableStorage(string companiesHouseNumber)
+    {
+        OrganisationModel? orgModel = null;
+
+        var tableName = tableStorageOptions.CompaniesHouseOfflineDataTableName;
+        var companiesHouseCompany = await tableStorageService.GetByCompanyNumber(companiesHouseNumber, tableName);
+
+        if (companiesHouseCompany != null)
+        {
+            orgModel = new OrganisationModel()
+            {
+                Name = companiesHouseCompany.CompanyName,
+                CompaniesHouseNumber = companiesHouseCompany.CompanyNumber,
+                Address = new AddressModel
+                {
+                    Street = companiesHouseCompany.RegAddressAddressLine1,
+                    County = companiesHouseCompany.RegAddressCounty,
+                    Postcode = companiesHouseCompany.RegAddressPostCode,
+                    Town = companiesHouseCompany.RegAddressPostTown,
+                    Country = companiesHouseCompany.RegAddressCountry
+                }
+            };
+        }
+
+        return orgModel;
     }
 }

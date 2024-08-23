@@ -1,8 +1,7 @@
 ﻿using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Services;
-using FluentAssertions;
 
-namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Service;
+namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 
 [TestClass]
 public class RecordExtractionTests
@@ -32,7 +31,7 @@ public class RecordExtractionTests
                .With(chc => chc.organisation_id, parents[1].organisation_id));
         var parent2Subsidiaries = fixture.CreateMany<CompaniesHouseCompany>();
 
-        var all = Enumerable.Concat(parents, parent1Subsidiaries).Concat(parent2Subsidiaries);
+        var all = parents.Concat(parent1Subsidiaries).Concat(parent2Subsidiaries);
 
         var extraction = new RecordExtraction();
 
@@ -88,7 +87,7 @@ public class RecordExtractionTests
         fixture.Customize<CompaniesHouseCompany>(ctx => ctx.With(chc => chc.parent_child, "Child"));
         var subsidiaries = fixture.CreateMany<CompaniesHouseCompany>();
 
-        var all = Enumerable.Concat(parents, subsidiaries);
+        var all = parents.Concat(subsidiaries);
 
         var extraction = new RecordExtraction();
 
@@ -115,7 +114,7 @@ public class RecordExtractionTests
 
         var parent1Children = fixture.CreateMany<CompaniesHouseCompany>();
 
-        var all = Enumerable.Concat(parents, miscSubsidiaries).Concat(parent1Children);
+        var all = parents.Concat(miscSubsidiaries).Concat(parent1Children);
 
         var extraction = new RecordExtraction();
 

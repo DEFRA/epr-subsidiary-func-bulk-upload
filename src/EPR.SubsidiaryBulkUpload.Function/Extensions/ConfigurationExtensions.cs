@@ -5,9 +5,8 @@ using System.Net.Http.Headers;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using EPR.SubsidiaryBulkUpload.Application.Configs;
+using EPR.SubsidiaryBulkUpload.Application.Options;
 using EPR.SubsidiaryBulkUpload.Application.Services;
-using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,15 +19,10 @@ public static class ConfigurationExtensions
     {
         /*
         services.Configure<AntivirusApiOptions>(configuration.GetSection(AntivirusApiOptions.Section));
+        services.Configure<SubmissionStatusApiOptions>(configuration.GetSection(SubmissionStatusApiOptions.Section));
         */
-        services.Configure<ConfigOptions>(options =>
-        {
-            options.TableStorageConnectionString = configuration["TableStorage:ConnectionString"];
-            options.CompaniesHouseOfflineDataTableName = configuration["CompaniesHouseOfflineData:TableName"];
-        });
-
-        services.Configure<ApiConfig>(configuration.GetSection(ApiConfig.SectionName));
-        services.Configure<HttpClientOptions>(configuration.GetSection(HttpClientOptions.ConfigSection));
+        services.Configure<ApiOptions>(configuration.GetSection(ApiOptions.SectionName));
+        services.Configure<TableStorageOptions>(configuration.GetSection(TableStorageOptions.SectionName));
         return services;
     }
 
@@ -36,20 +30,11 @@ public static class ConfigurationExtensions
     {
         var sp = services.BuildServiceProvider();
 
-        /*
-        var blobStorageOptions = sp.GetRequiredService<IOptions<BlobStorageOptions>>();
+        var tableStorageOptions = sp.GetRequiredService<IOptions<TableStorageOptions>>();
 
         services.AddAzureClients(cb =>
         {
-            cb.AddBlobServiceClient(blobStorageOptions.Value.ConnectionString);
-        });
-        */
-
-        var configOptions = sp.GetRequiredService<IOptions<ConfigOptions>>();
-
-        services.AddAzureClients(cb =>
-        {
-            cb.AddTableServiceClient(configOptions.Value.TableStorageConnectionString);
+            cb.AddTableServiceClient(tableStorageOptions.Value.ConnectionString);
         });
 
         return services;
@@ -94,19 +79,20 @@ public static class ConfigurationExtensions
 
         services.AddHttpClient<ISubsidiaryService, SubsidiaryService>((sp, c) =>
         {
-            var config = sp.GetRequiredService<IOptions<ApiConfig>>().Value;
+            var config = sp.GetRequiredService<IOptions<ApiOptions>>().Value;
             c.BaseAddress = new Uri(config.SubsidiaryServiceBaseUrl);
             c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         });
 
-        var isDevMode = configuration["ApiConfig:DeveloperMode"]; // configuration.GetValue<bool>("DeveloperMode");
-        if (isDevMode == "true")
+        var isDevMode = configuration.GetValue<bool?>("ApiConfig:DeveloperMode");
+        if (isDevMode is true)
         {
-            const string CompaniesHouseClient = "CompaniesHouse";
-            services.AddHttpClient<ICompaniesHouseLookupService, CompaniesHouseLookupDirectService>(CompaniesHouseClient, client =>
+            services.AddHttpClient<ICompaniesHouseLookupService, CompaniesHouseLookupDirectService>((sp, client) =>
             {
-                client.BaseAddress = new Uri(configuration["CompaniesHouseApi:BaseUri"]);
-                var apiKey = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{configuration["CompaniesHouseApi:ApiKey"]}:"));
+                var apiOptions = sp.GetRequiredService<IOptions<ApiOptions>>().Value;
+
+                client.BaseAddress = new Uri(apiOptions.CompaniesHouseDirectBaseUri);
+                var apiKey = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{apiOptions.CompaniesHouseDirectApiKey}:"));
                 client.DefaultRequestHeaders.Add("Authorization", $"BASIC {apiKey}");
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             });
@@ -115,11 +101,10 @@ public static class ConfigurationExtensions
         {
             services.AddHttpClient<ICompaniesHouseLookupService, CompaniesHouseLookupService>((sp, client) =>
             {
-            var apiOptions = sp.GetRequiredService<IOptions<ApiConfig>>().Value;
-            var httpClientOptions = sp.GetRequiredService<IOptions<HttpClientOptions>>().Value;
+                var apiOptions = sp.GetRequiredService<IOptions<ApiOptions>>().Value;
 
-            client.BaseAddress = new Uri(apiOptions.CompaniesHouseLookupBaseUrl);
-            client.Timeout = TimeSpan.FromSeconds(apiOptions.Timeout);
+                client.BaseAddress = new Uri(apiOptions.CompaniesHouseLookupBaseUrl);
+                client.Timeout = TimeSpan.FromSeconds(apiOptions.Timeout);
             })
                 .ConfigurePrimaryHttpMessageHandler(GetClientCertificateHandler);
         }
@@ -134,13 +119,11 @@ public static class ConfigurationExtensions
         services.AddTransient<ICompaniesHouseDataProvider, CompaniesHouseDataProvider>();
         services.AddTransient<IRecordExtraction, RecordExtraction>();
         services.AddTransient<ICsvProcessor, CsvProcessor>();
-        services.AddTransient<ICompaniesHouseCsvProcessor, CompaniesHouseCsvProcessor>();
         services.AddTransient<ITableStorageProcessor, TableStorageProcessor>();
-        services.AddTransient<IAzureStorageTableService, AzureStorageTableService>();
         services.AddTransient<ISubsidiaryService, SubsidiaryService>();
 
-        var isDevMode = configuration["ApiConfig:DeveloperMode"]; // configuration.GetValue<bool>("DeveloperMode");
-        if (isDevMode == "true")
+        var isDevMode = configuration.GetValue<bool?>("ApiConfig:DeveloperMode");
+        if (isDevMode is true)
         {
             services.AddTransient<ICompaniesHouseLookupService, CompaniesHouseLookupDirectService>();
         }
@@ -164,7 +147,7 @@ public static class ConfigurationExtensions
         handler.SslProtocols = SslProtocols.Tls12;
         handler.ClientCertificates
             .Add(new X509Certificate2(
-                Convert.FromBase64String(sp.GetRequiredService<IOptions<ApiConfig>>().Value.Certificate)));
+                Convert.FromBase64String(sp.GetRequiredService<IOptions<ApiOptions>>().Value.Certificate)));
 
         return handler;
     }
