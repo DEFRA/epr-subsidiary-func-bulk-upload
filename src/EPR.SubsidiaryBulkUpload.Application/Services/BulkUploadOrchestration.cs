@@ -1,4 +1,5 @@
 ﻿using EPR.SubsidiaryBulkUpload.Application.DTOs;
+using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 
@@ -22,7 +23,8 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
 
     public async Task Orchestrate(IEnumerable<CompaniesHouseCompany> data, UserRequestModel userRequestModel)
     {
-        _notificationService.SetStatus($"{userRequestModel.UserId}{userRequestModel.OrganisationId}{SubsidiaryBulkUploadProgress}", "Uploading");
+        var key = userRequestModel.GenerateKey(SubsidiaryBulkUploadProgress);
+        _notificationService.SetStatus(key, "Uploading");
 
         // this holds all the parents and their children records from csv
         var subsidiaryGroups = recordExtraction.ExtractParentsAndSubsidiaries(data).ToAsyncEnumerable();
@@ -38,7 +40,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
                 subsidiaryGroupAndParentOrg.SubsidiaryGroup.Subsidiaries,
                 subsidiaryGroupAndParentOrg.SubsidiaryGroup.Parent,
                 subsidiaryGroupAndParentOrg.Org,
-                Guid.Parse(userRequestModel.UserId));
+                userRequestModel.UserId);
         }
 
         _notificationService.SetStatus($"{userRequestModel.UserId}{userRequestModel.OrganisationId}{SubsidiaryBulkUploadProgress}", "Finished");

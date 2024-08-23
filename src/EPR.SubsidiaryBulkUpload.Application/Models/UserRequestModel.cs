@@ -2,7 +2,7 @@
 
 public class UserRequestModel
 {
-    public string UserId { get; set; }
+    public Guid UserId { get; set; }
 
-    public string OrganisationId { get; set; }
+    public Guid OrganisationId { get; set; }
 }

@@ -73,7 +73,7 @@ public class BulkUploadFunctionTests
     {
         var downloadStreamingDetails = BlobsModelBuilder.CreateBlobDownloadDetails(
             CsvContent.Length,
-            new Dictionary<string, string> { { "UserId", Guid.NewGuid().ToString() }, { "OrganisationId", "TestOrgId" } });
+            new Dictionary<string, string> { { "UserId", Guid.NewGuid().ToString() }, { "OrganisationId", Guid.NewGuid().ToString() } });
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(CsvContent));
         var downloadStreamingResult = BlobsModelFactory.BlobDownloadStreamingResult(stream, downloadStreamingDetails);

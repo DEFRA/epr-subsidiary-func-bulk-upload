@@ -18,10 +18,32 @@ public static class UserRequestModelExtensions
             return null;
         }
 
+        // Validate and convert UserId to GUID
+        if (!Guid.TryParse(caseInsensitiveMetadata["UserId"], out Guid userId))
+        {
+            return null;
+        }
+
+        // Validate and convert OrganisationId to GUID
+        if (!Guid.TryParse(caseInsensitiveMetadata["OrganisationId"], out Guid organisationId))
+        {
+            return null;
+        }
+
         return new UserRequestModel
         {
-            UserId = caseInsensitiveMetadata["UserId"],
-            OrganisationId = caseInsensitiveMetadata["OrganisationId"]
+            UserId = userId,
+            OrganisationId = organisationId
         };
+    }
+
+    public static string GenerateKey(this UserRequestModel userRequestModel, string suffix)
+    {
+        if (userRequestModel == null)
+        {
+            return null;
+        }
+
+        return $"{userRequestModel.UserId}{userRequestModel.OrganisationId}{suffix}";
     }
 }

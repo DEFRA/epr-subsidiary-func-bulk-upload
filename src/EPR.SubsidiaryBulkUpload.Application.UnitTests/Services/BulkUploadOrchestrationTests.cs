@@ -36,9 +36,10 @@ public class BulkUploadOrchestrationTests
         var orchestrator = new BulkUploadOrchestration(recordExtraction.Object, subsidiaryService.Object, bulkSubsidiaryProcessor.Object, notificationService.Object);
 
         var userId = Guid.NewGuid();
+        var organisationId = Guid.NewGuid();
 
         // Act
-        await orchestrator.Orchestrate(companyData, new UserRequestModel { UserId = userId.ToString(), OrganisationId = "TestorgId" });
+        await orchestrator.Orchestrate(companyData, new UserRequestModel { UserId = userId, OrganisationId = organisationId });
 
         // Assert
         foreach (var set in parentAndSubsidiaries)
