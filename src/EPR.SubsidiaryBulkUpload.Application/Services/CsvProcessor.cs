@@ -10,7 +10,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
     public class CsvProcessor(
         ILogger<CsvProcessor> logger) : ICsvProcessor
     {
-        private readonly ILogger<CsvProcessor> _logger = logger;
+        private readonly ILogger<CsvProcessor> _logger = logger = null;
 
         public async Task<IEnumerable<TD>> ProcessStream<TD, TM>(Stream stream, CsvConfiguration configuration)
             where TM : ClassMap
@@ -32,8 +32,17 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                             exceptions.Add(new HeaderValidationException(context, headerNames, headerNameIndex, "Your message here."));
                         }
                     };*/
+
+                    var slogger = new StringBuilder();
+
                     try
                     {
+                        if (slogger == null)
+                        {
+                            slogger = new StringBuilder();
+                        }
+
+                        csv.Context.RegisterClassMap(new CompaniesHouseCompanyMap(slogger));
                         csv.Read();
                         csv.ReadHeader();
                     }
@@ -94,21 +103,11 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                         throw new AggregateException(exceptions);
                     }
 
-                    var logger = new StringBuilder();
-                    logger = null;
                     try
                     {
-                        if (logger == null)
-                        {
-                            logger = new StringBuilder();
-                        }
-
-                        var map = new CompaniesHouseCompanyMap(logger);
-                        csv.Context.RegisterClassMap(map);
-
                         var recordsList = csv.GetRecords<TD>().ToList();
 
-                        if (logger.Length > 0)
+                        if (slogger.Length > 0)
                         {
                             throw new Exception(logger.ToString());
                         }
@@ -122,16 +121,16 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                         _logger.LogError(ex, "-Error occured while processing CSV File. {error}", ex.Message);
 
                         _logger.LogError(ex, "-Total number of Rows in the file {fileRowsCount}", ex.Context.Parser.Count);
-                        logger.AppendLine($"-Total number of Rows in the file '{ex.Context.Parser.Count.ToString()}' is not valid!");
+                        slogger.AppendLine($"-Total number of Rows in the file '{ex.Context.Parser.Count.ToString()}' is not valid!");
 
                         _logger.LogError(ex, "-Error row number in the file {rownumber}", ex.Context.Parser.Row);
-                        logger.AppendLine($"Row Number '{ex.Context.Parser.Row.ToString()}' is not valid!");
+                        slogger.AppendLine($"Row Number '{ex.Context.Parser.Row.ToString()}' is not valid!");
 
                         _logger.LogError(ex, "-Error field in the file {rownumber}", ex.Context.Reader.HeaderRecord[headerIndex].ToLower());
-                        logger.AppendLine($"field '{ex.Context.Reader.HeaderRecord[headerIndex].ToLower()}' is not valid!");
+                        slogger.AppendLine($"field '{ex.Context.Reader.HeaderRecord[headerIndex].ToLower()}' is not valid!");
 
                         _logger.LogError(ex, "-Error occured while processing Row : {error}", ex.Context.Parser.RawRecord);
-                        logger.AppendLine($"Full row '{ex.Context.Parser.RawRecord}' is not valid!");
+                        slogger.AppendLine($"Full row '{ex.Context.Parser.RawRecord}' is not valid!");
                     }
                     catch (Exception ex)
                     {
@@ -139,9 +138,9 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                         throw;
                     }
 
-                    if (logger.Length > 0)
+                    if (slogger.Length > 0)
                     {
-                        throw new Exception(logger.ToString());
+                        throw new Exception(slogger.ToString());
                     }
                 }
             }

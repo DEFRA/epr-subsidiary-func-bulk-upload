@@ -27,8 +27,7 @@ public class CustomCsvReader : CsvReader
     {
         base.ValidateHeader(map, invalidHeaders);
 
-        // We'll only run our validation if the base validation did not find any problems (otherwise we would need to throw
-        // a single exception signalling both kinds of problems, which is hard to implement in a subclass)
+        // We'll only run our validation if the base validation did not find any problems
         if (!invalidHeaders.Any())
         {
             var unexpectedHeaders = new List<string>();
@@ -43,9 +42,6 @@ public class CustomCsvReader : CsvReader
 
             if (unexpectedHeaders.Any())
             {
-                // Adding headers to `invalidHeaders` causes a HeaderValidationException to be thrown later with a message that
-                // implies that expected headers were not found, which is not the case (it's actually the other way around). Thus,
-                // we throw a custom exception instead. Note that this will "escape" any custom handling set on `Configuration.HeaderValidated`
                 throw new UnexpectedHeadersException(Context, unexpectedHeaders);
             }
         }
