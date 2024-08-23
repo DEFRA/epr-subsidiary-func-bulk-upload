@@ -18,7 +18,7 @@ To run locally, create a file `local.settings.json`. This file is in `.gitignore
     "BlobStorage__SubsidiaryContainerName": "subsidiary-upload-container",
     "BlobStorage__CompaniesHouseContainerName": "subsidiary-companies-house-upload-container",
     "TableStorage__ConnectionString": "UseDevelopmentStorage=true",
-    "CompaniesHouseOfflineData__TableName": "CompaniesHouseData",
+    "TableStorage__CompaniesHouseOfflineDataTableName": "CompaniesHouseData",
     "Redis__ConnectionString": "localhost",
     "CompaniesHouseDownload__Schedule": "0 */5 * * * *"
     "ApiConfig__SubsidiaryServiceBaseUrl": "http://localhost:5000/",

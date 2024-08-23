@@ -1,9 +1,8 @@
 ﻿using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services;
-using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 
-namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Service;
+namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 
 [TestClass]
 public class BulkUploadOrchestrationTests
@@ -41,7 +40,7 @@ public class BulkUploadOrchestrationTests
         await orchestrator.Orchestrate(companyData, new UserRequestModel { UserId = userId.ToString(), OrganisationId = "TestorgId" });
 
         // Assert
-        foreach(var set in parentAndSubsidiaries)
+        foreach (var set in parentAndSubsidiaries)
         {
             bulkSubsidiaryProcessor.Verify(cp => cp.Process(set.Subsidiaries, set.Parent, orgModel, userId));
         }

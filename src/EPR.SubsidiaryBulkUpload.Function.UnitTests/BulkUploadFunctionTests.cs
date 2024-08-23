@@ -5,7 +5,6 @@ using Azure.Storage.Blobs.Models;
 using CsvHelper.Configuration;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Services;
-using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using EPR.SubsidiaryBulkUpload.Function.UnitTests.TestHelpers;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -61,7 +60,7 @@ public class BulkUploadFunctionTests
 
         _bulkUploadOrchestrationMock = new Mock<IBulkUploadOrchestration>();
 
-        _csvProcessorMock.Setup(x => x.ProcessStream<CompaniesHouseCompany, CompaniesHouseCompanyMap>(It.IsAny<Stream>(), It.IsAny<CsvConfiguration>()))
+        _csvProcessorMock.Setup(x => x.ProcessStreamWithMapping<CompaniesHouseCompany, CompaniesHouseCompanyMap>(It.IsAny<Stream>(), It.IsAny<CsvConfiguration>()))
         .ReturnsAsync(new List<CompaniesHouseCompany> { new() { companies_house_number = "test" }, new() { organisation_name = "test" } });
 
         _loggerMock = new Mock<ILogger<BulkUploadFunction>>();
@@ -87,7 +86,7 @@ public class BulkUploadFunctionTests
         await _systemUnderTest.Run(_blobClientMock.Object);
 
         // Assert
-        _csvProcessorMock.Verify(x => x.ProcessStream<CompaniesHouseCompany, CompaniesHouseCompanyMap>(It.IsAny<Stream>(), It.IsAny<CsvConfiguration>()), Times.Once);
+        _csvProcessorMock.Verify(x => x.ProcessStreamWithMapping<CompaniesHouseCompany, CompaniesHouseCompanyMap>(It.IsAny<Stream>(), It.IsAny<CsvConfiguration>()), Times.Once);
         _loggerMock.VerifyLog(x => x.LogInformation("Blob trigger processed {Count} records from csv blob {Name}", CsvRowCount, CsvBlobName), Times.Once);
     }
 
