@@ -66,13 +66,7 @@ public class BulkUploadFunction
         };
 
         var records = await _csvProcessor.ProcessStream<CompaniesHouseCompany, CompaniesHouseCompanyMap>(content, configuration);
-        foreach (var company in records)
-        {
-            if (company.Errors != null && company.Errors.Count() > 0)
-            {
-                _logger.LogError("Invalid data in the row {count}", company.Errors);
-            }
-        }
+        var isValidData = await _csvProcessor.Validate(records, userId);
 
         await _orchestration.Orchestrate(records, userId);
 

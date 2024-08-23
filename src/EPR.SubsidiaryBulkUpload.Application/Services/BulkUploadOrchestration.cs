@@ -25,7 +25,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
             async sg => (SubsidiaryGroup: sg, Org: await organisationService.GetCompanyByCompaniesHouseNumber(sg.Parent.companies_house_number)))
             .Where(sg => sg.Org != null);
 
-        await foreach(var subsidiaryGroupAndParentOrg in subsidiaryGroupsAndParentOrg)
+        await foreach (var subsidiaryGroupAndParentOrg in subsidiaryGroupsAndParentOrg)
         {
             await childProcessor.Process(
                 subsidiaryGroupAndParentOrg.SubsidiaryGroup.Subsidiaries,
