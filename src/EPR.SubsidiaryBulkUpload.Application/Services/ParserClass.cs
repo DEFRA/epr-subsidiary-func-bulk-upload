@@ -35,11 +35,12 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             IList<string> readRow = new List<string>();
 
             using (var reader = new StreamReader(stream))
-            using (var csv = new CsvReader(reader, configuration))
+            using (var csv = new CustomCsvReader(reader, configuration))
             {
                 try
                 {
                     csv.Context.RegisterClassMap<CompaniesHouseCompanyMap>();
+                    csv.Read();
                     csv.ReadHeader();
                     csv.ValidateHeader<CompaniesHouseCompanySmart>();
                     rows = csv.GetRecords<CompaniesHouseCompany>().ToList();
