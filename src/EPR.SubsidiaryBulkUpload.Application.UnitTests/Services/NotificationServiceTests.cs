@@ -45,7 +45,7 @@ public class NotificationServiceTests
 
         // Assert
         _redisDatabaseMock.Verify(db => db.StringSetAsync(key, status, null, false, When.Always, CommandFlags.None), Times.Once);
-        _loggerMock.VerifyLog(x => x.LogInformation("Redis updated key: {key} status: {status}", key, status), Times.Once);
+        _loggerMock.VerifyLog(x => x.LogInformation("Redis updated key: {Key} status: {Status}", key, status), Times.Once);
     }
 
     [TestMethod]
@@ -64,6 +64,6 @@ public class NotificationServiceTests
 
         // Assert
         _redisDatabaseMock.Verify(db => db.StringSetAsync(key, serializedErrors, null, false, When.Always, CommandFlags.None), Times.Once);
-        _loggerMock.VerifyLog(x => x.LogInformation("Redis updated key: {key} errors: {value}", key, serializedErrors), Times.Once);
+        _loggerMock.VerifyLog(x => x.LogInformation("Redis updated key: {Key} errors: {Value}", key, serializedErrors), Times.Once);
     }
 }

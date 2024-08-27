@@ -16,7 +16,7 @@ public class NotificationService(
     {
         await _redisDatabase.StringSetAsync(key, status);
 
-        _logger.LogInformation("Redis updated key: {key} status: {status}", key, status);
+        _logger.LogInformation("Redis updated key: {Key} status: {Status}", key, status);
     }
 
     public async Task SetErrorStatus(string key, List<UploadFileErrorModel> errorsModel)
@@ -25,10 +25,10 @@ public class NotificationService(
 
         await _redisDatabase.StringSetAsync(key, value);
 
-        _logger.LogInformation("Redis updated key: {key} errors: {value}", key, value);
+        _logger.LogInformation("Redis updated key: {Key} errors: {Value}", key, value);
     }
 
-    private string SerializeErrorsToJson(List<UploadFileErrorModel> errors)
+    private static string SerializeErrorsToJson(List<UploadFileErrorModel> errors)
     {
         return JsonSerializer.Serialize(new { Errors = errors });
     }

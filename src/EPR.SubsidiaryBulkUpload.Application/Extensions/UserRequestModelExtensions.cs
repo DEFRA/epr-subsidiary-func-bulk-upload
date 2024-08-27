@@ -13,19 +13,17 @@ public static class UserRequestModelExtensions
 
         var caseInsensitiveMetadata = new Dictionary<string, string>(metadata, StringComparer.OrdinalIgnoreCase);
 
-        if (!caseInsensitiveMetadata.ContainsKey("UserId") || !caseInsensitiveMetadata.ContainsKey("OrganisationId"))
+        if (!caseInsensitiveMetadata.TryGetValue("UserId", out var userIdString) || !caseInsensitiveMetadata.TryGetValue("OrganisationId", out var organisationIdString))
         {
             return null;
         }
 
-        // Validate and convert UserId to GUID
-        if (!Guid.TryParse(caseInsensitiveMetadata["UserId"], out Guid userId))
+        if (!Guid.TryParse(userIdString, out Guid userId))
         {
             return null;
         }
 
-        // Validate and convert OrganisationId to GUID
-        if (!Guid.TryParse(caseInsensitiveMetadata["OrganisationId"], out Guid organisationId))
+        if (!Guid.TryParse(organisationIdString, out Guid organisationId))
         {
             return null;
         }
