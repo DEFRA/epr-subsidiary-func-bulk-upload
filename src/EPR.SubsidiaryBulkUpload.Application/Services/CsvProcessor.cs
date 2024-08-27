@@ -1,8 +1,5 @@
-﻿using System.Text;
+﻿using CsvHelper;
 using CsvHelper.Configuration;
-using EPR.SubsidiaryBulkUpload.Application.DTOs;
-using EPR.SubsidiaryBulkUpload.Application.Models;
-using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services
@@ -12,7 +9,19 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
         private readonly ILogger<CsvProcessor> _logger = logger;
         private readonly IParserClass _parserClass = parserClass;
 
-        public async Task<IEnumerable<TD>> ProcessStream<TD, TM>(Stream stream, CsvConfiguration configuration)
+        public async Task<IEnumerable<T>> ProcessStream<T>(Stream stream, IReaderConfiguration configuration)
+        {
+            using var streamReader = new StreamReader(stream);
+            using var csv = new CsvReader(streamReader, configuration);
+
+            var records = csv.GetRecords<T>().ToList();
+
+            _logger.LogInformation("Found {RowCount} csv rows", records.Count);
+
+            return records;
+        }
+
+        public async Task<IEnumerable<TD>> ProcessStreamWithMapping<TD, TM>(Stream stream, IReaderConfiguration configuration)
             where TM : ClassMap
         {
             try
@@ -27,73 +36,6 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             }
 
             return new List<TD>();
-        }
-
-        public async Task<bool?> Validate(IEnumerable<CompaniesHouseCompany> data, Guid userId)
-        {
-            var result = new List<CsvErrorModel>();
-            var slogger = new StringBuilder();
-
-            foreach (var record in data)
-            {
-                var companyData = (CompaniesHouseCompany)record;
-
-                if (string.IsNullOrEmpty(record.organisation_id))
-                {
-                    result.Add(new CsvErrorModel
-                    {
-                        FieldName = "organisation_id",
-                        ErrorMessage = "Organisation Id cannot be empty"
-                    });
-                }
-
-                if (string.IsNullOrEmpty(record.companies_house_number))
-                {
-                    result.Add(new CsvErrorModel
-                    {
-                        FieldName = "companies_house_number",
-                        ErrorMessage = "Organisation Id cannot be empty"
-                    });
-                }
-
-                if (string.IsNullOrEmpty(record.subsidiary_id))
-                {
-                    result.Add(new CsvErrorModel
-                    {
-                        FieldName = "subsidiary_id",
-                        ErrorMessage = "Organisation Id cannot be empty"
-                    });
-                }
-
-                if (string.IsNullOrEmpty(record.organisation_name))
-                {
-                    result.Add(new CsvErrorModel
-                    {
-                        FieldName = "organisation_name",
-                        ErrorMessage = "Organisation Id cannot be empty"
-                    });
-                }
-
-                if (string.IsNullOrEmpty(record.parent_child))
-                {
-                    result.Add(new CsvErrorModel
-                    {
-                        FieldName = "parent_child",
-                        ErrorMessage = "Organisation Id cannot be empty"
-                    });
-                }
-
-                if (result.Count > 0)
-                {
-                    _logger.LogError("File Validation Errors in {rownumber} rows ", result.Count);
-                    slogger.AppendLine($"File Validation Errors in {result.Count} rows!");
-
-                    // TO DO - send to database
-                    throw new Exception(slogger.ToString());
-                }
-            }
-
-            return true;
         }
     }
 }

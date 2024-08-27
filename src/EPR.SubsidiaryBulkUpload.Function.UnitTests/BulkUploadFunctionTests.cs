@@ -60,8 +60,10 @@ public class BulkUploadFunctionTests
 
         _bulkUploadOrchestrationMock = new Mock<IBulkUploadOrchestration>();
 
+        var companies = new List<CompaniesHouseCompany>();
+        companies.Add(new CompaniesHouseCompany() { companies_house_number = "test", organisation_id = "test", organisation_name = "test", parent_child = "test", subsidiary_id = "test" });
         _csvProcessorMock.Setup(x => x.ProcessStreamWithMapping<CompaniesHouseCompany, CompaniesHouseCompanyMap>(It.IsAny<Stream>(), It.IsAny<CsvConfiguration>()))
-        .ReturnsAsync(new List<CompaniesHouseCompany> { new() { companies_house_number = "test" }, new() { organisation_name = "test" } });
+        .ReturnsAsync(companies);
 
         _loggerMock = new Mock<ILogger<BulkUploadFunction>>();
 

@@ -81,7 +81,7 @@ public class CsvProcessorTests
             MissingFieldFound = null
         };
 
-        var processor = new CsvProcessor(NullLogger<CsvProcessor>.Instance);
+        var processor = new CsvProcessor(null, NullLogger<CsvProcessor>.Instance);
 
         // Act
         var actual = (await processor.ProcessStream<CompanyHouseTableEntity>(stream, configuration)).ToArray();

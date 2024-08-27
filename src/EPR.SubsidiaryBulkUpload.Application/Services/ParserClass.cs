@@ -9,7 +9,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
     {
         private readonly ILogger<ParserClass> _logger = logger;
 
-        public (ResponseClass ResponseClass, List<CompaniesHouseCompany> CompaniesHouseCompany) ParseWithHelper(Stream stream, CsvConfiguration configuration)
+        public (ResponseClass ResponseClass, List<CompaniesHouseCompany> CompaniesHouseCompany) ParseWithHelper(Stream stream, IReaderConfiguration configuration)
         {
             var response = new ResponseClass() { isDone = false, Messages = "None" };
             var rows = new List<CompaniesHouseCompany>();
@@ -27,7 +27,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             return (response, rows);
         }
 
-        private List<CompaniesHouseCompany> ParseFileData(Stream stream, CsvConfiguration configuration)
+        private List<CompaniesHouseCompany> ParseFileData(Stream stream, IReaderConfiguration configuration)
         {
             var rows = new List<CompaniesHouseCompany>();
             var exceptions = new List<HeaderValidationException>();

@@ -11,7 +11,7 @@ public class CustomCsvReader : CsvReader
     {
     }
 
-    public CustomCsvReader(TextReader reader, CsvConfiguration configuration)
+    public CustomCsvReader(TextReader reader, IReaderConfiguration configuration)
         : base(reader, configuration)
     {
     }
