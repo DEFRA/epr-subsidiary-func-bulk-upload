@@ -58,12 +58,15 @@ public class BulkUploadFunction
         {
             PrepareHeaderForMatch = args => args.Header.ToLower(),
             HasHeaderRecord = true,
+            IgnoreBlankLines = false,
+            MissingFieldFound = null,
+            Delimiter = ",",
+            TrimOptions = TrimOptions.Trim,
             HeaderValidated = (args) =>
             {
                 ConfigurationFunctions.HeaderValidated(args);
             },
-            IgnoreBlankLines = false,
-            MissingFieldFound = null
+            BadDataFound = null
         };
 
         var records = await _csvProcessor.ProcessStream<CompaniesHouseCompany, CompaniesHouseCompanyMap>(content, configuration);
