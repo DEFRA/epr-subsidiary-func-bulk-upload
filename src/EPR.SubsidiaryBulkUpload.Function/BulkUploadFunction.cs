@@ -62,7 +62,8 @@ public class BulkUploadFunction
             {
                 ConfigurationFunctions.HeaderValidated(args);
             },
-            IgnoreBlankLines = false
+            IgnoreBlankLines = false,
+            MissingFieldFound = null
         };
 
         var records = await _csvProcessor.ProcessStream<CompaniesHouseCompany, CompaniesHouseCompanyMap>(content, configuration);

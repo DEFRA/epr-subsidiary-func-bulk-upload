@@ -5,101 +5,49 @@ namespace EPR.SubsidiaryBulkUpload.Application.DTOs;
 
 public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
 {
-    public CompaniesHouseCompanyMap(StringBuilder logger)
+    public CompaniesHouseCompanyMap()
     {
-        if (logger == null)
+        Map(m => m.organisation_id).Validate(field => !field.Equals(null));
+        Map(m => m.subsidiary_id);
+        Map(m => m.organisation_name).Validate(field => !field.Equals(string.Empty));
+        Map(m => m.companies_house_number).Validate(field => !field.Equals(string.Empty));
+        Map(m => m.parent_child).Validate(field => !field.Equals(string.Empty));
+        Map(m => m.franchisee_licensee_tenant);
+        Map(m => m.Errors).Convert(args =>
         {
-            logger = new StringBuilder();
-        }
-
-        Map(c => c.organisation_id).Name("organisation_id").Validate(args =>
-        {
-            var isValid = !string.IsNullOrEmpty(args.Field);
-            if (!isValid)
-            {
-                logger.AppendLine($"Field '{args.Field}' is not valid!");
-                return false;
-            }
-
-            var isNumeric = int.TryParse(args.Field, out int n);
-            if (!isNumeric)
-            {
-                logger.AppendLine($"Field '{args.Field}' is not number!");
-                return false;
-            }
-
-            return true;
-        });
-        Map(c => c.subsidiary_id).Name("subsidiary_id").TypeConverterOption.NullValues(string.Empty);
-        /*Map(c => c.organisation_name).Name("organisation_name").Validate(args => !string.IsNullOrEmpty(args.Field));*/
-        Map(c => c.organisation_name).Name("organisation_name").Validate(args =>
-        {
-            var isValid = !string.IsNullOrEmpty(args.Field);
-            if (!isValid)
-            {
-                logger.AppendLine($"Field '{args.Field}' is not valid!");
-                return false;
-            }
-
-            return true;
-        });
-        Map(c => c.companies_house_number).Name("companies_house_number").Validate(args =>
-        {
-            var isValid = !string.IsNullOrEmpty(args.Field);
-            if (!isValid)
-            {
-                logger.AppendLine($"Field '{args.Field}' is not valid!");
-                return false;
-            }
-
-            return true;
-        });
-        Map(c => c.parent_child).Name("parent_child").Validate(args =>
-        {
-            var isValid = !string.IsNullOrEmpty(args.Field);
-            if (!isValid)
-            {
-                logger.AppendLine($"Field '{args.Field}' is not valid!");
-                return false;
-            }
-
-            return true;
-        });
-        Map(c => c.franchisee_licensee_tenant).Name("franchisee_licensee_tenant");
-        Map(c => c.Errors).Convert(args =>
-        {
+            var theRow = args.Row;
             var errors = new StringBuilder();
-            if (string.IsNullOrEmpty(args.Value.organisation_id))
+            if (string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.organisation_id))))
             {
-                logger.Append("organisation_id is null");
+                errors.Append("Organisation_id is null");
             }
 
-            if (string.IsNullOrEmpty(args.Value.organisation_name))
+            if (string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.subsidiary_id))))
             {
-                logger.Append("organisation_name is null");
+                errors.Append("Sub Org_id is null");
             }
 
-            if (string.IsNullOrEmpty(args.Value.companies_house_number))
+            if (string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.organisation_name))))
             {
-                logger.Append("companies_house_number is null");
+                errors.Append("Organisation_name is null");
             }
 
-            if (string.IsNullOrEmpty(args.Value.parent_child))
+            if (string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.companies_house_number))))
             {
-                logger.Append("parent_child is null");
+                errors.Append("Organisation_number is null");
             }
 
-            return logger.ToString();
-        });
-/*        Map(c => c.Errors).Convert((IReaderRow row) =>
-        {
-            var errors = new StringBuilder();
-            if (string.IsNullOrEmpty(row.GetField(nameof(c.organisation_id))))
+            if (string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.parent_child))))
             {
-                errors.Append("organisation_id is null");
+                errors.Append("parent_or_child is null");
+            }
+
+            if (string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.franchisee_licensee_tenant))))
+            {
+                errors.Append("License is null");
             }
 
             return errors.ToString();
-        });*/
+        });
     }
 }

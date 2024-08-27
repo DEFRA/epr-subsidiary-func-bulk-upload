@@ -31,7 +31,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                             slogger = new StringBuilder();
                         }
 
-                        csv.Context.RegisterClassMap(new CompaniesHouseCompanyMap(slogger));
+                        csv.Context.RegisterClassMap(new CompaniesHouseCompanyMap());
                         csv.Read();
                         csv.ReadHeader();
                     }
@@ -98,7 +98,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
 
                         if (slogger.Length > 0)
                         {
-                            throw new Exception(logger.ToString());
+                            throw new Exception(slogger.ToString());
                         }
 
                         return recordsList;
@@ -109,17 +109,17 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                         var headerIndex = ex.Context.Reader.CurrentIndex;
                         _logger.LogError(ex, "-Error occured while processing CSV File. {error}", ex.Message);
 
-                        _logger.LogError(ex, "-Total number of Rows in the file {fileRowsCount}", ex.Context.Parser.Count);
-                        slogger.AppendLine($"-Total number of Rows in the file '{ex.Context.Parser.Count.ToString()}' is not valid!");
+/*                        _logger.LogError(ex, "-Total number of Rows in the file {fileRowsCount}", ex.Context.Parser.Count);
+                        slogger.Add($"-Total number of Rows in the file '{ex.Context.Parser.Count.ToString()}' is not valid!");
 
                         _logger.LogError(ex, "-Error row number in the file {rownumber}", ex.Context.Parser.Row);
-                        slogger.AppendLine($"Row Number '{ex.Context.Parser.Row.ToString()}' is not valid!");
+                        slogger.Add($"Row Number '{ex.Context.Parser.Row.ToString()}' is not valid!");
 
                         _logger.LogError(ex, "-Error field in the file {rownumber}", ex.Context.Reader.HeaderRecord[headerIndex].ToLower());
-                        slogger.AppendLine($"field '{ex.Context.Reader.HeaderRecord[headerIndex].ToLower()}' is not valid!");
+                        slogger.Add($"field '{ex.Context.Reader.HeaderRecord[headerIndex].ToLower()}' is not valid!");
 
                         _logger.LogError(ex, "-Error occured while processing Row : {error}", ex.Context.Parser.RawRecord);
-                        slogger.AppendLine($"Full row '{ex.Context.Parser.RawRecord}' is not valid!");
+                        slogger.Add($"Full row '{ex.Context.Parser.RawRecord}' is not valid!");*/
                     }
                     catch (Exception ex)
                     {

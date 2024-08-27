@@ -1,11 +1,9 @@
-﻿using System.Globalization;
-using System.Text;
+﻿using System.Text;
 using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using CsvHelper.Configuration;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
-using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using EPR.SubsidiaryBulkUpload.Function.UnitTests.TestHelpers;
@@ -63,8 +61,12 @@ public class BulkUploadFunctionTests
 
         _bulkUploadOrchestrationMock = new Mock<IBulkUploadOrchestration>();
 
+        var companies = new List<CompaniesHouseCompany>();
+        var company = new CompaniesHouseCompany() { companies_house_number = "test", organisation_id = "test", organisation_name = "test", parent_child = "test", subsidiary_id = "test" };
+        companies.Add(company);
+
         _csvProcessorMock.Setup(x => x.ProcessStream<CompaniesHouseCompany, CompaniesHouseCompanyMap>(It.IsAny<Stream>(), It.IsAny<CsvConfiguration>()))
-        .ReturnsAsync(new List<CompaniesHouseCompany> { new() { companies_house_number = "test" }, new() { organisation_name = "test" } });
+        .ReturnsAsync(companies);
 
         _loggerMock = new Mock<ILogger<BulkUploadFunction>>();
 
