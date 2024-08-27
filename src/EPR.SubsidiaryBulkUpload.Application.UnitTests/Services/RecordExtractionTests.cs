@@ -9,7 +9,7 @@ public class RecordExtractionTests
     private Fixture fixture;
 
     [TestInitialize]
-    public void TestInitiaize()
+    public void TestInitialize()
     {
         fixture = new();
     }

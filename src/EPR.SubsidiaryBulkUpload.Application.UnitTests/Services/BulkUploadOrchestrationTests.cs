@@ -1,6 +1,7 @@
 ﻿using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services;
+using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 
@@ -10,7 +11,7 @@ public class BulkUploadOrchestrationTests
     private Fixture fixture;
 
     [TestInitialize]
-    public void TestInitiaize()
+    public void TestInitialize()
     {
         fixture = new();
     }
@@ -26,17 +27,19 @@ public class BulkUploadOrchestrationTests
         var recordExtraction = new Mock<IRecordExtraction>();
         var subsidiaryService = new Mock<ISubsidiaryService>();
         var bulkSubsidiaryProcessor = new Mock<IBulkSubsidiaryProcessor>();
+        var notificationService = new Mock<INotificationService>();
 
         recordExtraction.Setup(re => re.ExtractParentsAndSubsidiaries(companyData)).Returns(parentAndSubsidiaries);
 
         subsidiaryService.Setup(se => se.GetCompanyByCompaniesHouseNumber(It.IsAny<string>())).ReturnsAsync(orgModel);
 
-        var orchestrator = new BulkUploadOrchestration(recordExtraction.Object, subsidiaryService.Object, bulkSubsidiaryProcessor.Object);
+        var orchestrator = new BulkUploadOrchestration(recordExtraction.Object, subsidiaryService.Object, bulkSubsidiaryProcessor.Object, notificationService.Object);
 
         var userId = Guid.NewGuid();
+        var organisationId = Guid.NewGuid();
 
         // Act
-        await orchestrator.Orchestrate(companyData, userId);
+        await orchestrator.Orchestrate(companyData, new UserRequestModel { UserId = userId, OrganisationId = organisationId });
 
         // Assert
         foreach (var set in parentAndSubsidiaries)

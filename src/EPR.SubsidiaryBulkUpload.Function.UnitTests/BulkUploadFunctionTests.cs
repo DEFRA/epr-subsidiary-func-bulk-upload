@@ -71,11 +71,23 @@ public class BulkUploadFunctionTests
     [TestMethod]
     public async Task BulkUploadFunction_Calls_CsvService()
     {
+        var downloadStreamingDetails = BlobsModelBuilder.CreateBlobDownloadDetails(
+            CsvContent.Length,
+            new Dictionary<string, string> { { "UserId", Guid.NewGuid().ToString() }, { "OrganisationId", Guid.NewGuid().ToString() } });
+
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(CsvContent));
+        var downloadStreamingResult = BlobsModelFactory.BlobDownloadStreamingResult(stream, downloadStreamingDetails);
+
+        var response = Response.FromValue(downloadStreamingResult, new Mock<Response>().Object);
+        _blobClientMock.Setup(client => client.DownloadStreamingAsync(It.IsAny<BlobDownloadOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(response);
+
         // Act
         await _systemUnderTest.Run(_blobClientMock.Object);
 
         // Assert
         _csvProcessorMock.Verify(x => x.ProcessStreamWithMapping<CompaniesHouseCompany, CompaniesHouseCompanyMap>(It.IsAny<Stream>(), It.IsAny<CsvConfiguration>()), Times.Once);
+        _loggerMock.VerifyLog(x => x.LogInformation("Blob trigger processed {Count} records from csv blob {Name}", CsvRowCount, CsvBlobName), Times.Once);
     }
 
     [TestMethod]
@@ -85,6 +97,6 @@ public class BulkUploadFunctionTests
         await _systemUnderTest.Run(_blobClientMock.Object);
 
         // Assert
-        _loggerMock.VerifyLog(x => x.LogInformation("Blob trigger processed {Count} records from csv blob {Name}", CsvRowCount, CsvBlobName), Times.Once);
+        _loggerMock.VerifyLog(x => x.LogInformation("Blob trigger stopped, Missing userId or organisationId in the metadata for blob {Name}", CsvBlobName), Times.Once);
     }
 }

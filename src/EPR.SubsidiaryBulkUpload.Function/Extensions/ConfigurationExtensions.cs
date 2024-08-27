@@ -5,12 +5,15 @@ using System.Net.Http.Headers;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using EPR.SubsidiaryBulkUpload.Application.Configs;
 using EPR.SubsidiaryBulkUpload.Application.Options;
 using EPR.SubsidiaryBulkUpload.Application.Services;
+using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using StackExchange.Redis;
 
 [ExcludeFromCodeCoverage]
 public static class ConfigurationExtensions
@@ -23,6 +26,7 @@ public static class ConfigurationExtensions
         */
         services.Configure<ApiOptions>(configuration.GetSection(ApiOptions.SectionName));
         services.Configure<TableStorageOptions>(configuration.GetSection(TableStorageOptions.SectionName));
+        services.Configure<RedisConfig>(configuration.GetSection(RedisConfig.SectionName));
         return services;
     }
 
@@ -114,6 +118,8 @@ public static class ConfigurationExtensions
 
     public static IServiceCollection AddServices(this IServiceCollection services, IConfiguration configuration)
     {
+        var sp = services.BuildServiceProvider();
+        var redisConfig = sp.GetRequiredService<IOptions<RedisConfig>>().Value;
         services.AddTransient<IBulkUploadOrchestration, BulkUploadOrchestration>();
         services.AddTransient<IBulkSubsidiaryProcessor, BulkSubsidiaryProcessor>();
         services.AddTransient<ICompaniesHouseDataProvider, CompaniesHouseDataProvider>();
@@ -121,6 +127,8 @@ public static class ConfigurationExtensions
         services.AddTransient<ICsvProcessor, CsvProcessor>();
         services.AddTransient<ITableStorageProcessor, TableStorageProcessor>();
         services.AddTransient<ISubsidiaryService, SubsidiaryService>();
+        services.AddTransient<INotificationService, NotificationService>();
+        services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConfig.ConnectionString));
 
         var isDevMode = configuration.GetValue<bool?>("ApiConfig:DeveloperMode");
         if (isDevMode is true)
