@@ -38,7 +38,7 @@ public class CsvProcessorTests
             HasHeaderRecord = true,
         };
 
-        var processor = new CsvProcessor(NullLogger<CsvProcessor>.Instance);
+        var processor = new CsvProcessor(null, NullLogger<CsvProcessor>.Instance);
 
         // Act
         var actual = (await processor.ProcessStream<CompaniesHouseCompany, CompaniesHouseCompanyMap>(stream, configuration)).ToArray();

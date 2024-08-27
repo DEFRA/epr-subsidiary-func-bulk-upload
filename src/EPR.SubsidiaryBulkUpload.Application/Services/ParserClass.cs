@@ -1,22 +1,22 @@
 ﻿using CsvHelper;
 using CsvHelper.Configuration;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
+using Microsoft.Extensions.Logging;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services
 {
-    internal class ParserClass : IParserClass
+    public class ParserClass(ILogger<ParserClass> logger) : IParserClass
     {
-        // With CsvHelper
-#pragma warning disable SA1414 // Tuple types in signatures should have element names
-        public (ResponseClass, List<CompaniesHouseCompany>) ParseWithHelper(string filePath)
-#pragma warning restore SA1414 // Tuple types in signatures should have element names
+        private readonly ILogger<ParserClass> _logger = logger;
+
+        public (ResponseClass ResponseClass, List<CompaniesHouseCompany> CompaniesHouseCompany) ParseWithHelper(Stream stream, CsvConfiguration configuration)
         {
             var response = new ResponseClass() { isDone = false, Messages = "None" };
             var rows = new List<CompaniesHouseCompany>();
 
             try
             {
-                rows = ParseTests(filePath);
+                rows = ParseFileData(stream, configuration);
                 response = new ResponseClass() { isDone = true, Messages = "All Done!" };
             }
             catch (Exception e)
@@ -27,29 +27,52 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             return (response, rows);
         }
 
-        public List<CompaniesHouseCompany> ParseTests(string filePath)
+        private List<CompaniesHouseCompany> ParseFileData(Stream stream, CsvConfiguration configuration)
         {
             var rows = new List<CompaniesHouseCompany>();
-            if (!File.Exists(filePath))
-            {
-                throw new FileNotFoundException("The specified file was not found.", filePath);
-            }
-
-            var config = new CsvConfiguration(System.Globalization.CultureInfo.InvariantCulture);
-
-            config.Delimiter = ",";
-            config.MissingFieldFound = null;
-            config.TrimOptions = TrimOptions.Trim;
-            config.HeaderValidated = null;
-            config.BadDataFound = null;
+            var exceptions = new List<HeaderValidationException>();
 
             IList<string> readRow = new List<string>();
 
-            using (var reader = new StreamReader(filePath))
-            using (var csv = new CsvReader(reader, config))
+            using (var reader = new StreamReader(stream))
+            using (var csv = new CsvReader(reader, configuration))
             {
-                csv.Context.RegisterClassMap<CompaniesHouseCompanyMap>();
-                rows = csv.GetRecords<CompaniesHouseCompany>().ToList();
+                try
+                {
+                    csv.Context.RegisterClassMap<CompaniesHouseCompanyMap>();
+                    csv.ReadHeader();
+                    csv.ValidateHeader<CompaniesHouseCompanySmart>();
+                    rows = csv.GetRecords<CompaniesHouseCompany>().ToList();
+                }
+                catch (HeaderValidationException ex)
+                {
+                    if (ex != null && ex.InvalidHeaders is not null)
+                    {
+                        _logger.LogError(ex, " Invalid header count {count}", ex.InvalidHeaders);
+                        exceptions.Add(ex);
+                    }
+
+                    if (ex != null && ex.InvalidHeaders is not null)
+                    {
+                        var headerJoint = string.Join("\t", ex.InvalidHeaders.Select(x => x.Names[0]));
+                        _logger.LogError(ex, "Invalid header. Column header(s) missing: #### {headerJoint} #### ", headerJoint);
+                        exceptions.Add(ex);
+                    }
+                }
+                catch (UnexpectedHeadersException ex)
+                {
+                    if (ex != null && ex.UnexpectedHeaders is not null)
+                    {
+                        var headerJoint = string.Join("\t", ex.UnexpectedHeaders);
+                        _logger.LogError(ex, "Invalid header. Unexpected Header(s): **** {headerJoint} **** ", headerJoint);
+                        throw;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, " Error occured while processing the CSV file. {count}", ex.Message);
+                    throw;
+                }
             }
 
             return rows;
