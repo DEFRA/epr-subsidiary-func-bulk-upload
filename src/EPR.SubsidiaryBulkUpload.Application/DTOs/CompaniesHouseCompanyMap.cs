@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using CsvHelper.Configuration;
+using EPR.SubsidiaryBulkUpload.Application.Models;
 
 namespace EPR.SubsidiaryBulkUpload.Application.DTOs;
 
@@ -17,6 +18,8 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
         {
             var theRow = args.Row;
             var errors = new StringBuilder();
+
+            // var errors = new CsvErrorModel();
             if (string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.organisation_id))))
             {
                 errors.Append("Organisation_id is null");
@@ -24,27 +27,27 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
 
             if (string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.subsidiary_id))))
             {
-                errors.Append("Sub Org_id is null");
+                errors.Append("/nSub Org_id is null");
             }
 
             if (string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.organisation_name))))
             {
-                errors.Append("Organisation_name is null");
+                errors.Append("/nOrganisation_name is null");
             }
 
             if (string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.companies_house_number))))
             {
-                errors.Append("Organisation_number is null");
+                errors.Append("/nOrganisation_number is null");
             }
 
             if (string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.parent_child))))
             {
-                errors.Append("parent_or_child is null");
+                errors.Append("/nparent_or_child is null");
             }
 
             if (string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.franchisee_licensee_tenant))))
             {
-                errors.Append("License is null");
+                errors.Append("/nLicense is null");
             }
 
             return errors.ToString();
