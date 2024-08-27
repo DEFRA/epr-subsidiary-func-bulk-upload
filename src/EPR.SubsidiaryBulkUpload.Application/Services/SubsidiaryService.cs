@@ -1,42 +1,30 @@
-﻿namespace EPR.SubsidiaryBulkUpload.Application.Services;
-using System.Collections.Generic;
-using System.Net;
-using System.Net.Http;
+﻿using System.Net;
 using System.Net.Http.Json;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Exceptions;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Models;
-using Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+
+namespace EPR.SubsidiaryBulkUpload.Application.Services;
 
 public class SubsidiaryService : ISubsidiaryService
 {
     private const string OrganisationByCompanyHouseNumberUri = "api/bulkuploadorganisations/";
-    private const string OrganisationByTableStorageUri = "api/bulkuploadorganisations/organisation-by-tablestorage";
-    private const string OrganisationUri = "api/bulkuploadorganisations/organisation-by-externalId";
-    private const string OrganisationNameUri = "api/bulkuploadorganisations/organisation-by-invite-token";
     private const string OrganisationCreateAddSubsidiaryUri = "api/bulkuploadorganisations/create-subsidiary-and-add-relationship";
     private const string OrganisationAddSubsidiaryUri = "api/bulkuploadorganisations/add-subsidiary-relationship";
     private const string OrganisationRelationshipsByIdUri = "api/bulkuploadorganisations/organisation-by-relationship";
     private readonly ILogger<SubsidiaryService> _logger;
     private readonly HttpClient _httpClient;
-    private readonly IConfiguration _config;
-    private readonly IAzureStorageTableService _azureTableStorageService;
 
     public SubsidiaryService(
         HttpClient httpClient,
-        ILogger<SubsidiaryService> logger,
-        IConfiguration config,
-        IAzureStorageTableService azureTableStorageService)
+        ILogger<SubsidiaryService> logger)
     {
         _httpClient = httpClient;
         _logger = logger;
-        _config = config;
-        _azureTableStorageService = azureTableStorageService;
     }
 
     public async Task<OrganisationModel?> GetCompanyByOrgId(CompaniesHouseCompany company)
@@ -62,7 +50,7 @@ public class SubsidiaryService : ISubsidiaryService
         return await response.Content.ReadFromJsonWithEnumsAsync<OrganisationModel>();
     }
 
-    public async Task<bool> GetSubsidiaryRelationshipAysnc(int parentOrganisationId, int subsidiaryOrganisationId)
+    public async Task<bool> GetSubsidiaryRelationshipAsync(int parentOrganisationId, int subsidiaryOrganisationId)
     {
         var response = await _httpClient.GetAsync($"{OrganisationRelationshipsByIdUri}?parentId={parentOrganisationId}&subsidiaryId={subsidiaryOrganisationId}");
         if (response.StatusCode == HttpStatusCode.NoContent)
@@ -82,12 +70,7 @@ public class SubsidiaryService : ISubsidiaryService
 
         var orgResponse = response.Content.ReadFromJsonAsync<bool>();
 
-        if (orgResponse == null || orgResponse.Result == false)
-        {
-            return false;
-        }
-
-        return true;
+        return orgResponse != null && orgResponse.Result;
     }
 
     public async Task<OrganisationResponseModel?> GetCompanyByCompaniesHouseNumber(string companiesHouseNumber)
@@ -110,13 +93,7 @@ public class SubsidiaryService : ISubsidiaryService
 
         response.EnsureSuccessStatusCode();
         var orgResponse = response.Content.ReadFromJsonAsync<OrganisationResponseModel[]>();
-        return orgResponse.Result.ToList().FirstOrDefault();
-    }
-
-    public async Task<OrganisationModel?> GetCompanyByOrgIdFromTableStorage(string companiesHouseNumber)
-    {
-        List<OrganisationModel> companies = new List<OrganisationModel>();
-        return await _azureTableStorageService.GetByCompanyNumber(companiesHouseNumber);
+        return orgResponse.Result.FirstOrDefault();
     }
 
     public async Task<string?> CreateAndAddSubsidiaryAsync(LinkOrganisationModel linkOrganisationModel)
@@ -133,6 +110,8 @@ public class SubsidiaryService : ISubsidiaryService
 
             if (problemDetails != null)
             {
+                _logger.LogError("Failed to create and add subsidiary for Parent: {Parent} Subsidiary: {Subsidiary}", linkOrganisationModel.ParentOrganisationId, linkOrganisationModel.Subsidiary.Name);
+
                 throw new ProblemResponseException(problemDetails, response.StatusCode);
             }
         }
@@ -155,6 +134,8 @@ public class SubsidiaryService : ISubsidiaryService
 
             if (problemDetails != null)
             {
+                _logger.LogError("Failed to add subsidiary relationship for Parent: {Parent} Subsidiary: {Subsidiary}", subsidiaryAddModel.ParentOrganisationId, subsidiaryAddModel.ChildOrganisationId);
+
                 throw new ProblemResponseException(problemDetails, response.StatusCode);
             }
         }

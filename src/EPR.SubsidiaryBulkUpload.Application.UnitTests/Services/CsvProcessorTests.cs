@@ -2,25 +2,25 @@
 using System.Text;
 using CsvHelper.Configuration;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
+using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services;
-using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Service;
+namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 
 [TestClass]
+[System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1010:Opening square brackets should be spaced correctly", Justification = "Style cop rules dont yet support collection expressions")]
 public class CsvProcessorTests
 {
     private Fixture fixture;
 
     [TestInitialize]
-    public void TestInitiaize()
+    public void TestInitialize()
     {
         fixture = new();
     }
 
     [TestMethod]
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1010:Opening square brackets should be spaced correctly", Justification = "Style cop rules dont yet support collection expressions")]
     public async Task ShouldProcessCompaniesHouseScvUploadData()
     {
         // Arrange
@@ -29,7 +29,7 @@ public class CsvProcessorTests
         var header = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
         var rawSource = source.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
 
-        string[] all = [header, ..rawSource];
+        string[] all = [header, .. rawSource];
 
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
 
@@ -41,7 +41,7 @@ public class CsvProcessorTests
         var processor = new CsvProcessor(null, NullLogger<CsvProcessor>.Instance);
 
         // Act
-        var actual = (await processor.ProcessStream<CompaniesHouseCompany, CompaniesHouseCompanyMap>(stream, configuration)).ToArray();
+        var actual = (await processor.ProcessStreamWithMapping<CompaniesHouseCompany, CompaniesHouseCompanyMap>(stream, configuration)).ToArray();
 
         // Assert
         actual.Should().HaveCount(2);
@@ -59,5 +59,42 @@ public class CsvProcessorTests
                                chc.companies_house_number == source[1].companies_house_number &&
                                chc.parent_child == source[1].parent_child &&
                                chc.franchisee_licensee_tenant == source[1].franchisee_licensee_tenant);
+    }
+
+    [TestMethod]
+    public async Task ShouldProcessCsvStream()
+    {
+        // Arrange
+        var source = fixture.CreateMany<CompanyHouseTableEntity>(2).ToArray();
+        var header = "CompanyName,CompanyNumber,CompanyStatus\n";
+
+        var rawSource = source.Select(s => $"{s.CompanyName},{s.CompanyNumber},{s.CompanyStatus}\n");
+
+        string[] all = [header, .. rawSource];
+
+        using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
+
+        var configuration = new CsvConfiguration(CultureInfo.InvariantCulture)
+        {
+            HasHeaderRecord = true,
+            HeaderValidated = null,
+            MissingFieldFound = null
+        };
+
+        var processor = new CsvProcessor(NullLogger<CsvProcessor>.Instance);
+
+        // Act
+        var actual = (await processor.ProcessStream<CompanyHouseTableEntity>(stream, configuration)).ToArray();
+
+        // Assert
+        actual.Should().HaveCount(2);
+
+        actual.Should().Contain(chc => chc.CompanyName == source[0].CompanyName &&
+                               chc.CompanyNumber == source[0].CompanyNumber &&
+                               chc.CompanyStatus == source[0].CompanyStatus);
+
+        actual.Should().Contain(chc => chc.CompanyName == source[1].CompanyName &&
+                               chc.CompanyNumber == source[1].CompanyNumber &&
+                               chc.CompanyStatus == source[1].CompanyStatus);
     }
 }

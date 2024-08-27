@@ -1,6 +1,5 @@
 ﻿using Azure.Data.Tables;
 using EPR.SubsidiaryBulkUpload.Application.Models;
-using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services;
@@ -9,9 +8,9 @@ public class TableStorageProcessor(
     TableServiceClient tableServiceClient,
     ILogger<TableStorageProcessor> logger) : ITableStorageProcessor
 {
-    private const string CurrentIngestion = "Current Ingestion";
-    private const string LatestCHData = "Latest CH Data";
-    private const string Latest = "Latest";
+    public const string CurrentIngestion = "Current Ingestion";
+    public const string LatestCHData = "Latest CH Data";
+    public const string Latest = "Latest";
 
     private readonly TableServiceClient _tableServiceClient = tableServiceClient;
     private readonly ILogger<TableStorageProcessor> _logger = logger;
@@ -73,10 +72,50 @@ public class TableStorageProcessor(
         catch (Exception ex)
         {
             _logger.LogError(ex, "An error occurred during ingestion.");
-
             await tableClient.DeleteEntityAsync(currentIngestion);
 
             throw;
         }
+    }
+
+    public async Task<CompanyHouseTableEntity?> GetByCompanyNumber(string companiesHouseNumber, string tableName)
+    {
+        CompanyHouseTableEntity? chEntity = null;
+
+        try
+        {
+            var partitionKey = await GetLatestPartitionKey(tableName);
+
+            if (partitionKey != null)
+            {
+                var tableClient = _tableServiceClient.GetTableClient(tableName);
+                await tableClient.CreateIfNotExistsAsync();
+
+                var result = await tableClient.GetEntityAsync<CompanyHouseTableEntity>(
+                    partitionKey: partitionKey,
+                    rowKey: companiesHouseNumber);
+
+                chEntity = result?.Value;
+            }
+        }
+        catch(Exception ex)
+        {
+            // note: do not rethrow. The CH API will be used instead!
+            _logger.LogError(ex, "An error occurred whilst retrieving a companies house details ");
+        }
+
+        return chEntity;
+    }
+
+    private async Task<string?> GetLatestPartitionKey(string tableName)
+    {
+        var tableClient = _tableServiceClient.GetTableClient(tableName);
+        await tableClient.CreateIfNotExistsAsync();
+
+        var tableResult = await tableClient.GetEntityAsync<CompanyHouseTableEntity>(
+            partitionKey: LatestCHData,
+            rowKey: Latest);
+
+        return tableResult?.Value?.Data;
     }
 }

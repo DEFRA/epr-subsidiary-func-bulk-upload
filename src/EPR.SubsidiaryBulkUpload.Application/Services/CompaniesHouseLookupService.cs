@@ -1,9 +1,8 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
-using EPR.SubsidiaryBulkUpload.Application.Configs;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Models;
-using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
+using EPR.SubsidiaryBulkUpload.Application.Options;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -13,11 +12,11 @@ public class CompaniesHouseLookupService : ICompaniesHouseLookupService
 {
     private const string CompaniesHouseEndpoint = "CompaniesHouse/companies";
 
-    private readonly ApiConfig _apiConfig;
+    private readonly ApiOptions _apiConfig;
     private readonly ILogger<CompaniesHouseLookupService> _logger;
     private readonly HttpClient _httpClient;
 
-    public CompaniesHouseLookupService(HttpClient httpClient, IOptions<ApiConfig> apiOptions, ILogger<CompaniesHouseLookupService> logger)
+    public CompaniesHouseLookupService(HttpClient httpClient, IOptions<ApiOptions> apiOptions, ILogger<CompaniesHouseLookupService> logger)
     {
         _apiConfig = apiOptions.Value;
         _httpClient = httpClient;

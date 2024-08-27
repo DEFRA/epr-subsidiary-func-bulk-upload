@@ -3,7 +3,6 @@ using System.Net;
 using System.Net.Http.Json;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Models;
-using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services;
 

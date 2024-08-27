@@ -1,10 +1,10 @@
 ﻿using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Models;
+using EPR.SubsidiaryBulkUpload.Application.Options;
 using EPR.SubsidiaryBulkUpload.Application.Services;
-using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
-using FluentAssertions;
+using Microsoft.Extensions.Options;
 
-namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Service;
+namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 
 [TestClass]
 public class CompaniesHouseDataProviderTests
@@ -12,7 +12,7 @@ public class CompaniesHouseDataProviderTests
     private Fixture fixture;
 
     [TestInitialize]
-    public void TestInitiaize()
+    public void TestInitialize()
     {
         fixture = new();
     }
@@ -22,21 +22,28 @@ public class CompaniesHouseDataProviderTests
     {
         // Arrange
         var organisationModel = fixture.Create<OrganisationModel>();
-        var lookupResponse = fixture.Create<OrganisationModel>();
+        var companyHouseEntity = fixture.Create<CompanyHouseTableEntity>();
+        var config = fixture.Create<TableStorageOptions>();
+        var options = new Mock<IOptions<TableStorageOptions>>();
+        options.Setup(o => o.Value).Returns(config);
 
         var companiesHouseLookup = new Mock<ICompaniesHouseLookupService>();
-        var subsidiaryService = new Mock<ISubsidiaryService>();
+        var tableStorage = new Mock<ITableStorageProcessor>();
 
-        subsidiaryService.Setup(ss => ss.GetCompanyByOrgIdFromTableStorage(organisationModel.CompaniesHouseNumber))
-            .ReturnsAsync(lookupResponse);
+        tableStorage.Setup(ts => ts.GetByCompanyNumber(organisationModel.CompaniesHouseNumber, config.CompaniesHouseOfflineDataTableName))
+            .ReturnsAsync(companyHouseEntity);
 
-        var dataProvider = new CompaniesHouseDataProvider(companiesHouseLookup.Object, subsidiaryService.Object);
+        var dataProvider = new CompaniesHouseDataProvider(companiesHouseLookup.Object, tableStorage.Object, options.Object);
 
         // Act
         dataProvider.SetCompaniesHouseData(organisationModel);
 
         // Assert
-        organisationModel.Address.Should().BeEquivalentTo(lookupResponse.Address);
+        organisationModel.Address.Street.Should().Be(companyHouseEntity.RegAddressAddressLine1);
+        organisationModel.Address.County.Should().Be(companyHouseEntity.RegAddressCounty);
+        organisationModel.Address.Postcode.Should().Be(companyHouseEntity.RegAddressPostCode);
+        organisationModel.Address.Town.Should().Be(companyHouseEntity.RegAddressPostTown);
+        organisationModel.Address.Country.Should().Be(companyHouseEntity.RegAddressCountry);
         organisationModel.OrganisationType.Should().Be(OrganisationType.NotSet);
     }
 
@@ -46,17 +53,21 @@ public class CompaniesHouseDataProviderTests
         // Arrange
         var organisationModel = fixture.Create<OrganisationModel>();
         var companiesHouseResponse = fixture.Create<Company>();
+        var config = fixture.Create<TableStorageOptions>();
+        var options = new Mock<IOptions<TableStorageOptions>>();
+        options.Setup(o => o.Value).Returns(config);
 
         var companiesHouseLookup = new Mock<ICompaniesHouseLookupService>();
-        var subsidiaryService = new Mock<ISubsidiaryService>();
 
-        subsidiaryService.Setup(ss => ss.GetCompanyByOrgIdFromTableStorage(organisationModel.CompaniesHouseNumber))
-            .ReturnsAsync((OrganisationModel)null);
+        var tableStorage = new Mock<ITableStorageProcessor>();
+
+        tableStorage.Setup(ts => ts.GetByCompanyNumber(organisationModel.CompaniesHouseNumber, config.CompaniesHouseOfflineDataTableName))
+            .ReturnsAsync((CompanyHouseTableEntity)null);
 
         companiesHouseLookup.Setup(chl => chl.GetCompaniesHouseResponseAsync(organisationModel.CompaniesHouseNumber))
             .ReturnsAsync(companiesHouseResponse);
 
-        var dataProvider = new CompaniesHouseDataProvider(companiesHouseLookup.Object, subsidiaryService.Object);
+        var dataProvider = new CompaniesHouseDataProvider(companiesHouseLookup.Object, tableStorage.Object, options.Object);
 
         // Act
         dataProvider.SetCompaniesHouseData(organisationModel);

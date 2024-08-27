@@ -1,30 +1,24 @@
-﻿using Azure.Storage.Blobs;
-using EPR.SubsidiaryBulkUpload.Application.Configs;
+﻿using System.Globalization;
+using Azure.Storage.Blobs;
+using CsvHelper.Configuration;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Models;
-using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
+using EPR.SubsidiaryBulkUpload.Application.Options;
+using EPR.SubsidiaryBulkUpload.Application.Services;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace EPR.SubsidiaryBulkUpload.Function;
 
-public class CompaniesHouseImportFunction
+public class CompaniesHouseImportFunction(ILogger<CompaniesHouseImportFunction> logger, ICsvProcessor csvProcessor, ITableStorageProcessor tableStorageProcessor, IOptions<TableStorageOptions> configOptions)
 {
     private const int BatchSize = 100; // Maximum batch size for Azure Table Storage
 
-    private readonly ICompaniesHouseCsvProcessor _csvProcessor;
-    private readonly ITableStorageProcessor _tableStorageProcessor;
-    private readonly ILogger<CompaniesHouseImportFunction> _logger;
-    private readonly ConfigOptions _configOptions;
-
-    public CompaniesHouseImportFunction(ILogger<CompaniesHouseImportFunction> logger, ICompaniesHouseCsvProcessor csvProcessor, ITableStorageProcessor tableStorageProcessor, IOptions<ConfigOptions> configOptions)
-    {
-        _logger = logger;
-        _csvProcessor = csvProcessor;
-        _tableStorageProcessor = tableStorageProcessor;
-        _configOptions = configOptions.Value;
-    }
+    private readonly ICsvProcessor _csvProcessor = csvProcessor;
+    private readonly ITableStorageProcessor _tableStorageProcessor = tableStorageProcessor;
+    private readonly ILogger<CompaniesHouseImportFunction> _logger = logger;
+    private readonly TableStorageOptions _configOptions = configOptions.Value;
 
     [Function(nameof(CompaniesHouseImportFunction))]
     public async Task Run(
@@ -48,10 +42,17 @@ public class CompaniesHouseImportFunction
         {
             var content = downloadStreamingResult.Value.Content;
 
-            var storageConnectionString = _configOptions.TableStorageConnectionString;
+            var storageConnectionString = _configOptions.ConnectionString;
             var tableName = _configOptions.CompaniesHouseOfflineDataTableName;
 
-            var records = await _csvProcessor.ProcessStreamToObject(content, new CompanyHouseTableEntity());
+            var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                PrepareHeaderForMatch = args => args.Header.Trim(),
+                HeaderValidated = null,
+                MissingFieldFound = null
+            };
+
+            var records = await _csvProcessor.ProcessStream<CompanyHouseTableEntity>(content, config);
 
             if (records.Any())
             {

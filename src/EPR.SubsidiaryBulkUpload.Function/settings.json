@@ -7,7 +7,7 @@
     "BlobStorage__SubsidiaryContainerName": "subsidiary-upload-container",
     "BlobStorage__CompaniesHouseContainerName": "subsidiary-companies-house-upload-container",
     "TableStorage__ConnectionString": "UseDevelopmentStorage=true",
-    "CompaniesHouseOfflineData__TableName": "CompaniesHouseData",
+    "TableStorage__CompaniesHouseOfflineData": "CompaniesHouseData",
     "CompaniesHouseDownload__Schedule": "0 */5 * * * *"
   }
 }
