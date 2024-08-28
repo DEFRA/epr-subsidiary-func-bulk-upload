@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using CsvHelper.Configuration.Attributes;
+using EPR.SubsidiaryBulkUpload.Application.Models;
 
 namespace EPR.SubsidiaryBulkUpload.Application.DTOs;
 
@@ -31,6 +32,9 @@ public class CompaniesHouseCompany
 
     [Optional]
     public string? Errors { get; set; }
+
+    [Optional]
+    public UploadFileErrorModel? UploadFileError { get; set; }
 
     public static ValidationResult ValidateName(string organisation_name, ValidationContext context)
     {

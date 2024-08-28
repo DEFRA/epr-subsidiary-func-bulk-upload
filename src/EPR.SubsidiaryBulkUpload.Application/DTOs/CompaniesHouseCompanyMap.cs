@@ -1,6 +1,5 @@
 ﻿using System.Text;
 using CsvHelper.Configuration;
-using EPR.SubsidiaryBulkUpload.Application.Models;
 
 namespace EPR.SubsidiaryBulkUpload.Application.DTOs;
 

@@ -21,6 +21,33 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
         _notificationService = notificationService;
     }
 
+    public async Task NotifyErrors(IEnumerable<CompaniesHouseCompany> data, UserRequestModel userRequestModel)
+    {
+        var key = userRequestModel.GenerateKey(SubsidiaryBulkUploadProgress);
+        var notificationErrorList = new List<UploadFileErrorModel>();
+        var dataWithErrors = data.Where(e => e.Errors.Any()).ToList();
+        foreach (var company in dataWithErrors)
+        {
+            var errorListing = company.Errors.Split("/n");
+            if (errorListing.Length > 0)
+            {
+                foreach (var error in errorListing)
+                {
+                    var errModel = new UploadFileErrorModel()
+                    {
+                        FileLineNumber = int.Parse(company.organisation_id),
+                        FileContent = company.companies_house_number + "-" + company.organisation_name + "-" + company.parent_child,
+                        Message = error
+                    };
+
+                    notificationErrorList.Add(errModel);
+                }
+
+                _notificationService.SetErrorStatus(key, notificationErrorList);
+            }
+        }
+    }
+
     public async Task Orchestrate(IEnumerable<CompaniesHouseCompany> data, UserRequestModel userRequestModel)
     {
         var key = userRequestModel.GenerateKey(SubsidiaryBulkUploadProgress);
