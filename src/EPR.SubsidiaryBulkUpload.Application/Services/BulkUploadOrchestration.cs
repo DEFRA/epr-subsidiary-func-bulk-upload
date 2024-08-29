@@ -44,7 +44,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
         // this holds all the parents and their children records from csv
         var subsidiaryGroups = recordExtraction.ExtractParentsAndSubsidiaries(data).ToAsyncEnumerable();
 
-        // this will fectch data from the org database for all the parents and filter to keep the valid ones (org exists in RPD)
+        // this will fetch data from the org database for all the parents and filter to keep the valid ones (org exists in RPD)
         var subsidiaryGroupsAndParentOrg = subsidiaryGroups.SelectAwait(
             async sg => (SubsidiaryGroup: sg, Org: await organisationService.GetCompanyByCompaniesHouseNumber(sg.Parent.companies_house_number)))
             .Where(sg => sg.Org != null);
