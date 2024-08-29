@@ -32,8 +32,6 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             var rows = new List<CompaniesHouseCompany>();
             var exceptions = new List<HeaderValidationException>();
 
-            IList<string> readRow = new List<string>();
-
             using (var reader = new StreamReader(stream))
             using (var csv = new CustomCsvReader(reader, configuration))
             {
@@ -42,7 +40,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                     csv.Context.RegisterClassMap<CompaniesHouseCompanyMap>();
                     csv.Read();
                     csv.ReadHeader();
-                    csv.ValidateHeader<CompaniesHouseCompanySmart>();
+                    csv.ValidateHeader<FileUploadHeader>();
                     rows = csv.GetRecords<CompaniesHouseCompany>().ToList();
                 }
                 catch (HeaderValidationException ex)

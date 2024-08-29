@@ -3,7 +3,7 @@
 namespace EPR.SubsidiaryBulkUpload.Application.DTOs;
 
 [ExcludeFromCodeCoverage]
-public class CompaniesHouseCompanySmart
+public class FileUploadHeader
 {
     public string organisation_id { get; set; }
 

@@ -9,7 +9,7 @@ public class CompaniesHouseCompany
     required public string organisation_id { get; set; }
 
     [Optional]
-    required public string subsidiary_id { get; set; }
+    public string subsidiary_id { get; set; }
 
     [CustomValidation(typeof(CompaniesHouseCompany), nameof(ValidateName))]
     required public string organisation_name { get; set; }
@@ -33,8 +33,8 @@ public class CompaniesHouseCompany
     [Optional]
     public string? Errors { get; set; }
 
-    [Optional]
-    public UploadFileErrorModel? UploadFileError { get; set; }
+    [Ignore]
+    public UploadFileErrorModel UploadFileErrorModel { get; set; }
 
     public static ValidationResult ValidateName(string organisation_name, ValidationContext context)
     {
