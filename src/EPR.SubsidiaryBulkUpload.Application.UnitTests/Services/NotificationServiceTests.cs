@@ -2,7 +2,6 @@
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
 using StackExchange.Redis;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;

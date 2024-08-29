@@ -40,9 +40,4 @@ public class CompaniesHouseLookupDirectService : ICompaniesHouseLookupService
 
         return new Company(company);
     }
-
-    public async Task<Company?> GetCompanyByCompaniesHouseNumber(string companiesHouseNumber)
-    {
-        throw new NotImplementedException();
-    }
 }
