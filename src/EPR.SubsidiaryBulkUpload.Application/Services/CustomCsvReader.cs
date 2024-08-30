@@ -28,7 +28,7 @@ public class CustomCsvReader : CsvReader
         base.ValidateHeader(map, invalidHeaders);
 
         // We'll only run our validation if the base validation did not find any problems
-        if (!invalidHeaders.Any())
+        if (invalidHeaders.Count == 0)
         {
             var unexpectedHeaders = new List<string>();
             for (var i = 0; i < HeaderRecord.Length; i++)
@@ -40,22 +40,11 @@ public class CustomCsvReader : CsvReader
                 }
             }
 
-            if (unexpectedHeaders.Any())
+            if (unexpectedHeaders.Count != 0)
             {
                 throw new UnexpectedHeadersException(Context, unexpectedHeaders);
             }
         }
-
-     /*   base.ValidateHeader(map, invalidHeaders);
-
-        for (var i = 0; i < HeaderRecord.Length; i++)
-        {
-            var header = HeaderRecord[i];
-            if (!isHeaderMapped(map, header, i))
-            {
-                MissingFieldMappingFound?.Invoke(new MissingFieldFoundArgs(new[] { header }, i, Context));
-            }
-        }*/
     }
 
     private bool isHeaderMapped(ClassMap map, string header, int index)

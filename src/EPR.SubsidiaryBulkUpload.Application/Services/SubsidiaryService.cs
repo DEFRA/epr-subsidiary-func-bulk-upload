@@ -70,7 +70,7 @@ public class SubsidiaryService : ISubsidiaryService
 
         var orgResponse = await response.Content.ReadFromJsonAsync<bool>();
 
-        return orgResponse != null && orgResponse;
+        return orgResponse;
     }
 
     public async Task<OrganisationResponseModel?> GetCompanyByCompaniesHouseNumber(string companiesHouseNumber)
@@ -92,15 +92,9 @@ public class SubsidiaryService : ISubsidiaryService
         }
 
         response.EnsureSuccessStatusCode();
-        try
-        {
-            var orgResponse = await response.Content.ReadFromJsonAsync<OrganisationResponseModel[]>();
-            return orgResponse.FirstOrDefault();
-        }
-        catch (Exception ex)
-        {
-            throw;
-        }
+
+        var orgResponse = await response.Content.ReadFromJsonAsync<OrganisationResponseModel[]>();
+        return orgResponse.FirstOrDefault();
     }
 
     public async Task<string?> CreateAndAddSubsidiaryAsync(LinkOrganisationModel linkOrganisationModel)

@@ -1,6 +1,5 @@
 ﻿using System.Net;
 using System.Text.Json;
-using AutoFixture;
 using AutoFixture.AutoMoq;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Options;

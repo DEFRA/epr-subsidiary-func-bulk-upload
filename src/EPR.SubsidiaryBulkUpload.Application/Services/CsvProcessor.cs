@@ -26,7 +26,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
         {
             try
             {
-                var (response, theList) = _parserClass.ParseWithHelper(stream, configuration);
+                var (_, theList) = _parserClass.ParseWithHelper(stream, configuration);
                 return (IEnumerable<TD>)theList;
             }
             catch (Exception ex)
