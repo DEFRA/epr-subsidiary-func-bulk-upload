@@ -45,13 +45,13 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                 }
                 catch (HeaderValidationException ex)
                 {
-                    if (ex != null && ex.InvalidHeaders is not null)
+                    if (ex.InvalidHeaders is not null)
                     {
                         _logger.LogError(ex, " Invalid header count {Count}", ex.InvalidHeaders);
                         exceptions.Add(ex);
                     }
 
-                    if (ex != null && ex.InvalidHeaders is not null)
+                    if (ex.InvalidHeaders is not null)
                     {
                         var headerJoint = string.Join("\t", ex.InvalidHeaders.Select(x => x.Names[0]));
                         _logger.LogError(ex, "Invalid header. Column header(s) missing: #### {HeaderJoint} #### ", headerJoint);
@@ -60,7 +60,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                 }
                 catch (UnexpectedHeadersException ex)
                 {
-                    if (ex != null && ex.UnexpectedHeaders is not null)
+                    if (ex.UnexpectedHeaders is not null)
                     {
                         var headerJoint = string.Join("\t", ex.UnexpectedHeaders);
                         _logger.LogError(ex, "Invalid header. Unexpected Header(s): **** {HeaderJoint} **** ", headerJoint);

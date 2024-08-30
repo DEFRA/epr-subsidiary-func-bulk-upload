@@ -14,7 +14,6 @@ public class BulkUploadFunction
     private readonly ILogger<BulkUploadFunction> _logger;
     private readonly ICsvProcessor _csvProcessor;
     private readonly IBulkUploadOrchestration _orchestration;
-    private string? filePath = string.Empty;
 
     public BulkUploadFunction(ILogger<BulkUploadFunction> logger, ICsvProcessor csvProcessor, IBulkUploadOrchestration orchestration)
     {
@@ -29,6 +28,9 @@ public class BulkUploadFunction
         BlobClient client)
     {
         var downloadStreamingResult = await client.DownloadStreamingAsync();
+        var content = downloadStreamingResult.Value.Content
+            ?? throw new NullReferenceException("Client streaming result is null");
+
         var metaData = downloadStreamingResult.Value.Details?.Metadata;
 
         var userGuid = metaData.Where(pair => pair.Key.Contains("userId"))
@@ -38,20 +40,6 @@ public class BulkUploadFunction
         if (!hasUserId)
         {
             _logger.LogWarning("Missing userId metadata for blob {Name}", client.Name);
-        }
-
-        var content = downloadStreamingResult.Value.Content;
-
-        if (content == null)
-        {
-            throw new ArgumentNullException("stream");
-        }
-
-        // Check if file exists
-        if (content == null && !File.Exists(filePath))
-        {
-            // File not exits
-            throw new FileNotFoundException("data file not found");
         }
 
         var configuration = new CsvConfiguration(CultureInfo.InvariantCulture)

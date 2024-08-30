@@ -6,6 +6,8 @@ namespace EPR.SubsidiaryBulkUpload.Application.DTOs;
 
 public class CompaniesHouseCompany
 {
+    private static readonly string[] MemberNames = { "organisation_name" };
+
     required public string organisation_id { get; set; }
 
     [Optional]
@@ -40,7 +42,7 @@ public class CompaniesHouseCompany
     {
         if (string.IsNullOrWhiteSpace(organisation_name))
         {
-            return new ValidationResult("Invalid organisation_name format.", new[] { "organisation_name" });
+            return new ValidationResult("Invalid organisation_name format.", MemberNames);
         }
 
         return ValidationResult.Success;
