@@ -47,14 +47,14 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                 {
                     if (ex != null && ex.InvalidHeaders is not null)
                     {
-                        _logger.LogError(ex, " Invalid header count {count}", ex.InvalidHeaders);
+                        _logger.LogError(ex, " Invalid header count {Count}", ex.InvalidHeaders);
                         exceptions.Add(ex);
                     }
 
                     if (ex != null && ex.InvalidHeaders is not null)
                     {
                         var headerJoint = string.Join("\t", ex.InvalidHeaders.Select(x => x.Names[0]));
-                        _logger.LogError(ex, "Invalid header. Column header(s) missing: #### {headerJoint} #### ", headerJoint);
+                        _logger.LogError(ex, "Invalid header. Column header(s) missing: #### {HeaderJoint} #### ", headerJoint);
                         exceptions.Add(ex);
                     }
                 }
@@ -63,13 +63,13 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                     if (ex != null && ex.UnexpectedHeaders is not null)
                     {
                         var headerJoint = string.Join("\t", ex.UnexpectedHeaders);
-                        _logger.LogError(ex, "Invalid header. Unexpected Header(s): **** {headerJoint} **** ", headerJoint);
+                        _logger.LogError(ex, "Invalid header. Unexpected Header(s): **** {HeaderJoint} **** ", headerJoint);
                         throw;
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, " Error occured while processing the CSV file. {count}", ex.Message);
+                    _logger.LogError(ex, " Error occured while processing the CSV file. {Count}", ex.Message);
                     throw;
                 }
             }

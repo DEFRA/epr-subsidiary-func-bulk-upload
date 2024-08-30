@@ -34,7 +34,7 @@ public class CompaniesHouseLookupService : ICompaniesHouseLookupService
                 _logger.LogInformation("Has auth header {Scheme}", _httpClient.DefaultRequestHeaders.Authorization.Scheme);
             }
 
-            _logger.LogInformation("Has certificate? {Has} length {Len}", !string.IsNullOrEmpty(_apiConfig.Certificate), _apiConfig.Certificate?.Length ?? 0);
+            _logger.LogInformation("Has certificate? {Has} length {Len}", !string.IsNullOrEmpty(_apiConfig?.Certificate), _apiConfig?.Certificate?.Length ?? 0);
 
             var response = await _httpClient.GetAsync($"{CompaniesHouseEndpoint}/{id}");
 
@@ -55,7 +55,8 @@ public class CompaniesHouseLookupService : ICompaniesHouseLookupService
             }
 
             response.EnsureSuccessStatusCode();
-            var company = await response.Content.ReadFromJsonAsync<CompaniesHouseCompany>();
+
+            var company = await response.Content.ReadFromJsonAsync<CompaniesHouseResponseFromCompaniesHouse>();
             return new Company(company);
         }
         catch (Exception ex)

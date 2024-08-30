@@ -81,7 +81,7 @@ public class BulkUploadFunction
         }
         else
         {
-            _logger.LogInformation("Blob trigger stopped, Missing userId or organisationId in the metadata for blob {Name}", client.Name);
+            _logger.LogInformation("Blob trigger stopped, missing userId or organisationId in the metadata for blob {Name}", client.Name);
         }
     }
 }

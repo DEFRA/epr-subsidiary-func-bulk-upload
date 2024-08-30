@@ -59,10 +59,6 @@ public class CompaniesHouseImportFunctionTests
 
         _csvProcessorMock = new Mock<ICsvProcessor>();
 
-        /* _csvProcessorMock.Setup(x => x.ProcessStream(It.IsAny<Stream>()))
-         .ReturnsAsync(CsvRowCount);
-        */
-
         _tableStorageProcessor = new Mock<ITableStorageProcessor>();
 
         _loggerMock = new Mock<ILogger<CompaniesHouseImportFunction>>();
