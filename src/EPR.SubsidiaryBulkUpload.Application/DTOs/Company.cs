@@ -24,6 +24,20 @@ public class Company
         AccountCreatedOn = organisation.AccountCreatedOn;
     }
 
+    public Company(CompaniesHouseResponseFromCompaniesHouse? organisation)
+        : this()
+    {
+        if (organisation == null)
+        {
+            throw new ArgumentException("Organisation cannot be null.");
+        }
+
+        CompaniesHouseNumber = organisation.Organisation?.RegistrationNumber ?? string.Empty;
+        Name = organisation.Organisation?.Name ?? string.Empty;
+        BusinessAddress = new Address(organisation.Organisation?.RegisteredOffice);
+        AccountCreatedOn = organisation.AccountCreatedOn;
+    }
+
     public Company(CompaniesHouseResponse? organisationResponse)
         : this()
     {

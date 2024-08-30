@@ -1,14 +1,19 @@
 ﻿using System.Net;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
+using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using Microsoft.Extensions.Logging.Abstractions;
+using Moq.Protected;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 
 [TestClass]
 public class SubsidiaryServiceTests
 {
+    private const string BaseAddress = "http://localhost";
+    private const string OrganisationByCompanyHouseNumberUri = "api/bulkuploadorganisations/";
+
     private SubsidiaryService _sut;
     private Mock<HttpMessageHandler> _httpMessageHandlerMock;
     private HttpClient _httpClient;
@@ -19,7 +24,7 @@ public class SubsidiaryServiceTests
 
         _httpClient = new HttpClient(_httpMessageHandlerMock.Object)
         {
-            BaseAddress = new Uri("https://example.com")
+            BaseAddress = new Uri(BaseAddress)
         };
 
         _sut = new SubsidiaryService(_httpClient, new NullLogger<SubsidiaryService>());
@@ -33,28 +38,50 @@ public class SubsidiaryServiceTests
 
         var companiesHouseNumber = "0123456X";
         const string organisationId = "525362";
+        const string referenceNumber = "525362";
         const string buildingNumber = "1";
         const string street = "Main Street";
-        const string referenceNumber = "SW1A51AA";
+        const string postcode = "SW1A5 1AA";
         const string organisationType = "Regulators";
         const string countryName = "United Kingdom";
 
-        var company = new CompaniesHouseCompany
+        var organisationResponseModels = new OrganisationResponseModel[]
         {
-            organisation_id = organisationId,
-            companies_house_number = companiesHouseNumber,
-            organisation_name = companyName,
-            parent_child = "Parent"
+            new()
+            {
+                referenceNumber = referenceNumber,
+                companiesHouseNumber = companiesHouseNumber,
+                name = companyName,
+                organisationType = organisationType,
+                address = new()
+                {
+                    BuildingNumber = buildingNumber,
+                    Street = street,
+                    Postcode = postcode,
+                    Country = countryName,
+                }
+            }
         };
 
-        var response = new HttpResponseMessage(HttpStatusCode.OK);
-        response.Content = company.ToJsonContent();
+        var expectedUri = $"{BaseAddress}/{OrganisationByCompanyHouseNumberUri}?companiesHouseNumber={companiesHouseNumber}";
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(x => x.RequestUri != null && x.RequestUri.ToString() == expectedUri),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = organisationResponseModels.ToJsonContent() // TODO: Use ToJsonContent or -> new StringContent(JsonSerializer.Serialize(apiResponse))
+            }).Verifiable();
 
         // Act
         var result = await _sut.GetCompanyByCompaniesHouseNumber(companiesHouseNumber);
 
         // Assert
-        result.Should().BeOfType<Company>();
+        result.Should().NotBeNull();
+        result.Should().BeOfType<OrganisationResponseModel>();
         result.name.Should().Be(companyName);
         result.companiesHouseNumber.Should().Be(companiesHouseNumber);
         result.referenceNumber.Should().Be(referenceNumber);

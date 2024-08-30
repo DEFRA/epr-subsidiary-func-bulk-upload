@@ -60,10 +60,14 @@ public class BulkUploadFunctionTests
 
         _bulkUploadOrchestrationMock = new Mock<IBulkUploadOrchestration>();
 
-        var companies = new List<CompaniesHouseCompany>();
-        companies.Add(new CompaniesHouseCompany() { companies_house_number = "test", organisation_id = "test", organisation_name = "test", parent_child = "test", subsidiary_id = "test" });
+        var companies = new List<CompaniesHouseCompany>
+            {
+                new() { companies_house_number = "test", organisation_id = "test", organisation_name = "test", parent_child = "test", subsidiary_id = "test" },
+                new() { companies_house_number = "test2", organisation_id = "test2", organisation_name = "test2", parent_child = "test2", subsidiary_id = "test2" },
+            };
+
         _csvProcessorMock.Setup(x => x.ProcessStreamWithMapping<CompaniesHouseCompany, CompaniesHouseCompanyMap>(It.IsAny<Stream>(), It.IsAny<CsvConfiguration>()))
-        .ReturnsAsync(companies);
+            .ReturnsAsync(companies);
 
         _loggerMock = new Mock<ILogger<BulkUploadFunction>>();
 
@@ -73,6 +77,7 @@ public class BulkUploadFunctionTests
     [TestMethod]
     public async Task BulkUploadFunction_Calls_CsvService()
     {
+        // Arrange
         var downloadStreamingDetails = BlobsModelBuilder.CreateBlobDownloadDetails(
             CsvContent.Length,
             new Dictionary<string, string> { { "UserId", Guid.NewGuid().ToString() }, { "OrganisationId", Guid.NewGuid().ToString() } });
@@ -93,12 +98,15 @@ public class BulkUploadFunctionTests
     }
 
     [TestMethod]
-    public async Task BulkUploadFunction_Logs_Result()
+    public async Task BulkUploadFunction_Logs_Result_When_Metadata_Is_Missing()
     {
+        // Arrange
+        var downloadStreamingDetails = BlobsModelBuilder.CreateBlobDownloadDetails(CsvContent.Length, new Dictionary<string, string>());
+
         // Act
         await _systemUnderTest.Run(_blobClientMock.Object);
 
         // Assert
-        _loggerMock.VerifyLog(x => x.LogInformation("Blob trigger stopped, Missing userId or organisationId in the metadata for blob {Name}", CsvBlobName), Times.Once);
+        _loggerMock.VerifyLog(x => x.LogInformation("Blob trigger stopped, missing userId or organisationId in the metadata for blob {Name}", CsvBlobName), Times.Once);
     }
 }

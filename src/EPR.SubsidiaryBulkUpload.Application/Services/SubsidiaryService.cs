@@ -1,5 +1,7 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Exceptions;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
@@ -68,9 +70,9 @@ public class SubsidiaryService : ISubsidiaryService
             }
         }
 
-        var orgResponse = response.Content.ReadFromJsonAsync<bool>();
+        var orgResponse = await response.Content.ReadFromJsonAsync<bool>();
 
-        return orgResponse != null && orgResponse.Result;
+        return orgResponse != null && orgResponse;
     }
 
     public async Task<OrganisationResponseModel?> GetCompanyByCompaniesHouseNumber(string companiesHouseNumber)
@@ -91,9 +93,33 @@ public class SubsidiaryService : ISubsidiaryService
             }
         }
 
+        /*
+Test method EPR.SubsidiaryBulkUpload.Application.UnitTests.Services.SubsidiaryServiceTests.GetCompanyByCompaniesHouseNumber_ReturnsAccount threw exception:
+System.Text.Json.JsonException: The JSON value could not be converted to EPR.SubsidiaryBulkUpload.Application.Models.OrganisationResponseModel[]. Path: $ | LineNumber: 0 | BytePositionInLine: 1.
+        */
         response.EnsureSuccessStatusCode();
-        var orgResponse = response.Content.ReadFromJsonAsync<OrganisationResponseModel[]>();
-        return orgResponse.Result.FirstOrDefault();
+        try
+        {
+            var s = await response.Content.ReadAsStringAsync();
+            var jsonDocument = JsonDocument.Parse(s);
+            using var stream = new MemoryStream();
+            using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions
+            {
+                Indented = true
+            }))
+            {
+                jsonDocument.WriteTo(writer);
+            }
+
+            var docStr = Encoding.UTF8.GetString(stream.ToArray());
+
+            var orgResponse = await response.Content.ReadFromJsonAsync<OrganisationResponseModel[]>();
+            return orgResponse.FirstOrDefault();
+        }
+        catch (Exception ex)
+        {
+            throw;
+        }
     }
 
     public async Task<string?> CreateAndAddSubsidiaryAsync(LinkOrganisationModel linkOrganisationModel)

@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Text.Json;
+using AutoFixture;
 using AutoFixture.AutoMoq;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Options;
@@ -18,12 +19,22 @@ public class CompaniesHouseLookupServiceTest
     private const string BaseAddress = "http://localhost";
     private const string ExpectedUrl = $"{BaseAddress}/{CompaniesHouseEndpoint}/{CompaniesHouseNumber}";
     private readonly IFixture _fixture = new Fixture().Customize(new AutoMoqCustomization());
-    private readonly Mock<HttpMessageHandler> _httpMessageHandlerMock = new();
+    private Mock<HttpMessageHandler> _httpMessageHandlerMock;
     private Mock<IOptions<ApiOptions>> _configOptionsMock;
     private Mock<ILogger<CompaniesHouseLookupService>> _loggerMock;
 
+    [TestInitialize]
+    public void TestInitialize()
+    {
+        _httpMessageHandlerMock = new();
+
+        _configOptionsMock = new Mock<IOptions<ApiOptions>>();
+
+        _loggerMock = new Mock<ILogger<CompaniesHouseLookupService>>();
+    }
+
     [TestMethod]
-    public async Task Should_return_correct_companieshouselookupresponse()
+    public async Task Should_Return_Correct_CompaniesHouseLookupResponse()
     {
         // Arrange
         var apiResponse = _fixture.Create<CompaniesHouseResponse>();
@@ -39,10 +50,6 @@ public class CompaniesHouseLookupServiceTest
                  Content = new StringContent(JsonSerializer.Serialize(apiResponse))
              }).Verifiable();
 
-        _configOptionsMock = new Mock<IOptions<ApiOptions>>();
-
-        _loggerMock = new Mock<ILogger<CompaniesHouseLookupService>>();
-
         var httpClient = new HttpClient(_httpMessageHandlerMock.Object);
         httpClient.BaseAddress = new Uri(BaseAddress);
 
@@ -54,14 +61,15 @@ public class CompaniesHouseLookupServiceTest
         // Assert
         _httpMessageHandlerMock.Protected().Verify("SendAsync", Times.Once(), ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get && req.RequestUri != null && req.RequestUri.ToString() == ExpectedUrl), ItExpr.IsAny<CancellationToken>());
 
-        result.Should().BeOfType<CompaniesHouseResponse>();
+        result.Should().NotBeNull();
+        result.Should().BeOfType<DTOs.Company>();
     }
 
     [TestMethod]
     [DataRow(HttpStatusCode.NotFound)]
     [DataRow(HttpStatusCode.BadRequest)]
     [DataRow(HttpStatusCode.InternalServerError)]
-    public async Task Should_throw_exception_on_ApiReturns_error(HttpStatusCode returnedStatusCode)
+    public async Task Should_Throw_Exception_On_ApiReturns_Error(HttpStatusCode returnedStatusCode)
     {
         // Arrange
         var errorResponse = new CompaniesHouseErrorResponse

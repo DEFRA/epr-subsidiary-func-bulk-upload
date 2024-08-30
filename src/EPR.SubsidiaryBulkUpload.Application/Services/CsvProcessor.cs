@@ -31,7 +31,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occured while processing ProcessStream {error}", ex.Message);
+                _logger.LogError(ex, "Error occurred while processing ProcessStream {Error}", ex.Message);
                 throw;
             }
 
