@@ -1,7 +1,5 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
-using System.Text;
-using System.Text.Json;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Exceptions;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
@@ -93,26 +91,9 @@ public class SubsidiaryService : ISubsidiaryService
             }
         }
 
-        /*
-Test method EPR.SubsidiaryBulkUpload.Application.UnitTests.Services.SubsidiaryServiceTests.GetCompanyByCompaniesHouseNumber_ReturnsAccount threw exception:
-System.Text.Json.JsonException: The JSON value could not be converted to EPR.SubsidiaryBulkUpload.Application.Models.OrganisationResponseModel[]. Path: $ | LineNumber: 0 | BytePositionInLine: 1.
-        */
         response.EnsureSuccessStatusCode();
         try
         {
-            var s = await response.Content.ReadAsStringAsync();
-            var jsonDocument = JsonDocument.Parse(s);
-            using var stream = new MemoryStream();
-            using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions
-            {
-                Indented = true
-            }))
-            {
-                jsonDocument.WriteTo(writer);
-            }
-
-            var docStr = Encoding.UTF8.GetString(stream.ToArray());
-
             var orgResponse = await response.Content.ReadFromJsonAsync<OrganisationResponseModel[]>();
             return orgResponse.FirstOrDefault();
         }

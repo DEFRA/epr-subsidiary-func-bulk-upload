@@ -56,7 +56,6 @@ public class CompaniesHouseLookupService : ICompaniesHouseLookupService
 
             response.EnsureSuccessStatusCode();
 
-            // TODO: Confirm if this should be CompaniesHouseResponse or CompaniesHouseCompany - if the latter we need a new version of that class
             var company = await response.Content.ReadFromJsonAsync<CompaniesHouseResponseFromCompaniesHouse>();
             return new Company(company);
         }
