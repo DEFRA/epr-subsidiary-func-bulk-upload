@@ -31,6 +31,42 @@ public class NotificationServiceTests
     }
 
     [TestMethod]
+    public async Task GetStatus_ShouldReturnValueFromRedis()
+    {
+        // Arrange
+        var key = "testKey";
+        var status = "testStatus";
+
+        // _redisDatabaseMock.Setup(x => x.StringGetAsync(It.Is<RedisKey>(k => k == key), It.IsAny<RedisValue>(), It.Is<TimeSpan>(t => t.), It.IsAny<When>())).ReturnsAsync(status);
+        _redisDatabaseMock.Setup(x => x.StringGetAsync(It.Is<RedisKey>(k => k == key), It.IsAny<CommandFlags>())).ReturnsAsync(status);
+
+        // Act
+        var result = await _notificationService.GetStatus(key);
+
+        // Assert
+        result.Should().Be(status);
+        _redisDatabaseMock.Verify(db => db.StringGetAsync(key, CommandFlags.None), Times.Once);
+    }
+
+    [TestMethod]
+    public async Task GetStatus_ShouldReturnNullFromRedis_WhenKeyIsMissing()
+    {
+        // Arrange
+        var key = "testKey";
+        var missingKey = "missingKey";
+        var status = "testStatus";
+
+        _redisDatabaseMock.Setup(x => x.StringGetAsync(It.Is<RedisKey>(k => k == key), It.IsAny<CommandFlags>())).ReturnsAsync(status);
+
+        // Act
+        var result = await _notificationService.GetStatus(missingKey);
+
+        // Assert
+        result.Should().BeNull();
+        _redisDatabaseMock.Verify(db => db.StringGetAsync(missingKey, CommandFlags.None), Times.Once);
+    }
+
+    [TestMethod]
     public async Task SetStatus_ShouldSetStringInRedisAndLogInformation()
     {
         // Arrange
