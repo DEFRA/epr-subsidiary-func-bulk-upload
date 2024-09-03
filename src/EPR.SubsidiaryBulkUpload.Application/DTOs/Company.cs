@@ -24,7 +24,7 @@ public class Company
         AccountCreatedOn = organisation.AccountCreatedOn;
     }
 
-    public Company(CompaniesHouseResponseFromCompaniesHouse? organisation)
+    public Company(CompaniesHouseResponse? organisation)
         : this()
     {
         if (organisation == null)
@@ -38,30 +38,9 @@ public class Company
         AccountCreatedOn = organisation.AccountCreatedOn;
     }
 
-    public Company(CompaniesHouseResponse? organisationResponse)
-        : this()
-    {
-        if (organisationResponse == null)
-        {
-            throw new ArgumentException("Organisation cannot be null.");
-        }
-
-        CompaniesHouseNumber = organisationResponse.company_number ?? string.Empty;
-        Name = organisationResponse.company_name ?? string.Empty;
-        BusinessAddress = new Address(organisationResponse.registered_office_address);
-    }
-
-    public string Organisation_Id { get; set; }
-
-    public string Subsidiary_Id { get; set; }
-
     public string Name { get; set; }
 
     public string CompaniesHouseNumber { get; set; }
-
-    public string Parent_child { get; set; }
-
-    public string Franchisee_licensee_tenant { get; set; }
 
     public DateTimeOffset? AccountCreatedOn { get; set; }
 

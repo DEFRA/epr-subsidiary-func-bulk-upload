@@ -72,7 +72,7 @@ public class SubsidiaryServiceTests
             .ReturnsAsync(new HttpResponseMessage
             {
                 StatusCode = HttpStatusCode.OK,
-                Content = organisationResponseModels.ToJsonContent() // TODO: Use ToJsonContent or -> new StringContent(JsonSerializer.Serialize(apiResponse))
+                Content = organisationResponseModels.ToJsonContent()
             }).Verifiable();
 
         // Act

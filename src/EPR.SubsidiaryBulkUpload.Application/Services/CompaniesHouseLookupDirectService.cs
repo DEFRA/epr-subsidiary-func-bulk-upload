@@ -1,12 +1,11 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Net;
-using System.Net.Http.Json;
+﻿using System.Net;
+using System.Text.Json;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
+using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services;
 
-[ExcludeFromCodeCoverage(Justification = "Intended for use by developers because the cloud solution cannot be run from local developer systems")]
 public class CompaniesHouseLookupDirectService : ICompaniesHouseLookupService
 {
     private const string CompaniesHouseEndpoint = "/company";
@@ -22,13 +21,7 @@ public class CompaniesHouseLookupDirectService : ICompaniesHouseLookupService
         var response = await _httpClient.GetAsync($"{CompaniesHouseEndpoint}/{id}");
         if (response.StatusCode == HttpStatusCode.BadRequest)
         {
-            if (response.StatusCode == HttpStatusCode.NoContent)
-            {
-                return null;
-            }
-
-            var errorResponse = await response.Content.ReadFromJsonAsync<CompaniesHouseErrorResponse>();
-            if (errorResponse?.InnerException?.StatusCode == HttpStatusCode.NotFound)
+            if (response.StatusCode == HttpStatusCode.NoContent || response.StatusCode == HttpStatusCode.NotFound)
             {
                 return null;
             }
@@ -36,8 +29,23 @@ public class CompaniesHouseLookupDirectService : ICompaniesHouseLookupService
 
         response.EnsureSuccessStatusCode();
 
-        var company = await response.Content.ReadFromJsonAsync<CompaniesHouseResponse>();
+        var jsonDocument = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync());
+        var root = jsonDocument.RootElement;
 
-        return new Company(company);
+        return new Company
+        {
+            Name = root.GetStringFromJsonElement("company_name"),
+            CompaniesHouseNumber = root.GetStringFromJsonElement("company_number"),
+            BusinessAddress = root.TryGetProperty("registered_office_address", out var address)
+                ? new Address
+                {
+                    Street = address.GetStringFromJsonElement("address_line_1"),
+                    Locality = address.GetStringFromJsonElement("address_line_2"),
+                    County = address.GetStringFromJsonElement("locality"),
+                    Country = address.GetStringFromJsonElement("country"),
+                    Postcode = address.GetStringFromJsonElement("postal_code")
+                }
+                : new Address()
+        };
     }
 }

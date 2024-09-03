@@ -2,32 +2,27 @@
 using System.Text.Json;
 using AutoFixture.AutoMoq;
 using EPR.SubsidiaryBulkUpload.Application.Models;
-using EPR.SubsidiaryBulkUpload.Application.Options;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Moq.Protected;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 
 [TestClass]
-public class CompaniesHouseLookupServiceTest
+public class CompaniesHouseLookupServiceTests
 {
     private const string CompaniesHouseEndpoint = "CompaniesHouse/companies";
-    private const string CompaniesHouseNumber = "tempCompaniesHouseNumber";
+    private const string CompaniesHouseNumber = "0123456X";
     private const string BaseAddress = "http://localhost";
     private const string ExpectedUrl = $"{BaseAddress}/{CompaniesHouseEndpoint}/{CompaniesHouseNumber}";
     private readonly IFixture _fixture = new Fixture().Customize(new AutoMoqCustomization());
     private Mock<HttpMessageHandler> _httpMessageHandlerMock;
-    private Mock<IOptions<ApiOptions>> _configOptionsMock;
     private Mock<ILogger<CompaniesHouseLookupService>> _loggerMock;
 
     [TestInitialize]
     public void TestInitialize()
     {
         _httpMessageHandlerMock = new();
-
-        _configOptionsMock = new Mock<IOptions<ApiOptions>>();
 
         _loggerMock = new Mock<ILogger<CompaniesHouseLookupService>>();
     }
@@ -36,6 +31,7 @@ public class CompaniesHouseLookupServiceTest
     public async Task Should_Return_Correct_CompaniesHouseLookupResponse()
     {
         // Arrange
+        // var apiResponse = _fixture.Build<CompaniesHouseResponseFromCompaniesHouse>().With(x => x.date_of_creation, () => DateTime.Today.ToString("yyyy-MM-dd")).Create();
         var apiResponse = _fixture.Create<CompaniesHouseResponse>();
 
         _httpMessageHandlerMock.Protected()
@@ -52,7 +48,7 @@ public class CompaniesHouseLookupServiceTest
         var httpClient = new HttpClient(_httpMessageHandlerMock.Object);
         httpClient.BaseAddress = new Uri(BaseAddress);
 
-        var sut = new CompaniesHouseLookupService(httpClient, _configOptionsMock.Object, _loggerMock.Object);
+        var sut = new CompaniesHouseLookupService(httpClient, _loggerMock.Object);
 
         // Act
         var result = await sut.GetCompaniesHouseResponseAsync(CompaniesHouseNumber);
@@ -61,7 +57,17 @@ public class CompaniesHouseLookupServiceTest
         _httpMessageHandlerMock.Protected().Verify("SendAsync", Times.Once(), ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get && req.RequestUri != null && req.RequestUri.ToString() == ExpectedUrl), ItExpr.IsAny<CancellationToken>());
 
         result.Should().NotBeNull();
-        result.Should().BeOfType<DTOs.Company>();
+        result.Name.Should().Be(apiResponse.Organisation.Name);
+        result.CompaniesHouseNumber.Should().Be(apiResponse.Organisation.RegistrationNumber);
+        result.AccountCreatedOn.Should().Be(apiResponse.AccountCreatedOn);
+
+        result.BusinessAddress.Should().NotBeNull();
+        result.BusinessAddress.Country.Should().Be(apiResponse.Organisation.RegisteredOffice?.Country?.Name);
+        result.BusinessAddress.County.Should().Be(apiResponse.Organisation.RegisteredOffice.County);
+        result.BusinessAddress.Town.Should().Be(apiResponse.Organisation.RegisteredOffice.Town);
+        result.BusinessAddress.Postcode.Should().Be(apiResponse.Organisation.RegisteredOffice.Postcode);
+        result.BusinessAddress.Street.Should().Be(apiResponse.Organisation.RegisteredOffice.Street);
+        result.BusinessAddress.Locality.Should().Be(apiResponse.Organisation.RegisteredOffice.Locality);
     }
 
     [TestMethod]
@@ -93,7 +99,7 @@ public class CompaniesHouseLookupServiceTest
         var httpClient = new HttpClient(_httpMessageHandlerMock.Object);
         httpClient.BaseAddress = new Uri(BaseAddress);
 
-        var sut = new CompaniesHouseLookupService(httpClient, _configOptionsMock.Object, _loggerMock.Object);
+        var sut = new CompaniesHouseLookupService(httpClient, _loggerMock.Object);
 
         // Act
         var exception = await Assert.ThrowsExceptionAsync<HttpRequestException>(() => sut.GetCompaniesHouseResponseAsync(CompaniesHouseNumber));
