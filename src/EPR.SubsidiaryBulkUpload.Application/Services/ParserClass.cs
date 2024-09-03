@@ -45,7 +45,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                     try
                     {
                         csv.ValidateHeader<FileUploadHeader>();
-                        if (csv.InvalidHeaderErrors.Count > 0)
+                        if (csv.InvalidHeaderErrors is { Count: > 0 })
                         {
                             _logger.LogError("Invalid header count {Count}", csv.InvalidHeaderErrors);
                             var headerJoint = string.Join("\t", csv.InvalidHeaderErrors);
