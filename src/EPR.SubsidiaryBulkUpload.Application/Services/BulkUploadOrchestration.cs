@@ -7,6 +7,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services;
 public class BulkUploadOrchestration : IBulkUploadOrchestration
 {
     private const string SubsidiaryBulkUploadProgress = "Subsidiary bulk upload progress";
+    private const string SubsidiaryBulkUploadErrors = "Subsidiary bulk upload errors";
 
     private readonly IRecordExtraction recordExtraction;
     private readonly ISubsidiaryService organisationService;
@@ -23,7 +24,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
 
     public async Task NotifyErrors(IEnumerable<CompaniesHouseCompany> data, UserRequestModel userRequestModel)
     {
-        var key = userRequestModel.GenerateKey(SubsidiaryBulkUploadProgress);
+        var key = userRequestModel.GenerateKey(SubsidiaryBulkUploadErrors);
         _notificationService.SetStatus(key, "Started Data Validation");
         var notificationErrorList = new List<UploadFileErrorModel>();
         var dataWithErrors = data.Where(e => e.UploadFileErrorModel != null).ToList();
@@ -32,11 +33,12 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
             if (company.Errors.Length > 0)
             {
                 notificationErrorList.Add(company.UploadFileErrorModel);
-                _notificationService.SetStatus(key, "Error found in validation. Logging it in Redis storage");
-                _notificationService.SetErrorStatus(key, notificationErrorList);
             }
         }
 
+        var keyErrors = userRequestModel.GenerateKey(SubsidiaryBulkUploadErrors);
+        _notificationService.SetStatus(keyErrors, "Error found in validation. Logging it in Redis storage");
+        _notificationService.SetErrorStatus(key, notificationErrorList);
         _notificationService.SetStatus(key, "Finished Data Validation");
     }
 

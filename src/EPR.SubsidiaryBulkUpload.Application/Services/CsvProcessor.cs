@@ -35,7 +35,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                 throw;
             }
 
-            return new List<TD>();
+            return Enumerable.Empty<TD>();
         }
     }
 }

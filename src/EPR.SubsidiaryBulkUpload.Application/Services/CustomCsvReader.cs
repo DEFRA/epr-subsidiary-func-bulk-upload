@@ -23,26 +23,28 @@ public class CustomCsvReader : CsvReader
 
     public virtual MissingFieldFound MissingFieldMappingFound { get; set; }
 
-    protected override void ValidateHeader(ClassMap map, List<InvalidHeader> invalidHeaders)
+    protected void ValidateHeader(ClassMap map, List<InvalidHeader> invalidHeaders) // , out List<string> validationErrors)
     {
+#pragma warning disable SA1100 // Do not prefix calls with base unless local implementation exists
         base.ValidateHeader(map, invalidHeaders);
+#pragma warning restore SA1100 // Do not prefix calls with base unless local implementation exists
+        var validationErrors = new List<string>();
 
         // We'll only run our validation if the base validation did not find any problems
         if (invalidHeaders.Count == 0)
         {
-            var unexpectedHeaders = new List<string>();
             for (var i = 0; i < HeaderRecord.Length; i++)
             {
                 var header = HeaderRecord[i];
                 if (!isHeaderMapped(map, header, i))
                 {
-                    unexpectedHeaders.Add(header);
+                    validationErrors.Add(header);
                 }
             }
 
-            if (unexpectedHeaders.Count != 0)
+            if (validationErrors.Count != 0)
             {
-                throw new UnexpectedHeadersException(Context, unexpectedHeaders);
+                throw new UnexpectedHeadersException(Context, validationErrors);
             }
         }
     }
@@ -77,16 +79,5 @@ public class CustomCsvReader : CsvReader
         }
 
         return false;
-
-        /*var headerName = Configuration.PrepareHeaderForMatch(new PrepareHeaderForMatchArgs(header, index));
-
-        if (map.ParameterMaps.Any(parameter => parameter.Data.Names.Any(name => name == headerName)))
-        {
-            return true;
-        }
-
-        return map.MemberMaps.Any(memberMap => memberMap.Data.Names.Any(name => name == headerName));
-
-        // Not sure whether we should iterate `map.ReferenceMaps`*/
     }
 }
