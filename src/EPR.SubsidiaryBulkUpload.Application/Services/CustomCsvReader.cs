@@ -23,6 +23,10 @@ public class CustomCsvReader : CsvReader
 
     public virtual MissingFieldFound MissingFieldMappingFound { get; set; }
 
+    public virtual List<InvalidHeader> InvalidHeaders { get; set; }
+
+    public virtual List<string> InvalidHeaderErrors { get; set; }
+
     protected void ValidateHeader(ClassMap map, List<InvalidHeader> invalidHeaders) // , out List<string> validationErrors)
     {
 #pragma warning disable SA1100 // Do not prefix calls with base unless local implementation exists
@@ -44,7 +48,7 @@ public class CustomCsvReader : CsvReader
 
             if (validationErrors.Count != 0)
             {
-                throw new UnexpectedHeadersException(Context, validationErrors);
+                InvalidHeaderErrors = validationErrors;
             }
         }
     }

@@ -31,7 +31,8 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
         {
             var rows = new List<CompaniesHouseCompany>();
             var exceptions = new List<HeaderValidationException>();
-
+            var headersValidations = new List<InvalidHeader>();
+            var validationErrors = new List<string>();
             using (var reader = new StreamReader(stream))
             using (var csv = new CustomCsvReader(reader, configuration))
             {
@@ -40,37 +41,92 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                     csv.Context.RegisterClassMap<CompaniesHouseCompanyMap>();
                     csv.Read();
                     csv.ReadHeader();
-                    csv.ValidateHeader<FileUploadHeader>();
-                    rows = csv.GetRecords<CompaniesHouseCompany>().ToList();
-                }
-                catch (HeaderValidationException ex)
-                {
-                    if (ex.InvalidHeaders is not null)
+
+                    try
                     {
-                        _logger.LogError(ex, " Invalid header count {Count}", ex.InvalidHeaders);
-                        exceptions.Add(ex);
+                        csv.ValidateHeader<FileUploadHeader>();
+                        if (csv.InvalidHeaderErrors.Count > 0)
+                        {
+                            _logger.LogError("Invalid header count {Count}", csv.InvalidHeaderErrors);
+                            var headerJoint = string.Join("\t", csv.InvalidHeaderErrors);
+                            var companyHeaderErrors = new CompaniesHouseCompany()
+                            {
+                                companies_house_number = string.Empty,
+                                organisation_name = string.Empty,
+                                organisation_id = string.Empty,
+                                parent_child = string.Empty,
+                                UploadFileErrorModel = new Models.UploadFileErrorModel()
+                                {
+                                    FileContent = "headererror-Invalid",
+                                    Message = headerJoint
+                                }
+                            };
+
+                            _logger.LogError("Invalid header. Column header(s) missing: #### {HeaderJoint} #### ", headerJoint);
+                            rows.Add(companyHeaderErrors);
+                            return rows;
+                        }
+
+                    }
+                    catch (Exception e)
+                    {
+                        if (e is HeaderValidationException)
+                        {
+                            var errorType = (HeaderValidationException)e;
+                            if (errorType.InvalidHeaders is not null)
+                            {
+                                _logger.LogError(e, " Invalid header count {Count}", errorType.InvalidHeaders);
+                                var headerJoint = string.Join("\t", errorType.InvalidHeaders.Select(x => x.Names[0]));
+                                var companyHeaderErrors = new CompaniesHouseCompany()
+                                {
+                                    companies_house_number = string.Empty,
+                                    organisation_name = string.Empty,
+                                    organisation_id = string.Empty,
+                                    parent_child = string.Empty,
+                                    UploadFileErrorModel = new Models.UploadFileErrorModel()
+                                    {
+                                        FileContent = "headererror-Invalid",
+                                        Message = headerJoint
+                                    }
+                                };
+
+                                _logger.LogError(e, "Invalid header. Column header(s) missing: #### {HeaderJoint} #### ", headerJoint);
+                                rows.Add(companyHeaderErrors);
+                                return rows;
+                            }
+                        }
+                        else if (e is UnexpectedHeadersException)
+                        {
+                            var errorType = (UnexpectedHeadersException)e;
+                            if (errorType.UnexpectedHeaders is not null)
+                            {
+                                _logger.LogError(e, "Invalid header. Unexpected Header(s): **** {UnexpectedHeaders} **** ", errorType.UnexpectedHeaders);
+
+                                var headerJoint = string.Join("\t", errorType.UnexpectedHeaders);
+                                var companyHeaderErrors = new CompaniesHouseCompany()
+                                {
+                                    companies_house_number = string.Empty,
+                                    organisation_name = string.Empty,
+                                    organisation_id = string.Empty,
+                                    parent_child = string.Empty,
+                                    UploadFileErrorModel = new Models.UploadFileErrorModel()
+                                    {
+                                        FileContent = "headererror-Unexpected",
+                                        Message = headerJoint
+                                    }
+                                };
+
+                                rows.Add(companyHeaderErrors);
+                                return rows;
+                            }
+                        }
                     }
 
-                    if (ex.InvalidHeaders is not null)
-                    {
-                        var headerJoint = string.Join("\t", ex.InvalidHeaders.Select(x => x.Names[0]));
-                        _logger.LogError(ex, "Invalid header. Column header(s) missing: #### {HeaderJoint} #### ", headerJoint);
-                        exceptions.Add(ex);
-                    }
-                }
-                catch (UnexpectedHeadersException ex)
-                {
-                    if (ex.UnexpectedHeaders is not null)
-                    {
-                        var headerJoint = string.Join("\t", ex.UnexpectedHeaders);
-                        _logger.LogError(ex, "Invalid header. Unexpected Header(s): **** {HeaderJoint} **** ", headerJoint);
-                        throw;
-                    }
+                    rows = csv.GetRecords<CompaniesHouseCompany>().ToList();
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, " Error occured while processing the CSV file. {Count}", ex.Message);
-                    throw;
+                    _logger.LogError(ex, "Error occured while processing the CSV file. {Message}", ex.Message);
                 }
             }
 
