@@ -66,60 +66,10 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                             rows.Add(companyHeaderErrors);
                             return rows;
                         }
-
                     }
-                    catch (Exception e)
+                    catch (Exception ex)
                     {
-                        if (e is HeaderValidationException)
-                        {
-                            var errorType = (HeaderValidationException)e;
-                            if (errorType.InvalidHeaders is not null)
-                            {
-                                _logger.LogError(e, " Invalid header count {Count}", errorType.InvalidHeaders);
-                                var headerJoint = string.Join("\t", errorType.InvalidHeaders.Select(x => x.Names[0]));
-                                var companyHeaderErrors = new CompaniesHouseCompany()
-                                {
-                                    companies_house_number = string.Empty,
-                                    organisation_name = string.Empty,
-                                    organisation_id = string.Empty,
-                                    parent_child = string.Empty,
-                                    UploadFileErrorModel = new Models.UploadFileErrorModel()
-                                    {
-                                        FileContent = "headererror-Invalid",
-                                        Message = headerJoint
-                                    }
-                                };
-
-                                _logger.LogError(e, "Invalid header. Column header(s) missing: #### {HeaderJoint} #### ", headerJoint);
-                                rows.Add(companyHeaderErrors);
-                                return rows;
-                            }
-                        }
-                        else if (e is UnexpectedHeadersException)
-                        {
-                            var errorType = (UnexpectedHeadersException)e;
-                            if (errorType.UnexpectedHeaders is not null)
-                            {
-                                _logger.LogError(e, "Invalid header. Unexpected Header(s): **** {UnexpectedHeaders} **** ", errorType.UnexpectedHeaders);
-
-                                var headerJoint = string.Join("\t", errorType.UnexpectedHeaders);
-                                var companyHeaderErrors = new CompaniesHouseCompany()
-                                {
-                                    companies_house_number = string.Empty,
-                                    organisation_name = string.Empty,
-                                    organisation_id = string.Empty,
-                                    parent_child = string.Empty,
-                                    UploadFileErrorModel = new Models.UploadFileErrorModel()
-                                    {
-                                        FileContent = "headererror-Unexpected",
-                                        Message = headerJoint
-                                    }
-                                };
-
-                                rows.Add(companyHeaderErrors);
-                                return rows;
-                            }
-                        }
+                        _logger.LogError("Error occured while processing Headers. {Message}", ex.Message);
                     }
 
                     rows = csv.GetRecords<CompaniesHouseCompany>().ToList();

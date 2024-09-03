@@ -27,14 +27,11 @@ public class CustomCsvReader : CsvReader
 
     public virtual List<string> InvalidHeaderErrors { get; set; }
 
-    protected void ValidateHeader(ClassMap map, List<InvalidHeader> invalidHeaders) // , out List<string> validationErrors)
+    protected void ValidateHeader(ClassMap map, List<InvalidHeader> invalidHeaders)
     {
-#pragma warning disable SA1100 // Do not prefix calls with base unless local implementation exists
         base.ValidateHeader(map, invalidHeaders);
-#pragma warning restore SA1100 // Do not prefix calls with base unless local implementation exists
         var validationErrors = new List<string>();
 
-        // We'll only run our validation if the base validation did not find any problems
         if (invalidHeaders.Count == 0)
         {
             for (var i = 0; i < HeaderRecord.Length; i++)
