@@ -28,21 +28,33 @@ public class NotificationStatusFunctionTests
     {
         // Arrange
         var key = $"{_userId}{_organisationId}Subsidiary bulk upload progress";
+        var errorKey = $"{_userId}{_organisationId}Subsidiary bulk upload errors";
 
         var status = "Working";
+        var errorStatus = default(string);
+
+        var statusJson =
+            """
+            {
+                "status": "Working",
+                "errors": []
+            }
+            """;
 
         _notificationServiceMock.Setup(x => x.GetStatus(key))
             .ReturnsAsync(status);
+        _notificationServiceMock.Setup(x => x.GetStatus(errorKey))
+            .ReturnsAsync(errorStatus);
 
         // Act
         var result = await _systemUnderTest.Run(Mock.Of<HttpRequest>(), _userId, _organisationId);
 
         // Assert
         result.Should().NotBeNull();
-        result.Should().BeOfType<OkObjectResult>();
-        (result as OkObjectResult).Value.Should().Be(status);
+        result.Should().BeOfType<JsonResult>();
 
         _notificationServiceMock.Verify(x => x.GetStatus(key), Times.Once);
+        _notificationServiceMock.Verify(x => x.GetStatus(errorKey), Times.Once);
     }
 
     [TestMethod]

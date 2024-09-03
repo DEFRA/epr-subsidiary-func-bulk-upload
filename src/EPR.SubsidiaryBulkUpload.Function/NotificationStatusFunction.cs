@@ -1,4 +1,5 @@
-﻿using EPR.SubsidiaryBulkUpload.Application.Extensions;
+﻿using System.Text.Json;
+using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
@@ -10,6 +11,8 @@ namespace EPR.SubsidiaryBulkUpload.Function;
 public class NotificationStatusFunction(INotificationService notificationService)
 {
     private const string SubsidiaryBulkUploadProgress = "Subsidiary bulk upload progress";
+    private const string SubsidiaryBulkUploadErrors = "Subsidiary bulk upload errors";
+
     private readonly INotificationService _notificationService = notificationService;
 
     [Function("NotificationStatusFunction")]
@@ -19,16 +22,35 @@ public class NotificationStatusFunction(INotificationService notificationService
         Guid userId,
         Guid organisationId)
     {
-        var key = new UserRequestModel
+        try
         {
-            UserId = userId,
-            OrganisationId = organisationId
-        }
-        .GenerateKey(SubsidiaryBulkUploadProgress);
+            var userRequestModel = new UserRequestModel
+            {
+                UserId = userId,
+                OrganisationId = organisationId
+            };
 
-        var value = await _notificationService.GetStatus(key);
-        return value is null
-            ? new NotFoundResult()
-            : new OkObjectResult(value.ToString());
+            var key = userRequestModel.GenerateKey(SubsidiaryBulkUploadProgress);
+            var errorsKey = userRequestModel.GenerateKey(SubsidiaryBulkUploadErrors);
+
+            var status = await _notificationService.GetStatus(key);
+            var errorStatus = await _notificationService.GetStatus(errorsKey);
+
+            var errors = !string.IsNullOrEmpty(errorStatus)
+                ? JsonSerializer.Deserialize<UploadFileErrorCollectionModel>(errorStatus)
+                : null;
+
+            return status is null
+                ? new NotFoundResult()
+                : new JsonResult(new
+                {
+                    Status = status,
+                    Errors = errors
+                });
+        }
+        catch (Exception ex)
+        {
+            return new StatusCodeResult(500);
+        }
     }
 }
