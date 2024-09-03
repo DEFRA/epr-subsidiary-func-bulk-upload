@@ -24,7 +24,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
 
     public async Task NotifyErrors(IEnumerable<CompaniesHouseCompany> data, UserRequestModel userRequestModel)
     {
-        var key = userRequestModel.GenerateKey(SubsidiaryBulkUploadErrors);
+        var key = userRequestModel.GenerateKey(SubsidiaryBulkUploadProgress);
         _notificationService.SetStatus(key, "Started Data Validation");
         var notificationErrorList = new List<UploadFileErrorModel>();
         var dataWithErrors = data.Where(e => e.UploadFileErrorModel != null).ToList();
@@ -37,8 +37,8 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
         }
 
         var keyErrors = userRequestModel.GenerateKey(SubsidiaryBulkUploadErrors);
-        _notificationService.SetStatus(keyErrors, "Error found in validation. Logging it in Redis storage");
-        _notificationService.SetErrorStatus(key, notificationErrorList);
+        _notificationService.SetStatus(key, "Error found in validation. Logging it in Redis storage");
+        _notificationService.SetErrorStatus(keyErrors, notificationErrorList);
         _notificationService.SetStatus(key, "Finished Data Validation");
     }
 
