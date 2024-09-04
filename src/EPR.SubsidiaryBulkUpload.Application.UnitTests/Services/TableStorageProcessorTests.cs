@@ -72,7 +72,7 @@ public class TableStorageProcessorTests
     }
 
     [TestMethod]
-    public async Task WriteToAzureTableStorage_ShouldDEleteEntityLogErrorAndRethrowException_OnFailure()
+    public async Task WriteToAzureTableStorage_ShouldDeleteEntityLogErrorAndRethrowException_OnFailure()
     {
         // Arrange
         var records = new List<CompanyHouseTableEntity>

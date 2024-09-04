@@ -28,6 +28,14 @@ public class NotificationService(
         _logger.LogInformation("Redis updated key: {Key} errors: {Value}", key, value);
     }
 
+    public async Task<string?> GetStatus(string key)
+    {
+        var value = await _redisDatabase.StringGetAsync(key);
+        return value.IsNull
+            ? null
+            : value.ToString();
+    }
+
     private static string SerializeErrorsToJson(List<UploadFileErrorModel> errors)
     {
         return JsonSerializer.Serialize(new { Errors = errors });

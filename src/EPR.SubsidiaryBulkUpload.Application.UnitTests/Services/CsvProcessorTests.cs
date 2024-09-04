@@ -38,7 +38,12 @@ public class CsvProcessorTests
             HasHeaderRecord = true,
         };
 
-        var processor = new CsvProcessor(NullLogger<CsvProcessor>.Instance);
+        var parserClass = new Mock<IParserClass>();
+        parserClass
+            .Setup(p => p.ParseWithHelper(It.IsAny<Stream>(), configuration))
+            .Returns((new ResponseClass(), source.ToList()));
+
+        var processor = new CsvProcessor(parserClass.Object, NullLogger<CsvProcessor>.Instance);
 
         // Act
         var actual = (await processor.ProcessStreamWithMapping<CompaniesHouseCompany, CompaniesHouseCompanyMap>(stream, configuration)).ToArray();
@@ -81,7 +86,7 @@ public class CsvProcessorTests
             MissingFieldFound = null
         };
 
-        var processor = new CsvProcessor(NullLogger<CsvProcessor>.Instance);
+        var processor = new CsvProcessor(null, NullLogger<CsvProcessor>.Instance);
 
         // Act
         var actual = (await processor.ProcessStream<CompanyHouseTableEntity>(stream, configuration)).ToArray();

@@ -2,23 +2,18 @@
 using System.Net.Http.Json;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Models;
-using EPR.SubsidiaryBulkUpload.Application.Options;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
-// using Microsoft.Extensions.Logging;
 namespace EPR.SubsidiaryBulkUpload.Application.Services;
 public class CompaniesHouseLookupService : ICompaniesHouseLookupService
 {
     private const string CompaniesHouseEndpoint = "CompaniesHouse/companies";
 
-    private readonly ApiOptions _apiConfig;
     private readonly ILogger<CompaniesHouseLookupService> _logger;
     private readonly HttpClient _httpClient;
 
-    public CompaniesHouseLookupService(HttpClient httpClient, IOptions<ApiOptions> apiOptions, ILogger<CompaniesHouseLookupService> logger)
+    public CompaniesHouseLookupService(HttpClient httpClient, ILogger<CompaniesHouseLookupService> logger)
     {
-        _apiConfig = apiOptions.Value;
         _httpClient = httpClient;
 
         _logger = logger;
@@ -33,8 +28,6 @@ public class CompaniesHouseLookupService : ICompaniesHouseLookupService
             {
                 _logger.LogInformation("Has auth header {Scheme}", _httpClient.DefaultRequestHeaders.Authorization.Scheme);
             }
-
-            _logger.LogInformation("Has certificate? {Has} length {Len}", !string.IsNullOrEmpty(_apiConfig.Certificate), _apiConfig.Certificate?.Length ?? 0);
 
             var response = await _httpClient.GetAsync($"{CompaniesHouseEndpoint}/{id}");
 
@@ -55,7 +48,8 @@ public class CompaniesHouseLookupService : ICompaniesHouseLookupService
             }
 
             response.EnsureSuccessStatusCode();
-            var company = await response.Content.ReadFromJsonAsync<CompaniesHouseCompany>();
+
+            var company = await response.Content.ReadFromJsonAsync<CompaniesHouseResponse>();
             return new Company(company);
         }
         catch (Exception ex)

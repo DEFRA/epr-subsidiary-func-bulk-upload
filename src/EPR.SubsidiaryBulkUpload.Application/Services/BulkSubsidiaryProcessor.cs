@@ -25,7 +25,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
                  RelationshipExists: await organisationService.GetSubsidiaryRelationshipAsync(parentOrg.id, co.SubsidiaryOrg.id)))
             .Where(co => !co.RelationshipExists);
 
-        // Add relationships for for the children already in RPD...
+        // Add relationships for the children already in RPD...
         await foreach (var subsidiaryAddModel in knownSubsidiariesToAdd)
         {
             await AddSubsidiary(parentOrg, subsidiaryAddModel!.SubsidiaryOrg, userId);
@@ -79,6 +79,6 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         };
         await organisationService.AddSubsidiaryRelationshipAsync(subsidiaryModel);
 
-        _logger.LogInformation("Subsidiary Company {0} {1} linked to {2} in the database.", subsidiary.referenceNumber, subsidiary.name, parent.referenceNumber);
+        _logger.LogInformation("Subsidiary Company {SubsidiaryReferenceNumber} {SubsidiaryName} linked to {ParentReferenceNumber} in the database.", subsidiary.referenceNumber, subsidiary.name, parent.referenceNumber);
     }
 }

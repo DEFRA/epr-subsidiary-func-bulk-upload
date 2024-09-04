@@ -28,6 +28,9 @@ public class BulkUploadFunction
         BlobClient client)
     {
         var downloadStreamingResult = await client.DownloadStreamingAsync();
+        var content = downloadStreamingResult.Value.Content
+            ?? throw new NullReferenceException("Client streaming result is null");
+
         var metaData = downloadStreamingResult.Value.Details?.Metadata;
 
         var userGuid = metaData.Where(pair => pair.Key.Contains("userId"))
@@ -39,11 +42,19 @@ public class BulkUploadFunction
             _logger.LogWarning("Missing userId metadata for blob {Name}", client.Name);
         }
 
-        var content = downloadStreamingResult.Value.Content;
-
         var configuration = new CsvConfiguration(CultureInfo.InvariantCulture)
         {
+            PrepareHeaderForMatch = args => args.Header.ToLower(),
             HasHeaderRecord = true,
+            IgnoreBlankLines = false,
+            MissingFieldFound = null,
+            Delimiter = ",",
+            TrimOptions = TrimOptions.Trim,
+            HeaderValidated = (args) =>
+            {
+                ConfigurationFunctions.HeaderValidated(args);
+            },
+            BadDataFound = null
         };
 
         var userRequestModel = metaData.ToUserRequestModel();
@@ -51,13 +62,14 @@ public class BulkUploadFunction
         if (userRequestModel != null)
         {
             var records = await _csvProcessor.ProcessStreamWithMapping<CompaniesHouseCompany, CompaniesHouseCompanyMap>(content, configuration);
+            await _orchestration.NotifyErrors(records, userRequestModel);
             await _orchestration.Orchestrate(records, userRequestModel);
 
             _logger.LogInformation("Blob trigger processed {Count} records from csv blob {Name}", records.Count(), client.Name);
         }
         else
         {
-            _logger.LogInformation("Blob trigger stopped, Missing userId or organisationId in the metadata for blob {Name}", client.Name);
+            _logger.LogInformation("Blob trigger stopped, missing userId or organisationId in the metadata for blob {Name}", client.Name);
         }
     }
 }

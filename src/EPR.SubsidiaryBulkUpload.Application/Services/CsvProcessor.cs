@@ -4,21 +4,10 @@ using Microsoft.Extensions.Logging;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services
 {
-    public class CsvProcessor(
-        ILogger<CsvProcessor> logger) : ICsvProcessor
+    public class CsvProcessor(IParserClass parserClass, ILogger<CsvProcessor> logger) : ICsvProcessor
     {
         private readonly ILogger<CsvProcessor> _logger = logger;
-
-        public async Task<IEnumerable<TD>> ProcessStreamWithMapping<TD, TM>(Stream stream, IReaderConfiguration configuration)
-            where TM : ClassMap
-        {
-            using (var reader = new StreamReader(stream))
-            using (var csv = new CsvReader(reader, configuration))
-            {
-                csv.Context.RegisterClassMap<TM>();
-                return csv.GetRecords<TD>().ToList();
-            }
-        }
+        private readonly IParserClass _parserClass = parserClass;
 
         public async Task<IEnumerable<T>> ProcessStream<T>(Stream stream, IReaderConfiguration configuration)
         {
@@ -30,6 +19,23 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             _logger.LogInformation("Found {RowCount} csv rows", records.Count);
 
             return records;
+        }
+
+        public async Task<IEnumerable<TD>> ProcessStreamWithMapping<TD, TM>(Stream stream, IReaderConfiguration configuration)
+            where TM : ClassMap
+        {
+            try
+            {
+                var (_, theList) = _parserClass.ParseWithHelper(stream, configuration);
+                return (IEnumerable<TD>)theList;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while processing ProcessStream {Error}", ex.Message);
+                throw;
+            }
+
+            return Enumerable.Empty<TD>();
         }
     }
 }
