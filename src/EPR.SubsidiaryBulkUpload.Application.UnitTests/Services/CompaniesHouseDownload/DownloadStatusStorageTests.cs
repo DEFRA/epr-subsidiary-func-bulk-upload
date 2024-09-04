@@ -138,4 +138,58 @@ public class DownloadStatusStorageTests
         // Assert
         tableClient.Verify(tc => tc.CreateIfNotExistsAsync(It.IsAny<CancellationToken>()));
     }
+
+    [TestMethod]
+    public async Task ShouldReplyNullGetCompaniesStatusCreateTableFails()
+    {
+        // Arrange
+        var now = new DateTimeOffset(2024, 3, 5, 7, 9, 11, TimeSpan.Zero);
+        timeProvider.SetUtcNow(now);
+
+        tableClient.Setup(tc => tc.CreateIfNotExistsAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new RequestFailedException("error"));
+
+        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, NullLogger<DownloadStatusStorage>.Instance);
+
+        // Act
+        var actual = await downloadStatusStorage.GetCompaniesHouseFileDownloadStatusAsync();
+
+        // Assert
+        actual.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task ShouldUploadStatusAndReplySuccess()
+    {
+        // Arrange
+        var status = fixture.Create<CompaniesHouseFileSetDownloadStatus>();
+
+        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, NullLogger<DownloadStatusStorage>.Instance);
+
+        // Act
+        var response = await downloadStatusStorage.SetCompaniesHouseFileDownloadStatusAsync(status);
+
+        // Assert
+        response.Should().Be(true);
+        tableClient.Verify(tc => tc.CreateIfNotExistsAsync(It.IsAny<CancellationToken>()));
+        tableClient.Verify(tc => tc.UpsertEntityAsync<CompaniesHouseFileSetDownloadStatus>(status, TableUpdateMode.Merge, It.IsAny<CancellationToken>()));
+    }
+
+    [TestMethod]
+    public async Task ShouldReplyFailedWhenUploadStatusCreateTableFails()
+    {
+        // Arrange
+        var status = fixture.Create<CompaniesHouseFileSetDownloadStatus>();
+
+        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, NullLogger<DownloadStatusStorage>.Instance);
+
+        tableClient.Setup(tc => tc.CreateIfNotExistsAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new RequestFailedException("error"));
+
+        // Act
+        var response = await downloadStatusStorage.SetCompaniesHouseFileDownloadStatusAsync(status);
+
+        // Assert
+        response.Should().Be(false);
+    }
 }

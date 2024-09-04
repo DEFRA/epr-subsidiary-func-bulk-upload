@@ -59,7 +59,7 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
         {
             await tableClient.CreateIfNotExistsAsync();
 
-            await tableClient.AddEntityAsync<CompaniesHouseFileSetDownloadStatus>(status);
+            await tableClient.UpsertEntityAsync(status, TableUpdateMode.Merge);
             success = true;
         }
         catch (RequestFailedException ex)
