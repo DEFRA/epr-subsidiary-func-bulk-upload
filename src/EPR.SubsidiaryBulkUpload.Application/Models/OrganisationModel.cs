@@ -24,4 +24,6 @@ public class OrganisationModel
     public string? ReferenceNumber { get; set; }
 
     public Nation? Nation { get; set; }
+
+    public string? SubsidiaryOrganisationId { get; set; }
 }
