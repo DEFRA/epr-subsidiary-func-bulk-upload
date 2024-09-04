@@ -1,0 +1,55 @@
+﻿using EPR.SubsidiaryBulkUpload.Application.Models;
+using EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
+using Microsoft.Extensions.Time.Testing;
+
+namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services.CompaniesHouseDownload;
+
+[TestClass]
+public class CompaniesHouseDownloadServiceTests
+{
+    private Fixture fixture;
+    private FakeTimeProvider timeProvider;
+
+    [TestInitialize]
+    public void TestInitialize()
+    {
+        fixture = new();
+        timeProvider = new();
+    }
+
+    [TestMethod]
+    public async Task ShouldDownloadAllREquiredFiles()
+    {
+        // Arrange
+        var month = 3;
+        var year = 2024;
+        var now = new DateTimeOffset(year, month, 5, 7, 9, 11, TimeSpan.Zero);
+        timeProvider.SetUtcNow(now);
+
+        using var stream = new MemoryStream();
+
+        var partialFileName = $"{CompaniesHouseDownloadService.FileSource}{CompaniesHouseDownloadService.PartialFilename}-{now.Year}-{now.Month}-01-part_";
+
+        var numberOfDownloads = 3;
+
+        fixture.Customize<CompaniesHouseFileSetDownloadStatus>(ctx => ctx.With(s => s.CurrentRunExpectedFileCount, numberOfDownloads));
+        var downloadStatus = fixture.Create<CompaniesHouseFileSetDownloadStatus>();
+
+        var downloadStatusStorage = new Mock<IDownloadStatusStorage>();
+        downloadStatusStorage.Setup(dss => dss.GetCompaniesHouseFileDownloadStatusAsync()).ReturnsAsync(downloadStatus);
+
+        var fileDownloadService = new Mock<IFileDownloadService>();
+        fileDownloadService.Setup(fds => fds.GetStreamAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((stream, FileDownloadResponseCode.Succeeded));
+
+        var downloadService = new CompaniesHouseDownloadService(fileDownloadService.Object, downloadStatusStorage.Object, timeProvider);
+
+        // Act
+        await downloadService.StartDownload();
+
+        // Assert
+        fileDownloadService.Verify(fds => fds.GetStreamAsync($"{partialFileName}1.zip", It.IsAny<CancellationToken>()));
+        fileDownloadService.Verify(fds => fds.GetStreamAsync($"{partialFileName}2.zip", It.IsAny<CancellationToken>()));
+        fileDownloadService.Verify(fds => fds.GetStreamAsync($"{partialFileName}3.zip", It.IsAny<CancellationToken>()));
+    }
+}

@@ -129,6 +129,7 @@ public static class ConfigurationExtensions
         services.AddTransient<ISubsidiaryService, SubsidiaryService>();
         services.AddTransient<INotificationService, NotificationService>();
         services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConfig.ConnectionString));
+        services.AddSingleton<TimeProvider>(TimeProvider.System);
 
         var isDevMode = configuration.GetValue<bool?>("ApiConfig:DeveloperMode");
         if (isDevMode is true)
