@@ -143,7 +143,7 @@ public class CompaniesHouseLookupDirectServiceTests
     }
 
     [TestMethod]
-    public async Task Should_ReturnNull_When_ApiReturns_NoContent()
+    public async Task Should_Return_Null_When_ApiReturns_NoContent()
     {
         // Arrange
         _httpMessageHandlerMock.Protected()
