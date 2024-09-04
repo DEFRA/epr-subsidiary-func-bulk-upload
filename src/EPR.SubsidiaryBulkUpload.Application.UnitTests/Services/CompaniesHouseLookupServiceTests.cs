@@ -31,7 +31,6 @@ public class CompaniesHouseLookupServiceTests
     public async Task Should_Return_Correct_CompaniesHouseLookupResponse()
     {
         // Arrange
-        // var apiResponse = _fixture.Build<CompaniesHouseResponseFromCompaniesHouse>().With(x => x.date_of_creation, () => DateTime.Today.ToString("yyyy-MM-dd")).Create();
         var apiResponse = _fixture.Create<CompaniesHouseResponse>();
 
         _httpMessageHandlerMock.Protected()
