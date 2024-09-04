@@ -57,7 +57,8 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
                 OrganisationType = OrganisationType.NotSet,
                 ProducerType = ProducerType.Other,
                 IsComplianceScheme = false,
-                Nation = Nation.NotSet
+                Nation = Nation.NotSet,
+                SubsidiaryOrganisationId = subsidiary.subsidiary_id
             },
             ParentOrganisationId = parentOrg.ExternalId.Value
         };
@@ -75,8 +76,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             ParentOrganisationId = parent.referenceNumber,
             ChildOrganisationId = subsidiary.referenceNumber,
             ParentOrganisationExternalId = parent.ExternalId,
-            ChildOrganisationExternalId = subsidiary.ExternalId,
-            SubsidiaryOrganisationId = subsidiaryFileData.subsidiary_id
+            ChildOrganisationExternalId = subsidiary.ExternalId
         };
         await organisationService.AddSubsidiaryRelationshipAsync(subsidiaryModel);
 
