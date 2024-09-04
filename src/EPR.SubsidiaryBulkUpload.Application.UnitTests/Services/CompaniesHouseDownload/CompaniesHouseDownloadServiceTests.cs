@@ -1,5 +1,7 @@
 ﻿using EPR.SubsidiaryBulkUpload.Application.Models;
+using EPR.SubsidiaryBulkUpload.Application.Options;
 using EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services.CompaniesHouseDownload;
@@ -26,9 +28,16 @@ public class CompaniesHouseDownloadServiceTests
         var now = new DateTimeOffset(year, month, 5, 7, 9, 11, TimeSpan.Zero);
         timeProvider.SetUtcNow(now);
 
+        var downloadPath = "https://download";
+
+        fixture.Customize<ApiOptions>(ctx => ctx.With(a => a.CompaniesHouseDataDownloadUrl, downloadPath));
+        var config = fixture.Create<ApiOptions>();
+        var options = new Mock<IOptions<ApiOptions>>();
+        options.Setup(o => o.Value).Returns(config);
+
         using var stream = new MemoryStream();
 
-        var partialFileName = $"{CompaniesHouseDownloadService.FileSource}{CompaniesHouseDownloadService.PartialFilename}-{now.Year}-{now.Month}-01-part_";
+        var partialFileName = $"{downloadPath}/{CompaniesHouseDownloadService.PartialFilename}-{now.Year}-{now.Month}-01-part_";
 
         var numberOfDownloads = 3;
 
@@ -42,7 +51,7 @@ public class CompaniesHouseDownloadServiceTests
         fileDownloadService.Setup(fds => fds.GetStreamAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((stream, FileDownloadResponseCode.Succeeded));
 
-        var downloadService = new CompaniesHouseDownloadService(fileDownloadService.Object, downloadStatusStorage.Object, timeProvider);
+        var downloadService = new CompaniesHouseDownloadService(fileDownloadService.Object, downloadStatusStorage.Object, options.Object, timeProvider);
 
         // Act
         await downloadService.StartDownload();

@@ -20,4 +20,6 @@ public class ApiOptions
     public int Timeout { get; set; }
 
     public string SubsidiaryServiceBaseUrl { get; set; } = null!;
+
+    public string CompaniesHouseDataDownloadUrl { get; set; } = null!;
 }

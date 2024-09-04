@@ -1,45 +1,47 @@
-﻿namespace EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
+﻿using EPR.SubsidiaryBulkUpload.Application.Options;
+using Microsoft.Extensions.Options;
+
+namespace EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
 
 public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadService,
     IDownloadStatusStorage downloadStatusStorage,
+    IOptions<ApiOptions> apiOptions,
     TimeProvider timeProvider) : ICompaniesHouseDownloadService
 {
     public const string PartialFilename = "BasicCompanyData";
-    public const string FileSource = "https://download.companieshouse.gov.uk/";
 
     private readonly IFileDownloadService fileDownloadService = fileDownloadService;
     private readonly IDownloadStatusStorage downloadStatusStorage = downloadStatusStorage;
     private readonly TimeProvider timeProvider = timeProvider;
+    private readonly ApiOptions apiOptions = apiOptions.Value;
 
     public async Task<bool> StartDownload()
     {
         var downloadStatus = await downloadStatusStorage.GetCompaniesHouseFileDownloadStatusAsync();
 
-        return downloadStatus != null && downloadStatus.CurrentRunExpectedFileCount != null
-            ? await DownloadFiles(downloadStatus.CurrentRunExpectedFileCount.Value)
-            : false;
+        return downloadStatus != null &&
+            downloadStatus.CurrentRunExpectedFileCount != null &&
+            await DownloadFiles(downloadStatus.CurrentRunExpectedFileCount.Value);
     }
 
     private async Task<bool> DownloadFiles(int currentRunExpectedFileCount)
     {
         var now = timeProvider.GetUtcNow();
 
-        var month = now.Month;
-        var year = now.Year;
-
         var all = Enumerable.Range(1, currentRunExpectedFileCount)
             .Select(i => DownloadFile(i, now));
 
         await Task.WhenAll(all);
 
-        return !all.Any(t => t.Result == false);
+        return !all.Any(t => !t.Result);
     }
 
     private async Task<bool> DownloadFile(int fileCount, DateTimeOffset now)
     {
         var succeeded = false;
         var fileName = $"{PartialFilename}-{now.Year}-{now.Month}-01-part_{fileCount}.zip";
-        var filePath = $"{FileSource}{fileName}";
+
+        var filePath = $"{apiOptions.CompaniesHouseDataDownloadUrl}/{fileName}";
 
         var download = await fileDownloadService.GetStreamAsync(filePath);
 
