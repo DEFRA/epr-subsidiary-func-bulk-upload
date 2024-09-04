@@ -53,7 +53,7 @@ public class AntivirusClientTests
     }
 
     [TestMethod]
-    public async Task SendFileAsync_ThrowException_WhenHttpClientResponseIsInternalServerError()
+    public async Task SendFileAsync_RepliesFalse_WhenHttpClientResponseIsInternalServerError()
     {
         // Arrange
         var fileDetails = _fixture.Create<FileDetails>();
@@ -61,12 +61,11 @@ public class AntivirusClientTests
 
         _httpMessageHandlerMock.RespondWith(HttpStatusCode.InternalServerError, null);
 
-        // Act / Assert
-        await _systemUnderTest
-            .Invoking(x => x.SendFileAsync(fileDetails, FileName, fileStream))
-            .Should()
-            .ThrowAsync<HttpRequestException>();
+        // Act
+        var result = await _systemUnderTest.SendFileAsync(fileDetails, FileName, fileStream);
 
+        // Assert
         _loggerMock.VerifyLog(x => x.LogError(It.IsAny<HttpRequestException>(), "Error sending file to antivirus api"));
+        result.Should().BeFalse();
     }
 }

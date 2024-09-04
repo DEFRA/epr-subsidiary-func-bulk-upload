@@ -16,8 +16,9 @@ public class AntivirusClient : IAntivirusClient
         _logger = logger;
     }
 
-    public async Task SendFileAsync(FileDetails fileDetails, string fileName, Stream fileStream)
+    public async Task<bool> SendFileAsync(FileDetails fileDetails, string fileName, Stream fileStream)
     {
+        var result = false;
         try
         {
             var formContent = new MultipartFormDataContent
@@ -32,11 +33,14 @@ public class AntivirusClient : IAntivirusClient
             var response = await _httpClient.PutAsync($"files/stream/{fileDetails.Collection}/{fileDetails.Key}", formContent);
 
             response.EnsureSuccessStatusCode();
+
+            result = true;
         }
         catch (HttpRequestException exception)
         {
             _logger.LogError(exception, "Error sending file to antivirus api");
-            throw;
         }
+
+        return result;
     }
 }
