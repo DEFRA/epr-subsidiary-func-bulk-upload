@@ -28,7 +28,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         // Add relationships for the children already in RPD...
         await foreach (var subsidiaryAddModel in knownSubsidiariesToAdd)
         {
-            await AddSubsidiary(parentOrg, subsidiaryAddModel!.SubsidiaryOrg, userId);
+            await AddSubsidiary(parentOrg, subsidiaryAddModel!.SubsidiaryOrg, userId, subsidiaryAddModel.Subsidiary);
         }
 
         // Subsidiaries which do not exist in the RPD
@@ -67,7 +67,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         return modelLoaded ? newSubsidiaryModel : null;
     }
 
-    private async Task AddSubsidiary(OrganisationResponseModel parent, OrganisationResponseModel subsidiary, Guid userId)
+    private async Task AddSubsidiary(OrganisationResponseModel parent, OrganisationResponseModel subsidiary, Guid userId, CompaniesHouseCompany subsidiaryFileData)
     {
         var subsidiaryModel = new SubsidiaryAddModel
         {
@@ -75,7 +75,8 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             ParentOrganisationId = parent.referenceNumber,
             ChildOrganisationId = subsidiary.referenceNumber,
             ParentOrganisationExternalId = parent.ExternalId,
-            ChildOrganisationExternalId = subsidiary.ExternalId
+            ChildOrganisationExternalId = subsidiary.ExternalId,
+            SubsidiaryOrganisationId = subsidiaryFileData.subsidiary_id
         };
         await organisationService.AddSubsidiaryRelationshipAsync(subsidiaryModel);
 
