@@ -15,6 +15,9 @@ public class SubsidiaryServiceTests
 {
     private const string BaseAddress = "http://localhost";
     private const string OrganisationByCompanyHouseNumberUri = "api/bulkuploadorganisations/";
+    private const string OrganisationCreateAddSubsidiaryUri = "api/bulkuploadorganisations/create-subsidiary-and-add-relationship";
+    private const string OrganisationAddSubsidiaryUri = "api/bulkuploadorganisations/add-subsidiary-relationship";
+    private const string OrganisationRelationshipsByIdUri = "api/bulkuploadorganisations/organisation-by-relationship";
 
     private Fixture _fixture;
 
@@ -200,6 +203,85 @@ public class SubsidiaryServiceTests
     }
 
     [TestMethod]
+    public async Task GetSubsidiaryRelationshipAsync_Returns_Expected_Result()
+    {
+        const int parentOrganisationId = 1;
+        const int subsidiaryOrganisationId = 2;
+        var apiResponse = true;
+
+        var expectedUri = $"{BaseAddress}/{OrganisationRelationshipsByIdUri}?parentId={parentOrganisationId}&subsidiaryId={subsidiaryOrganisationId}";
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(x => x.RequestUri != null && x.RequestUri.ToString() == expectedUri),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = apiResponse.ToJsonContent()
+            }).Verifiable();
+
+        // Act
+        var result = await _sut.GetSubsidiaryRelationshipAsync(parentOrganisationId, subsidiaryOrganisationId);
+
+        // Assert
+        result.Should().BeTrue();
+    }
+
+    [TestMethod]
+    public async Task GetSubsidiaryRelationshipAsync_ReturnsFalse_When_NoContent()
+    {
+        const int parentOrganisationId = 1;
+        const int subsidiaryOrganisationId = 2;
+
+        var expectedUri = $"{BaseAddress}/{OrganisationRelationshipsByIdUri}?parentId={parentOrganisationId}&subsidiaryId={subsidiaryOrganisationId}";
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(x => x.RequestUri != null && x.RequestUri.ToString() == expectedUri),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.NoContent,
+            }).Verifiable();
+
+        // Act
+        var result = await _sut.GetSubsidiaryRelationshipAsync(parentOrganisationId, subsidiaryOrganisationId);
+
+        // Assert
+        result.Should().BeFalse();
+    }
+
+    [TestMethod]
+    public async Task GetSubsidiaryRelationshipAsync_ThrowsProblemResponseException_When_NoSuccessResponse()
+    {
+        const int parentOrganisationId = 1;
+        const int subsidiaryOrganisationId = 2;
+        var apiResponse = _fixture.Create<ProblemDetails>();
+
+        var expectedUri = $"{BaseAddress}/{OrganisationRelationshipsByIdUri}?parentId={parentOrganisationId}&subsidiaryId={subsidiaryOrganisationId}";
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(x => x.RequestUri != null && x.RequestUri.ToString() == expectedUri),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.BadRequest,
+                Content = apiResponse.ToJsonContent()
+            }).Verifiable();
+
+        // Act
+        var act = async () => await _sut.GetSubsidiaryRelationshipAsync(parentOrganisationId, subsidiaryOrganisationId);
+
+        // Assert
+        await act.Should().ThrowAsync<ProblemResponseException>();
+    }
+
+    [TestMethod]
     public async Task CreateAndAddSubsidiaryAsync_Returns_Expected_Result()
     {
         // Arrange
@@ -219,17 +301,6 @@ public class SubsidiaryServiceTests
 
         // Act
         /* Task<string?> AddSubsidiaryRelationshipAsync(SubsidiaryAddModel subsidiaryAddModel); */
-
-        // Assert
-    }
-
-    [TestMethod]
-    public async Task GetSubsidiaryRelationshipAsync_Returns_Expected_Result()
-    {
-        // Arrange
-
-        // Act
-        /* Task<bool> GetSubsidiaryRelationshipAsync(int parentOrganisationId, int subsidiaryOrganisationId); */
 
         // Assert
     }
