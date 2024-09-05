@@ -14,4 +14,6 @@ public class SubsidiaryAddModel
     public Guid? ChildOrganisationExternalId { get; init; }
 
     public Guid? UserId { get; set; }
+
+    public string? SubsidiaryOrganisationId { get; set; }
 }
