@@ -27,6 +27,20 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             return (response, rows);
         }
 
+        private static CompaniesHouseCompany CreateHeaderErrors(IEnumerable<string> invalidHeaders) =>
+            new()
+            {
+                companies_house_number = string.Empty,
+                organisation_name = string.Empty,
+                organisation_id = string.Empty,
+                parent_child = string.Empty,
+                UploadFileErrorModel = new Models.UploadFileErrorModel
+                {
+                    FileContent = "headererror-Invalid",
+                    Message = string.Join("\t", invalidHeaders)
+                }
+            };
+
         private List<CompaniesHouseCompany> ParseFileData(Stream stream, IReaderConfiguration configuration)
         {
             var rows = new List<CompaniesHouseCompany>();
@@ -73,19 +87,5 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
 
             return rows;
         }
-
-        private CompaniesHouseCompany CreateHeaderErrors(IEnumerable<string> invalidHeaders) =>
-            new()
-            {
-                companies_house_number = string.Empty,
-                organisation_name = string.Empty,
-                organisation_id = string.Empty,
-                parent_child = string.Empty,
-                UploadFileErrorModel = new Models.UploadFileErrorModel
-                {
-                    FileContent = "headererror-Invalid",
-                    Message = string.Join("\t", invalidHeaders)
-                }
-            };
     }
 }
