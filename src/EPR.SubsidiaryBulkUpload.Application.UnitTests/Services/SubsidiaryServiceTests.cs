@@ -1,4 +1,6 @@
 ﻿using System.Net;
+using System.Net.Http.Json;
+using System.Text;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Exceptions;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
@@ -205,6 +207,7 @@ public class SubsidiaryServiceTests
     [TestMethod]
     public async Task GetSubsidiaryRelationshipAsync_Returns_Expected_Result()
     {
+        // Arrange
         const int parentOrganisationId = 1;
         const int subsidiaryOrganisationId = 2;
         var apiResponse = true;
@@ -232,6 +235,7 @@ public class SubsidiaryServiceTests
     [TestMethod]
     public async Task GetSubsidiaryRelationshipAsync_ReturnsFalse_When_NoContent()
     {
+        // Arrange
         const int parentOrganisationId = 1;
         const int subsidiaryOrganisationId = 2;
 
@@ -257,6 +261,7 @@ public class SubsidiaryServiceTests
     [TestMethod]
     public async Task GetSubsidiaryRelationshipAsync_ThrowsProblemResponseException_When_NoSuccessResponse()
     {
+        // Arrange
         const int parentOrganisationId = 1;
         const int subsidiaryOrganisationId = 2;
         var apiResponse = _fixture.Create<ProblemDetails>();
@@ -285,23 +290,107 @@ public class SubsidiaryServiceTests
     public async Task CreateAndAddSubsidiaryAsync_Returns_Expected_Result()
     {
         // Arrange
+        var linkOrganisationModel = _fixture.Create<LinkOrganisationModel>();
+        var apiResponse = "123456";
+
+        var expectedUri = $"{BaseAddress}/{OrganisationCreateAddSubsidiaryUri}";
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(x => x.RequestUri != null && x.RequestUri.ToString() == expectedUri),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(apiResponse, Encoding.UTF8)
+            }).Verifiable();
 
         // Act
-
-        // Act
-        /* Task<string?> CreateAndAddSubsidiaryAsync(LinkOrganisationModel linkOrganisationModel); */
+        var response = await _sut.CreateAndAddSubsidiaryAsync(linkOrganisationModel);
 
         // Assert
+        response.Should().Be(apiResponse);
+    }
+
+    [TestMethod]
+    public async Task CreateAndAddSubsidiary_ThrowsProblemResponseException_When_NoSuccessResponse()
+    {
+        // Arrange
+        var linkOrganisationModel = _fixture.Create<LinkOrganisationModel>();
+        var apiResponse = _fixture.Create<ProblemDetails>();
+
+        var expectedUri = $"{BaseAddress}/{OrganisationCreateAddSubsidiaryUri}";
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(x => x.RequestUri != null && x.RequestUri.ToString() == expectedUri),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.Forbidden,
+                Content = apiResponse.ToJsonContent()
+            }).Verifiable();
+
+        // Act
+        var act = async () => await _sut.CreateAndAddSubsidiaryAsync(linkOrganisationModel);
+
+        // Assert
+        await act.Should().ThrowAsync<ProblemResponseException>();
     }
 
     [TestMethod]
     public async Task AddSubsidiaryRelationshipAsync_Returns_Expected_Result()
     {
         // Arrange
+        var subsidiaryAddModel = _fixture.Create<SubsidiaryAddModel>();
+        var apiResponse = "123456";
+
+        var expectedUri = $"{BaseAddress}/{OrganisationAddSubsidiaryUri}";
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(x => x.RequestUri != null && x.RequestUri.ToString() == expectedUri),
+                ItExpr.IsAny<CancellationToken>())
+        .ReturnsAsync(new HttpResponseMessage
+        {
+            StatusCode = HttpStatusCode.OK,
+            Content = new StringContent(apiResponse, Encoding.UTF8)
+        }).Verifiable();
 
         // Act
-        /* Task<string?> AddSubsidiaryRelationshipAsync(SubsidiaryAddModel subsidiaryAddModel); */
+        var response = await _sut.AddSubsidiaryRelationshipAsync(subsidiaryAddModel);
 
         // Assert
+        response.Should().Be(apiResponse);
+    }
+
+    [TestMethod]
+    public async Task AddSubsidiaryRelationshipAsync_ThrowsProblemResponseException_When_NoSuccessResponse()
+    {
+        // Arrange
+        var subsidiaryAddModel = _fixture.Create<SubsidiaryAddModel>();
+        var apiResponse = _fixture.Create<ProblemDetails>();
+
+        var expectedUri = $"{BaseAddress}/{OrganisationAddSubsidiaryUri}";
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(x => x.RequestUri != null && x.RequestUri.ToString() == expectedUri),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.Forbidden,
+                Content = apiResponse.ToJsonContent()
+            }).Verifiable();
+
+        // Act
+        var act = async () => await _sut.AddSubsidiaryRelationshipAsync(subsidiaryAddModel);
+
+        // Assert
+        await act.Should().ThrowAsync<ProblemResponseException>();
     }
 }
