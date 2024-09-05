@@ -11,9 +11,11 @@ namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1010:Opening square brackets should be spaced correctly", Justification = "Style cop rules don't yet support collection expressions")]
 public class ParserClassTests
 {
+    private const string _csvHeader = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
+    private const string _badHeader = "organisation,subsidiary,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
+
     private Fixture _fixture;
     private CsvConfiguration _csvConfiguration;
-    private string _csvHeader;
     private List<CompaniesHouseCompany> _listDataModel = null;
     private Mock<ILogger<ParserClass>> _loggerMock;
     private ParserClass _sut;
@@ -30,7 +32,6 @@ public class ParserClassTests
             HasHeaderRecord = true,
         };
 
-        _csvHeader = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
         _listDataModel = new List<CompaniesHouseCompany>
             {
                 new() { organisation_id = "23123",  subsidiary_id = string.Empty, organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Parent", franchisee_licensee_tenant = string.Empty, Errors = string.Empty },
@@ -56,6 +57,33 @@ public class ParserClassTests
     }
 
     [TestMethod]
+    public void ParseClass_InvalidCsvFile_ReturnError()
+    {
+        var rawSource = _listDataModel.Take(1).Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
+        string[] all = [_badHeader, .. rawSource];
+
+        using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
+
+        var returnValue = _sut.ParseWithHelper(stream, _csvConfiguration);
+
+        // Assert
+        returnValue.Should().NotBeNull();
+
+        returnValue.ResponseClass.Should().NotBeNull();
+        returnValue.ResponseClass.isDone.Should().BeTrue();
+
+        returnValue.CompaniesHouseCompany.Should().NotBeNull();
+        returnValue.CompaniesHouseCompany.Count.Should().Be(1);
+
+        var errorRow = returnValue.CompaniesHouseCompany[0];
+
+        errorRow.UploadFileErrorModel.Should().NotBeNull();
+        errorRow.UploadFileErrorModel.FileContent.Should().Be("headererror-Invalid");
+        errorRow.UploadFileErrorModel.Message.Should().Contain("organisation");
+        errorRow.UploadFileErrorModel.Message.Should().Contain("subsidiary");
+    }
+
+    [TestMethod]
     public void ParseClass_ValidCsvFile_ReturnsCorrectData()
     {
         // Arrange
@@ -69,6 +97,10 @@ public class ParserClassTests
 
         // Assert
         returnValue.Should().NotBeNull();
+
+        returnValue.ResponseClass.Should().NotBeNull();
+        returnValue.ResponseClass.isDone.Should().BeTrue();
+
         returnValue.CompaniesHouseCompany.Should().NotBeNull();
         returnValue.CompaniesHouseCompany.Count.Should().Be(2);
 
