@@ -153,8 +153,7 @@ public class CompaniesHouseLookupDirectServiceTests
                 ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(new HttpResponseMessage
             {
-                StatusCode = HttpStatusCode.NoContent,
-                Content = new StringContent(CompaniesHouseErrorResponseJson)
+                StatusCode = HttpStatusCode.NoContent
             }).Verifiable();
 
         var httpClient = new HttpClient(_httpMessageHandlerMock.Object);

@@ -24,7 +24,6 @@ public class CompaniesHouseCompanyTests
         var validationResult = CompaniesHouseCompany.ValidateName("test", validationContext);
 
         // Assert
-        // TODO: null, empty, not null - pass as test cases with expected result of success or not
         validationResult.Should().Be(ValidationResult.Success);
     }
 

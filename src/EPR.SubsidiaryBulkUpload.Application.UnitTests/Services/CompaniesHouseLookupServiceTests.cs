@@ -73,8 +73,6 @@ public class CompaniesHouseLookupServiceTests
     public async Task Should_Return_Null_When_ApiReturns_NoContent()
     {
         // Arrange
-        var apiResponse = _fixture.Create<CompaniesHouseResponse>();
-
         _httpMessageHandlerMock.Protected()
              .Setup<Task<HttpResponseMessage>>(
                  "SendAsync",
@@ -82,8 +80,7 @@ public class CompaniesHouseLookupServiceTests
                  ItExpr.IsAny<CancellationToken>())
              .ReturnsAsync(new HttpResponseMessage
              {
-                 StatusCode = HttpStatusCode.NoContent,
-                 Content = new StringContent(JsonSerializer.Serialize(apiResponse))
+                 StatusCode = HttpStatusCode.NoContent
              }).Verifiable();
 
         var httpClient = new HttpClient(_httpMessageHandlerMock.Object);
