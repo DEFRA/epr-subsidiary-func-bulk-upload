@@ -1,5 +1,5 @@
 ﻿using System.Text;
-using EPR.SubsidiaryBulkUpload.Application.CsvConfiguration;
+using EPR.SubsidiaryBulkUpload.Application.CsvReaderConfiguration;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using Microsoft.Extensions.Logging;

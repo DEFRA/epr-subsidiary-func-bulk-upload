@@ -2,7 +2,7 @@
 using CsvHelper.Configuration;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 
-namespace EPR.SubsidiaryBulkUpload.Application.CsvConfiguration;
+namespace EPR.SubsidiaryBulkUpload.Application.CsvReaderConfiguration;
 
 public static class CsvConfigurations
 {

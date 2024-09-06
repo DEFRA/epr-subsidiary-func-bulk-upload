@@ -1,5 +1,5 @@
 ﻿using Azure.Storage.Blobs;
-using EPR.SubsidiaryBulkUpload.Application.CsvConfiguration;
+using EPR.SubsidiaryBulkUpload.Application.CsvReaderConfiguration;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Services;
