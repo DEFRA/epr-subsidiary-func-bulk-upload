@@ -23,32 +23,27 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
 
             if (string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.organisation_id))))
             {
-                errors.Append("Organisation_id is required.");
-            }
-
-            if (string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.subsidiary_id))))
-            {
-                // errors.Append("/nSubsidiary_id is required.");
+                errors.Append("organisation_id is required.");
             }
 
             if (string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.organisation_name))))
             {
-                errors.Append("/nOrganisation_name is required.");
+                errors.Append("organisation_name is required.");
             }
 
             if (string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.companies_house_number))))
             {
-                errors.Append("/nOrganisation_number is required.");
+                errors.Append("companies_house_number is required.");
             }
 
             if (string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.parent_child))))
             {
-                errors.Append("/nparent_or_child is required.");
+                errors.Append("parent_or_child is required.");
             }
 
             if (string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.franchisee_licensee_tenant))))
             {
-                // errors.Append("/nLicense is required.");
+                // errors.Append("franchisee_licensee_tenant is required.");
             }
 
             errorsInRow = errors.ToString();

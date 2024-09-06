@@ -25,10 +25,15 @@ public class BulkUploadOrchestrationTests
     }
 
     [TestMethod]
-    public async Task ShouldProcessOrganisations()
+    public async Task Should_Process_Organisations()
     {
         // Arrange
-        var companyData = _fixture.CreateMany<CompaniesHouseCompany>();
+        var companyData = _fixture
+            .Build<CompaniesHouseCompany>()
+            .With(c => c.Errors, () => null)
+            .With(c => c.UploadFileErrorModel, () => null)
+            .CreateMany<CompaniesHouseCompany>();
+
         var parentAndSubsidiaries = _fixture.CreateMany<ParentAndSubsidiaries>();
         var orgModel = _fixture.Create<OrganisationResponseModel>();
 
@@ -51,7 +56,7 @@ public class BulkUploadOrchestrationTests
     }
 
     [TestMethod]
-    public async Task NotifyErrors()
+    public async Task Should_Notify_Errors()
     {
         // Arrange
         var companyData = _fixture
@@ -60,9 +65,6 @@ public class BulkUploadOrchestrationTests
             .With(c => c.UploadFileErrorModel, () => new UploadFileErrorModel { IsError = true, FileLineNumber = 2, FileContent = "test,test", Message = "Test error" })
             .CreateMany(1);
 
-        // var apiResponse = _fixture.Build<CompaniesHouseResponseFromCompaniesHouse>().With(x => x.date_of_creation, () => DateTime.Today.ToString("yyyy-MM-dd")).Create();
-        // var parentAndSubsidiaries = fixture.CreateMany<ParentAndSubsidiaries>();
-        // var orgModel = fixture.Create<OrganisationResponseModel>();
         var userId = Guid.NewGuid();
         var organisationId = Guid.NewGuid();
         var userRequestModel = new UserRequestModel { UserId = userId, OrganisationId = organisationId };
@@ -73,7 +75,30 @@ public class BulkUploadOrchestrationTests
         orchestrator.NotifyErrors(companyData, userRequestModel);
 
         // Assert
-        _notificationService.Verify(ns => ns.SetStatus(It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(3));
+        _notificationService.Verify(ns => ns.SetStatus(It.IsAny<string>(), It.IsAny<string>()), Times.Once());
         _notificationService.Verify(ns => ns.SetErrorStatus(It.IsAny<string>(), It.IsAny<List<UploadFileErrorModel>>()), Times.Once());
+    }
+
+    [TestMethod]
+    public async Task Should_Notify_Errors_When_No_Errors()
+    {
+        // Arrange
+        var companyData = _fixture
+            .Build<CompaniesHouseCompany>()
+            .With(c => c.Errors, () => null)
+            .With(c => c.UploadFileErrorModel, () => null)
+            .CreateMany(2);
+
+        var userId = Guid.NewGuid();
+        var organisationId = Guid.NewGuid();
+        var userRequestModel = new UserRequestModel { UserId = userId, OrganisationId = organisationId };
+
+        var orchestrator = new BulkUploadOrchestration(_recordExtraction.Object, _subsidiaryService.Object, _bulkSubsidiaryProcessor.Object, _notificationService.Object);
+
+        // Act
+        orchestrator.NotifyErrors(companyData, userRequestModel);
+
+        // Assert
+        _notificationService.Verify(ns => ns.SetErrorStatus(It.IsAny<string>(), It.IsAny<List<UploadFileErrorModel>>()), Times.Never());
     }
 }

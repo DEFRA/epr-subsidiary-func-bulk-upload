@@ -1,5 +1,4 @@
-﻿using CsvHelper;
-using CsvHelper.Configuration;
+﻿using CsvHelper.Configuration;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using Microsoft.Extensions.Logging;
 
@@ -19,27 +18,14 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                 rows = ParseFileData(stream, configuration);
                 response = new ResponseClass { isDone = true, Messages = "All Done!" };
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                response = new ResponseClass { isDone = false, Messages = e.Message };
+                _logger.LogError(ex, "Error occurred while processing the CSV file. {Message}", ex.Message);
+                response = new ResponseClass { isDone = false, Messages = ex.Message };
             }
 
             return (response, rows);
         }
-
-        private static CompaniesHouseCompany CreateHeaderErrors(IEnumerable<string> invalidHeaders) =>
-            new()
-            {
-                companies_house_number = string.Empty,
-                organisation_name = string.Empty,
-                organisation_id = string.Empty,
-                parent_child = string.Empty,
-                UploadFileErrorModel = new Models.UploadFileErrorModel
-                {
-                    FileContent = "headererror-Invalid",
-                    Message = string.Join("\t", invalidHeaders)
-                }
-            };
 
         private List<CompaniesHouseCompany> ParseFileData(Stream stream, IReaderConfiguration configuration)
         {
@@ -48,42 +34,34 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             using var reader = new StreamReader(stream);
             using var csv = new CustomCsvReader(reader, configuration);
 
-            try
+            csv.Context.RegisterClassMap<CompaniesHouseCompanyMap>();
+            csv.Read();
+            csv.ReadHeader();
+
+            csv.ValidateHeader<FileUploadHeader>();
+            if (csv.InvalidHeaderErrors is { Count: > 0 })
             {
-                csv.Context.RegisterClassMap<CompaniesHouseCompanyMap>();
-                csv.Read();
-                csv.ReadHeader();
-
-                try
+                var errors = string.Join("\t", csv.InvalidHeaderErrors);
+                var companyHeaderErrors = new CompaniesHouseCompany
                 {
-                    csv.ValidateHeader<FileUploadHeader>();
-                    if (csv.InvalidHeaderErrors is { Count: > 0 })
+                    companies_house_number = string.Empty,
+                    organisation_name = string.Empty,
+                    organisation_id = string.Empty,
+                    parent_child = string.Empty,
+                    Errors = errors,
+                    UploadFileErrorModel = new Models.UploadFileErrorModel
                     {
-                        var companyHeaderErrors = CreateHeaderErrors(csv.InvalidHeaderErrors);
-                        _logger.LogError("Invalid header count {Count}. Column header(s) missing: #### {Message} #### ", csv.InvalidHeaderErrors.Count, companyHeaderErrors.UploadFileErrorModel.Message);
-                        rows.Add(companyHeaderErrors);
-                        return rows;
+                        FileContent = "headererror-Invalid",
+                        Message = errors
                     }
-                }
-                catch (HeaderValidationException ex)
-                {
-                    if (ex.InvalidHeaders is not null)
-                    {
-                        _logger.LogError(ex, "Invalid header count {Count}", ex.InvalidHeaders);
-                        var companyHeaderErrors = CreateHeaderErrors(ex.InvalidHeaders.Select(x => x.Names[0]));
+                };
 
-                        _logger.LogError("Invalid header count {Count}. Column header(s) missing: #### {Message} #### ", ex.InvalidHeaders.Length, companyHeaderErrors.UploadFileErrorModel.Message);
-                        rows.Add(companyHeaderErrors);
-                        return rows;
-                    }
-                }
+                _logger.LogError("Invalid header count {Count}. Column header(s) missing: #### {Message} #### ", csv.InvalidHeaderErrors.Count, companyHeaderErrors.UploadFileErrorModel.Message);
+                rows.Add(companyHeaderErrors);
+                return rows;
+            }
 
-                rows = csv.GetRecords<CompaniesHouseCompany>().ToList();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred while processing the CSV file. {Message}", ex.Message);
-            }
+            rows = csv.GetRecords<CompaniesHouseCompany>().ToList();
 
             return rows;
         }

@@ -12,9 +12,22 @@ public class CompaniesHouseCompanyMapTests
 {
     private const string _csvHeader = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
 
-    private CsvConfiguration _csvConfiguration = new CsvConfiguration(CultureInfo.InvariantCulture)
+    private CsvConfiguration _csvConfiguration = new(CultureInfo.InvariantCulture)
     {
+        PrepareHeaderForMatch = args => args.Header.ToLower(),
         HasHeaderRecord = true,
+        IgnoreBlankLines = false,
+        MissingFieldFound = null,
+        Delimiter = ",",
+        TrimOptions = TrimOptions.Trim,
+        BadDataFound = null,
+        HeaderValidated = args =>
+        {
+            if (args.Context?.Reader is CustomCsvReader csvReader)
+            {
+                csvReader.InvalidHeaderErrors = args.InvalidHeaders?.Select(x => x.Names[0]).ToList();
+            }
+        },
     };
 
     [TestMethod]
@@ -53,9 +66,9 @@ public class CompaniesHouseCompanyMapTests
     }
 
     [TestMethod]
-    [DataRow("", "", "OrgA", "123456", "Child", "", "Organisation_id is required.")]
-    [DataRow("23123", "", "", "123456", "Child", "", "Organisation_name is required.")]
-    [DataRow("23123", "", "OrgA", "", "Child", "", "Organisation_number is required.")]
+    [DataRow("", "", "OrgA", "123456", "Child", "", "organisation_id is required.")]
+    [DataRow("23123", "", "", "123456", "Child", "", "organisation_name is required.")]
+    [DataRow("23123", "", "OrgA", "", "Child", "", "companies_house_number is required.")]
     [DataRow("23123", "", "OrgA", "123456", "", "", "parent_or_child is required.")]
     public void ClassMap_Returns_Error(
         string organisationId,

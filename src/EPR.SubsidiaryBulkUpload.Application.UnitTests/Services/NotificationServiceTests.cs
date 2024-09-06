@@ -37,7 +37,6 @@ public class NotificationServiceTests
         var key = "testKey";
         var status = "testStatus";
 
-        // _redisDatabaseMock.Setup(x => x.StringGetAsync(It.Is<RedisKey>(k => k == key), It.IsAny<RedisValue>(), It.Is<TimeSpan>(t => t.), It.IsAny<When>())).ReturnsAsync(status);
         _redisDatabaseMock.Setup(x => x.StringGetAsync(It.Is<RedisKey>(k => k == key), It.IsAny<CommandFlags>())).ReturnsAsync(status);
 
         // Act

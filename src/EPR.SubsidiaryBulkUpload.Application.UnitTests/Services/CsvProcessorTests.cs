@@ -1,6 +1,5 @@
-﻿using System.Globalization;
-using System.Text;
-using CsvHelper.Configuration;
+﻿using System.Text;
+using EPR.SubsidiaryBulkUpload.Application.CsvConfiguration;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services;
@@ -33,10 +32,7 @@ public class CsvProcessorTests
 
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
 
-        var configuration = new CsvConfiguration(CultureInfo.InvariantCulture)
-        {
-            HasHeaderRecord = true,
-        };
+        var configuration = CsvConfigurations.BulkUploadCsvConfiguration;
 
         var parserClass = new Mock<IParserClass>();
         parserClass
@@ -79,17 +75,10 @@ public class CsvProcessorTests
 
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
 
-        var configuration = new CsvConfiguration(CultureInfo.InvariantCulture)
-        {
-            HasHeaderRecord = true,
-            HeaderValidated = null,
-            MissingFieldFound = null
-        };
-
         var processor = new CsvProcessor(null, NullLogger<CsvProcessor>.Instance);
 
         // Act
-        var actual = (await processor.ProcessStream<CompanyHouseTableEntity>(stream, configuration)).ToArray();
+        var actual = (await processor.ProcessStream<CompanyHouseTableEntity>(stream, CsvConfigurations.BulkUploadCsvConfiguration)).ToArray();
 
         // Assert
         actual.Should().HaveCount(2);

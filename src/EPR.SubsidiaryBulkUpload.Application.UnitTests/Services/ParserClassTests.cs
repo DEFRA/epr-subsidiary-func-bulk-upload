@@ -1,6 +1,5 @@
-﻿using System.Globalization;
-using System.Text;
-using CsvHelper.Configuration;
+﻿using System.Text;
+using EPR.SubsidiaryBulkUpload.Application.CsvConfiguration;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using Microsoft.Extensions.Logging;
@@ -16,7 +15,6 @@ public class ParserClassTests
     private const string _badHeader = "organisation,subsidiary,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
 
     private Fixture _fixture;
-    private CsvConfiguration _csvConfiguration;
     private List<CompaniesHouseCompany> _listDataModel = null;
     private Mock<ILogger<ParserClass>> _loggerMock;
     private ParserClass _sut;
@@ -27,11 +25,6 @@ public class ParserClassTests
         _fixture = new();
 
         _loggerMock = new Mock<ILogger<ParserClass>>();
-
-        _csvConfiguration = new CsvConfiguration(CultureInfo.InvariantCulture)
-        {
-            HasHeaderRecord = true,
-        };
 
         _listDataModel = new List<CompaniesHouseCompany>
             {
@@ -49,7 +42,7 @@ public class ParserClassTests
 
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
 
-        var returnValue = _sut.ParseWithHelper(stream, _csvConfiguration);
+        var returnValue = _sut.ParseWithHelper(stream, CsvConfigurations.BulkUploadCsvConfiguration);
 
         // Assert
         returnValue.Should().NotBeNull();
@@ -65,7 +58,7 @@ public class ParserClassTests
 
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
 
-        var returnValue = _sut.ParseWithHelper(stream, _csvConfiguration);
+        var returnValue = _sut.ParseWithHelper(stream, CsvConfigurations.BulkUploadCsvConfiguration);
 
         // Assert
         returnValue.Should().NotBeNull();
@@ -92,7 +85,7 @@ public class ParserClassTests
 
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
 
-        var returnValue = _sut.ParseWithHelper(stream, _csvConfiguration);
+        var returnValue = _sut.ParseWithHelper(stream, CsvConfigurations.BulkUploadCsvConfiguration);
 
         // Assert
         returnValue.Should().NotBeNull();
@@ -120,7 +113,7 @@ public class ParserClassTests
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
 
         // Act
-        var returnValue = _sut.ParseWithHelper(stream, _csvConfiguration);
+        var returnValue = _sut.ParseWithHelper(stream, CsvConfigurations.BulkUploadCsvConfiguration);
 
         // Assert
         returnValue.Should().NotBeNull();
@@ -166,7 +159,7 @@ public class ParserClassTests
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
 
         // Act
-        var returnValue = _sut.ParseWithHelper(stream, _csvConfiguration);
+        var returnValue = _sut.ParseWithHelper(stream, CsvConfigurations.BulkUploadCsvConfiguration);
 
         // Assert
         returnValue.Should().NotBeNull();
@@ -191,6 +184,18 @@ public class ParserClassTests
         parsedResult[1].franchisee_licensee_tenant.Should().Be("License123");
 
         parsedResult[1].UploadFileErrorModel.Should().NotBeNull();
-        parsedResult[1].UploadFileErrorModel.Message.Should().Contain("Organisation_name is required.");
+        parsedResult[1].UploadFileErrorModel.Message.Should().Contain("organisation_name is required.");
+    }
+
+    [TestMethod]
+    public void ParseClass_Exception_ReturnsMessage()
+    {
+        var returnValue = _sut.ParseWithHelper(null, CsvConfigurations.BulkUploadCsvConfiguration);
+
+        returnValue.Should().NotBeNull();
+
+        returnValue.ResponseClass.Should().NotBeNull();
+        returnValue.ResponseClass.isDone.Should().BeFalse();
+        returnValue.ResponseClass.Messages.Should().NotBeNull();
     }
 }
