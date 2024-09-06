@@ -2,6 +2,7 @@
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
+using Microsoft.WindowsAzure.Storage.Blob.Protocol;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services;
 public class BulkUploadOrchestration : IBulkUploadOrchestration
@@ -65,5 +66,25 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
         }
 
         _notificationService.SetStatus($"{userRequestModel.UserId}{userRequestModel.OrganisationId}{SubsidiaryBulkUploadProgress}", "Finished");
+    }
+
+    private async Task NotifyErrorsProcessing(IEnumerable<CompaniesHouseCompany> data, UserRequestModel userRequestModel, string keyValue)
+    {
+        var key = userRequestModel.GenerateKey(keyValue);
+        _notificationService.SetStatus(Guid.NewGuid().ToString(), "Started NotifyErrorsProcessing");
+        var notificationErrorList = new List<UploadFileErrorModel>();
+        var dataWithErrors = data.Where(e => e.UploadFileErrorModel != null).ToList();
+        foreach (var company in dataWithErrors)
+        {
+            if (company.Errors.Length > 0)
+            {
+                notificationErrorList.Add(company.UploadFileErrorModel);
+            }
+        }
+
+        var keyErrors = userRequestModel.GenerateKey(SubsidiaryBulkUploadErrors);
+        _notificationService.SetStatus(key, "Error found in validation. Logging it in Redis storage");
+        _notificationService.SetErrorStatus(keyErrors, notificationErrorList);
+        _notificationService.SetStatus(Guid.NewGuid().ToString(), "Finished NotifyErrorsProcessing");
     }
 }

@@ -16,6 +16,7 @@ public class SubsidiaryService : ISubsidiaryService
     private const string OrganisationCreateAddSubsidiaryUri = "api/bulkuploadorganisations/create-subsidiary-and-add-relationship";
     private const string OrganisationAddSubsidiaryUri = "api/bulkuploadorganisations/add-subsidiary-relationship";
     private const string OrganisationRelationshipsByIdUri = "api/bulkuploadorganisations/organisation-by-relationship";
+    private const string OrganisationGetValidOrgsByIdUri = "api/bulkuploadorganisations/valid-organisation-by-companyhousenumber";
     private readonly ILogger<SubsidiaryService> _logger;
     private readonly HttpClient _httpClient;
 
@@ -144,6 +145,31 @@ public class SubsidiaryService : ISubsidiaryService
         response.EnsureSuccessStatusCode();
 
         var result = await response.Content.ReadAsStringAsync();
+
+        return result;
+    }
+
+    public async Task<List<SubsidiaryAddModel>> GetNoneProccessedCompanies(IEnumerable<CompaniesHouseCompany> subsidiaries)
+    {
+        string json = JsonConvert.SerializeObject(subsidiaries);
+        StringContent httpContent = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+        var response = await _httpClient.PostAsync(OrganisationAddSubsidiaryUri, httpContent);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+
+            if (problemDetails != null)
+            {
+                // _logger.LogError("Failed to add subsidiary relationship for Parent: {Parent} Subsidiary: {Subsidiary}", subsidiaryAddModel.ParentOrganisationId, subsidiaryAddModel.ChildOrganisationId);
+                throw new ProblemResponseException(problemDetails, response.StatusCode);
+            }
+        }
+
+        response.EnsureSuccessStatusCode();
+
+        var result = await response.Content.ReadFromJsonAsync<OrganisationResponseModel[]>();
 
         return result;
     }
