@@ -1,6 +1,5 @@
-﻿using System.Globalization;
-using Azure.Storage.Blobs;
-using CsvHelper.Configuration;
+﻿using Azure.Storage.Blobs;
+using EPR.SubsidiaryBulkUpload.Application.CsvConfiguration;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Services;
@@ -42,26 +41,12 @@ public class BulkUploadFunction
             _logger.LogWarning("Missing userId metadata for blob {Name}", client.Name);
         }
 
-        var configuration = new CsvConfiguration(CultureInfo.InvariantCulture)
-        {
-            PrepareHeaderForMatch = args => args.Header.ToLower(),
-            HasHeaderRecord = true,
-            IgnoreBlankLines = false,
-            MissingFieldFound = null,
-            Delimiter = ",",
-            TrimOptions = TrimOptions.Trim,
-            HeaderValidated = (args) =>
-            {
-                ConfigurationFunctions.HeaderValidated(args);
-            },
-            BadDataFound = null
-        };
-
         var userRequestModel = metaData.ToUserRequestModel();
 
         if (userRequestModel != null)
         {
-            var records = await _csvProcessor.ProcessStreamWithMapping<CompaniesHouseCompany, CompaniesHouseCompanyMap>(content, configuration);
+            var records = await _csvProcessor.ProcessStreamWithMapping<CompaniesHouseCompany, CompaniesHouseCompanyMap>(content, CsvConfigurations.BulkUploadCsvConfiguration);
+
             await _orchestration.NotifyErrors(records, userRequestModel);
             await _orchestration.Orchestrate(records, userRequestModel);
 
