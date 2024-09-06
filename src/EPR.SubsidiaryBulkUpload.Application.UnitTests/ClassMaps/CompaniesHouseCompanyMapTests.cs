@@ -55,7 +55,7 @@ public class CompaniesHouseCompanyMapTests
 
         // Assert
         rows.Should().NotBeNullOrEmpty();
-        rows.Count().Should().Be(1);
+        rows.Count.Should().Be(1);
         rows[0].organisation_id.Should().Be("23123");
         rows[0].subsidiary_id.Should().Be("Sub1");
         rows[0].organisation_name.Should().Be("OrgA");
