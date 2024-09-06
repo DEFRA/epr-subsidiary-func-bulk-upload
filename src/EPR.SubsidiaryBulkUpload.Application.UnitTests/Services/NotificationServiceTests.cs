@@ -15,7 +15,7 @@ public class NotificationServiceTests
     private NotificationService _notificationService;
 
     [TestInitialize]
-    public void Setup()
+    public void TestInitialize()
     {
         _loggerMock = new Mock<ILogger<NotificationService>>();
         _redisConnectionMultiplexerMock = new Mock<IConnectionMultiplexer>();

@@ -2,7 +2,6 @@
 using System.Text;
 using CsvHelper.Configuration;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
-using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using Microsoft.Extensions.Logging;
 
@@ -13,6 +12,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 public class ParserClassTests
 {
     private const string _csvHeader = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
+    private const string _csvHeaderWithMissingSubsidiaryId = "organisation_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
     private const string _badHeader = "organisation,subsidiary,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
 
     private Fixture _fixture;
@@ -22,7 +22,7 @@ public class ParserClassTests
     private ParserClass _sut;
 
     [TestInitialize]
-    public void ParserClassMockObjectsSetup()
+    public void TestInitialize()
     {
         _fixture = new();
 
@@ -58,7 +58,7 @@ public class ParserClassTests
     }
 
     [TestMethod]
-    public void ParseClass_InvalidCsvFile_ReturnError()
+    public void ParseClass_InvalidCsvHeader_ReturnsError()
     {
         var rawSource = _listDataModel.Take(1).Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
         string[] all = [_badHeader, .. rawSource];
@@ -81,6 +81,32 @@ public class ParserClassTests
         errorRow.UploadFileErrorModel.Should().NotBeNull();
         errorRow.UploadFileErrorModel.FileContent.Should().Be("headererror-Invalid");
         errorRow.UploadFileErrorModel.Message.Should().Contain("organisation_id");
+        errorRow.UploadFileErrorModel.Message.Should().Contain("subsidiary_id");
+    }
+
+    [TestMethod]
+    public void ParseClass_Missing_Column_ReturnsError()
+    {
+        var rawSource = _listDataModel.Take(1).Select(s => $"{s.organisation_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
+        string[] all = [_csvHeaderWithMissingSubsidiaryId, .. rawSource];
+
+        using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
+
+        var returnValue = _sut.ParseWithHelper(stream, _csvConfiguration);
+
+        // Assert
+        returnValue.Should().NotBeNull();
+
+        returnValue.ResponseClass.Should().NotBeNull();
+        returnValue.ResponseClass.isDone.Should().BeTrue();
+
+        returnValue.CompaniesHouseCompany.Should().NotBeNull();
+        returnValue.CompaniesHouseCompany.Count.Should().Be(1);
+
+        var errorRow = returnValue.CompaniesHouseCompany[0];
+
+        errorRow.UploadFileErrorModel.Should().NotBeNull();
+        errorRow.UploadFileErrorModel.FileContent.Should().Be("headererror-Invalid");
         errorRow.UploadFileErrorModel.Message.Should().Contain("subsidiary_id");
     }
 

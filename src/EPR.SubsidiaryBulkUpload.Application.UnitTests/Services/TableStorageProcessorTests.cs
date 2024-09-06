@@ -16,7 +16,7 @@ public class TableStorageProcessorTests
     private Fixture _fixture;
 
     [TestInitialize]
-    public void Setup()
+    public void TestInitialize()
     {
         _mockTableServiceClient = new Mock<TableServiceClient>();
         _mockTableClient = new Mock<TableClient>();
