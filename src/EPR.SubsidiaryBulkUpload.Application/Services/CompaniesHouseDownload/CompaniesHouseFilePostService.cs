@@ -54,7 +54,7 @@ public class CompaniesHouseFilePostService(
             Key = fileId,
             Extension = Path.GetExtension(fileName),
             FileName = Path.GetFileNameWithoutExtension(fileName),
-            Collection = SubmissionType.CompaniesHouse.GetDisplayName() + antiVirusOptions.CollectionSuffix ?? string.Empty,
+            Collection = SubmissionType.CompaniesHouse.GetDisplayName() + (antiVirusOptions.CollectionSuffix ?? string.Empty),
             UserId = systemUserId,
             UserEmail = "system@dummy.com"
         };
