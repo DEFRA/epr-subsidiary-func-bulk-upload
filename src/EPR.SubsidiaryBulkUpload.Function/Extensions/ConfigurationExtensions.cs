@@ -5,6 +5,7 @@ using System.Net.Http.Headers;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using EPR.SubsidiaryBulkUpload.Application.Clients;
 using EPR.SubsidiaryBulkUpload.Application.Configs;
 using EPR.SubsidiaryBulkUpload.Application.Handlers;
 using EPR.SubsidiaryBulkUpload.Application.Options;
@@ -14,6 +15,9 @@ using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Polly;
+using Polly.Extensions.Http;
+using Polly.Retry;
 using StackExchange.Redis;
 
 [ExcludeFromCodeCoverage]
@@ -59,16 +63,21 @@ public static class ConfigurationExtensions
         });
         */
 
-        /*
-        services.AddHttpClient<IAntivirusApiClient, AntivirusApiClient>((sp, client) =>
+        services.AddHttpClient<ISubmissionStatusClient, SubmissionStatusClient>((sp, client) =>
         {
-            var options = sp.GetRequiredService<IOptions<AntivirusApiOptions>>().Value;
-
+            var options = sp.GetRequiredService<IOptions<SubmissionStatusApiOptions>>().Value;
             client.BaseAddress = new Uri($"{options.BaseUrl}/v1/");
-            client.Timeout = TimeSpan.FromSeconds(options.Timeout);
-            client.DefaultRequestHeaders.Add("OCP-APIM-Subscription-Key", options.SubscriptionKey);
-        }).AddHttpMessageHandler<TradeAntivirusApiAuthorizationHandler>();
-        */
+        })
+    .AddPolicyHandler(GetRetryPolicy());
+
+        var antivirusOptions = services.BuildServiceProvider().GetRequiredService<IOptions<AntivirusApiOptions>>().Value;
+
+        services.AddHttpClient<IAntivirusClient, AntivirusClient>(client =>
+        {
+            client.BaseAddress = new Uri($"{antivirusOptions.BaseUrl}/v1/");
+            client.Timeout = TimeSpan.FromSeconds(antivirusOptions.Timeout);
+            client.DefaultRequestHeaders.Add("OCP-APIM-Subscription-Key", antivirusOptions.SubscriptionKey);
+        }).AddHttpMessageHandler<AntivirusApiAuthorizationHandler>();
 
         services.AddHttpClient<ISubsidiaryService, SubsidiaryService>((sp, c) =>
         {
@@ -153,4 +162,8 @@ public static class ConfigurationExtensions
 
         return handler;
     }
+
+    private static AsyncRetryPolicy<HttpResponseMessage> GetRetryPolicy() => HttpPolicyExtensions
+        .HandleTransientHttpError()
+        .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(3, retryAttempt)));
 }
