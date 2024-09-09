@@ -18,9 +18,9 @@ public class SubmissionStatusClient(
     private readonly HttpClient _httpClient = httpClient;
     private readonly ApiOptions _apiOptions = options.Value;
 
-    public async Task<HttpStatusCode> CreateEventAsync(AntivirusCheckEvent avEvent, Guid submissionId)
+    public async Task<HttpStatusCode> CreateEventAsync(AntivirusCheckEvent antivirusEventEvent, Guid submissionId)
     {
-        return await Post($"submissions/{submissionId}/events", avEvent);
+        return await Post($"submissions/{submissionId}/events", antivirusEventEvent);
     }
 
     public async Task<HttpStatusCode> CreateSubmissionAsync(CreateSubmission submission)

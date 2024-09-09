@@ -5,7 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 [ExcludeFromCodeCoverage]
 public class FileDetails
 {
-    public string Service => "epr";
+    public static string Service => "epr";
 
     public Guid Key { get; set; }
 

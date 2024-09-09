@@ -2,7 +2,7 @@
 
 public class AntivirusCheckEvent
 {
-    public EventType Type => EventType.AntivirusCheck;
+    public EventType Type { get; init; } = EventType.AntivirusCheck;
 
     public Guid FileId { get; set; }
 
