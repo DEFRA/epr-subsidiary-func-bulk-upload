@@ -53,23 +53,11 @@ public static class ConfigurationExtensions
 
     public static IServiceCollection AddHttpClients(this IServiceCollection services, IConfiguration configuration)
     {
-        // var sp = services.BuildServiceProvider();
-
-        /*
-        services.AddHttpClient<ISubmissionStatusApiClient, SubmissionStatusApiClient>((sp, c) =>
-        {
-            var submissionStatusApiOptions = sp.GetRequiredService<IOptions<SubmissionStatusApiOptions>>().Value;
-            c.BaseAddress = new Uri($"{submissionStatusApiOptions.BaseUrl}/v1/");
-            c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        });
-        */
-
         services.AddHttpClient<ISubmissionStatusClient, SubmissionStatusClient>((sp, client) =>
         {
             var options = sp.GetRequiredService<IOptions<SubmissionStatusApiOptions>>().Value;
             client.BaseAddress = new Uri($"{options.BaseUrl}/v1/");
-        })
-    .AddPolicyHandler(GetRetryPolicy());
+        }).AddPolicyHandler(GetRetryPolicy());
 
         var antivirusOptions = services.BuildServiceProvider().GetRequiredService<IOptions<AntivirusApiOptions>>().Value;
 
