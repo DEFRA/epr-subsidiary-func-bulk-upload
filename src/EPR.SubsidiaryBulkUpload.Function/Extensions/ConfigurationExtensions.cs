@@ -10,6 +10,7 @@ using EPR.SubsidiaryBulkUpload.Application.Configs;
 using EPR.SubsidiaryBulkUpload.Application.Handlers;
 using EPR.SubsidiaryBulkUpload.Application.Options;
 using EPR.SubsidiaryBulkUpload.Application.Services;
+using EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
@@ -132,6 +133,12 @@ public static class ConfigurationExtensions
         services.AddTransient<INotificationService, NotificationService>();
         services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConfig.ConnectionString));
         services.AddSingleton<TimeProvider>(TimeProvider.System);
+        services.AddTransient<ICompaniesHouseDownloadService, CompaniesHouseDownloadService>();
+        services.AddTransient<ICompaniesHouseFilePostService, CompaniesHouseFilePostService>();
+        services.AddTransient<IDownloadStatusStorage, DownloadStatusStorage>();
+        services.AddTransient<IFileDownloadService, FileDownloadService>();
+        services.AddTransient<IAntivirusClient, AntivirusClient>();
+        services.AddTransient<ISubmissionStatusClient, SubmissionStatusClient>();
 
         var isDevMode = configuration.GetValue<bool?>("ApiConfig:DeveloperMode");
         if (isDevMode is true)

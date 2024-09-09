@@ -2,7 +2,6 @@
 using EPR.SubsidiaryBulkUpload.Application.Options;
 using EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
 using EPR.SubsidiaryBulkUpload.Application.UnitTests.Support;
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services.CompaniesHouseDownload;
@@ -32,9 +31,7 @@ public class CompaniesHouseDownloadServiceTests
         var downloadPath = "https://download";
 
         fixture.Customize<ApiOptions>(ctx => ctx.With(a => a.CompaniesHouseDataDownloadUrl, downloadPath));
-        var config = fixture.Create<ApiOptions>();
-        var options = new Mock<IOptions<ApiOptions>>();
-        options.Setup(o => o.Value).Returns(config);
+        var options = fixture.CreateOptions<ApiOptions>();
 
         using var stream = new MemoryStream();
 
@@ -56,7 +53,7 @@ public class CompaniesHouseDownloadServiceTests
             fileDownloadService.Object,
             downloadStatusStorage.Object,
             Mock.Of<ICompaniesHouseFilePostService>(),
-            options.Object,
+            options,
             timeProvider);
 
         // Act
