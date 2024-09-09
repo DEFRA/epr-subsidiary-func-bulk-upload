@@ -36,7 +36,16 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
                 errors.Append("/nOrganisation_name is required.");
             }
 
-            if (string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.companies_house_number))))
+            if (!string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.franchisee_licensee_tenant))))
+            {
+                var franchiseeVal = theRow.GetField(nameof(CompaniesHouseCompany.franchisee_licensee_tenant)).ToLower();
+                if (franchiseeVal != "yes" && franchiseeVal != "y")
+                {
+                    errors.Append("/franchisee_licensee_tenant can only be blank or Yes or Y.");
+                }
+            }
+
+            if (string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.companies_house_number))) && string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.franchisee_licensee_tenant))))
             {
                 errors.Append("/nOrganisation_number is required.");
             }
@@ -44,11 +53,6 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
             if (string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.parent_child))))
             {
                 errors.Append("/nparent_or_child is required.");
-            }
-
-            if (string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.franchisee_licensee_tenant))))
-            {
-                // errors.Append("/nLicense is required.");
             }
 
             errorsInRow = errors.ToString();

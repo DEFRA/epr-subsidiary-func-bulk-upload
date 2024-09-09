@@ -149,7 +149,7 @@ public class SubsidiaryService : ISubsidiaryService
         return result;
     }
 
-    public async Task<List<SubsidiaryAddModel>> GetNoneProccessedCompanies(IEnumerable<CompaniesHouseCompany> subsidiaries)
+    public async Task<List<OrganisationResponseModel>> GetNoneProccessedCompanies(IEnumerable<CompaniesHouseCompany> subsidiaries)
     {
         string json = JsonConvert.SerializeObject(subsidiaries);
         StringContent httpContent = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
@@ -169,7 +169,7 @@ public class SubsidiaryService : ISubsidiaryService
 
         response.EnsureSuccessStatusCode();
 
-        var result = await response.Content.ReadFromJsonAsync<OrganisationResponseModel[]>();
+        var result = await response.Content.ReadFromJsonAsync<List<OrganisationResponseModel>>();
 
         return result;
     }

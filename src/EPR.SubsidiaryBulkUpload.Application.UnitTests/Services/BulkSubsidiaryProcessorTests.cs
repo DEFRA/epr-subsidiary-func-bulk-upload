@@ -1,6 +1,7 @@
 ﻿using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services;
+using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
@@ -26,6 +27,7 @@ public class BulkSubsidiaryProcessorTests
         var parentOrganisation = fixture.Create<OrganisationResponseModel>();
         var subsidiaries = fixture.CreateMany<CompaniesHouseCompany>(2).ToArray();
         var subsidiaryOrganisations = fixture.CreateMany<OrganisationResponseModel>(2).ToArray();
+        var notificationServiceMock = new Mock<INotificationService>();
 
         var subsidiaryService = new Mock<ISubsidiaryService>();
         subsidiaryService.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(subsidiaries[0].companies_house_number))
@@ -39,10 +41,17 @@ public class BulkSubsidiaryProcessorTests
 
         var companiesHouseDataProvider = new Mock<ICompaniesHouseDataProvider>();
 
-        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance);
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+
+        var organisationId = Guid.NewGuid();
+        var userRequestModel = new UserRequestModel
+        {
+            UserId = userId,
+            OrganisationId = organisationId
+        };
 
         // Act
-        await processor.Process(subsidiaries, parent, parentOrganisation, userId);
+        await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
 
         // Assert
         updates.Should().HaveCount(2);
@@ -81,10 +90,19 @@ public class BulkSubsidiaryProcessorTests
         var companiesHouseDataProvider = new Mock<ICompaniesHouseDataProvider>();
         companiesHouseDataProvider.Setup(chdp => chdp.SetCompaniesHouseData(It.IsAny<OrganisationModel>())).ReturnsAsync(true);
 
-        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance);
+        var notificationService = new Mock<INotificationService>();
+
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationService.Object);
+
+        var organisationId = Guid.NewGuid();
+        var userRequestModel = new UserRequestModel
+        {
+            UserId = userId,
+            OrganisationId = organisationId
+        };
 
         // Act
-        await processor.Process(subsidiaries, parent, parentOrganisation, userId);
+        await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
 
         // Assert
         inserts.Should().HaveCount(2);

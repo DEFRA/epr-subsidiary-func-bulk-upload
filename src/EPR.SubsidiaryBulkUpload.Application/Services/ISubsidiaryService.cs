@@ -14,5 +14,5 @@ public interface ISubsidiaryService
 
     Task<bool> GetSubsidiaryRelationshipAsync(int parentOrganisationId, int subsidiaryOrganisationId);
 
-    Task<List<SubsidiaryAddModel>> GetNoneProccessedCompanies(IEnumerable<CompaniesHouseCompany> subsidiaries);
+    Task<List<OrganisationResponseModel>> GetNoneProccessedCompanies(IEnumerable<CompaniesHouseCompany> subsidiaries);
 }

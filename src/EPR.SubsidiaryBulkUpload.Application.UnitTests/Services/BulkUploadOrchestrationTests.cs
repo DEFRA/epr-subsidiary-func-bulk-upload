@@ -37,6 +37,11 @@ public class BulkUploadOrchestrationTests
 
         var userId = Guid.NewGuid();
         var organisationId = Guid.NewGuid();
+        var userRequestModel = new UserRequestModel
+        {
+            UserId = userId,
+            OrganisationId = organisationId
+        };
 
         // Act
         await orchestrator.Orchestrate(companyData, new UserRequestModel { UserId = userId, OrganisationId = organisationId });
@@ -44,7 +49,7 @@ public class BulkUploadOrchestrationTests
         // Assert
         foreach (var set in parentAndSubsidiaries)
         {
-            bulkSubsidiaryProcessor.Verify(cp => cp.Process(set.Subsidiaries, set.Parent, orgModel, userId));
+            bulkSubsidiaryProcessor.Verify(cp => cp.Process(set.Subsidiaries, set.Parent, orgModel, userRequestModel));
         }
     }
 }

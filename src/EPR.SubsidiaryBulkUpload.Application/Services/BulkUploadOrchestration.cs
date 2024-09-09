@@ -2,7 +2,6 @@
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
-using Microsoft.WindowsAzure.Storage.Blob.Protocol;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services;
 public class BulkUploadOrchestration : IBulkUploadOrchestration
@@ -62,7 +61,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
                 subsidiaryGroupAndParentOrg.SubsidiaryGroup.Subsidiaries,
                 subsidiaryGroupAndParentOrg.SubsidiaryGroup.Parent,
                 subsidiaryGroupAndParentOrg.Org,
-                userRequestModel.UserId);
+                userRequestModel);
         }
 
         _notificationService.SetStatus($"{userRequestModel.UserId}{userRequestModel.OrganisationId}{SubsidiaryBulkUploadProgress}", "Finished");
