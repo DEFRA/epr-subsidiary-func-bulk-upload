@@ -86,8 +86,7 @@ public class BulkSubsidiaryProcessorTests
         subsidiaryService.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(It.IsAny<string>()))
             .ReturnsAsync((OrganisationResponseModel)null);
 
-        subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(It.IsAny<int>(), It.IsAny<int>())
-            .ReturnsAsync(It.IsAny<bool>());
+        subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(It.IsAny<int>(), It.IsAny<int>()));
 
         // subsidiaryService.Setup(ss => ss.GetLinkModelForCompaniesHouseData(It.IsAny<string>()))
         // .ReturnsAsync((OrganisationResponseModel)null);
