@@ -3,9 +3,7 @@
 namespace EPR.SubsidiaryBulkUpload.Application.Models;
 
 [ExcludeFromCodeCoverage]
-public class AccountingReferenceDate
+public class UploadFileErrorCollectionModel
 {
-    public string day { get; set; }
-
-    public string month { get; set; }
+    public List<UploadFileErrorModel> Errors { get; set; }
 }

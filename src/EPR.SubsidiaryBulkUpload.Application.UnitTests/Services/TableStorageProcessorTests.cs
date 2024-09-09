@@ -16,7 +16,7 @@ public class TableStorageProcessorTests
     private Fixture _fixture;
 
     [TestInitialize]
-    public void Setup()
+    public void TestInitialize()
     {
         _mockTableServiceClient = new Mock<TableServiceClient>();
         _mockTableClient = new Mock<TableClient>();
@@ -36,8 +36,8 @@ public class TableStorageProcessorTests
         // Arrange
         var records = new List<CompanyHouseTableEntity>
             {
-                new CompanyHouseTableEntity { CompanyNumber = "123" },
-                new CompanyHouseTableEntity { CompanyNumber = "456" }
+                new() { CompanyNumber = "123" },
+                new() { CompanyNumber = "456" }
             };
 
         // Mock CreateIfNotExistsAsync and other calls
@@ -72,7 +72,7 @@ public class TableStorageProcessorTests
     }
 
     [TestMethod]
-    public async Task WriteToAzureTableStorage_ShouldDEleteEntityLogErrorAndRethrowException_OnFailure()
+    public async Task WriteToAzureTableStorage_ShouldDeleteEntityLogErrorAndRethrowException_OnFailure()
     {
         // Arrange
         var records = new List<CompanyHouseTableEntity>
@@ -146,6 +146,33 @@ public class TableStorageProcessorTests
 
         // Assert
         actual.Should().BeEquivalentTo(companyData);
+    }
+
+    [TestMethod]
+    public async Task ShouldGetCompaniesFromStorage_When_GetEntity_ReturnsNull()
+    {
+        // Arrange
+        var companyData = _fixture.Create<CompanyHouseTableEntity>();
+        var partitionData = _fixture.Create<CompanyHouseTableEntity>();
+
+        var companyResponse = null as Response<CompanyHouseTableEntity>;
+        var partitionResponse = new Mock<Response<CompanyHouseTableEntity>>();
+
+        partitionResponse.Setup(x => x.Value).Returns(partitionData);
+
+        _mockTableClient.Setup(tc =>
+            tc.GetEntityAsync<CompanyHouseTableEntity>(TableStorageProcessor.LatestCHData, TableStorageProcessor.Latest, null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(partitionResponse.Object);
+
+        _mockTableClient.Setup(tc =>
+            tc.GetEntityAsync<CompanyHouseTableEntity>(partitionData.Data, companyData.CompanyNumber, null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(companyResponse);
+
+        // Act
+        var actual = await _processor.GetByCompanyNumber(companyData.CompanyNumber, "table");
+
+        // Assert
+        actual.Should().BeNull();
     }
 
     [TestMethod]

@@ -26,25 +26,6 @@ public class Address
         IsManualAddress = false;
     }
 
-    public Address(RegisteredOfficeAddress? office)
-      : this()
-    {
-        AddressSingleLine = office?.address_line_1;
-
-        // SubBuildingName = office?.subBuildingName;
-        // BuildingName = office?.buildingName;
-        // BuildingNumber = office?.BuildingNumber;
-        // Street = office?.Street;
-        // Town = office?.Town;
-        County = office?.locality;
-        Country = office?.country;
-        Postcode = office?.postal_code;
-        Locality = office?.locality;
-
-        // DependentLocality = office?.DependentLocality;
-        IsManualAddress = false;
-    }
-
     public string? AddressSingleLine { get; set; }
 
     public string? SubBuildingName { get; set; }

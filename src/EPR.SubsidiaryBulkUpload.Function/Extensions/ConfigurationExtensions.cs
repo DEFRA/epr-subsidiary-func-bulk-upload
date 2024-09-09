@@ -6,6 +6,7 @@ using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using EPR.SubsidiaryBulkUpload.Application.Configs;
+using EPR.SubsidiaryBulkUpload.Application.Handlers;
 using EPR.SubsidiaryBulkUpload.Application.Options;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
@@ -69,25 +70,13 @@ public static class ConfigurationExtensions
         }).AddHttpMessageHandler<TradeAntivirusApiAuthorizationHandler>();
         */
 
-        /*
-        services.AddTransient<AccountServiceAuthorisationHandler>();
-
-        services.AddHttpClient<ISubsidiaryService, SubsidiaryService>((sp, client) =>
-        {
-            var config = sp.GetRequiredService<IOptions<ApiConfig>>().Value;
-
-            client.BaseAddress = new Uri(config.SubsidiaryServiceBaseUrl);
-            client.Timeout = TimeSpan.FromSeconds(config.Timeout);
-        })
-        .AddHttpMessageHandler(AccountServiceAuthorisationHandler);
-        */
-
         services.AddHttpClient<ISubsidiaryService, SubsidiaryService>((sp, c) =>
         {
             var config = sp.GetRequiredService<IOptions<ApiOptions>>().Value;
             c.BaseAddress = new Uri(config.SubsidiaryServiceBaseUrl);
             c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        });
+        })
+        .AddHttpMessageHandler<AccountServiceAuthorisationHandler>();
 
         var isDevMode = configuration.GetValue<bool?>("ApiConfig:DeveloperMode");
         if (isDevMode is true)
@@ -121,11 +110,14 @@ public static class ConfigurationExtensions
     {
         var sp = services.BuildServiceProvider();
         var redisConfig = sp.GetRequiredService<IOptions<RedisConfig>>().Value;
+
+        services.AddTransient<AccountServiceAuthorisationHandler>();
         services.AddTransient<IBulkUploadOrchestration, BulkUploadOrchestration>();
         services.AddTransient<IBulkSubsidiaryProcessor, BulkSubsidiaryProcessor>();
         services.AddTransient<ICompaniesHouseDataProvider, CompaniesHouseDataProvider>();
         services.AddTransient<IRecordExtraction, RecordExtraction>();
         services.AddTransient<ICsvProcessor, CsvProcessor>();
+        services.AddTransient<IParserClass, ParserClass>();
         services.AddTransient<ITableStorageProcessor, TableStorageProcessor>();
         services.AddTransient<ISubsidiaryService, SubsidiaryService>();
         services.AddTransient<INotificationService, NotificationService>();

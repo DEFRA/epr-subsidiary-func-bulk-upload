@@ -8,6 +8,7 @@ parameters:
   default: 'DEV2'
   type: string
   values:
+    - DEV1
     - DEV2
 
     
