@@ -100,7 +100,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         var key = userRequestModel.GenerateKey(SubsidiaryBulkUploadMismatchedProgress);
         _notificationService.SetStatus(key, "Started reporting invalid subsidiaries.");
         _notificationService.SetErrorStatus(keyErrors, notificationErrorList);
-        _logger.LogInformation("Mismatched named subsidiries found. Subsidiary reported : {count}", subsidiaries.Count().ToString());
+        _logger.LogInformation("Mismatched named subsidiaries found. Subsidiary reported : {Count}", subsidiaries.Count().ToString());
     }
 
     private async Task ReportCompaniesNotfound(IEnumerable<CompaniesHouseCompany> subsidiaries)

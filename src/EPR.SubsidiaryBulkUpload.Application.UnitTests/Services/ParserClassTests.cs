@@ -28,8 +28,8 @@ public class ParserClassTests
 
         _listDataModel = new List<CompaniesHouseCompany>
             {
-                new() { organisation_id = "23123",  subsidiary_id = string.Empty, organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Parent", franchisee_licensee_tenant = "00000", Errors = string.Empty },
-                new() { organisation_id = "23123", subsidiary_id = "Sub1", organisation_name = "OrgB", companies_house_number = "654321", parent_child = "Child", franchisee_licensee_tenant = "License123", Errors = string.Empty }
+                new() { organisation_id = "23123",  subsidiary_id = string.Empty, organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Parent", franchisee_licensee_tenant = string.Empty, Errors = string.Empty },
+                new() { organisation_id = "23123", subsidiary_id = "Sub1", organisation_name = "OrgB", companies_house_number = "654321", parent_child = "Child", franchisee_licensee_tenant = string.Empty, Errors = string.Empty }
             };
 
         _sut = new ParserClass(_loggerMock.Object);
@@ -107,7 +107,7 @@ public class ParserClassTests
     public void ParseClass_ValidCsvFile_ReturnsCorrectData()
     {
         // Arrange
-        var rawSource = _listDataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}");
+        var rawSource = _listDataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
         string[] all = [_csvHeader, .. rawSource];
 
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
@@ -122,7 +122,7 @@ public class ParserClassTests
         returnValue.ResponseClass.isDone.Should().BeTrue();
 
         returnValue.CompaniesHouseCompany.Should().NotBeNull();
-        returnValue.CompaniesHouseCompany.Count.Should().Be(1);
+        returnValue.CompaniesHouseCompany.Count.Should().Be(2);
 
         var parsedResult = returnValue.CompaniesHouseCompany;
 
@@ -139,7 +139,7 @@ public class ParserClassTests
         parsedResult[1].organisation_name.Should().Be("OrgB");
         parsedResult[1].companies_house_number.Should().Be("654321");
         parsedResult[1].parent_child.Should().Be("Child");
-        parsedResult[1].franchisee_licensee_tenant.Should().Be("License123");
+        parsedResult[1].franchisee_licensee_tenant.Should().Be(string.Empty);
         parsedResult[1].UploadFileErrorModel.Should().BeNull();
     }
 
