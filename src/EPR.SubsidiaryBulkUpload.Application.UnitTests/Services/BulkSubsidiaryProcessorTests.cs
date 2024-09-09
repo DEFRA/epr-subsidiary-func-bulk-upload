@@ -41,6 +41,13 @@ public class BulkSubsidiaryProcessorTests
         subsidiaryService.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(subsidiaries[1].companies_house_number))
             .ReturnsAsync(subsidiaryOrganisations[1]);
 
+        subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(parentOrganisation.id, subsidiaryOrganisations[0].id));
+        subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(parentOrganisation.id, subsidiaryOrganisations[1].id));
+
+        var inserts = new List<LinkOrganisationModel>();
+        subsidiaryService.Setup(ss => ss.CreateAndAddSubsidiaryAsync(It.IsAny<LinkOrganisationModel>()))
+            .Callback<LinkOrganisationModel>(model => inserts.Add(model));
+
         var key = "testKey";
         var errorsModel = new List<UploadFileErrorModel> { new UploadFileErrorModel() { FileLineNumber = 1, Message = "testMessage", IsError = true } };
         notificationServiceMock.Setup(ss => ss.SetErrorStatus(key, errorsModel));
@@ -81,10 +88,13 @@ public class BulkSubsidiaryProcessorTests
         var parent = fixture.Create<CompaniesHouseCompany>();
         var parentOrganisation = fixture.Create<OrganisationResponseModel>();
         var subsidiaries = fixture.CreateMany<CompaniesHouseCompany>(2).ToArray();
-
+        var subsidiaryOrganisations = fixture.CreateMany<OrganisationResponseModel>(2).ToArray();
         var subsidiaryService = new Mock<ISubsidiaryService>();
-        subsidiaryService.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(It.IsAny<string>()))
-            .ReturnsAsync((OrganisationResponseModel)null);
+
+        subsidiaryService.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(subsidiaries[0].companies_house_number))
+            .ReturnsAsync(subsidiaryOrganisations[0]);
+        subsidiaryService.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(subsidiaries[1].companies_house_number))
+            .ReturnsAsync(subsidiaryOrganisations[1]);
 
         subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(It.IsAny<int>(), It.IsAny<int>()));
 
