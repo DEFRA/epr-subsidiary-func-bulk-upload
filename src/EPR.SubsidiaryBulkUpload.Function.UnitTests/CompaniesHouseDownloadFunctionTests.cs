@@ -1,4 +1,5 @@
-﻿using Microsoft.Azure.Functions.Worker;
+﻿using EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -9,12 +10,35 @@ public class CompaniesHouseDownloadFunctionTests
 {
     private Mock<ILogger<CompaniesHouseDownloadFunction>> _loggerMock;
     private CompaniesHouseDownloadFunction _systemUnderTest;
+    private Mock<ICompaniesHouseDownloadService> _downloadService;
 
     [TestInitialize]
     public void TestInitialize()
     {
         _loggerMock = new Mock<ILogger<CompaniesHouseDownloadFunction>>();
-        _systemUnderTest = new CompaniesHouseDownloadFunction(_loggerMock.Object);
+        _downloadService = new Mock<ICompaniesHouseDownloadService>();
+        _systemUnderTest = new CompaniesHouseDownloadFunction(_downloadService.Object, _loggerMock.Object);
+    }
+
+    [TestMethod]
+    public void ShouldStartTheDownload()
+    {
+        // Arrange
+        var nextScheduledTime = DateTime.UtcNow.AddHours(1);
+        var timerInfo = new TimerInfo()
+        {
+            IsPastDue = false,
+            ScheduleStatus = new ScheduleStatus
+            {
+                Next = nextScheduledTime
+            }
+        };
+
+        // Act
+        _systemUnderTest.Run(timerInfo);
+
+        // Assert
+        _downloadService.Verify(ds => ds.StartDownload());
     }
 
     [TestMethod]
