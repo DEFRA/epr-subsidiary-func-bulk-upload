@@ -74,4 +74,23 @@ public class NotificationStatusFunctionTests
 
         _notificationServiceMock.Verify(x => x.GetStatus(key), Times.Once);
     }
+
+    [TestMethod]
+    public async Task NotificationStatusFunction_Returns_NotFound_WhenExceptionIsThrown()
+    {
+        // Arrange
+        var exception = new Exception("Test Exception");
+        _notificationServiceMock.Setup(x => x.GetStatus(It.IsAny<string>()))
+            .ThrowsAsync(exception);
+
+        // Act
+        var result = await _systemUnderTest.Run(Mock.Of<HttpRequest>(), _userId, _organisationId);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().BeOfType<StatusCodeResult>();
+        ((StatusCodeResult)result).StatusCode.Should().Be(500);
+
+        _notificationServiceMock.Verify(x => x.GetStatus(It.IsAny<string>()), Times.Once);
+    }
 }

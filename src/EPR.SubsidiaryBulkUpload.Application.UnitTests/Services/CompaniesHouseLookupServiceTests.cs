@@ -31,7 +31,6 @@ public class CompaniesHouseLookupServiceTests
     public async Task Should_Return_Correct_CompaniesHouseLookupResponse()
     {
         // Arrange
-        // var apiResponse = _fixture.Build<CompaniesHouseResponseFromCompaniesHouse>().With(x => x.date_of_creation, () => DateTime.Today.ToString("yyyy-MM-dd")).Create();
         var apiResponse = _fixture.Create<CompaniesHouseResponse>();
 
         _httpMessageHandlerMock.Protected()
@@ -68,6 +67,69 @@ public class CompaniesHouseLookupServiceTests
         result.BusinessAddress.Postcode.Should().Be(apiResponse.Organisation.RegisteredOffice.Postcode);
         result.BusinessAddress.Street.Should().Be(apiResponse.Organisation.RegisteredOffice.Street);
         result.BusinessAddress.Locality.Should().Be(apiResponse.Organisation.RegisteredOffice.Locality);
+    }
+
+    [TestMethod]
+    public async Task Should_Return_Null_When_ApiReturns_NoContent()
+    {
+        // Arrange
+        _httpMessageHandlerMock.Protected()
+             .Setup<Task<HttpResponseMessage>>(
+                 "SendAsync",
+                 ItExpr.Is<HttpRequestMessage>(x => x.RequestUri != null && x.RequestUri.ToString() == ExpectedUrl),
+                 ItExpr.IsAny<CancellationToken>())
+             .ReturnsAsync(new HttpResponseMessage
+             {
+                 StatusCode = HttpStatusCode.NoContent
+             }).Verifiable();
+
+        var httpClient = new HttpClient(_httpMessageHandlerMock.Object);
+        httpClient.BaseAddress = new Uri(BaseAddress);
+
+        var sut = new CompaniesHouseLookupService(httpClient, _loggerMock.Object);
+
+        // Act
+        var result = await sut.GetCompaniesHouseResponseAsync(CompaniesHouseNumber);
+
+        // Assert
+        _httpMessageHandlerMock.Protected().Verify("SendAsync", Times.Once(), ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get && req.RequestUri != null && req.RequestUri.ToString() == ExpectedUrl), ItExpr.IsAny<CancellationToken>());
+
+        result.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task Should_Return_Null_When_Response_StatusCode_NotFound()
+    {
+        // Arrange
+        var errorResponse = new CompaniesHouseErrorResponse
+        {
+            InnerException = new InnerExceptionResponse
+            {
+                Code = ((int)HttpStatusCode.NotFound).ToString()
+            }
+        };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(x => x.RequestUri != null && x.RequestUri.ToString() == ExpectedUrl),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.BadRequest,
+                Content = new StringContent(JsonSerializer.Serialize(errorResponse))
+            }).Verifiable();
+
+        var httpClient = new HttpClient(_httpMessageHandlerMock.Object);
+        httpClient.BaseAddress = new Uri(BaseAddress);
+
+        var sut = new CompaniesHouseLookupService(httpClient, _loggerMock.Object);
+
+        // Act
+        var result = await sut.GetCompaniesHouseResponseAsync(CompaniesHouseNumber);
+
+        // Assert
+        result.Should().BeNull();
     }
 
     [TestMethod]
