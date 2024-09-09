@@ -24,22 +24,21 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
 
     public async Task NotifyErrors(IEnumerable<CompaniesHouseCompany> data, UserRequestModel userRequestModel)
     {
-        var key = userRequestModel.GenerateKey(SubsidiaryBulkUploadProgress);
-        _notificationService.SetStatus(key, "Started Data Validation");
-        var notificationErrorList = new List<UploadFileErrorModel>();
-        var dataWithErrors = data.Where(e => e.UploadFileErrorModel != null).ToList();
-        foreach (var company in dataWithErrors)
+        var notificationErrorList = data
+            .Where(e => e.UploadFileErrorModel != null)
+            .Select(e => e.UploadFileErrorModel)
+            .ToList();
+
+        if(notificationErrorList.Count == 0)
         {
-            if (company.Errors.Length > 0)
-            {
-                notificationErrorList.Add(company.UploadFileErrorModel);
-            }
+            return;
         }
 
+        var key = userRequestModel.GenerateKey(SubsidiaryBulkUploadProgress);
         var keyErrors = userRequestModel.GenerateKey(SubsidiaryBulkUploadErrors);
+
         _notificationService.SetStatus(key, "Error found in validation. Logging it in Redis storage");
         _notificationService.SetErrorStatus(keyErrors, notificationErrorList);
-        _notificationService.SetStatus(key, "Finished Data Validation");
     }
 
     public async Task Orchestrate(IEnumerable<CompaniesHouseCompany> data, UserRequestModel userRequestModel)
@@ -48,7 +47,9 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
         _notificationService.SetStatus(key, "Uploading");
 
         // this holds all the parents and their children records from csv
-        var subsidiaryGroups = recordExtraction.ExtractParentsAndSubsidiaries(data).ToAsyncEnumerable();
+        var subsidiaryGroups = recordExtraction
+            .ExtractParentsAndSubsidiaries(data.Where(r => r.UploadFileErrorModel is null))
+            .ToAsyncEnumerable();
 
         // this will fetch data from the org database for all the parents and filter to keep the valid ones (org exists in RPD)
         var subsidiaryGroupsAndParentOrg = subsidiaryGroups.SelectAwait(
@@ -64,6 +65,6 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
                 userRequestModel);
         }
 
-        _notificationService.SetStatus($"{userRequestModel.UserId}{userRequestModel.OrganisationId}{SubsidiaryBulkUploadProgress}", "Finished");
+        _notificationService.SetStatus(key, "Finished");
     }
 }

@@ -93,7 +93,7 @@ public class CompaniesHouseLookupDirectServiceTests
     public async Task Should_Return_Correct_CompaniesHouseLookupResponse()
     {
         // Arrange
-        var expectedCompany = new DTOs.Company
+        var expectedCompany = new Application.DTOs.Company
         {
             Name = "TEST LTD",
             CompaniesHouseNumber = "0123456X",
@@ -140,6 +140,33 @@ public class CompaniesHouseLookupDirectServiceTests
         result.BusinessAddress.Postcode.Should().Be(expectedCompany.BusinessAddress.Postcode);
         result.BusinessAddress.Street.Should().Be(expectedCompany.BusinessAddress.Street);
         result.BusinessAddress.Locality.Should().Be(expectedCompany.BusinessAddress.Locality);
+    }
+
+    [TestMethod]
+    public async Task Should_Return_Null_When_ApiReturns_NoContent()
+    {
+        // Arrange
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(x => x.RequestUri != null && x.RequestUri.ToString() == ExpectedUrl),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.NoContent
+            }).Verifiable();
+
+        var httpClient = new HttpClient(_httpMessageHandlerMock.Object);
+        httpClient.BaseAddress = new Uri(BaseAddress);
+
+        var sut = new CompaniesHouseLookupDirectService(httpClient);
+
+        // Act
+        var result = await sut.GetCompaniesHouseResponseAsync(CompaniesHouseNumber);
+
+        // Assert
+        _httpMessageHandlerMock.Protected().Verify("SendAsync", Times.Once(), ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get && req.RequestUri != null && req.RequestUri.ToString() == ExpectedUrl), ItExpr.IsAny<CancellationToken>());
+        result.Should().BeNull();
     }
 
     [TestMethod]
