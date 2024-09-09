@@ -71,7 +71,11 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             await organisationService.CreateAndAddSubsidiaryAsync(subsidiaryandLink.LinkModel);
         }
 
-        // check and report the remaining ones and raise error for none processed subsidiaries.
+        var subsidiariesAndOrgExistinTheDatabaseAfterallCalls = subsidiaries
+        .ToAsyncEnumerable()
+        .SelectAwait(async subsidiary => (Subsidiary: subsidiary, SubsidiaryOrg: await organisationService.GetCompanyByCompaniesHouseNumber(subsidiary.companies_house_number)));
+
+        // check and report the remaining ones and raise error for all none processed subsidiaries.
         await ReportCompaniesNotfound(subsidiaries);
     }
 
@@ -101,16 +105,6 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
     private async Task ReportCompaniesNotfound(IEnumerable<CompaniesHouseCompany> subsidiaries)
     {
-        /* var subsidiaryModel = new SubsidiaryAddModel
-         {
-             UserId = userId,
-             ParentOrganisationId = parent.referenceNumber,
-             ChildOrganisationId = subsidiary.referenceNumber,
-             ParentOrganisationExternalId = parent.ExternalId,
-             ChildOrganisationExternalId = subsidiary.ExternalId
-         };
-         */
-
         /*Scenario 1:
                 The subsidiary is not found in RPD and not in Local storage and also not found on companies house*/
         var noneProcessedCompanies = await organisationService.GetNoneProccessedCompanies(subsidiaries);

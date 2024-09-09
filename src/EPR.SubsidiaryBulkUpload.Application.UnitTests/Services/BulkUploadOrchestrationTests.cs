@@ -44,7 +44,7 @@ public class BulkUploadOrchestrationTests
         };
 
         // Act
-        await orchestrator.Orchestrate(companyData, new UserRequestModel { UserId = userId, OrganisationId = organisationId });
+        await orchestrator.Orchestrate(companyData, userRequestModel);
 
         // Assert
         foreach (var set in parentAndSubsidiaries)
