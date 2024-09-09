@@ -21,9 +21,10 @@ public static class ConfigurationExtensions
     public static IServiceCollection ConfigureOptions(this IServiceCollection services, IConfiguration configuration)
     {
         /*
-        services.Configure<AntivirusApiOptions>(configuration.GetSection(AntivirusApiOptions.Section));
         services.Configure<SubmissionStatusApiOptions>(configuration.GetSection(SubmissionStatusApiOptions.Section));
         */
+        services.Configure<AntivirusApiOptions>(configuration.GetSection(AntivirusApiOptions.Section));
+        services.Configure<BlobStorageOptions>(configuration.GetSection(BlobStorageOptions.SectionName));
         services.Configure<ApiOptions>(configuration.GetSection(ApiOptions.SectionName));
         services.Configure<TableStorageOptions>(configuration.GetSection(TableStorageOptions.SectionName));
         services.Configure<RedisConfig>(configuration.GetSection(RedisConfig.SectionName));

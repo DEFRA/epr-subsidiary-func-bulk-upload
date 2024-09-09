@@ -1,10 +1,12 @@
-﻿using EPR.SubsidiaryBulkUpload.Application.Options;
+﻿using EPR.SubsidiaryBulkUpload.Application.Extensions;
+using EPR.SubsidiaryBulkUpload.Application.Options;
 using Microsoft.Extensions.Options;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
 
 public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadService,
     IDownloadStatusStorage downloadStatusStorage,
+    ICompaniesHouseFilePostService companiesHouseFilePostService,
     IOptions<ApiOptions> apiOptions,
     TimeProvider timeProvider) : ICompaniesHouseDownloadService
 {
@@ -12,6 +14,7 @@ public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadServ
 
     private readonly IFileDownloadService fileDownloadService = fileDownloadService;
     private readonly IDownloadStatusStorage downloadStatusStorage = downloadStatusStorage;
+    private readonly ICompaniesHouseFilePostService companiesHouseFilePostService = companiesHouseFilePostService;
     private readonly TimeProvider timeProvider = timeProvider;
     private readonly ApiOptions apiOptions = apiOptions.Value;
 
@@ -47,14 +50,11 @@ public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadServ
 
         if(download.ResponseCode == Models.FileDownloadResponseCode.Succeeded)
         {
-            succeeded = await PublishToAntiVirus(download.Stream, fileName);
+            var status = await companiesHouseFilePostService.PostFileAsync(download.Stream, fileName);
+
+            succeeded = status.IsSuccessStatusCode();
         }
 
         return succeeded;
-    }
-
-    private async Task<bool> PublishToAntiVirus(Stream fileStream, string fileName)
-    {
-        return false;
     }
 }

@@ -79,6 +79,6 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         };
         await organisationService.AddSubsidiaryRelationshipAsync(subsidiaryModel);
 
-        _logger.LogInformation("Subsidiary Company {0} {1} linked to {2} in the database.", subsidiary.referenceNumber, subsidiary.name, parent.referenceNumber);
+        _logger.LogInformation("Subsidiary Company {Subsidiary} {Name} linked to {Parent} in the database.", subsidiary.referenceNumber, subsidiary.name, parent.referenceNumber);
     }
 }

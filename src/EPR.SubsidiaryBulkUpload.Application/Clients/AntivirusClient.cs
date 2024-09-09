@@ -1,24 +1,20 @@
-﻿using EPR.SubsidiaryBulkUpload.Application.Models.Antivirus;
+﻿using System.Net;
+using EPR.SubsidiaryBulkUpload.Application.Models.Antivirus;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Clients;
 
 // Note, this code was cloned from WebApiGateway.
-public class AntivirusClient : IAntivirusClient
+public class AntivirusClient(HttpClient httpClient, ILogger<AntivirusClient> logger) : IAntivirusClient
 {
-    private readonly HttpClient _httpClient;
-    private readonly ILogger<AntivirusClient> _logger;
+    private readonly HttpClient _httpClient = httpClient;
+    private readonly ILogger<AntivirusClient> _logger = logger;
 
-    public AntivirusClient(HttpClient httpClient, ILogger<AntivirusClient> logger)
+    public async Task<HttpStatusCode> SendFileAsync(FileDetails fileDetails, string fileName, Stream fileStream)
     {
-        _httpClient = httpClient;
-        _logger = logger;
-    }
+        HttpStatusCode statusCode;
 
-    public async Task<bool> SendFileAsync(FileDetails fileDetails, string fileName, Stream fileStream)
-    {
-        var result = false;
         try
         {
             var formContent = new MultipartFormDataContent
@@ -32,15 +28,24 @@ public class AntivirusClient : IAntivirusClient
 
             var response = await _httpClient.PutAsync($"files/stream/{fileDetails.Collection}/{fileDetails.Key}", formContent);
 
-            response.EnsureSuccessStatusCode();
-
-            result = true;
+            statusCode = response.StatusCode;
+        }
+        catch (OperationCanceledException exception)
+        {
+            _logger.LogError(exception, "Timeout whilst sending file {Filename} to antivirus api", fileName);
+            statusCode = HttpStatusCode.RequestTimeout;
         }
         catch (HttpRequestException exception)
         {
-            _logger.LogError(exception, "Error sending file to antivirus api");
+            _logger.LogError(exception, "Error sending file {FileName} to antivirus api", fileName);
+            statusCode = exception.StatusCode ?? HttpStatusCode.InternalServerError;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "Unhandeled error sending file {Filename} to antivirus api", fileName);
+            statusCode = HttpStatusCode.InternalServerError;
         }
 
-        return result;
+        return statusCode;
     }
 }

@@ -2,10 +2,10 @@
 using AutoFixture.AutoMoq;
 using EPR.SubsidiaryBulkUpload.Application.Clients;
 using EPR.SubsidiaryBulkUpload.Application.Models.Antivirus;
-using EPR.SubsidiaryBulkUpload.Application.UnitTests.Support.Extensions;
+using EPR.SubsidiaryBulkUpload.Application.UnitTests.Support;
 using Microsoft.Extensions.Logging;
 
-namespace WebApiGateway.UnitTests.Api.Clients;
+namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Clients;
 
 // Note, these tests were cloned from WebApiGateway.
 [TestClass]
@@ -53,7 +53,7 @@ public class AntivirusClientTests
     }
 
     [TestMethod]
-    public async Task SendFileAsync_RepliesFalse_WhenHttpClientResponseIsInternalServerError()
+    public async Task SendFileAsync_RepliesWithError_WhenHttpClientResponseIsInternalServerError()
     {
         // Arrange
         var fileDetails = _fixture.Create<FileDetails>();
@@ -65,7 +65,59 @@ public class AntivirusClientTests
         var result = await _systemUnderTest.SendFileAsync(fileDetails, FileName, fileStream);
 
         // Assert
-        _loggerMock.VerifyLog(x => x.LogError(It.IsAny<HttpRequestException>(), "Error sending file to antivirus api"));
-        result.Should().BeFalse();
+        result.Should().Be(HttpStatusCode.InternalServerError);
+    }
+
+    [TestMethod]
+    public async Task ShouldReplyTimeoutWhenTimeoutException()
+    {
+        // Arrange
+        var fileDetails = _fixture.Create<FileDetails>();
+        var fileStream = new MemoryStream();
+
+        _httpMessageHandlerMock.RespondWithException(new OperationCanceledException());
+
+        // Act
+        var result = await _systemUnderTest.SendFileAsync(fileDetails, FileName, fileStream);
+
+        // Assert
+        result.Should().Be(HttpStatusCode.RequestTimeout);
+    }
+
+    [TestMethod]
+    [DataRow(HttpStatusCode.InternalServerError)]
+    [DataRow(HttpStatusCode.InsufficientStorage)]
+    [DataRow(HttpStatusCode.RequestTimeout)]
+    public async Task ShouldReplyHttpRequestExceptionStatus(HttpStatusCode httpStatusCode)
+    {
+        // Arrange
+        var fileDetails = _fixture.Create<FileDetails>();
+        var fileStream = new MemoryStream();
+
+        var exception = new HttpRequestException("message", null, httpStatusCode);
+
+        _httpMessageHandlerMock.RespondWithException(exception);
+
+        // Act
+        var result = await _systemUnderTest.SendFileAsync(fileDetails, FileName, fileStream);
+
+        // Assert
+        result.Should().Be(httpStatusCode);
+    }
+
+    [TestMethod]
+    public async Task ShouldReplyInternalServerErrorOnUnhandeledException()
+    {
+        // Arrange
+        var fileDetails = _fixture.Create<FileDetails>();
+        var fileStream = new MemoryStream();
+
+        _httpMessageHandlerMock.RespondWithException(new Exception());
+
+        // Act
+        var result = await _systemUnderTest.SendFileAsync(fileDetails, FileName, fileStream);
+
+        // Assert
+        result.Should().Be(HttpStatusCode.InternalServerError);
     }
 }

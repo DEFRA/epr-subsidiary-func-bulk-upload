@@ -2,7 +2,7 @@
 using System.Net.Http.Headers;
 using Moq.Protected;
 
-namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Support.Extensions;
+namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Support;
 
 // Note, these extensiona were cloned from WebApiGateway.
 public static class HttpMessageHandlerMockExtensions
@@ -22,6 +22,16 @@ public static class HttpMessageHandlerMockExtensions
                 StatusCode = statusCode,
                 Content = content
             });
+    }
+
+    public static void RespondWithException(this Mock<HttpMessageHandler> messageHandlerMock, Exception exception)
+    {
+        messageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(exception);
     }
 
     public static void VerifyRequest(

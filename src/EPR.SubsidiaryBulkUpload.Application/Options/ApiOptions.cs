@@ -22,4 +22,8 @@ public class ApiOptions
     public string SubsidiaryServiceBaseUrl { get; set; } = null!;
 
     public string CompaniesHouseDataDownloadUrl { get; set; } = null!;
+
+    public string SystemUserId { get; set; } = null!;
+
+    public string SystemOrganisationId { get; set; } = null!;
 }
