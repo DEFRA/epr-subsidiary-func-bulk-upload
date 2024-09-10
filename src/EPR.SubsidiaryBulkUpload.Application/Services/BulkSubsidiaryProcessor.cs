@@ -58,7 +58,8 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             .Where(sub => sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg.companiesHouseNumber && sub.Subsidiary.organisation_name != sub.SubsidiaryOrg.name);
 
         // check and report subsidiaries with mismatched names.
-        await ReportCompanies((IEnumerable<CompaniesHouseCompany>)subsidiariesAndOrgWith_InValidName, userRequestModel);
+        var subWithInvalidName = await subsidiariesAndOrgWith_InValidName.Select(s => s.Subsidiary).ToListAsync();
+        await ReportCompanies(subWithInvalidName, userRequestModel);
 
         // Subsidiaries which do not exist in the RPD
         // TO DO use these new subsidiaries.
@@ -74,7 +75,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         }
 
         // check and report the remaining ones and raise error for all none processed subsidiaries.
-        var allAdded = await newSubsidiariesToAdd.Select(sta => sta.LinkModel).Where(sta => sta.StatusCode == System.Net.HttpStatusCode.OK)
+        var allAdded = await newSubsidiariesToAdd.Where(sta => sta.LinkModel.StatusCode == System.Net.HttpStatusCode.OK).Select(sta => sta.Subsidiary)
             .Concat(subsidiariesAndOrgWithValidName.Select(swoan => swoan.Subsidiary))
             .ToListAsync();
 

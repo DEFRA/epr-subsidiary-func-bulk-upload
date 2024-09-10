@@ -1,4 +1,5 @@
-﻿using EPR.SubsidiaryBulkUpload.Application.DTOs;
+﻿using System.Net;
+using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
@@ -41,11 +42,14 @@ public class BulkSubsidiaryProcessorTests
         subsidiaryService.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(subsidiaries[1].companies_house_number))
             .ReturnsAsync(subsidiaryOrganisations[1]);
 
-        subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(parentOrganisation.id, subsidiaryOrganisations[0].id));
-        subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(parentOrganisation.id, subsidiaryOrganisations[1].id));
+        subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(parentOrganisation.id, subsidiaryOrganisations[0].id))
+            .ReturnsAsync(true);
+        subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(parentOrganisation.id, subsidiaryOrganisations[1].id))
+            .ReturnsAsync(true);
 
         var inserts = new List<LinkOrganisationModel>();
         subsidiaryService.Setup(ss => ss.CreateAndAddSubsidiaryAsync(It.IsAny<LinkOrganisationModel>()))
+            .ReturnsAsync(HttpStatusCode.OK)
             .Callback<LinkOrganisationModel>(model => inserts.Add(model));
 
         var key = "testKey";
@@ -96,12 +100,12 @@ public class BulkSubsidiaryProcessorTests
         subsidiaryService.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(subsidiaries[1].companies_house_number))
             .ReturnsAsync(subsidiaryOrganisations[1]);
 
-        subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(It.IsAny<int>(), It.IsAny<int>()));
+        subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(It.IsAny<int>(), It.IsAny<int>()))
+            .ReturnsAsync(false);
 
-        // subsidiaryService.Setup(ss => ss.GetLinkModelForCompaniesHouseData(It.IsAny<string>()))
-        // .ReturnsAsync((OrganisationResponseModel)null);
         var inserts = new List<LinkOrganisationModel>();
         subsidiaryService.Setup(ss => ss.CreateAndAddSubsidiaryAsync(It.IsAny<LinkOrganisationModel>()))
+            .ReturnsAsync(HttpStatusCode.OK)
             .Callback<LinkOrganisationModel>(model => inserts.Add(model));
 
         var companiesHouseDataProvider = new Mock<ICompaniesHouseDataProvider>();

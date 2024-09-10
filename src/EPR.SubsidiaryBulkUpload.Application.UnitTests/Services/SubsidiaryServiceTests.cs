@@ -290,7 +290,7 @@ public class SubsidiaryServiceTests
     {
         // Arrange
         var linkOrganisationModel = _fixture.Create<LinkOrganisationModel>();
-        var apiResponse = "123456";
+        HttpStatusCode apiResponse = HttpStatusCode.OK;
 
         var expectedUri = $"{BaseAddress}/{OrganisationCreateAddSubsidiaryUri}";
 
@@ -301,8 +301,7 @@ public class SubsidiaryServiceTests
                 ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(new HttpResponseMessage
             {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(apiResponse, Encoding.UTF8)
+                StatusCode = HttpStatusCode.OK
             }).Verifiable();
 
         // Act

@@ -113,15 +113,9 @@ public class SubsidiaryService : ISubsidiaryService
             if (problemDetails != null)
             {
                 _logger.LogError("Failed to create and add subsidiary for Parent: {Parent} Subsidiary: {Subsidiary}", linkOrganisationModel.ParentOrganisationId, linkOrganisationModel.Subsidiary.Name);
-
-                throw new ProblemResponseException(problemDetails, response.StatusCode);
             }
         }
 
-        response.EnsureSuccessStatusCode();
-
-        // var result = await response.Content.ReadAsStringAsync();
-        // var result = await response.StatusCode;
         return response.StatusCode;
     }
 
