@@ -29,7 +29,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         // after checking the name only that collection will pass on for relationship check
 
-        // All subsidiaries with an org id, where no relationship already exists and Company name in RPD mathes with company name in file
+        // All subsidiaries with an org id, where no relationship already exists and Company name in RPD matches with company name in file
         var knownSubsidiariesToAdd = subsidiariesAndOrgWithValidName.Where(co => co.SubsidiaryOrg != null)
             .SelectAwait(async co =>
                 (Subsidiary: co.Subsidiary,
@@ -71,12 +71,18 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             await organisationService.CreateAndAddSubsidiaryAsync(subsidiaryandLink.LinkModel);
         }
 
-        var subsidiariesAndOrgExistinTheDatabaseAfterallCalls = subsidiaries
+        // check and report the remaining ones and raise error for all none processed subsidiaries.
+        var processedSubs = subsidiaries
         .ToAsyncEnumerable()
         .SelectAwait(async subsidiary => (Subsidiary: subsidiary, SubsidiaryOrg: await organisationService.GetCompanyByCompaniesHouseNumber(subsidiary.companies_house_number)));
 
-        // check and report the remaining ones and raise error for all none processed subsidiaries.
-        await ReportCompaniesNotfound(subsidiaries);
+        var sd = from s in subsidiaries where s.companies_house_number == string.Empty select s;
+
+        var subsidiariesDifference = subsidiaries.Where(sb => sb.companies_house_number != null)
+            .Except(processedSubs.Select(p => p.SubsidiaryOrg.companiesHouseNumber))
+            .ToList();
+
+        await ReportCompaniesNotfound(subsidiariesDifference, userRequestModel);
     }
 
     private async Task ReportCompanies(IEnumerable<CompaniesHouseCompany> subsidiaries, UserRequestModel userRequestModel)
@@ -103,7 +109,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         _logger.LogInformation("Mismatched named subsidiaries found. Subsidiary reported : {Count}", subsidiaries.Count().ToString());
     }
 
-    private async Task ReportCompaniesNotfound(IEnumerable<CompaniesHouseCompany> subsidiaries)
+    private async Task ReportCompaniesNotfound(IEnumerable<CompaniesHouseCompany> subsidiaries, UserRequestModel userRequestModel)
     {
         /*Scenario 1:
                 The subsidiary is not found in RPD and not in Local storage and also not found on companies house*/
@@ -111,7 +117,22 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         var notificationErrorList = new List<UploadFileErrorModel>();
 
-        _logger.LogInformation("The subsidiaries not found in RPD and not in Local storage and also not found on companies house. Subsidiaries Company {count}.", subsidiaries.Count().ToString());
+        foreach (var company in subsidiaries)
+        {
+            var newError = new UploadFileErrorModel()
+            {
+                FileContent = company.organisation_name + "-" + company.companies_house_number,
+                Message = "The subsidiary is not found in RPD and not in Local storage and also not found on companies house."
+            };
+
+            notificationErrorList.Add(newError);
+        }
+
+        var keyErrors = userRequestModel.GenerateKey(SubsidiaryBulkUploadMismatchedErrors);
+        var key = userRequestModel.GenerateKey(SubsidiaryBulkUploadMismatchedProgress);
+        _notificationService.SetStatus(key, "Started reporting invalid subsidiaries.");
+        _notificationService.SetErrorStatus(keyErrors, notificationErrorList);
+        _logger.LogInformation("Subsidiaries not found in RPD, Local storage and companies house. Subsidiary reported : {Count}", subsidiaries.Count().ToString());
     }
 
     private async Task<LinkOrganisationModel?> GetLinkModelForCompaniesHouseData(CompaniesHouseCompany subsidiary, OrganisationResponseModel parentOrg, Guid userId)
