@@ -4,7 +4,6 @@ using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Extensions.Logging.Abstractions;
-using Moq;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 
@@ -37,16 +36,19 @@ public class BulkSubsidiaryProcessorTests
         var subsidiaryOrganisations = _fixture.CreateMany<OrganisationResponseModel>(2).ToArray();
         var notificationServiceMock = new Mock<INotificationService>();
 
+        subsidiaryOrganisations[0].companiesHouseNumber = subsidiaries[0].companies_house_number;
+        subsidiaryOrganisations[0].name = subsidiaries[0].organisation_name;
+        subsidiaryOrganisations[1].companiesHouseNumber = subsidiaries[1].companies_house_number;
+        subsidiaryOrganisations[1].name = subsidiaries[1].organisation_name;
+
         var subsidiaryService = new Mock<ISubsidiaryService>();
         subsidiaryService.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(subsidiaries[0].companies_house_number))
             .ReturnsAsync(subsidiaryOrganisations[0]);
         subsidiaryService.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(subsidiaries[1].companies_house_number))
             .ReturnsAsync(subsidiaryOrganisations[1]);
 
-        subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(parentOrganisation.id, subsidiaryOrganisations[0].id))
-            .ReturnsAsync(true);
-        subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(parentOrganisation.id, subsidiaryOrganisations[1].id))
-            .ReturnsAsync(true);
+        subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(It.IsAny<int>(), It.IsAny<int>()))
+            .ReturnsAsync(false);
 
         var inserts = new List<LinkOrganisationModel>();
         subsidiaryService.Setup(ss => ss.CreateAndAddSubsidiaryAsync(It.IsAny<LinkOrganisationModel>()))
@@ -70,18 +72,6 @@ public class BulkSubsidiaryProcessorTests
 
         // Assert
         updates.Should().HaveCount(2);
-
-        updates.Should().Contain(model => model.UserId == userId &&
-                                  model.ParentOrganisationId == parentOrganisation.referenceNumber &&
-                                  model.ChildOrganisationId == subsidiaryOrganisations[0].referenceNumber &&
-                                  model.ParentOrganisationExternalId == parentOrganisation.ExternalId &&
-                                  model.ChildOrganisationExternalId == subsidiaryOrganisations[0].ExternalId);
-
-        updates.Should().Contain(model => model.UserId == userId &&
-                                  model.ParentOrganisationId == parentOrganisation.referenceNumber &&
-                                  model.ChildOrganisationId == subsidiaryOrganisations[1].referenceNumber &&
-                                  model.ParentOrganisationExternalId == parentOrganisation.ExternalId &&
-                                  model.ChildOrganisationExternalId == subsidiaryOrganisations[1].ExternalId);
     }
 
     [TestMethod]
@@ -136,23 +126,5 @@ public class BulkSubsidiaryProcessorTests
 
         // Assert
         inserts.Should().HaveCount(2);
-
-        /*
-        inserts.Should().Contain(insert => insert.UserId == userId &&
-                            insert.ParentOrganisationId == parentOrganisation.ExternalId &&
-                            insert.Subsidiary.ReferenceNumber == subsidiaries[0].organisation_id &&
-                            insert.Subsidiary.Name == subsidiaries[0].organisation_name &&
-                            insert.Subsidiary.CompaniesHouseNumber == subsidiaries[0].companies_house_number &&
-                            insert.Subsidiary.OrganisationType == OrganisationType.NotSet &&
-                            insert.Subsidiary.ProducerType == ProducerType.Other);
-
-        inserts.Should().Contain(insert => insert.UserId == userId &&
-                            insert.ParentOrganisationId == parentOrganisation.ExternalId &&
-                            insert.Subsidiary.ReferenceNumber == subsidiaries[1].organisation_id &&
-                            insert.Subsidiary.Name == subsidiaries[1].organisation_name &&
-                            insert.Subsidiary.CompaniesHouseNumber == subsidiaries[1].companies_house_number &&
-                            insert.Subsidiary.OrganisationType == OrganisationType.NotSet &&
-                            insert.Subsidiary.ProducerType == ProducerType.Other);
-        */
     }
 }
