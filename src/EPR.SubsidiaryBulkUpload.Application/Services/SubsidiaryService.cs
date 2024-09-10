@@ -98,7 +98,7 @@ public class SubsidiaryService : ISubsidiaryService
         return orgResponse.FirstOrDefault();
     }
 
-    public async Task<string?> CreateAndAddSubsidiaryAsync(LinkOrganisationModel linkOrganisationModel)
+    public async Task<HttpStatusCode> CreateAndAddSubsidiaryAsync(LinkOrganisationModel linkOrganisationModel)
     {
         string json = JsonConvert.SerializeObject(linkOrganisationModel);
 
@@ -119,8 +119,10 @@ public class SubsidiaryService : ISubsidiaryService
         }
 
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadAsStringAsync();
-        return result;
+
+        // var result = await response.Content.ReadAsStringAsync();
+        // var result = await response.StatusCode;
+        return response.StatusCode;
     }
 
     public async Task<string?> AddSubsidiaryRelationshipAsync(SubsidiaryAddModel subsidiaryAddModel)

@@ -24,6 +24,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             .SelectAwait(async subsidiary => (Subsidiary: subsidiary, SubsidiaryOrg: await organisationService.GetCompanyByCompaniesHouseNumber(subsidiary.companies_house_number)));
 
         // before going further. here we can check with RPD if the company name in the file is matching the RPD Org table company name
+        // TO DO Use this subsidiaries that already have orgs
         var subsidiariesAndOrgWithValidName = subsidiariesAndOrg
             .Where(sub => sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg.companiesHouseNumber && sub.Subsidiary.organisation_name == sub.SubsidiaryOrg.name);
 
@@ -47,7 +48,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         The subsidiary companies house number is in RPD, but the name is different
         Note, could this be because the company name has changed.What do we do then?
         When a subsidiary is found in RPD
-        But the name for the subsidiary is different to the name in RPD
+        But the name for the subsidiary in cvs file is different to the name in RPD
         Then an error is created for that row in the bulk upload file.
 
         Implementation: build another collection of those subsidiaries where csv file name not matching with RPD name and
@@ -60,6 +61,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         await ReportCompanies((IEnumerable<CompaniesHouseCompany>)subsidiariesAndOrgWith_InValidName, userRequestModel);
 
         // Subsidiaries which do not exist in the RPD
+        // TO DO use these new subsidiaries.
         var newSubsidiariesToAdd = subsidiariesAndOrg.Where(co => co.SubsidiaryOrg == null)
             .SelectAwait(async subsidiary =>
                 (Subsidiary: subsidiary.Subsidiary, LinkModel: await GetLinkModelForCompaniesHouseData(subsidiary.Subsidiary, parentOrg, userRequestModel.UserId)))
@@ -68,21 +70,17 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         // Create and add subsidiaries where the companies house data has been provided
         await foreach (var subsidiaryandLink in newSubsidiariesToAdd)
         {
-            await organisationService.CreateAndAddSubsidiaryAsync(subsidiaryandLink.LinkModel);
+            subsidiaryandLink.LinkModel.StatusCode = await organisationService.CreateAndAddSubsidiaryAsync(subsidiaryandLink.LinkModel);
         }
 
         // check and report the remaining ones and raise error for all none processed subsidiaries.
-        var processedSubs = subsidiaries
-        .ToAsyncEnumerable()
-        .SelectAwait(async subsidiary => (Subsidiary: subsidiary, SubsidiaryOrg: await organisationService.GetCompanyByCompaniesHouseNumber(subsidiary.companies_house_number)));
+        var allAdded = await newSubsidiariesToAdd.Select(sta => sta.LinkModel).Where(sta => sta.StatusCode == System.Net.HttpStatusCode.OK)
+            .Concat(subsidiariesAndOrgWithValidName.Select(swoan => swoan.Subsidiary))
+            .ToListAsync();
 
-        var sd = from s in subsidiaries where s.companies_house_number == string.Empty select s;
+        var subsidiariesNotAdded = subsidiaries.Except(allAdded);
 
-        var subsidiariesDifference = subsidiaries.Where(sb => sb.companies_house_number != null)
-            .Except(processedSubs.Select(p => p.SubsidiaryOrg.companiesHouseNumber))
-            .ToList();
-
-        await ReportCompaniesNotfound(subsidiariesDifference, userRequestModel);
+        await ReportCompaniesNotfound(subsidiariesNotAdded, userRequestModel);
     }
 
     private async Task ReportCompanies(IEnumerable<CompaniesHouseCompany> subsidiaries, UserRequestModel userRequestModel)

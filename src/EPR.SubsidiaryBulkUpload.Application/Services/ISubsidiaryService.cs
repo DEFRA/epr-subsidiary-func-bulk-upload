@@ -1,4 +1,5 @@
-﻿using EPR.SubsidiaryBulkUpload.Application.DTOs;
+﻿using System.Net;
+using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services;
@@ -8,7 +9,7 @@ public interface ISubsidiaryService
 
     Task<OrganisationModel?> GetCompanyByOrgId(CompaniesHouseCompany company);
 
-    Task<string?> CreateAndAddSubsidiaryAsync(LinkOrganisationModel linkOrganisationModel);
+    Task<HttpStatusCode> CreateAndAddSubsidiaryAsync(LinkOrganisationModel linkOrganisationModel);
 
     Task<string?> AddSubsidiaryRelationshipAsync(SubsidiaryAddModel subsidiaryAddModel);
 
