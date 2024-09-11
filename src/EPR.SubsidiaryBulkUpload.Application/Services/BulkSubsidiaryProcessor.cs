@@ -24,7 +24,6 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             .SelectAwait(async subsidiary => (Subsidiary: subsidiary, SubsidiaryOrg: await organisationService.GetCompanyByCompaniesHouseNumber(subsidiary.companies_house_number)));
 
         // before going further. here we can check with RPD if the company name in the file is matching the RPD Org table company name
-        // TO DO Use this subsidiaries that already have orgs
         var subsidiariesAndOrgWithValidName = subsidiariesAndOrg
             .Where(sub => sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg.companiesHouseNumber && sub.Subsidiary.organisation_name == sub.SubsidiaryOrg.name);
 
@@ -62,7 +61,6 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         await ReportCompanies(subWithInvalidName, userRequestModel);
 
         // Subsidiaries which do not exist in the RPD
-        // TO DO use these new subsidiaries.
         var newSubsidiariesToAdd = subsidiariesAndOrg.Where(co => co.SubsidiaryOrg == null)
             .SelectAwait(async subsidiary =>
                 (Subsidiary: subsidiary.Subsidiary, LinkModel: await GetLinkModelForCompaniesHouseData(subsidiary.Subsidiary, parentOrg, userRequestModel.UserId)))
