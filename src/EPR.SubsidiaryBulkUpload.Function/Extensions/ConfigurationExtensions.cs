@@ -126,6 +126,7 @@ public static class ConfigurationExtensions
         services.AddTransient<IFileDownloadService, FileDownloadService>();
         services.AddTransient<IAntivirusClient, AntivirusClient>();
         services.AddTransient<ISubmissionStatusClient, SubmissionStatusClient>();
+        services.AddSingleton<ISystemDetailsProvider, SystemDetailsProvider>();
 
         var isDevMode = configuration.GetValue<bool?>("ApiConfig:DeveloperMode");
         if (isDevMode is true)
