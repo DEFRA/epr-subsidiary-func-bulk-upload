@@ -10,12 +10,13 @@
     <UserSecretsId>a996cd13-8208-4a47-9602-f9f3ebf431b5</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="local.settings.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    <Compile Remove="NotificationStatusFunction.cs" />
   </ItemGroup>
   <ItemGroup>
 	  <FrameworkReference Include="Microsoft.AspNetCore.App" />
+	  <None Include="NotificationStatusFunction.cs">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
 	  <PackageReference Include="Azure.Storage.Blobs" Version="12.21.1" />
 	  <PackageReference Include="Azure.Storage.Files.Shares" Version="12.19.1" />
 	  <PackageReference Include="Azure.Storage.Queues" Version="12.19.1" />
@@ -44,10 +45,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="settings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
-    </None>
-    <None Update="local.settings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>Never</CopyToPublishDirectory>
     </None>
