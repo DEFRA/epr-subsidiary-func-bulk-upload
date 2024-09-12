@@ -1,11 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Diagnostics.CodeAnalysis;
 using CsvHelper.Configuration.Attributes;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 
 namespace EPR.SubsidiaryBulkUpload.Application.DTOs;
 
-[ExcludeFromCodeCoverage]
 public class CompaniesHouseCompany
 {
     private static readonly string[] MemberNames = { "organisation_name" };

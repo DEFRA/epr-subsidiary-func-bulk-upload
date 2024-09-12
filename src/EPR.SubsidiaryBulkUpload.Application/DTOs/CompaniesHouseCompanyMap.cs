@@ -1,11 +1,9 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Text;
+﻿using System.Text;
 using CsvHelper.Configuration;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 
 namespace EPR.SubsidiaryBulkUpload.Application.DTOs;
 
-[ExcludeFromCodeCoverage]
 public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
 {
     public CompaniesHouseCompanyMap()
