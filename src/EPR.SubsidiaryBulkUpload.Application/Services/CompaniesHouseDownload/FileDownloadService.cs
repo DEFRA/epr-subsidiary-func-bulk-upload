@@ -30,7 +30,7 @@ public class FileDownloadService(HttpClient httpClient, ILogger<FileDownloadServ
             }
             catch (HttpRequestException ex)
             {
-                logger.LogError(ex, "Failed tofind or  connect to the download service (file may not exist) {FilePath}", path);
+                logger.LogError(ex, "Failed to find or  connect to the download service (file may not exist) {FilePath}", path);
                 responseCode = FileDownloadResponseCode.FailedToFindFile;
             }
             catch (TaskCanceledException ex)
