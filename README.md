@@ -30,8 +30,8 @@ To run locally, create a file `local.settings.json`. This file is in `.gitignore
     "ApiConfig__DeveloperMode": true,
     "ApiConfig__Timeout": 30
     "ApiConfig__CompaniesHouseDataDownloadUrl": "https://download.companieshouse.gov.uk/",
-    "ApiConfig__SystemUserId": "59F5EE8E-690C-4D54-B285-4B04AC8124E3",
-    "ApiConfig__SystemOrganisationId": "7CD04AD0-55FD-4295-8F8A-93D7477486DE",
+    "ApiConfig__SystemUserId": "SYSTEM USER ID GUID",
+    "ApiConfig__SystemOrganisationId": "ORGANISATION GUID",
     "SubmissionApi__BaseUrl": "https://localhost:7206"
   }
 }
