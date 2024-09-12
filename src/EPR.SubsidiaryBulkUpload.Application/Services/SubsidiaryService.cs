@@ -88,7 +88,7 @@ public class SubsidiaryService : ISubsidiaryService
 
             if (problemDetails != null)
             {
-                throw new ProblemResponseException(problemDetails, response.StatusCode);
+                _logger.LogError("Error occurred in GetCompanyByCompaniesHouseNumber call: {Parent} Subsidiary: {Subsidiary}", problemDetails.Detail, response.StatusCode);
             }
         }
 
@@ -133,40 +133,11 @@ public class SubsidiaryService : ISubsidiaryService
             if (problemDetails != null)
             {
                 _logger.LogError("Failed to add subsidiary relationship for Parent: {Parent} Subsidiary: {Subsidiary}", subsidiaryAddModel.ParentOrganisationId, subsidiaryAddModel.ChildOrganisationId);
-
-                throw new ProblemResponseException(problemDetails, response.StatusCode);
             }
         }
 
         response.EnsureSuccessStatusCode();
-
         var result = await response.Content.ReadAsStringAsync();
-
-        return result;
-    }
-
-    public async Task<List<OrganisationResponseModel>> GetNoneProccessedCompanies(IEnumerable<CompaniesHouseCompany> subsidiaries)
-    {
-        string json = JsonConvert.SerializeObject(subsidiaries);
-        StringContent httpContent = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-
-        var response = await _httpClient.PostAsync(OrganisationAddSubsidiaryUri, httpContent);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>();
-
-            if (problemDetails != null)
-            {
-                // _logger.LogError("Failed to add subsidiary relationship for Parent: {Parent} Subsidiary: {Subsidiary}", subsidiaryAddModel.ParentOrganisationId, subsidiaryAddModel.ChildOrganisationId);
-                throw new ProblemResponseException(problemDetails, response.StatusCode);
-            }
-        }
-
-        response.EnsureSuccessStatusCode();
-
-        var result = await response.Content.ReadFromJsonAsync<List<OrganisationResponseModel>>();
-
         return result;
     }
 }

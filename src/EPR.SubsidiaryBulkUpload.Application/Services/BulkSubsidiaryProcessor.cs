@@ -28,7 +28,6 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             .Where(sub => sub.SubsidiaryOrg != null && sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg.companiesHouseNumber && sub.Subsidiary.organisation_name == sub.SubsidiaryOrg.name);
 
         // after checking the name only that collection will pass on for relationship check
-
         // All subsidiaries with an org id, where no relationship already exists and Company name in RPD matches with company name in file
         var knownSubsidiariesToAdd = subsidiariesAndOrgWithValidName.Where(co => co.SubsidiaryOrg != null)
             .SelectAwait(async co =>
@@ -86,7 +85,6 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
     {
         /*Scenario 2:
                 The subsidiary found in companies house. name does not match*/
-
         var notificationErrorList = new List<UploadFileErrorModel>();
         foreach (var company in subsidiaries)
         {
@@ -110,8 +108,6 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
     {
         /*Scenario 1:
                 The subsidiary is not found in RPD and not in Local storage and also not found on companies house*/
-        var noneProcessedCompanies = await organisationService.GetNoneProccessedCompanies(subsidiaries);
-
         var notificationErrorList = new List<UploadFileErrorModel>();
 
         foreach (var company in subsidiaries)
