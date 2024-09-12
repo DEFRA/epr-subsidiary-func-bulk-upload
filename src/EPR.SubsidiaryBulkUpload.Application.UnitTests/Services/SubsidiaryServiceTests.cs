@@ -197,10 +197,10 @@ public class SubsidiaryServiceTests
             }).Verifiable();
 
         // Act
-        Func<Task> act = async () => await _sut.GetCompanyByOrgId(company);
+        var result = await _sut.GetCompanyByOrgId(company);
 
         // Assert
-        await act.Should().ThrowAsync<ProblemResponseException>();
+        result.Should().BeNull();
     }
 
     [TestMethod]
@@ -258,7 +258,7 @@ public class SubsidiaryServiceTests
     }
 
     [TestMethod]
-    public async Task GetSubsidiaryRelationshipAsync_ThrowsProblemResponseException_When_NoSuccessResponse()
+    public async Task GetSubsidiaryRelationshipAsync_ReturnFalse_When_NoSuccessResponse()
     {
         // Arrange
         const int parentOrganisationId = 1;
@@ -279,10 +279,10 @@ public class SubsidiaryServiceTests
             }).Verifiable();
 
         // Act
-        var act = async () => await _sut.GetSubsidiaryRelationshipAsync(parentOrganisationId, subsidiaryOrganisationId);
+        var result = await _sut.GetSubsidiaryRelationshipAsync(parentOrganisationId, subsidiaryOrganisationId);
 
         // Assert
-        await act.Should().ThrowAsync<ProblemResponseException>();
+        result.Should().BeFalse();
     }
 
     [TestMethod]

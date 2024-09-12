@@ -1,7 +1,6 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
-using EPR.SubsidiaryBulkUpload.Application.Exceptions;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -42,8 +41,10 @@ public class SubsidiaryService : ISubsidiaryService
 
             if (problemDetails != null)
             {
-                throw new ProblemResponseException(problemDetails, response.StatusCode);
+                _logger.LogError("Failed to add subsidiary relationship for Parent: {Detail} Subsidiary: {StatusCode}", problemDetails.Detail, response.StatusCode);
             }
+
+            return null;
         }
 
         response.EnsureSuccessStatusCode();
@@ -65,8 +66,10 @@ public class SubsidiaryService : ISubsidiaryService
 
             if (problemDetails != null)
             {
-                throw new ProblemResponseException(problemDetails, response.StatusCode);
+                _logger.LogError("Error occurred in GetSubsidiaryRelationshipAsync call: {Detail} : {StatusCode}", problemDetails.Detail, response.StatusCode);
             }
+
+            return false;
         }
 
         var orgResponse = await response.Content.ReadFromJsonAsync<bool>();
@@ -88,7 +91,7 @@ public class SubsidiaryService : ISubsidiaryService
 
             if (problemDetails != null)
             {
-                _logger.LogError("Error occurred in GetCompanyByCompaniesHouseNumber call: {Parent} Subsidiary: {Subsidiary}", problemDetails.Detail, response.StatusCode);
+                _logger.LogError("Error occurred in GetCompanyByCompaniesHouseNumber call: {Detail} : {StatusCode}", problemDetails.Detail, response.StatusCode);
             }
 
             return null;
