@@ -20,7 +20,7 @@ public class CompaniesHouseDownloadServiceTests
     }
 
     [TestMethod]
-    public async Task ShouldDownloadAllREquiredFiles()
+    public async Task ShouldDownloadAllRequiredFiles()
     {
         // Arrange
         var month = 3;
@@ -28,14 +28,14 @@ public class CompaniesHouseDownloadServiceTests
         var now = new DateTimeOffset(year, month, 5, 7, 9, 11, TimeSpan.Zero);
         timeProvider.SetUtcNow(now);
 
-        var downloadPath = "https://download";
+        var downloadPath = "https://download/";
 
         fixture.Customize<ApiOptions>(ctx => ctx.With(a => a.CompaniesHouseDataDownloadUrl, downloadPath));
         var options = fixture.CreateOptions<ApiOptions>();
 
         using var stream = new MemoryStream();
 
-        var partialFileName = $"{downloadPath}/{CompaniesHouseDownloadService.PartialFilename}-2024-03-01-part";
+        var partialFileName = $"{downloadPath}{CompaniesHouseDownloadService.PartialFilename}-2024-03-01-part";
 
         var numberOfDownloads = 3;
 
@@ -74,7 +74,7 @@ public class CompaniesHouseDownloadServiceTests
         var now = new DateTimeOffset(year, month, 5, 7, 9, 11, TimeSpan.Zero);
         timeProvider.SetUtcNow(now);
 
-        var downloadPath = "https://download";
+        var downloadPath = "https://download/";
 
         fixture.Customize<ApiOptions>(ctx => ctx.With(a => a.CompaniesHouseDataDownloadUrl, downloadPath));
         var options = fixture.CreateOptions<ApiOptions>();

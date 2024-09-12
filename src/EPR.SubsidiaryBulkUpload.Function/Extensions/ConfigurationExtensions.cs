@@ -26,7 +26,7 @@ public static class ConfigurationExtensions
 {
     public static IServiceCollection ConfigureOptions(this IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<SubmissionStatusApiOptions>(configuration.GetSection(SubmissionStatusApiOptions.SectionName));
+        services.Configure<SubmissionApiOptions>(configuration.GetSection(SubmissionApiOptions.SectionName));
         services.Configure<AntivirusApiOptions>(configuration.GetSection(AntivirusApiOptions.SectionName));
         services.Configure<BlobStorageOptions>(configuration.GetSection(BlobStorageOptions.SectionName));
         services.Configure<ApiOptions>(configuration.GetSection(ApiOptions.SectionName));
@@ -53,7 +53,7 @@ public static class ConfigurationExtensions
     {
         services.AddHttpClient<ISubmissionStatusClient, SubmissionStatusClient>((sp, client) =>
         {
-            var options = sp.GetRequiredService<IOptions<SubmissionStatusApiOptions>>().Value;
+            var options = sp.GetRequiredService<IOptions<SubmissionApiOptions>>().Value;
             client.BaseAddress = new Uri($"{options.BaseUrl}/v1/");
         }).AddPolicyHandler(GetRetryPolicy());
 

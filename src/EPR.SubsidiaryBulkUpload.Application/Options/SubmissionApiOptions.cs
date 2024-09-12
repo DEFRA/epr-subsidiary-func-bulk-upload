@@ -3,9 +3,9 @@
 namespace EPR.SubsidiaryBulkUpload.Application.Options;
 
 [ExcludeFromCodeCoverage]
-public class SubmissionStatusApiOptions
+public class SubmissionApiOptions
 {
-    public const string SectionName = "SubmissionStatusApi";
+    public const string SectionName = "SubmissionApi";
 
     public string BaseUrl { get; set; }
 }

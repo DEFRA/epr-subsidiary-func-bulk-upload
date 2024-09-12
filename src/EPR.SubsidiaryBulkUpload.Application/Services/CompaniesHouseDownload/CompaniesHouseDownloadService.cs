@@ -34,9 +34,9 @@ public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadServ
         var all = Enumerable.Range(1, currentRunExpectedFileCount)
             .Select(i => DownloadFile(currentRunExpectedFileCount, i, now));
 
-        await Task.WhenAll(all);
+        var results = await Task.WhenAll(all);
 
-        return !all.Any(t => !t.Result);
+        return results.All(r => r);
     }
 
     private async Task<bool> DownloadFile(int fileCount, int fileNumber, DateTimeOffset now)
