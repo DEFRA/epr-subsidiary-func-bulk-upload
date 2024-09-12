@@ -15,7 +15,6 @@ public class SubsidiaryService : ISubsidiaryService
     private const string OrganisationCreateAddSubsidiaryUri = "api/bulkuploadorganisations/create-subsidiary-and-add-relationship";
     private const string OrganisationAddSubsidiaryUri = "api/bulkuploadorganisations/add-subsidiary-relationship";
     private const string OrganisationRelationshipsByIdUri = "api/bulkuploadorganisations/organisation-by-relationship";
-    private const string OrganisationGetValidOrgsByIdUri = "api/bulkuploadorganisations/valid-organisation-by-companyhousenumber";
     private readonly ILogger<SubsidiaryService> _logger;
     private readonly HttpClient _httpClient;
 
