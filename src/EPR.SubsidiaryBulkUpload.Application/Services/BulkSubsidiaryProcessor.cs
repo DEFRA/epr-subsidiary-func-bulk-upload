@@ -75,9 +75,9 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         /*Scenario 1:
         The subsidiary is not found in RPD and not in Local storage and not found on companies house*/
-        string message2 = "The subsidiary is not found in RPD and not in Local storage and also not found on companies house.";
-        string errorMesssage2 = "Subsidiaries not found in RPD, Local storage and companies house. Subsidiary reported : {Count}";
-        await ReportCompanies(subsidiariesNotAdded, userRequestModel, message2, errorMesssage2);
+        message = "found in RPD and not in Local storage and also not found on companies house.";
+        errorMesssage = "found in RPD, local storage and companies house database. Subsidiary reported : {Count}";
+        await ReportCompanies(subsidiariesNotAdded, userRequestModel, message, errorMesssage);
     }
 
     private async Task ReportCompanies(IEnumerable<CompaniesHouseCompany> subsidiaries, UserRequestModel userRequestModel, string message, string logMessage)
@@ -88,7 +88,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             var newError = new UploadFileErrorModel()
             {
                 FileContent = company.organisation_name + "-" + company.companies_house_number,
-                Message = message
+                Message = "The subsidiary not " + message
             };
 
             notificationErrorList.Add(newError);
@@ -98,7 +98,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         var keyErrors = userRequestModel.GenerateKey(SubsidiaryBulkUploadMismatchedErrors);
         _notificationService.SetStatus(key, "Started reporting invalid subsidiaries.");
         _notificationService.SetErrorStatus(keyErrors, notificationErrorList);
-        _logger.LogInformation(logMessage, subsidiaries.Count().ToString());
+        _logger.LogInformation("Subsidiaries not " + logMessage, subsidiaries.Count().ToString());
     }
 
     private async Task<LinkOrganisationModel?> GetLinkModelForCompaniesHouseData(CompaniesHouseCompany subsidiary, OrganisationResponseModel parentOrg, Guid userId)
