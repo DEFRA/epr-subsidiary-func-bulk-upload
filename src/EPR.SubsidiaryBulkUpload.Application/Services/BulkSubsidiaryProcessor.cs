@@ -18,17 +18,13 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
     public async Task Process(IEnumerable<CompaniesHouseCompany> subsidiaries, CompaniesHouseCompany parent, OrganisationResponseModel parentOrg, UserRequestModel userRequestModel)
     {
-        // these are the subsidiaries which exists in RPD
         var subsidiariesAndOrg = subsidiaries
             .ToAsyncEnumerable()
             .SelectAwait(async subsidiary => (Subsidiary: subsidiary, SubsidiaryOrg: await organisationService.GetCompanyByCompaniesHouseNumber(subsidiary.companies_house_number)));
 
-        // before going further. here we can check with RPD if the company name in the file is matching the RPD Org table company name
         var subsidiariesAndOrgWithValidName = subsidiariesAndOrg
             .Where(sub => sub.SubsidiaryOrg != null && sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg.companiesHouseNumber && sub.Subsidiary.organisation_name == sub.SubsidiaryOrg.name);
 
-        // after checking the name only that collection will pass on for relationship check
-        // All subsidiaries with an org id, where no relationship already exists and Company name in RPD matches with company name in file
         var knownSubsidiariesToAdd = subsidiariesAndOrgWithValidName.Where(co => co.SubsidiaryOrg != null)
             .SelectAwait(async co =>
                 (Subsidiary: co.Subsidiary,
@@ -36,7 +32,6 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
                  RelationshipExists: await organisationService.GetSubsidiaryRelationshipAsync(parentOrg.id, co.SubsidiaryOrg.id)))
             .Where(co => !co.RelationshipExists);
 
-        // Add relationships for the children already in RPD...
         await foreach (var subsidiaryAddModel in knownSubsidiariesToAdd)
         {
             await AddSubsidiary(parentOrg, subsidiaryAddModel!.SubsidiaryOrg, userRequestModel.UserId, subsidiaryAddModel.Subsidiary);
@@ -48,84 +43,62 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         When a subsidiary is found in RPD
         But the name for the subsidiary in cvs file is different to the name in RPD
         Then an error is created for that row in the bulk upload file.
-
         Implementation: build another collection of those subsidiaries where csv file name not matching with RPD name and
         report to Redis
          */
         var subsidiariesAndOrgWith_InValidName = subsidiariesAndOrg
             .Where(sub => sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg.companiesHouseNumber && sub.Subsidiary.organisation_name != sub.SubsidiaryOrg.name);
 
-        // check and report subsidiaries with mismatched names.
         var subWithInvalidName = await subsidiariesAndOrgWith_InValidName.Select(s => s.Subsidiary).ToListAsync();
-        await ReportCompanies(subWithInvalidName, userRequestModel);
 
-        // Subsidiaries which do not exist in the RPD
+        string message = "The subsidiary companies house number is in RPD, but the name is different\r\n Note, could this be because the company name has changed.";
+        string errorMesssage = "Mismatched named subsidiaries found. Subsidiary reported : {Count}";
+        /*Scenario 2:
+        The subsidiary found in companies house. name not match*/
+        await ReportCompanies(subWithInvalidName, userRequestModel, message, errorMesssage);
+
         var newSubsidiariesToAdd = subsidiariesAndOrg.Where(co => co.SubsidiaryOrg == null)
             .SelectAwait(async subsidiary =>
                 (Subsidiary: subsidiary.Subsidiary, LinkModel: await GetLinkModelForCompaniesHouseData(subsidiary.Subsidiary, parentOrg, userRequestModel.UserId)))
             .Where(subAndLink => subAndLink.LinkModel != null);
 
-        // Create and add subsidiaries where the companies house data has been provided
         await foreach (var subsidiaryandLink in newSubsidiariesToAdd)
         {
             subsidiaryandLink.LinkModel.StatusCode = await organisationService.CreateAndAddSubsidiaryAsync(subsidiaryandLink.LinkModel);
         }
 
-        // check and report the remaining ones and raise error for all none processed subsidiaries.
         var allAdded = await newSubsidiariesToAdd.Where(sta => sta.LinkModel.StatusCode == System.Net.HttpStatusCode.OK).Select(sta => sta.Subsidiary)
             .Concat(subsidiariesAndOrgWithValidName.Select(swoan => swoan.Subsidiary))
             .ToListAsync();
 
         var subsidiariesNotAdded = subsidiaries.Except(allAdded);
 
-        await ReportCompaniesNotfound(subsidiariesNotAdded, userRequestModel);
-    }
-
-    private async Task ReportCompanies(IEnumerable<CompaniesHouseCompany> subsidiaries, UserRequestModel userRequestModel)
-    {
-        /*Scenario 2:
-                The subsidiary found in companies house. name does not match*/
-        var notificationErrorList = new List<UploadFileErrorModel>();
-        foreach (var company in subsidiaries)
-        {
-            var newError = new UploadFileErrorModel()
-            {
-                FileContent = company.organisation_name + "-" + company.companies_house_number,
-                Message = "The subsidiary companies house number is in RPD, but the name is different\r\n Note, could this be because the company name has changed."
-            };
-
-            notificationErrorList.Add(newError);
-        }
-
-        var keyErrors = userRequestModel.GenerateKey(SubsidiaryBulkUploadMismatchedErrors);
-        var key = userRequestModel.GenerateKey(SubsidiaryBulkUploadMismatchedProgress);
-        _notificationService.SetStatus(key, "Started reporting invalid subsidiaries.");
-        _notificationService.SetErrorStatus(keyErrors, notificationErrorList);
-        _logger.LogInformation("Mismatched named subsidiaries found. Subsidiary reported : {Count}", subsidiaries.Count().ToString());
-    }
-
-    private async Task ReportCompaniesNotfound(IEnumerable<CompaniesHouseCompany> subsidiaries, UserRequestModel userRequestModel)
-    {
         /*Scenario 1:
-                The subsidiary is not found in RPD and not in Local storage and also not found on companies house*/
-        var notificationErrorList = new List<UploadFileErrorModel>();
+        The subsidiary is not found in RPD and not in Local storage and not found on companies house*/
+        string message2 = "The subsidiary is not found in RPD and not in Local storage and also not found on companies house.";
+        string errorMesssage2 = "Subsidiaries not found in RPD, Local storage and companies house. Subsidiary reported : {Count}";
+        await ReportCompanies(subsidiariesNotAdded, userRequestModel, message2, errorMesssage2);
+    }
 
+    private async Task ReportCompanies(IEnumerable<CompaniesHouseCompany> subsidiaries, UserRequestModel userRequestModel, string message, string logMessage)
+    {
+        var notificationErrorList = new List<UploadFileErrorModel>();
         foreach (var company in subsidiaries)
         {
             var newError = new UploadFileErrorModel()
             {
                 FileContent = company.organisation_name + "-" + company.companies_house_number,
-                Message = "The subsidiary is not found in RPD and not in Local storage and also not found on companies house."
+                Message = message
             };
 
             notificationErrorList.Add(newError);
         }
 
-        var keyErrors = userRequestModel.GenerateKey(SubsidiaryBulkUploadMismatchedErrors);
         var key = userRequestModel.GenerateKey(SubsidiaryBulkUploadMismatchedProgress);
+        var keyErrors = userRequestModel.GenerateKey(SubsidiaryBulkUploadMismatchedErrors);
         _notificationService.SetStatus(key, "Started reporting invalid subsidiaries.");
         _notificationService.SetErrorStatus(keyErrors, notificationErrorList);
-        _logger.LogInformation("Subsidiaries not found in RPD, Local storage and companies house. Subsidiary reported : {Count}", subsidiaries.Count().ToString());
+        _logger.LogInformation(logMessage, subsidiaries.Count().ToString());
     }
 
     private async Task<LinkOrganisationModel?> GetLinkModelForCompaniesHouseData(CompaniesHouseCompany subsidiary, OrganisationResponseModel parentOrg, Guid userId)
