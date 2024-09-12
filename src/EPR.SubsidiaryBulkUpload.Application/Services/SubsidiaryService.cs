@@ -90,6 +90,8 @@ public class SubsidiaryService : ISubsidiaryService
             {
                 _logger.LogError("Error occurred in GetCompanyByCompaniesHouseNumber call: {Parent} Subsidiary: {Subsidiary}", problemDetails.Detail, response.StatusCode);
             }
+
+            return null;
         }
 
         response.EnsureSuccessStatusCode();
@@ -134,9 +136,10 @@ public class SubsidiaryService : ISubsidiaryService
             {
                 _logger.LogError("Failed to add subsidiary relationship for Parent: {Parent} Subsidiary: {Subsidiary}", subsidiaryAddModel.ParentOrganisationId, subsidiaryAddModel.ChildOrganisationId);
             }
+
+            return null;
         }
 
-        response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadAsStringAsync();
         return result;
     }

@@ -97,7 +97,7 @@ public class SubsidiaryServiceTests
     }
 
     [TestMethod]
-    public async Task GetCompanyByCompaniesHouseNumber_ThrowsProblemResponseException_When_NoSuccessResponse()
+    public async Task GetCompanyByCompaniesHouseNumber_When_NullResponse()
     {
         // Arrange
         var apiResponse = _fixture.Create<ProblemDetails>();
@@ -117,10 +117,10 @@ public class SubsidiaryServiceTests
             }).Verifiable();
 
         // Act
-        Func<Task> act = async () => await _sut.GetCompanyByCompaniesHouseNumber(organisationResponseModel.companiesHouseNumber);
+        var result = await _sut.GetCompanyByCompaniesHouseNumber(organisationResponseModel.companiesHouseNumber);
 
         // Assert
-        await act.Should().ThrowAsync<ProblemResponseException>();
+        result.Should().BeNull();
     }
 
     [TestMethod]
@@ -385,9 +385,9 @@ public class SubsidiaryServiceTests
             }).Verifiable();
 
         // Act
-        var act = async () => await _sut.AddSubsidiaryRelationshipAsync(subsidiaryAddModel);
+        var response = await _sut.AddSubsidiaryRelationshipAsync(subsidiaryAddModel);
 
         // Assert
-        await act.Should().ThrowAsync<ProblemResponseException>();
+        response.Should().Be(response);
     }
 }
