@@ -25,7 +25,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         // before going further. here we can check with RPD if the company name in the file is matching the RPD Org table company name
         var subsidiariesAndOrgWithValidName = subsidiariesAndOrg
-            .Where(sub => sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg.companiesHouseNumber && sub.Subsidiary.organisation_name == sub.SubsidiaryOrg.name);
+            .Where(sub => sub.SubsidiaryOrg != null && sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg.companiesHouseNumber && sub.Subsidiary.organisation_name == sub.SubsidiaryOrg.name);
 
         // after checking the name only that collection will pass on for relationship check
 
