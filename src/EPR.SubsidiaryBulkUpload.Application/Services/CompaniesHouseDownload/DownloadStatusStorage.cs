@@ -87,7 +87,11 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
         }
         catch (RequestFailedException ex)
         {
-            logger.LogError(ex, "Cannot get or create table {TableName}", CompaniesHouseDownloadTableName);
+            logger.LogError(ex, "Cannot get or table entity from {Table} row {Row}", CompaniesHouseDownloadTableName, rowKey);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Cannot get or table entity from {Table} row {Row}", CompaniesHouseDownloadTableName, rowKey);
         }
 
         return result;

@@ -10,7 +10,9 @@
     <UserSecretsId>a996cd13-8208-4a47-9602-f9f3ebf431b5</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="local.settings.json" />
+    <Content Include="local.settings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
 	  <FrameworkReference Include="Microsoft.AspNetCore.App" />

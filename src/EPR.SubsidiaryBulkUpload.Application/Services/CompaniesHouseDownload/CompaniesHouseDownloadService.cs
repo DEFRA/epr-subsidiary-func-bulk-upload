@@ -32,19 +32,19 @@ public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadServ
         var now = timeProvider.GetUtcNow();
 
         var all = Enumerable.Range(1, currentRunExpectedFileCount)
-            .Select(i => DownloadFile(i, now));
+            .Select(i => DownloadFile(currentRunExpectedFileCount, i, now));
 
         await Task.WhenAll(all);
 
         return !all.Any(t => !t.Result);
     }
 
-    private async Task<bool> DownloadFile(int fileCount, DateTimeOffset now)
+    private async Task<bool> DownloadFile(int fileCount, int fileNumber, DateTimeOffset now)
     {
         var succeeded = false;
-        var fileName = $"{PartialFilename}-{now.Year}-{now.Month}-01-part_{fileCount}.zip";
+        var fileName = $"{PartialFilename}-{now.Year}-{now.Month.ToString("00")}-01-part{fileNumber}_{fileCount}.zip";
 
-        var filePath = $"{apiOptions.CompaniesHouseDataDownloadUrl}/{fileName}";
+        var filePath = $"{apiOptions.CompaniesHouseDataDownloadUrl}{fileName}";
 
         var download = await fileDownloadService.GetStreamAsync(filePath);
 

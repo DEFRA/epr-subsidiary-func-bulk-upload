@@ -59,8 +59,6 @@ public class CompaniesHouseFilePostService(
             UserEmail = "system@dummy.com"
         };
 
-        stream.Seek(0, SeekOrigin.Begin);
-
         var statusCode = await submissionStatusClient.CreateSubmissionAsync(submission)
             .ThenIfIsSuccessStatusCode(() => submissionStatusClient.CreateEventAsync(antiVirusEvent, fileId))
             .ThenIfIsSuccessStatusCode(() => antivirusClient.SendFileAsync(fileDetails, fileName, stream));

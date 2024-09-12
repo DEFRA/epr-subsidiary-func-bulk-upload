@@ -35,7 +35,7 @@ public class CompaniesHouseDownloadServiceTests
 
         using var stream = new MemoryStream();
 
-        var partialFileName = $"{downloadPath}/{CompaniesHouseDownloadService.PartialFilename}-{now.Year}-{now.Month}-01-part_";
+        var partialFileName = $"{downloadPath}/{CompaniesHouseDownloadService.PartialFilename}-2024-03-01-part";
 
         var numberOfDownloads = 3;
 
@@ -60,9 +60,9 @@ public class CompaniesHouseDownloadServiceTests
         await downloadService.StartDownload();
 
         // Assert
-        fileDownloadService.Verify(fds => fds.GetStreamAsync($"{partialFileName}1.zip", It.IsAny<CancellationToken>()));
-        fileDownloadService.Verify(fds => fds.GetStreamAsync($"{partialFileName}2.zip", It.IsAny<CancellationToken>()));
-        fileDownloadService.Verify(fds => fds.GetStreamAsync($"{partialFileName}3.zip", It.IsAny<CancellationToken>()));
+        fileDownloadService.Verify(fds => fds.GetStreamAsync($"{partialFileName}1_{numberOfDownloads}.zip", It.IsAny<CancellationToken>()));
+        fileDownloadService.Verify(fds => fds.GetStreamAsync($"{partialFileName}2_{numberOfDownloads}.zip", It.IsAny<CancellationToken>()));
+        fileDownloadService.Verify(fds => fds.GetStreamAsync($"{partialFileName}3_{numberOfDownloads}.zip", It.IsAny<CancellationToken>()));
     }
 
     [TestMethod]
@@ -81,7 +81,7 @@ public class CompaniesHouseDownloadServiceTests
 
         using var stream = new MemoryStream();
 
-        var partialFileName = $"{CompaniesHouseDownloadService.PartialFilename}-{now.Year}-{now.Month}-01-part_";
+        var partialFileName = $"{CompaniesHouseDownloadService.PartialFilename}-2024-03-01-part";
 
         var numberOfDownloads = 3;
 
@@ -108,8 +108,8 @@ public class CompaniesHouseDownloadServiceTests
         await downloadService.StartDownload();
 
         // Assert
-        companiesHouseFilePostService.Verify(fps => fps.PostFileAsync(stream, $"{partialFileName}1.zip"));
-        companiesHouseFilePostService.Verify(fps => fps.PostFileAsync(stream, $"{partialFileName}2.zip"));
-        companiesHouseFilePostService.Verify(fps => fps.PostFileAsync(stream, $"{partialFileName}3.zip"));
+        companiesHouseFilePostService.Verify(fps => fps.PostFileAsync(stream, $"{partialFileName}1_{numberOfDownloads}.zip"));
+        companiesHouseFilePostService.Verify(fps => fps.PostFileAsync(stream, $"{partialFileName}2_{numberOfDownloads}.zip"));
+        companiesHouseFilePostService.Verify(fps => fps.PostFileAsync(stream, $"{partialFileName}3_{numberOfDownloads}.zip"));
     }
 }

@@ -5,7 +5,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Options;
 [ExcludeFromCodeCoverage]
 public class AntivirusApiOptions
 {
-    public const string Section = "AntivirusApi";
+    public const string SectionName = "AntivirusApi";
 
     public string BaseUrl { get; set; }
 

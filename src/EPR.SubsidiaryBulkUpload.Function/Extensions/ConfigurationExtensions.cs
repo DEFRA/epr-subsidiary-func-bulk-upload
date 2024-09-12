@@ -26,10 +26,8 @@ public static class ConfigurationExtensions
 {
     public static IServiceCollection ConfigureOptions(this IServiceCollection services, IConfiguration configuration)
     {
-        /*
-        services.Configure<SubmissionStatusApiOptions>(configuration.GetSection(SubmissionStatusApiOptions.Section));
-        */
-        services.Configure<AntivirusApiOptions>(configuration.GetSection(AntivirusApiOptions.Section));
+        services.Configure<SubmissionStatusApiOptions>(configuration.GetSection(SubmissionStatusApiOptions.SectionName));
+        services.Configure<AntivirusApiOptions>(configuration.GetSection(AntivirusApiOptions.SectionName));
         services.Configure<BlobStorageOptions>(configuration.GetSection(BlobStorageOptions.SectionName));
         services.Configure<ApiOptions>(configuration.GetSection(ApiOptions.SectionName));
         services.Configure<TableStorageOptions>(configuration.GetSection(TableStorageOptions.SectionName));
@@ -109,6 +107,7 @@ public static class ConfigurationExtensions
         var sp = services.BuildServiceProvider();
         var redisConfig = sp.GetRequiredService<IOptions<RedisConfig>>().Value;
 
+        services.AddScoped<AntivirusApiAuthorizationHandler>();
         services.AddTransient<AccountServiceAuthorisationHandler>();
         services.AddTransient<IBulkUploadOrchestration, BulkUploadOrchestration>();
         services.AddTransient<IBulkSubsidiaryProcessor, BulkSubsidiaryProcessor>();
