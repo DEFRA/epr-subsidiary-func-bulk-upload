@@ -164,11 +164,11 @@ public class SubsidiaryService : ISubsidiaryService
 
             if (problemDetails != null)
             {
-                throw new ProblemResponseException(problemDetails, response.StatusCode);
+                _logger.LogError("Error occurred in GetSystemUserAndOrganisation call: Status code {StatusCode}, details {Details}", response.StatusCode, problemDetails.Detail);
             }
-        }
 
-        response.EnsureSuccessStatusCode();
+            return new();
+        }
 
         return await response.Content.ReadFromJsonAsync<UserOrganisation>();
     }

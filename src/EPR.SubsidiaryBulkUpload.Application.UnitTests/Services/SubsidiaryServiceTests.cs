@@ -1,12 +1,13 @@
 ﻿using System.Net;
 using System.Text;
+using Azure;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Exceptions;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Logging;
 using Moq.Protected;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
@@ -26,6 +27,7 @@ public class SubsidiaryServiceTests
     private SubsidiaryService _sut;
     private Mock<HttpMessageHandler> _httpMessageHandlerMock;
     private HttpClient _httpClient;
+    private Mock<ILogger<SubsidiaryService>> _loggerMock;
 
     [TestInitialize]
     public void TestInitialize()
@@ -38,7 +40,9 @@ public class SubsidiaryServiceTests
             BaseAddress = new Uri(BaseAddress)
         };
 
-        _sut = new SubsidiaryService(_httpClient, new NullLogger<SubsidiaryService>());
+        _loggerMock = new Mock<ILogger<SubsidiaryService>>();
+
+        _sut = new SubsidiaryService(_httpClient, _loggerMock.Object);
     }
 
     [TestMethod]
@@ -454,7 +458,7 @@ public class SubsidiaryServiceTests
     }
 
     [TestMethod]
-    public async Task GetSystemUserAndOrganisation_ThrowsProblemResponseException_When_NoSuccessResponse()
+    public async Task GetSystemUserAndOrganisation_ReturnsNullGuids_When_NoSuccessResponse()
     {
         // Arrange
         var apiResponse = _fixture.Create<ProblemDetails>();
@@ -473,9 +477,13 @@ public class SubsidiaryServiceTests
             }).Verifiable();
 
         // Act
-        var act = async () => await _sut.GetSystemUserAndOrganisation();
+        var result = await _sut.GetSystemUserAndOrganisation();
 
         // Assert
-        await act.Should().ThrowAsync<ProblemResponseException>();
+        result.Should().NotBeNull();
+        result.UserId.Should().BeNull();
+        result.OrganisationId.Should().BeNull();
+
+        _loggerMock.VerifyLog(x => x.LogError("Error occurred in GetSystemUserAndOrganisation call: Status code {StatusCode}, details {Details}", HttpStatusCode.BadRequest, apiResponse.Detail), Times.Once);
     }
 }
