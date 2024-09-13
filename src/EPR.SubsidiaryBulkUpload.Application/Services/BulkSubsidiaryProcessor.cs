@@ -51,7 +51,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         var subWithInvalidName = await subsidiariesAndOrgWith_InValidName.Select(s => s.Subsidiary).ToListAsync();
 
-        string message = "The subsidiary companies house number is in RPD, but the name is different\r\n Note, could this be because the company name has changed.";
+        string message = "The subsidiary company house number is in RPD, but the name is different\r\n Note, could this be because the company name has changed.";
         string errorMesssage = "Mismatched named subsidiaries found. Subsidiary reported : {Count}";
         /*Scenario 2:
         The subsidiary found in companies house. name not match*/
@@ -75,8 +75,8 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         /*Scenario 1:
         The subsidiary is not found in RPD and not in Local storage and not found on companies house*/
-        message = "found in RPD and not in Local storage and also not found on companies house.";
-        errorMesssage = "found in RPD, local storage and companies house database. Subsidiary reported : {Count}";
+        message = "Subsidirarys not found in RPD and not in Local storage and also not found on companies house.";
+        errorMesssage = "Subsidirarys not  found in RPD, local storage and companies house database. Subsidiary reported : {Count}";
         await ReportCompanies(subsidiariesNotAdded, userRequestModel, message, errorMesssage);
     }
 
@@ -88,7 +88,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             var newError = new UploadFileErrorModel()
             {
                 FileContent = company.organisation_name + "-" + company.companies_house_number,
-                Message = "The subsidiary not " + message
+                Message = message
             };
 
             notificationErrorList.Add(newError);
@@ -98,7 +98,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         var keyErrors = userRequestModel.GenerateKey(SubsidiaryBulkUploadMismatchedErrors);
         _notificationService.SetStatus(key, "Started reporting invalid subsidiaries.");
         _notificationService.SetErrorStatus(keyErrors, notificationErrorList);
-        _logger.LogInformation("Subsidiaries not " + logMessage, subsidiaries.Count().ToString());
+        _logger.LogInformation(logMessage, subsidiaries.Count().ToString());
     }
 
     private async Task<LinkOrganisationModel?> GetLinkModelForCompaniesHouseData(CompaniesHouseCompany subsidiary, OrganisationResponseModel parentOrg, Guid userId)
