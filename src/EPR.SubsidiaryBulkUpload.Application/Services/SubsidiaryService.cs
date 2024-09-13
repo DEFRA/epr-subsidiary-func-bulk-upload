@@ -153,7 +153,7 @@ public class SubsidiaryService : ISubsidiaryService
     public async Task<UserOrganisation> GetSystemUserAndOrganisation()
     {
         var response = await _httpClient.GetAsync($"{SystemUserAndOrganisationUri}");
-        if (response.StatusCode == HttpStatusCode.NoContent)
+        if (response.StatusCode == HttpStatusCode.NotFound)
         {
             return new();
         }

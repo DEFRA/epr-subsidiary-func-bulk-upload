@@ -1,45 +1,27 @@
-﻿namespace EPR.SubsidiaryBulkUpload.Application.Services;
+﻿using EPR.SubsidiaryBulkUpload.Application.Models;
 
-public class SystemDetailsProvider(
-    ISubsidiaryService subsidiaryService)
-    : ISystemDetailsProvider
+namespace EPR.SubsidiaryBulkUpload.Application.Services;
+
+public class SystemDetailsProvider : ISystemDetailsProvider
 {
-    private readonly ISubsidiaryService _subsidiaryService = subsidiaryService;
+    private readonly ISubsidiaryService _subsidiaryService;
+    private readonly Lazy<UserOrganisation> _lazySystemUserAndOrganisation;
 
-    private Guid? _systemUserId;
-    private Guid? _systemOrganisationId;
-
-    public Guid? SystemUserId
+    public SystemDetailsProvider(ISubsidiaryService subsidiaryService)
     {
-        get
-        {
-            if (_systemUserId is null)
-            {
-                GetSystemUserAndOrganisation().GetAwaiter().GetResult();
-            }
-
-            return _systemUserId;
-        }
+        _subsidiaryService = subsidiaryService;
+        _lazySystemUserAndOrganisation = new Lazy<UserOrganisation>(GetSystemUserAndOrganisation);
     }
 
-    public Guid? SystemOrganisationId
+    public Guid SystemUserId => _systemUserAndOrganisation.UserId ?? Guid.Empty;
+
+    public Guid SystemOrganisationId => _systemUserAndOrganisation.OrganisationId ?? Guid.Empty;
+
+    private UserOrganisation _systemUserAndOrganisation => _lazySystemUserAndOrganisation.Value;
+
+    private UserOrganisation GetSystemUserAndOrganisation()
     {
-        get
-        {
-            if (_systemOrganisationId is null)
-            {
-                GetSystemUserAndOrganisation().GetAwaiter().GetResult();
-            }
-
-            return _systemOrganisationId;
-        }
-    }
-
-    public async Task GetSystemUserAndOrganisation()
-    {
-        var result = await _subsidiaryService.GetSystemUserAndOrganisation();
-
-        _systemOrganisationId = result.OrganisationId;
-        _systemUserId = result.UserId;
+        var systemUserAndOrganisation = _subsidiaryService.GetSystemUserAndOrganisation().GetAwaiter().GetResult();
+        return systemUserAndOrganisation;
     }
 }
