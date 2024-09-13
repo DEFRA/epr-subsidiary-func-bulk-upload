@@ -12,6 +12,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
 public class CompaniesHouseFilePostService(
                 ISubmissionStatusClient submissionStatusClient,
                 IAntivirusClient antivirusClient,
+                ISystemDetailsProvider systemDetailsProvider,
                 IOptions<AntivirusApiOptions> antiVirusOptions,
                 IOptions<BlobStorageOptions> blobOptions,
                 IOptions<ApiOptions> apiOptions) : ICompaniesHouseFilePostService
@@ -19,6 +20,8 @@ public class CompaniesHouseFilePostService(
     public const string SubmissionPeriodText = "NA Companies house data File Upload";
     private readonly ISubmissionStatusClient submissionStatusClient = submissionStatusClient;
     private readonly IAntivirusClient antivirusClient = antivirusClient;
+    private readonly ISystemDetailsProvider systemDetailsProvider = systemDetailsProvider;
+
     private readonly AntivirusApiOptions antiVirusOptions = antiVirusOptions.Value;
     private readonly BlobStorageOptions blobOptions = blobOptions.Value;
     private readonly ApiOptions apiOptions = apiOptions.Value;
@@ -26,7 +29,9 @@ public class CompaniesHouseFilePostService(
     public async Task<HttpStatusCode> PostFileAsync(Stream stream, string fileName)
     {
         var fileId = Guid.NewGuid();
-        if(!Guid.TryParse(apiOptions.SystemUserId, out Guid systemUserId))
+
+        var systemUserId = systemDetailsProvider.SystemUserId;
+        if (systemUserId == Guid.Empty)
         {
             return HttpStatusCode.BadRequest;
         }

@@ -1,6 +1,5 @@
 ﻿using System.Net;
 using System.Text;
-using Azure;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Exceptions;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
@@ -433,7 +432,7 @@ public class SubsidiaryServiceTests
     }
 
     [TestMethod]
-    public async Task GetSystemUserAndOrganisation_ReturnsNullGuids_When_NoContent()
+    public async Task GetSystemUserAndOrganisation_ReturnsNullGuids_When_NotFound()
     {
         // Arrange
         var expectedUri = $"{BaseAddress}/{SystemUserAndOrganisationUri}";
@@ -445,7 +444,7 @@ public class SubsidiaryServiceTests
                 ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(new HttpResponseMessage
             {
-                StatusCode = HttpStatusCode.NoContent,
+                StatusCode = HttpStatusCode.NotFound,
             }).Verifiable();
 
         // Act
