@@ -59,11 +59,17 @@ public class CompaniesHouseImportFunction(ILogger<CompaniesHouseImportFunction> 
                 await _tableStorageProcessor.WriteToAzureTableStorage(records, tableName, partitionKey, storageConnectionString, BatchSize);
             }
 
-            _logger.LogInformation("C# Blob trigger processed {Count} records from csv blob {Name}", records.Count(), client.Name);
+            _logger.LogInformation("CompaniesHouseImport blob trigger processed {Count} records from csv blob {Name}", records.Count(), client.Name);
         }
         else
         {
-            _logger.LogInformation("C# Blob trigger function did not processed file name doesn't contain partition key {Name}", client.Name);
+            _logger.LogInformation("CompaniesHouseImport blob trigger function did not process file because name '{Name}' doesn't contain partition key", client.Name);
+        }
+
+        var isDeleted = await client.DeleteIfExistsAsync();
+        if (isDeleted?.Value == true)
+        {
+            _logger.LogInformation("Blob {Name} was deleted.", client.Name);
         }
     }
 }
