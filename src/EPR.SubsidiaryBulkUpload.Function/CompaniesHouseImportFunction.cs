@@ -13,8 +13,6 @@ namespace EPR.SubsidiaryBulkUpload.Function;
 
 public class CompaniesHouseImportFunction(ILogger<CompaniesHouseImportFunction> logger, ICsvProcessor csvProcessor, ITableStorageProcessor tableStorageProcessor, IOptions<TableStorageOptions> configOptions)
 {
-    private const int BatchSize = 100; // Maximum batch size for Azure Table Storage
-
     private readonly ICsvProcessor _csvProcessor = csvProcessor;
     private readonly ITableStorageProcessor _tableStorageProcessor = tableStorageProcessor;
     private readonly ILogger<CompaniesHouseImportFunction> _logger = logger;
@@ -42,7 +40,6 @@ public class CompaniesHouseImportFunction(ILogger<CompaniesHouseImportFunction> 
         {
             var content = downloadStreamingResult.Value.Content;
 
-            var storageConnectionString = _configOptions.ConnectionString;
             var tableName = _configOptions.CompaniesHouseOfflineDataTableName;
 
             var config = new CsvConfiguration(CultureInfo.InvariantCulture)
@@ -56,10 +53,12 @@ public class CompaniesHouseImportFunction(ILogger<CompaniesHouseImportFunction> 
 
             if (records.Any())
             {
-                await _tableStorageProcessor.WriteToAzureTableStorage(records, tableName, partitionKey, storageConnectionString, BatchSize);
+                await _tableStorageProcessor.WriteToAzureTableStorage(records, tableName, partitionKey);
             }
 
-            _logger.LogInformation("CompaniesHouseImport blob trigger processed {Count} records from csv blob {Name}", records.Count(), client.Name);
+            var deletedRecords = await _tableStorageProcessor.DeleteObsoleteRecords(tableName);
+
+            _logger.LogInformation("CompaniesHouseImport blob trigger processed {Count} records from csv blob {Name} and deleted {DeletedCount} records", records.Count(), client.Name, deletedRecords);
         }
         else
         {

@@ -59,7 +59,7 @@ public class TableStorageProcessorTests
             .ReturnsAsync(Mock.Of<Response>());
 
         // Act
-        await _processor.WriteToAzureTableStorage(records, "TestTable", "TestPartitionKey", "TestConnectionString", 2);
+        await _processor.WriteToAzureTableStorage(records, "TestTable", "TestPartitionKey");
 
         // Assert
         _mockTableClient.Verify(x => x.CreateIfNotExistsAsync(default), Times.Once);
@@ -89,7 +89,7 @@ public class TableStorageProcessorTests
 
         // Act & Assert
         await Assert.ThrowsExceptionAsync<Exception>(async () =>
-            await _processor.WriteToAzureTableStorage(records, "TestTable", "TestPartitionKey", "TestConnectionString", 2));
+            await _processor.WriteToAzureTableStorage(records, "TestTable", "TestPartitionKey"));
 
         _mockLogger.Verify(
             x => x.Log(
@@ -116,7 +116,7 @@ public class TableStorageProcessorTests
             .ReturnsAsync(Mock.Of<Response>());
 
         // Act
-        await _processor.WriteToAzureTableStorage(records, "TestTable", string.Empty, "TestConnectionString", 2);
+        await _processor.WriteToAzureTableStorage(records, "TestTable", string.Empty);
 
         // Assert
         _mockTableClient.Verify(x => x.UpsertEntityAsync(It.Is<CompanyHouseTableEntity>(e => e.PartitionKey == "EmptyPartitionKey" && e.RowKey == "Current Ingestion"), TableUpdateMode.Merge, default), Times.Once);
@@ -231,6 +231,18 @@ public class TableStorageProcessorTests
 
         // Assert
         actual.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task DeleteObsoleteRecords_Should_Return_Count()
+    {
+        // Arrange
+
+        // Act
+        var result = await _processor.DeleteObsoleteRecords("table");
+
+        // Assert
+        result.Should().Be(0);
     }
 
     [TestMethod]

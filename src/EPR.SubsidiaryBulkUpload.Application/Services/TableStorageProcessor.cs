@@ -10,22 +10,24 @@ public class TableStorageProcessor(
     ILogger<TableStorageProcessor> logger) : ITableStorageProcessor
 {
     public const string CurrentIngestion = "Current Ingestion";
+    public const string EmptyPartitionKey = "EmptyPartitionKey";
     public const string LatestCHData = "Latest CH Data";
     public const string Latest = "Latest";
+    public const string Previous = "Previous";
     public const string ToDelete = "To Delete";
-    private const int TableBatchSize = 100;
+    private const int BatchSize = 100; // Maximum batch size for Azure Table Storage
 
     private readonly TableServiceClient _tableServiceClient = tableServiceClient;
     private readonly ILogger<TableStorageProcessor> _logger = logger;
 
-    public async Task WriteToAzureTableStorage(IEnumerable<CompanyHouseTableEntity> records, string tableName, string partitionKey, string connectionString, int batchSize)
+    public async Task WriteToAzureTableStorage(IEnumerable<CompanyHouseTableEntity> records, string tableName, string partitionKey)
     {
         var tableClient = _tableServiceClient.GetTableClient(tableName);
         await tableClient.CreateIfNotExistsAsync();
 
         if (string.IsNullOrEmpty(partitionKey))
         {
-            partitionKey = "EmptyPartitionKey";
+            partitionKey = EmptyPartitionKey;
         }
 
         var currentIngestion = new CompanyHouseTableEntity
@@ -47,7 +49,7 @@ public class TableStorageProcessor(
 
                 batch.Add(new TableTransactionAction(TableTransactionActionType.UpdateReplace, record));
 
-                if (batch.Count >= batchSize)
+                if (batch.Count >= BatchSize)
                 {
                     await tableClient.SubmitTransactionAsync(batch);
                     batch.Clear();
@@ -109,7 +111,13 @@ public class TableStorageProcessor(
         return companiesHouseEntity;
     }
 
-    // https://medienstudio.net/development-en/delete-all-rows-from-azure-table-storage-as-fast-as-possible/
+    public async Task<int> DeleteObsoleteRecords(string tableName)
+    {
+        var deletedRecordsCount = 0;
+
+        return deletedRecordsCount;
+    }
+
     public async Task<int> DeleteByPartitionKey(string tableName, string partitionKey)
     {
         var deleted = 0;
@@ -143,7 +151,6 @@ public class TableStorageProcessor(
         return deleted;
     }
 
-    // https://medium.com/medialesson/deleting-all-rows-from-azure-table-storage-as-fast-as-possible-79e03937c331
     private static async Task<List<Response<IReadOnlyList<Response>>>> BatchManipulateEntities<TEntity>(
             TableClient tableClient,
             IEnumerable<TEntity> entities,
@@ -157,8 +164,8 @@ public class TableStorageProcessor(
             var items = group.AsEnumerable();
             while (items.Any())
             {
-                var batch = items.Take(TableBatchSize);
-                items = items.Skip(TableBatchSize);
+                var batch = items.Take(BatchSize);
+                items = items.Skip(BatchSize);
 
                 var actions = new List<TableTransactionAction>();
                 actions.AddRange(batch.Select(e => new TableTransactionAction(tableTransactionActionType, e)));
@@ -172,13 +179,27 @@ public class TableStorageProcessor(
 
     private async Task<string?> GetLatestPartitionKey(string tableName)
     {
+        return await GetPartitionRowValue(tableName, LatestCHData, Latest);
+    }
+
+    private async Task<string?> GetPartitionRowValue(string tableName, string partitionKey, string rowKey)
+    {
         var tableClient = _tableServiceClient.GetTableClient(tableName);
         await tableClient.CreateIfNotExistsAsync();
 
-        var tableResult = await tableClient.GetEntityAsync<CompanyHouseTableEntity>(
-            partitionKey: LatestCHData,
-            rowKey: Latest);
+        try
+        {
+            var tableResult = await tableClient.GetEntityAsync<CompanyHouseTableEntity>(
+                 partitionKey: partitionKey,
+                 rowKey: rowKey);
 
-        return tableResult?.Value?.Data;
+            return tableResult?.Value?.Data;
+        }
+        catch(RequestFailedException)
+        {
+            return null;
+        }
+
+        return null;
     }
 }
