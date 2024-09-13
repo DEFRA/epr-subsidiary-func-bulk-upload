@@ -1,7 +1,9 @@
-﻿using Azure;
+﻿using System.Linq.Expressions;
+using Azure;
 using Azure.Data.Tables;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services;
+using EPR.SubsidiaryBulkUpload.Application.UnitTests.Mocks;
 using Microsoft.Extensions.Logging;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
@@ -77,7 +79,7 @@ public class TableStorageProcessorTests
         // Arrange
         var records = new List<CompanyHouseTableEntity>
             {
-                new CompanyHouseTableEntity { CompanyNumber = "123" }
+                new() { CompanyNumber = "123" }
             };
 
         var exception = new Exception("Test Exception");
@@ -91,11 +93,11 @@ public class TableStorageProcessorTests
 
         _mockLogger.Verify(
             x => x.Log(
-            LogLevel.Error,
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => true),
-            exception,
-            It.Is<Func<It.IsAnyType, Exception, string>>((v, t) => true)),
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => true),
+                exception,
+                It.Is<Func<It.IsAnyType, Exception, string>>((v, t) => true)),
             Times.Once);
     }
 
@@ -105,7 +107,7 @@ public class TableStorageProcessorTests
         // Arrange
         var records = new List<CompanyHouseTableEntity>
             {
-                new CompanyHouseTableEntity { CompanyNumber = "123" }
+                new() { CompanyNumber = "123" }
             };
 
         _mockTableClient.Setup(x => x.CreateIfNotExistsAsync(default));
@@ -138,18 +140,53 @@ public class TableStorageProcessorTests
             .ReturnsAsync(partitionResponse.Object);
 
         _mockTableClient.Setup(tc =>
-            tc.GetEntityAsync<CompanyHouseTableEntity>(partitionData.Data, companyData.CompanyNumber, null, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(companyResponse.Object);
+            tc.QueryAsync<CompanyHouseTableEntity>(
+                It.IsAny<Expression<Func<CompanyHouseTableEntity, bool>>>(),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .Returns(new MockAsyncPageable<CompanyHouseTableEntity>(new List<CompanyHouseTableEntity> { companyData }));
 
         // Act
-        var actual = await _processor.GetByCompanyNumber(companyData.CompanyNumber, "table");
+        var actual = await _processor.GetByCompanyNumber("table", partitionData.Data);
 
         // Assert
         actual.Should().BeEquivalentTo(companyData);
     }
 
     [TestMethod]
-    public async Task ShouldGetCompaniesFromStorage_When_GetEntity_ReturnsNull()
+    public async Task ShouldGetCompaniesFromStorage_When_QueryAsync_ReturnsEmptyResult()
+    {
+        // Arrange
+        var companyData = _fixture.Create<CompanyHouseTableEntity>();
+        var partitionData = _fixture.Create<CompanyHouseTableEntity>();
+
+        var companyResponse = Enumerable.Empty<CompanyHouseTableEntity>().ToList();
+        var partitionResponse = new Mock<Response<CompanyHouseTableEntity>>();
+
+        partitionResponse.Setup(x => x.Value).Returns(partitionData);
+
+        _mockTableClient.Setup(tc =>
+            tc.GetEntityAsync<CompanyHouseTableEntity>(TableStorageProcessor.LatestCHData, TableStorageProcessor.Latest, null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(partitionResponse.Object);
+
+        _mockTableClient.Setup(tc =>
+            tc.QueryAsync<CompanyHouseTableEntity>(
+                It.IsAny<Expression<Func<CompanyHouseTableEntity, bool>>>(),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .Returns(new MockAsyncPageable<CompanyHouseTableEntity>(companyResponse));
+
+        // Act
+        var actual = await _processor.GetByCompanyNumber(companyData.CompanyNumber, "table");
+
+        // Assert
+        actual.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task ShouldGetCompaniesFromStorage_When_QueryAsync_ReturnsNull()
     {
         // Arrange
         var companyData = _fixture.Create<CompanyHouseTableEntity>();
@@ -165,8 +202,12 @@ public class TableStorageProcessorTests
             .ReturnsAsync(partitionResponse.Object);
 
         _mockTableClient.Setup(tc =>
-            tc.GetEntityAsync<CompanyHouseTableEntity>(partitionData.Data, companyData.CompanyNumber, null, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(companyResponse);
+            tc.QueryAsync<CompanyHouseTableEntity>(
+                It.IsAny<Expression<Func<CompanyHouseTableEntity, bool>>>(),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .Returns(null as AsyncPageable<CompanyHouseTableEntity>);
 
         // Act
         var actual = await _processor.GetByCompanyNumber(companyData.CompanyNumber, "table");
@@ -190,5 +231,91 @@ public class TableStorageProcessorTests
 
         // Assert
         actual.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task DeleteByPartitionKey_Should_Delete_CompaniesFromStorage()
+    {
+        // Arrange
+        const string partitionKey = "TestPartitionKey";
+        var companyData = _fixture
+            .Build<CompanyHouseTableEntity>()
+            .With(c => c.PartitionKey, () => partitionKey)
+            .CreateMany(3)
+            .ToList();
+
+        var transactionResponse = new Mock<Response<IReadOnlyList<Response>>>();
+        transactionResponse
+            .Setup(x => x.Value)
+            .Returns(new List<Response>
+            {
+                new Mock<Response>().Object,
+                new Mock<Response>().Object,
+                new Mock<Response>().Object
+            });
+
+        _mockTableClient
+            .Setup(tc => tc.QueryAsync<CompanyHouseTableEntity>(
+                It.IsAny<Expression<Func<CompanyHouseTableEntity, bool>>>(),
+                It.IsAny<int>(),
+                It.IsAny<IEnumerable<string>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(new MockAsyncPageable<CompanyHouseTableEntity>(companyData));
+
+        _mockTableClient
+            .Setup(tc => tc.SubmitTransactionAsync(It.IsAny<IEnumerable<TableTransactionAction>>(), default))
+            .ReturnsAsync(transactionResponse.Object);
+
+        // Act
+        var actual = await _processor.DeleteByPartitionKey(partitionKey, "table");
+
+        // Assert
+        actual.Should().Be(companyData.Count);
+
+        _mockLogger.VerifyLog(x => x.LogError(It.IsAny<string>()), Times.Never);
+    }
+
+    [TestMethod]
+    public async Task DeleteByPartitionKey_Should_Log_RequestFailedException_And_Return_Zero()
+    {
+        // Arrange
+        const string partitionKey = "TestPartitionKey";
+        var exception = new RequestFailedException("Request failed");
+
+        var companyData = _fixture
+            .Build<CompanyHouseTableEntity>()
+            .With(c => c.PartitionKey, () => partitionKey)
+            .CreateMany(3)
+            .ToList();
+
+        _mockTableClient
+            .Setup(tc => tc.QueryAsync<CompanyHouseTableEntity>(
+                It.IsAny<Expression<Func<CompanyHouseTableEntity, bool>>>(),
+                It.IsAny<int>(),
+                It.IsAny<IEnumerable<string>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(new MockAsyncPageable<CompanyHouseTableEntity>(companyData));
+
+        _mockTableClient
+            .Setup(tc => tc.SubmitTransactionAsync(It.IsAny<IEnumerable<TableTransactionAction>>(), default))
+            .Throws(exception);
+
+        // Act & Assert
+        // Act
+        var actual = await _processor.DeleteByPartitionKey(partitionKey, "table");
+
+        // Assert
+        actual.Should().Be(0);
+
+        _mockLogger.Verify(
+            x => x.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => true),
+                exception,
+                It.Is<Func<It.IsAnyType, Exception, string>>((v, t) => true)),
+            Times.Once);
+
+        _mockLogger.VerifyLog(x => x.LogError(It.IsAny<string>()), Times.Once);
     }
 }
