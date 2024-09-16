@@ -103,7 +103,6 @@ public class ParserClassTests
         errorRow.UploadFileErrorModel.Message.Should().Contain("subsidiary_id");
     }
 
-
     [TestMethod]
     public void ParseClass_Missing_Column_ReturnsError2()
     {

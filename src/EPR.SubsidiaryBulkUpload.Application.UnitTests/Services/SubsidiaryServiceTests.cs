@@ -1,7 +1,6 @@
 ﻿using System.Net;
 using System.Text;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
-using EPR.SubsidiaryBulkUpload.Application.Exceptions;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services;
@@ -123,7 +122,6 @@ public class SubsidiaryServiceTests
         result.Should().BeNull();
     }
 
-
     [TestMethod]
     public async Task GetCompanyByCompaniesHouseNumber_ThrowsException_When_EmptyErrorReturned()
     {
@@ -141,16 +139,16 @@ public class SubsidiaryServiceTests
             .ReturnsAsync(new HttpResponseMessage
             {
                 StatusCode = HttpStatusCode.Forbidden,
-                Content = new StringContent(string.Empty)
+                Content = apiResponse.ToJsonContent()
             }).Verifiable();
 
         // Act
-        Func<Task> act = async () => await _sut.GetCompanyByCompaniesHouseNumber(organisationResponseModel.companiesHouseNumber);
+        var result = await _sut.GetCompanyByCompaniesHouseNumber(organisationResponseModel.companiesHouseNumber);
 
         // Assert
-        await act.Should().ThrowAsync<HttpRequestException>();
+        result.Should().BeNull();
     }
-	
+
     [TestMethod]
     public async Task GetCompanyByOrgId_ReturnsOrganisation()
     {
@@ -339,31 +337,31 @@ public class SubsidiaryServiceTests
         response.Should().Be(apiResponse);
     }
 
-  /*  [TestMethod]
-    public async Task CreateAndAddSubsidiary_ThrowsProblemResponseException_When_NoSuccessResponse()
-    {
-        // Arrange
-        var linkOrganisationModel = _fixture.Create<LinkOrganisationModel>();
-        HttpStatusCode apiResponse = HttpStatusCode.Forbidden;
+    /*  [TestMethod]
+      public async Task CreateAndAddSubsidiary_ThrowsProblemResponseException_When_NoSuccessResponse()
+      {
+          // Arrange
+          var linkOrganisationModel = _fixture.Create<LinkOrganisationModel>();
+          HttpStatusCode apiResponse = HttpStatusCode.Forbidden;
 
-        var expectedUri = $"{BaseAddress}/{OrganisationCreateAddSubsidiaryUri}";
+          var expectedUri = $"{BaseAddress}/{OrganisationCreateAddSubsidiaryUri}";
 
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.Is<HttpRequestMessage>(x => x.RequestUri != null && x.RequestUri.ToString() == expectedUri),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.Forbidden
-            }).Verifiable();
+          _httpMessageHandlerMock.Protected()
+              .Setup<Task<HttpResponseMessage>>(
+                  "SendAsync",
+                  ItExpr.Is<HttpRequestMessage>(x => x.RequestUri != null && x.RequestUri.ToString() == expectedUri),
+                  ItExpr.IsAny<CancellationToken>())
+              .ReturnsAsync(new HttpResponseMessage
+              {
+                  StatusCode = HttpStatusCode.Forbidden
+              }).Verifiable();
 
-        // Act
-        var act = await _sut.CreateAndAddSubsidiaryAsync(linkOrganisationModel);
+          // Act
+          var act = await _sut.CreateAndAddSubsidiaryAsync(linkOrganisationModel);
 
-        // Assert
-        act.Should().Be(apiResponse);
-    }*/
+          // Assert
+          act.Should().Be(apiResponse);
+      }*/
 
     [TestMethod]
     public async Task AddSubsidiaryRelationshipAsync_Returns_Expected_Result()

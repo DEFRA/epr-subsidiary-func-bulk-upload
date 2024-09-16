@@ -5,11 +5,12 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services;
 
 public class CustomCsvReader : CsvReader
 {
-
     public CustomCsvReader(TextReader reader, IReaderConfiguration configuration)
         : base(reader, configuration)
     {
     }
+
+    public virtual List<string> InvalidHeaderErrors { get; set; }
 
     protected override void ValidateHeader(ClassMap map, List<InvalidHeader> invalidHeaders)
     {

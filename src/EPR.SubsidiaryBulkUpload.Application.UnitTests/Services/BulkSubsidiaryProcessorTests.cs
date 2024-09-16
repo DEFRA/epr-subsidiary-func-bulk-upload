@@ -127,8 +127,8 @@ public class BulkSubsidiaryProcessorTests
         // Assert
         inserts.Should().HaveCount(2);
     }
-	
-	[TestMethod]
+
+    [TestMethod]
     public async Task ShouldLinkSubsidiaryWhenItDoesNotExist()
     {
         // Arrange
