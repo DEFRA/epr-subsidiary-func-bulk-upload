@@ -12,13 +12,13 @@ public class CompaniesHouseDownloadFunction(ICompaniesHouseDownloadService compa
     [Function("CompaniesHouseDownloadFunction")]
     public async Task Run([TimerTrigger("%CompaniesHouseDownload:Schedule%", RunOnStartup = true)] TimerInfo timerInfo)
     {
-        _logger.LogInformation("C# Timer trigger function executed at: {ExecutionTime}", DateTime.Now);
+        _logger.LogInformation("Companies house data download starting at: {ExecutionTime}", DateTime.Now);
 
         await companiesHouseDownloadService.StartDownload();
 
         if (timerInfo.ScheduleStatus is not null)
         {
-            _logger.LogInformation("Next timer schedule at: {NextTime}", timerInfo.ScheduleStatus.Next);
+            _logger.LogInformation("Next ompanies house data download schedule at: {NextTime}", timerInfo.ScheduleStatus.Next);
         }
     }
 }
