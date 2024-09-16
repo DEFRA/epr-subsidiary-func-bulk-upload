@@ -51,10 +51,10 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         var subWithInvalidName = await subsidiariesAndOrgWith_InValidName.Select(s => s.Subsidiary).ToListAsync();
 
         string message = "The subsidiary company house number is in RPD, but the name is different\r\n Note, could this be because the company name has changed.";
-        string errorMesssage = "Mismatched named subsidiaries found. Subsidiary reported : {Count}";
+        string errorMessage = "Mismatched named subsidiaries found. Subsidiary reported : {Count}";
         /*Scenario 2:
         The subsidiary found in companies house. name not match*/
-        await ReportCompanies(subWithInvalidName, userRequestModel, message, errorMesssage);
+        await ReportCompanies(subWithInvalidName, userRequestModel, message, errorMessage);
 
         var newSubsidiariesToAdd = subsidiariesAndOrg.Where(co => co.SubsidiaryOrg == null)
             .SelectAwait(async subsidiary =>
@@ -75,8 +75,8 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         /*Scenario 1:
         The subsidiary is not found in RPD and not in Local storage and not found on companies house*/
         message = "Subsidiaries not found in RPD and not in Local storage and also not found on companies house.";
-        errorMesssage = "Subsidiaries not  found in RPD, local storage and companies house database. Subsidiary reported : {Count}";
-        await ReportCompanies(subsidiariesNotAdded, userRequestModel, message, errorMesssage);
+        errorMessage = "Subsidiaries not found in RPD, local storage and companies house database. Subsidiary reported : {Count}";
+        await ReportCompanies(subsidiariesNotAdded, userRequestModel, message, errorMessage);
     }
 
     private async Task ReportCompanies(IEnumerable<CompaniesHouseCompany> subsidiaries, UserRequestModel userRequestModel, string message, string logMessage)
