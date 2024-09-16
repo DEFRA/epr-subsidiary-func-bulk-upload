@@ -47,8 +47,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         report to Redis
          */
         var subsidiariesAndOrgWith_InValidName = subsidiariesAndOrg
-            .Where(sub => sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg.companiesHouseNumber && sub.Subsidiary.organisation_name != sub.SubsidiaryOrg.name);
-
+			.Where(sub => sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg?.companiesHouseNumber && sub.Subsidiary.organisation_name != sub.SubsidiaryOrg?.name);
         var subWithInvalidName = await subsidiariesAndOrgWith_InValidName.Select(s => s.Subsidiary).ToListAsync();
 
         string message = "The subsidiary company house number is in RPD, but the name is different\r\n Note, could this be because the company name has changed.";

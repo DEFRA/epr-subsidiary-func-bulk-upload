@@ -123,6 +123,34 @@ public class SubsidiaryServiceTests
         result.Should().BeNull();
     }
 
+
+    [TestMethod]
+    public async Task GetCompanyByCompaniesHouseNumber_ThrowsException_When_EmptyErrorReturned()
+    {
+        // Arrange
+        var apiResponse = _fixture.Create<ProblemDetails>();
+        var organisationResponseModel = _fixture.Create<OrganisationResponseModel>();
+
+        var expectedUri = $"{BaseAddress}/{OrganisationByCompanyHouseNumberUri}?companiesHouseNumber={organisationResponseModel.companiesHouseNumber}";
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(x => x.RequestUri != null && x.RequestUri.ToString() == expectedUri),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.Forbidden,
+                Content = new StringContent(string.Empty)
+            }).Verifiable();
+
+        // Act
+        Func<Task> act = async () => await _sut.GetCompanyByCompaniesHouseNumber(organisationResponseModel.companiesHouseNumber);
+
+        // Assert
+        await act.Should().ThrowAsync<HttpRequestException>();
+    }
+	
     [TestMethod]
     public async Task GetCompanyByOrgId_ReturnsOrganisation()
     {

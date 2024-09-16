@@ -103,6 +103,33 @@ public class ParserClassTests
         errorRow.UploadFileErrorModel.Message.Should().Contain("subsidiary_id");
     }
 
+
+    [TestMethod]
+    public void ParseClass_Missing_Column_ReturnsError2()
+    {
+        var rawSource = _listDataModel.Take(1).Select(s => $"{s.organisation_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
+        string[] all = [_csvHeaderWithMissingSubsidiaryId, .. rawSource];
+
+        using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
+
+        var returnValue = _sut.ParseWithHelper(stream, CsvConfigurations.BulkUploadCsvConfiguration);
+
+        // Assert
+        returnValue.Should().NotBeNull();
+
+        returnValue.ResponseClass.Should().NotBeNull();
+        returnValue.ResponseClass.isDone.Should().BeTrue();
+
+        returnValue.CompaniesHouseCompany.Should().NotBeNull();
+        returnValue.CompaniesHouseCompany.Count.Should().Be(1);
+
+        var errorRow = returnValue.CompaniesHouseCompany[0];
+
+        errorRow.UploadFileErrorModel.Should().NotBeNull();
+        errorRow.UploadFileErrorModel.FileContent.Should().Be("headererror-Invalid");
+        errorRow.UploadFileErrorModel.Message.Should().Contain("subsidiary_id");
+    }
+
     [TestMethod]
     public void ParseClass_ValidCsvFile_ReturnsCorrectData()
     {

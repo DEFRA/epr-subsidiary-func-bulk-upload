@@ -127,4 +127,58 @@ public class BulkSubsidiaryProcessorTests
         // Assert
         inserts.Should().HaveCount(2);
     }
+	
+	[TestMethod]
+    public async Task ShouldLinkSubsidiaryWhenItDoesNotExist()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+
+        var parent = _fixture.Create<CompaniesHouseCompany>();
+        var parentOrganisation = _fixture.Create<OrganisationResponseModel>();
+
+        var subsidiaries = _fixture.CreateMany<CompaniesHouseCompany>(1).ToArray();
+        var subsidiaryOrganisations = _fixture.CreateMany<OrganisationResponseModel>(1).ToArray();
+        var subsidiaryService = new Mock<ISubsidiaryService>();
+
+        subsidiaryOrganisations[0].companiesHouseNumber = subsidiaries[0].companies_house_number;
+        subsidiaryOrganisations[0].name = subsidiaries[0].organisation_name;
+
+        // Return a null OrganisationResponseModel to simulate the company not existing in RPD
+        subsidiaryService.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(subsidiaries[0].companies_house_number))
+            .ReturnsAsync((OrganisationResponseModel?)null);
+
+        subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(It.IsAny<int>(), It.IsAny<int>()))
+            .ReturnsAsync(false);
+
+        var inserts = new List<SubsidiaryAddModel>();
+        subsidiaryService.Setup(ss => ss.AddSubsidiaryRelationshipAsync(It.IsAny<SubsidiaryAddModel>()))
+            .Callback<SubsidiaryAddModel>(model => inserts.Add(model));
+
+        var companiesHouseDataProvider = new Mock<ICompaniesHouseDataProvider>();
+        companiesHouseDataProvider.Setup(chdp => chdp.SetCompaniesHouseData(It.IsAny<OrganisationModel>())).ReturnsAsync(true);
+
+        var notificationServiceMock = new Mock<INotificationService>();
+        var key = "testKey";
+        var errorsModel = new List<UploadFileErrorModel> { new UploadFileErrorModel() { FileLineNumber = 1, Message = "testMessage", IsError = true } };
+        notificationServiceMock.Setup(ss => ss.SetErrorStatus(key, errorsModel));
+
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+
+        var organisationId = Guid.NewGuid();
+        var userRequestModel = new UserRequestModel
+        {
+            UserId = userId,
+            OrganisationId = organisationId
+        };
+
+        // Act
+        await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
+
+        // Assert
+        inserts.Should().HaveCount(0);
+
+        // "At least once" because the implementation of Process (controversially) calls SetCompaniesHouseData twice due to how the code is structured
+        companiesHouseDataProvider.Verify(chdp => chdp.SetCompaniesHouseData(It.Is<OrganisationModel>(org => org.CompaniesHouseNumber == subsidiaries[0].companies_house_number)), Times.AtLeastOnce);
+    }
 }
