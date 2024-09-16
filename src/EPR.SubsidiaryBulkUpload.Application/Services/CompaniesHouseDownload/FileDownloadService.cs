@@ -15,6 +15,7 @@ public class FileDownloadService(HttpClient httpClient, ILogger<FileDownloadServ
 
         if (!string.IsNullOrEmpty(path))
         {
+            logger.LogInformation("Attempting to download {FilePath}", path);
             try
             {
                 if (!cancellation.IsCancellationRequested)
