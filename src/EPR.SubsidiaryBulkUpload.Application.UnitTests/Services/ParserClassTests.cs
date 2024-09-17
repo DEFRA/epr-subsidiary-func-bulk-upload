@@ -13,6 +13,7 @@ public class ParserClassTests
     private const string _csvHeader = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
     private const string _csvHeaderWithMissingSubsidiaryId = "organisation_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
     private const string _badHeader = "organisation,subsidiary,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
+    private const string _badHeaderWithExtras = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,invalid_item\n";
 
     private Fixture _fixture;
     private List<CompaniesHouseCompany> _listDataModel = null;
@@ -104,10 +105,11 @@ public class ParserClassTests
     }
 
     [TestMethod]
-    public void ParseClass_Missing_Column_ReturnsError2()
+    public void ParseClass_ExtraColumn_IsIgnored()
     {
-        var rawSource = _listDataModel.Take(1).Select(s => $"{s.organisation_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
-        string[] all = [_csvHeaderWithMissingSubsidiaryId, .. rawSource];
+        var rawSource = _listDataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
+
+        string[] all = [_badHeaderWithExtras, .. rawSource];
 
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
 
@@ -120,13 +122,25 @@ public class ParserClassTests
         returnValue.ResponseClass.isDone.Should().BeTrue();
 
         returnValue.CompaniesHouseCompany.Should().NotBeNull();
-        returnValue.CompaniesHouseCompany.Count.Should().Be(1);
+        returnValue.CompaniesHouseCompany.Count.Should().Be(2);
 
-        var errorRow = returnValue.CompaniesHouseCompany[0];
+        var parsedResult = returnValue.CompaniesHouseCompany;
 
-        errorRow.UploadFileErrorModel.Should().NotBeNull();
-        errorRow.UploadFileErrorModel.FileContent.Should().Be("headererror-Invalid");
-        errorRow.UploadFileErrorModel.Message.Should().Contain("subsidiary_id");
+        parsedResult[0].organisation_id.Should().Be("23123");
+        parsedResult[0].subsidiary_id.Should().Be(string.Empty);
+        parsedResult[0].organisation_name.Should().Be("OrgA");
+        parsedResult[0].companies_house_number.Should().Be("123456");
+        parsedResult[0].parent_child.Should().Be("Parent");
+        parsedResult[0].franchisee_licensee_tenant.Should().Be(string.Empty);
+        parsedResult[0].UploadFileErrorModel.Should().BeNull();
+
+        parsedResult[1].organisation_id.Should().Be("23123");
+        parsedResult[1].subsidiary_id.Should().Be("Sub1");
+        parsedResult[1].organisation_name.Should().Be("OrgB");
+        parsedResult[1].companies_house_number.Should().Be("654321");
+        parsedResult[1].parent_child.Should().Be("Child");
+        parsedResult[1].franchisee_licensee_tenant.Should().Be(string.Empty);
+        parsedResult[1].UploadFileErrorModel.Should().BeNull();
     }
 
     [TestMethod]

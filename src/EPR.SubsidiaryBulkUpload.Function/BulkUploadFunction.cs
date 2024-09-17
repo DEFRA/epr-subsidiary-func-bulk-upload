@@ -30,7 +30,8 @@ public class BulkUploadFunction
         var content = downloadStreamingResult.Value.Content;
         if (content == null)
         {
-            throw new InvalidDataException("Client streaming result is invalid or empty");
+            _logger.LogInformation("File without any data or invalid data");
+            return;
         }
 
         var metaData = downloadStreamingResult.Value.Details?.Metadata;
