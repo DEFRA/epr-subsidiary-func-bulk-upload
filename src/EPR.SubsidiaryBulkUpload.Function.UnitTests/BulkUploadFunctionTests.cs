@@ -109,4 +109,22 @@ public class BulkUploadFunctionTests
         // Assert
         _loggerMock.VerifyLog(x => x.LogInformation("Blob trigger stopped, missing userId or organisationId in the metadata for blob {Name}", CsvBlobName), Times.Once);
     }
+
+    [TestMethod]
+    public async Task BulkUploadFunction_Logs_Result_When_ContentIs_Missing()
+    {
+        // Arrange
+        var downloadStreamingDetails = BlobsModelBuilder.CreateBlobDownloadDetails();
+        var downloadStreamingResult = BlobsModelFactory.BlobDownloadStreamingResult(null, downloadStreamingDetails);
+
+        var response = Response.FromValue(downloadStreamingResult, new Mock<Response>().Object);
+        _blobClientMock.Setup(client => client.DownloadStreamingAsync(It.IsAny<BlobDownloadOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(response);
+
+        // Act
+        await _systemUnderTest.Run(_blobClientMock.Object);
+
+        // Assert
+        _loggerMock.VerifyLog(x => x.LogInformation("File without any data or invalid data"), Times.Once);
+    }
 }

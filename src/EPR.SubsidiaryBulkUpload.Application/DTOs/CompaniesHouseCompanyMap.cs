@@ -1,9 +1,11 @@
-﻿using System.Text;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using CsvHelper.Configuration;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 
 namespace EPR.SubsidiaryBulkUpload.Application.DTOs;
 
+[ExcludeFromCodeCoverage]
 public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
 {
     public CompaniesHouseCompanyMap()
@@ -31,7 +33,7 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
                 errors.Append("organisation_name is required.");
             }
 
-            if (string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.companies_house_number))))
+            if (string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.companies_house_number))) && string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.franchisee_licensee_tenant))))
             {
                 errors.Append("companies_house_number is required.");
             }
@@ -41,9 +43,13 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
                 errors.Append("parent_or_child is required.");
             }
 
-            if (string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.franchisee_licensee_tenant))))
+            if (!string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.franchisee_licensee_tenant))))
             {
-                // errors.Append("franchisee_licensee_tenant is required.");
+                var franchiseeVal = theRow.GetField(nameof(CompaniesHouseCompany.franchisee_licensee_tenant)).ToLower();
+                if (franchiseeVal != "yes" && franchiseeVal != "y")
+                {
+                    errors.Append("franchisee_licensee_tenant can only be blank or Yes or Y.");
+                }
             }
 
             errorsInRow = errors.ToString();

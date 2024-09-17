@@ -5,6 +5,14 @@
 Functions to handle bulk upload of subsidiary data.
 
 
+## Retry policy
+
+Polly is used to retry http requests. Policies are added to http clients in the in the `ConfigurationExtensions` class.
+
+**Important** - if a timeout policy is used, the http client timeout should not be set in `AddHttpClient`, otherwise a `TaskCanceledException` will be thrown and not caught by the policy.
+There is some good information on this [here](https://briancaos.wordpress.com/2020/12/16/httpclient-retry-on-http-timeout-with-polly-and-ihttpclientbuilder/)
+
+
 ## Running on a developer machine
 To run locally, create a file `local.settings.json`. This file is in `.gitignore`.
 
