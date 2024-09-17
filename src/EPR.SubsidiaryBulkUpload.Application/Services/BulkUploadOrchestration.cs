@@ -8,7 +8,6 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
 {
     private const string SubsidiaryBulkUploadProgress = "Subsidiary bulk upload progress";
     private const string SubsidiaryBulkUploadErrors = "Subsidiary bulk upload errors";
-    private const string SubsidiaryBulkUploadFileErrors = "Subsidiary bulk upload file is empty";
 
     private readonly IRecordExtraction recordExtraction;
     private readonly ISubsidiaryService organisationService;
@@ -40,22 +39,6 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
 
         _notificationService.SetStatus(key, "Error found in validation. Logging it in Redis storage");
         _notificationService.SetErrorStatus(keyErrors, notificationErrorList);
-    }
-
-    public async Task NotifyFileUpdates(UserRequestModel userRequestModel)
-    {
-        var key = userRequestModel.GenerateKey(SubsidiaryBulkUploadProgress);
-        var keyErrors = userRequestModel.GenerateKey(SubsidiaryBulkUploadFileErrors);
-        var fileError = new UploadFileErrorModel
-        {
-            Message = "Error found in upload file. Logging it in Redis storage",
-            FileContent = null,
-            IsError = true
-        };
-        var errorList = new List<UploadFileErrorModel>();
-        errorList.Add(fileError);
-        _notificationService.SetStatus(key, "Error found in upload file. Logging it in Redis storage");
-        _notificationService.SetErrorStatus(keyErrors, errorList);
     }
 
     public async Task Orchestrate(IEnumerable<CompaniesHouseCompany> data, UserRequestModel userRequestModel)
