@@ -29,10 +29,6 @@ public static class ConfigurationExtensions
 {
     public static IServiceCollection ConfigureOptions(this IServiceCollection services, IConfiguration configuration)
     {
-        /*
-        services.Configure<AntivirusApiOptions>(configuration.GetSection(AntivirusApiOptions.Section));
-        services.Configure<SubmissionStatusApiOptions>(configuration.GetSection(SubmissionStatusApiOptions.Section));
-        */
         services.Configure<ApiOptions>(configuration.GetSection(ApiOptions.SectionName));
         services.Configure<TableStorageOptions>(configuration.GetSection(TableStorageOptions.SectionName));
         services.Configure<RedisConfig>(configuration.GetSection(RedisConfig.SectionName));
@@ -55,28 +51,6 @@ public static class ConfigurationExtensions
 
     public static IServiceCollection AddHttpClients(this IServiceCollection services, IConfiguration configuration)
     {
-        // var sp = services.BuildServiceProvider();
-
-        /*
-        services.AddHttpClient<ISubmissionStatusApiClient, SubmissionStatusApiClient>((sp, c) =>
-        {
-            var submissionStatusApiOptions = sp.GetRequiredService<IOptions<SubmissionStatusApiOptions>>().Value;
-            c.BaseAddress = new Uri($"{submissionStatusApiOptions.BaseUrl}/v1/");
-            c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        });
-        */
-
-        /*
-        services.AddHttpClient<IAntivirusApiClient, AntivirusApiClient>((sp, client) =>
-        {
-            var options = sp.GetRequiredService<IOptions<AntivirusApiOptions>>().Value;
-
-            client.BaseAddress = new Uri($"{options.BaseUrl}/v1/");
-            client.Timeout = TimeSpan.FromSeconds(options.Timeout);
-            client.DefaultRequestHeaders.Add("OCP-APIM-Subscription-Key", options.SubscriptionKey);
-        }).AddHttpMessageHandler<TradeAntivirusApiAuthorizationHandler>();
-        */
-
         services.AddHttpClient<ISubsidiaryService, SubsidiaryService>((sp, c) =>
         {
             var config = sp.GetRequiredService<IOptions<ApiOptions>>().Value;

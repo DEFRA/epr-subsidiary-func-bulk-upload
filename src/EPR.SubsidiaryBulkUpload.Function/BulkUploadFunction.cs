@@ -27,10 +27,22 @@ public class BulkUploadFunction
         BlobClient client)
     {
         var downloadStreamingResult = await client.DownloadStreamingAsync();
-        var content = downloadStreamingResult.Value.Content
-            ?? throw new NullReferenceException("Client streaming result is null");
+        var content = downloadStreamingResult.Value.Content;
+        if (content == null)
+        {
+            _logger.LogInformation("File without any data or invalid data");
+            return;
+        }
 
         var metaData = downloadStreamingResult.Value.Details?.Metadata;
+
+        if (metaData is not null && metaData.Count > 0)
+        {
+            foreach (var metadataItem in metaData)
+            {
+                _logger.LogInformation("Blob {Name} has metadata {Key} {Value}", client.Name, metadataItem.Key, metadataItem.Value);
+            }
+        }
 
         var userGuid = metaData.Where(pair => pair.Key.Contains("userId"))
                         .Select(pair => pair.Value).FirstOrDefault();

@@ -13,6 +13,7 @@ public class ParserClassTests
     private const string _csvHeader = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
     private const string _csvHeaderWithMissingSubsidiaryId = "organisation_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
     private const string _badHeader = "organisation,subsidiary,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
+    private const string _badHeaderWithExtras = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,invalid_item\n";
 
     private Fixture _fixture;
     private List<CompaniesHouseCompany> _listDataModel = null;
@@ -29,7 +30,7 @@ public class ParserClassTests
         _listDataModel = new List<CompaniesHouseCompany>
             {
                 new() { organisation_id = "23123",  subsidiary_id = string.Empty, organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Parent", franchisee_licensee_tenant = string.Empty, Errors = string.Empty },
-                new() { organisation_id = "23123", subsidiary_id = "Sub1", organisation_name = "OrgB", companies_house_number = "654321", parent_child = "Child", franchisee_licensee_tenant = "License123", Errors = string.Empty }
+                new() { organisation_id = "23123", subsidiary_id = "Sub1", organisation_name = "OrgB", companies_house_number = "654321", parent_child = "Child", franchisee_licensee_tenant = string.Empty, Errors = string.Empty }
             };
 
         _sut = new ParserClass(_loggerMock.Object);
@@ -104,6 +105,45 @@ public class ParserClassTests
     }
 
     [TestMethod]
+    public void ParseClass_ExtraColumn_IsIgnored()
+    {
+        var rawSource = _listDataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
+
+        string[] all = [_badHeaderWithExtras, .. rawSource];
+
+        using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
+
+        var returnValue = _sut.ParseWithHelper(stream, CsvConfigurations.BulkUploadCsvConfiguration);
+
+        // Assert
+        returnValue.Should().NotBeNull();
+
+        returnValue.ResponseClass.Should().NotBeNull();
+        returnValue.ResponseClass.isDone.Should().BeTrue();
+
+        returnValue.CompaniesHouseCompany.Should().NotBeNull();
+        returnValue.CompaniesHouseCompany.Count.Should().Be(2);
+
+        var parsedResult = returnValue.CompaniesHouseCompany;
+
+        parsedResult[0].organisation_id.Should().Be("23123");
+        parsedResult[0].subsidiary_id.Should().Be(string.Empty);
+        parsedResult[0].organisation_name.Should().Be("OrgA");
+        parsedResult[0].companies_house_number.Should().Be("123456");
+        parsedResult[0].parent_child.Should().Be("Parent");
+        parsedResult[0].franchisee_licensee_tenant.Should().Be(string.Empty);
+        parsedResult[0].UploadFileErrorModel.Should().BeNull();
+
+        parsedResult[1].organisation_id.Should().Be("23123");
+        parsedResult[1].subsidiary_id.Should().Be("Sub1");
+        parsedResult[1].organisation_name.Should().Be("OrgB");
+        parsedResult[1].companies_house_number.Should().Be("654321");
+        parsedResult[1].parent_child.Should().Be("Child");
+        parsedResult[1].franchisee_licensee_tenant.Should().Be(string.Empty);
+        parsedResult[1].UploadFileErrorModel.Should().BeNull();
+    }
+
+    [TestMethod]
     public void ParseClass_ValidCsvFile_ReturnsCorrectData()
     {
         // Arrange
@@ -139,7 +179,7 @@ public class ParserClassTests
         parsedResult[1].organisation_name.Should().Be("OrgB");
         parsedResult[1].companies_house_number.Should().Be("654321");
         parsedResult[1].parent_child.Should().Be("Child");
-        parsedResult[1].franchisee_licensee_tenant.Should().Be("License123");
+        parsedResult[1].franchisee_licensee_tenant.Should().Be(string.Empty);
         parsedResult[1].UploadFileErrorModel.Should().BeNull();
     }
 

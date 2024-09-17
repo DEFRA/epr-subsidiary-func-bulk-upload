@@ -62,7 +62,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
                 subsidiaryGroupAndParentOrg.SubsidiaryGroup.Subsidiaries,
                 subsidiaryGroupAndParentOrg.SubsidiaryGroup.Parent,
                 subsidiaryGroupAndParentOrg.Org,
-                userRequestModel.UserId);
+                userRequestModel);
         }
 
         _notificationService.SetStatus(key, "Finished");

@@ -1,5 +1,8 @@
-﻿namespace EPR.SubsidiaryBulkUpload.Application.DTOs;
+﻿using System.Diagnostics.CodeAnalysis;
 
+namespace EPR.SubsidiaryBulkUpload.Application.DTOs;
+
+[ExcludeFromCodeCoverage]
 public class ParentAndSubsidiaries
 {
     public CompaniesHouseCompany Parent { get; set; }
