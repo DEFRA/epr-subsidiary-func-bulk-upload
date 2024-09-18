@@ -61,7 +61,7 @@ public class CompaniesHouseFilePostService(
             FileName = Path.GetFileNameWithoutExtension(fileName),
             Collection = SubmissionType.CompaniesHouse.GetDisplayName() + (antiVirusOptions.CollectionSuffix ?? string.Empty),
             UserId = systemUserId,
-            UserEmail = "system@dummy.com"
+            UserEmail = antiVirusOptions.NotificationEmail
         };
 
         var statusCode = await submissionStatusClient.CreateSubmissionAsync(submission)

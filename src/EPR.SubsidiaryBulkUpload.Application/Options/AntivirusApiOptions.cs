@@ -24,4 +24,6 @@ public class AntivirusApiOptions
     public bool EnableDirectAccess { get; set; } = false;
 
     public string CollectionSuffix { get; set; }
+
+    public string NotificationEmail { get; set; }
 }
