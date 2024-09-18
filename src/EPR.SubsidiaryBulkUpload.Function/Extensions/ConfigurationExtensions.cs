@@ -15,10 +15,12 @@ using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Polly;
 using Polly.Extensions.Http;
 using Polly.Retry;
+using Polly.Timeout;
 using StackExchange.Redis;
 
 [ExcludeFromCodeCoverage]
@@ -55,7 +57,8 @@ public static class ConfigurationExtensions
         {
             var options = sp.GetRequiredService<IOptions<SubmissionApiOptions>>().Value;
             client.BaseAddress = new Uri($"{options.BaseUrl}/v1/");
-        }).AddPolicyHandler(GetRetryPolicy());
+        })
+            .AddPolicyHandler((services, _) => GetRetryPolicy<SubmissionStatusClient>(services));
 
         var antivirusOptions = services.BuildServiceProvider().GetRequiredService<IOptions<AntivirusApiOptions>>().Value;
 
@@ -64,7 +67,8 @@ public static class ConfigurationExtensions
             client.BaseAddress = new Uri($"{antivirusOptions.BaseUrl}/v1/");
             client.Timeout = TimeSpan.FromSeconds(antivirusOptions.Timeout);
             client.DefaultRequestHeaders.Add("OCP-APIM-Subscription-Key", antivirusOptions.SubscriptionKey);
-        }).AddHttpMessageHandler<AntivirusApiAuthorizationHandler>();
+        })
+            .AddHttpMessageHandler<AntivirusApiAuthorizationHandler>();
 
         services.AddHttpClient<ISubsidiaryService, SubsidiaryService>((sp, c) =>
         {
@@ -72,7 +76,7 @@ public static class ConfigurationExtensions
             c.BaseAddress = new Uri(config.SubsidiaryServiceBaseUrl);
             c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         })
-        .AddHttpMessageHandler<AccountServiceAuthorisationHandler>();
+            .AddHttpMessageHandler<AccountServiceAuthorisationHandler>();
 
         var isDevMode = configuration.GetValue<bool?>("ApiConfig:DeveloperMode");
         if (isDevMode is true)
@@ -85,7 +89,9 @@ public static class ConfigurationExtensions
                 var apiKey = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{apiOptions.CompaniesHouseDirectApiKey}:"));
                 client.DefaultRequestHeaders.Add("Authorization", $"BASIC {apiKey}");
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            });
+            })
+            .AddPolicyHandler((services, _) => GetRetryPolicy<CompaniesHouseLookupDirectService>(services))
+            .AddPolicyHandler((services, _) => GetTimeoutPolicy(services));
         }
         else
         {
@@ -96,7 +102,9 @@ public static class ConfigurationExtensions
                 client.BaseAddress = new Uri(apiOptions.CompaniesHouseLookupBaseUrl);
                 client.Timeout = TimeSpan.FromSeconds(apiOptions.Timeout);
             })
-                .ConfigurePrimaryHttpMessageHandler(GetClientCertificateHandler);
+                .ConfigurePrimaryHttpMessageHandler(GetClientCertificateHandler)
+                .AddPolicyHandler((services, _) => GetRetryPolicy<CompaniesHouseLookupService>(services))
+                .AddPolicyHandler((services, _) => GetTimeoutPolicy(services));
         }
 
         return services;
@@ -158,7 +166,30 @@ public static class ConfigurationExtensions
         return handler;
     }
 
-    private static AsyncRetryPolicy<HttpResponseMessage> GetRetryPolicy() => HttpPolicyExtensions
-        .HandleTransientHttpError()
-        .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(3, retryAttempt)));
+    private static AsyncRetryPolicy<HttpResponseMessage> GetRetryPolicy<T>(IServiceProvider services) => HttpPolicyExtensions
+       .HandleTransientHttpError()
+       .Or<TimeoutRejectedException>()
+       .WaitAndRetryAsync(
+           3,
+           retryAttempt => TimeSpan.FromSeconds(Math.Pow(3, retryAttempt)),
+           onRetry: (outcome, timespan, retryAttempt, context) =>
+           {
+               services?.GetService<ILogger<T>>()?
+                   .LogWarning(
+                       "{Type} retry policy will attempt retry {Retry} in {Delay}ms after a transient error or timeout. {ExceptionMessage}",
+                       typeof(T).Name,
+                       retryAttempt,
+                       timespan.TotalMilliseconds,
+                       outcome?.Exception?.Message);
+           });
+
+    private static AsyncTimeoutPolicy<HttpResponseMessage> GetTimeoutPolicy(IServiceProvider sp)
+    {
+        var apiOptions = sp.GetRequiredService<IOptions<ApiOptions>>().Value;
+
+        return Policy
+            .TimeoutAsync<HttpResponseMessage>(
+                timeout: TimeSpan.FromSeconds(apiOptions.Timeout),
+                timeoutStrategy: TimeoutStrategy.Optimistic);
+    }
 }
