@@ -12,6 +12,7 @@ public class ParserClassTests
 {
     private const string _csvHeader = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
     private const string _csvHeaderWithMissingSubsidiaryId = "organisation_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
+    private const string _csvHeaderWithNullValues = "";
     private const string _badHeader = "organisation,subsidiary,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
     private const string _badHeaderWithExtras = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,invalid_item\n";
 
@@ -237,5 +238,31 @@ public class ParserClassTests
         returnValue.ResponseClass.Should().NotBeNull();
         returnValue.ResponseClass.isDone.Should().BeFalse();
         returnValue.ResponseClass.Messages.Should().NotBeNull();
+    }
+
+    [TestMethod]
+    public void ParseClass_Exception_EmptyFile_ReturnsMessage()
+    {
+        var rawSource = new string[] { };
+        string[] all = [_csvHeaderWithNullValues, .. rawSource];
+
+        using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
+
+        var returnValue = _sut.ParseWithHelper(stream, CsvConfigurations.BulkUploadCsvConfiguration);
+
+        // Assert
+        returnValue.Should().NotBeNull();
+
+        returnValue.ResponseClass.Should().NotBeNull();
+        returnValue.ResponseClass.isDone.Should().BeTrue();
+
+        returnValue.CompaniesHouseCompany.Should().NotBeNull();
+        returnValue.CompaniesHouseCompany.Count.Should().Be(1);
+
+        var errorRow = returnValue.CompaniesHouseCompany[0];
+
+        errorRow.UploadFileErrorModel.Should().NotBeNull();
+        errorRow.UploadFileErrorModel.FileContent.Should().Be("File is empty or in invalid format");
+        errorRow.UploadFileErrorModel.Message.Should().Contain("Invalid File");
     }
 }
