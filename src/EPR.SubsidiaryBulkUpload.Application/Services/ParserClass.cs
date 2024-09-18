@@ -43,7 +43,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             }
             catch (Exception ex)
             {
-                var errors = string.Join("\t", "Invalid File");
+                var errors = "Invalid File";
                 var fileErrors = new CompaniesHouseCompany
                 {
                     companies_house_number = string.Empty,
@@ -57,7 +57,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                         Message = errors
                     }
                 };
-                _logger.LogError("Iile is empty or in invalid format");
+                _logger.LogError("File is empty or in invalid format");
                 rows.Add(fileErrors);
                 return rows;
             }
