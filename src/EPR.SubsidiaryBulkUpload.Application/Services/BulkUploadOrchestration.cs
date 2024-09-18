@@ -6,6 +6,7 @@ using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 namespace EPR.SubsidiaryBulkUpload.Application.Services;
 public class BulkUploadOrchestration : IBulkUploadOrchestration
 {
+    private const string SubsidiaryBulkUploadInvalidDataErrors = "Subsidiary bulk upload File errors";
     private const string SubsidiaryBulkUploadProgress = "Subsidiary bulk upload progress";
     private const string SubsidiaryBulkUploadErrors = "Subsidiary bulk upload errors";
 
@@ -24,6 +25,20 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
 
     public async Task NotifyErrors(IEnumerable<CompaniesHouseCompany> data, UserRequestModel userRequestModel)
     {
+        if (data.Count() == 0)
+        {
+            var fileValidaditon = new List<UploadFileErrorModel>();
+            var newError = new UploadFileErrorModel()
+            {
+                FileContent = "No Record found in the file.",
+                Message = "No Record found in the file"
+            };
+            fileValidaditon.Add(newError);
+            _notificationService.SetStatus(userRequestModel.GenerateKey(SubsidiaryBulkUploadProgress), "Error found in validation. Logging it in Redis storage");
+            _notificationService.SetErrorStatus(userRequestModel.GenerateKey(SubsidiaryBulkUploadInvalidDataErrors), fileValidaditon);
+            return;
+        }
+
         var notificationErrorList = data
             .Where(e => e.UploadFileErrorModel != null)
             .Select(e => e.UploadFileErrorModel)

@@ -35,8 +35,32 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             using var csv = new CustomCsvReader(reader, configuration);
 
             csv.Context.RegisterClassMap<CompaniesHouseCompanyMap>();
-            csv.Read();
-            csv.ReadHeader();
+
+            try
+            {
+                csv.Read();
+                csv.ReadHeader();
+            }
+            catch (Exception ex)
+            {
+                var errors = string.Join("\t", "Invalid File");
+                var fileErrors = new CompaniesHouseCompany
+                {
+                    companies_house_number = string.Empty,
+                    organisation_name = string.Empty,
+                    organisation_id = string.Empty,
+                    parent_child = string.Empty,
+                    Errors = errors,
+                    UploadFileErrorModel = new Models.UploadFileErrorModel
+                    {
+                        FileContent = "File is empty or in invalid format",
+                        Message = errors
+                    }
+                };
+                _logger.LogError("Iile is empty or in invalid format");
+                rows.Add(fileErrors);
+                return rows;
+            }
 
             csv.ValidateHeader<FileUploadHeader>();
             if (csv.InvalidHeaderErrors is { Count: > 0 })

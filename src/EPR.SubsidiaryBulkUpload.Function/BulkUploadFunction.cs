@@ -44,7 +44,7 @@ public class BulkUploadFunction
             }
         }
 
-        var userGuid = metaData.Where(pair => pair.Key.Contains("userId"))
+        var userGuid = metaData.Where(pair => pair.Key.ToLower().Contains("userid"))
                         .Select(pair => pair.Value).FirstOrDefault();
 
         var hasUserId = Guid.TryParse(userGuid, out var userId);
