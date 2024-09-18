@@ -56,9 +56,7 @@ public class CompaniesHouseImportFunction(ILogger<CompaniesHouseImportFunction> 
                 await _tableStorageProcessor.WriteToAzureTableStorage(records, tableName, partitionKey);
             }
 
-            var deletedRecords = await _tableStorageProcessor.DeleteObsoleteRecords(tableName);
-
-            _logger.LogInformation("CompaniesHouseImport blob trigger processed {Count} records from csv blob {Name} and deleted {DeletedCount} records", records.Count(), client.Name, deletedRecords);
+            _logger.LogInformation("CompaniesHouseImport blob trigger processed {Count} records from csv blob {Name}", records.Count(), client.Name);
         }
         else
         {

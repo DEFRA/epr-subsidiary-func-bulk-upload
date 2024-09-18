@@ -1,10 +1,13 @@
-﻿using System.Linq.Expressions;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Linq.Expressions;
 using Azure;
 using Azure.Data.Tables;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using EPR.SubsidiaryBulkUpload.Application.UnitTests.Mocks;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 
@@ -42,7 +45,6 @@ public class TableStorageProcessorTests
                 new() { CompanyNumber = "456" }
             };
 
-        // Mock CreateIfNotExistsAsync and other calls
         _mockTableClient.Setup(x => x.CreateIfNotExistsAsync(default));
 
         _mockTableClient.Setup(x => x.UpsertEntityAsync(
@@ -70,7 +72,175 @@ public class TableStorageProcessorTests
             It.IsAny<CancellationToken>()),
             Times.Once);
         _mockTableClient.Verify(x => x.SubmitTransactionAsync(It.IsAny<IEnumerable<TableTransactionAction>>(), default), Times.Exactly(1));
+    }
+
+    [TestMethod]
+    public async Task WriteToAzureTableStorage_Should_Write_Status_Records()
+    {
+        // Arrange
+        var records = new List<CompanyHouseTableEntity>
+            {
+                new() { CompanyNumber = "123" },
+                new() { CompanyNumber = "456" }
+            };
+
+        var transactionResponse = new Mock<Response<IReadOnlyList<Response>>>();
+        transactionResponse
+            .Setup(x => x.Value)
+            .Returns(new List<Response>
+            {
+                new Mock<Response>().Object,
+                new Mock<Response>().Object
+            });
+
+        _mockTableClient.Setup(x => x.CreateIfNotExistsAsync(default));
+
+        var currentPartitionData = new CompanyHouseTableEntity
+        {
+            PartitionKey = TableStorageProcessor.LatestCHData,
+            RowKey = TableStorageProcessor.CurrentIngestion,
+            Data = "2024-09-01"
+        };
+        var latestPartitionData = new CompanyHouseTableEntity
+        {
+            PartitionKey = TableStorageProcessor.LatestCHData,
+            RowKey = TableStorageProcessor.ToDelete,
+            Data = "2024-08-01"
+        };
+        var previousPartitionData = new CompanyHouseTableEntity
+        {
+            PartitionKey = TableStorageProcessor.LatestCHData,
+            RowKey = TableStorageProcessor.ToDelete,
+            Data = "2024-07-01"
+        };
+        var toDeletePartitionData = new CompanyHouseTableEntity
+        {
+            PartitionKey = TableStorageProcessor.LatestCHData,
+            RowKey = TableStorageProcessor.ToDelete,
+            Data = "2024-06-01"
+        };
+
+        var toDeletePartitionResponse = new Mock<Response<CompanyHouseTableEntity>>();
+        toDeletePartitionResponse.Setup(x => x.Value).Returns(toDeletePartitionData);
+
+        var previousPartitionResponse = new Mock<Response<CompanyHouseTableEntity>>();
+        previousPartitionResponse.Setup(x => x.Value).Returns(previousPartitionData);
+
+        var latestPartitionResponse = new Mock<Response<CompanyHouseTableEntity>>();
+        latestPartitionResponse.Setup(x => x.Value).Returns(latestPartitionData);
+
+        var currentPartitionResponse = new Mock<Response<CompanyHouseTableEntity>>();
+        currentPartitionResponse.Setup(x => x.Value).Returns(currentPartitionData);
+
+        _mockTableClient.Setup(tc =>
+            tc.GetEntityAsync<CompanyHouseTableEntity>(TableStorageProcessor.LatestCHData, TableStorageProcessor.CurrentIngestion, null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(currentPartitionResponse.Object);
+        _mockTableClient.Setup(tc =>
+            tc.GetEntityAsync<CompanyHouseTableEntity>(TableStorageProcessor.LatestCHData, TableStorageProcessor.Latest, null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(latestPartitionResponse.Object);
+        _mockTableClient.Setup(tc =>
+            tc.GetEntityAsync<CompanyHouseTableEntity>(TableStorageProcessor.LatestCHData, TableStorageProcessor.Previous, null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(previousPartitionResponse.Object);
+        _mockTableClient.Setup(tc =>
+            tc.GetEntityAsync<CompanyHouseTableEntity>(TableStorageProcessor.LatestCHData, TableStorageProcessor.ToDelete, null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(toDeletePartitionResponse.Object);
+
+        _mockTableClient.Setup(tc =>
+            tc.QueryAsync<CompanyHouseTableEntity>(
+                It.IsAny<Expression<Func<CompanyHouseTableEntity, bool>>>(),
+                It.IsAny<int?>(),
+                It.IsAny<IEnumerable<string>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(new MockAsyncPageable<CompanyHouseTableEntity>(records));
+
+        _mockTableClient.Setup(x => x.DeleteEntityAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<ETag>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Mock.Of<Response>());
+
+        _mockTableClient
+            .Setup(tc => tc.SubmitTransactionAsync(It.IsAny<IEnumerable<TableTransactionAction>>(), default))
+            .ReturnsAsync(transactionResponse.Object);
+
+        // Act
+        await _processor.WriteToAzureTableStorage(records, "TestTable", "TestPartitionKey");
+
+        // Assert
+        _mockTableClient.Verify(x => x.UpsertEntityAsync(It.Is<CompanyHouseTableEntity>(e => e.RowKey == "Current Ingestion"), TableUpdateMode.Merge, It.IsAny<CancellationToken>()), Times.Once);
+        _mockTableClient.Verify(x => x.UpsertEntityAsync(It.Is<CompanyHouseTableEntity>(e => e.RowKey == "Previous"), TableUpdateMode.Merge, default), Times.Once);
         _mockTableClient.Verify(x => x.UpsertEntityAsync(It.Is<CompanyHouseTableEntity>(e => e.RowKey == "Latest"), TableUpdateMode.Merge, default), Times.Once);
+        _mockTableClient.Verify(x => x.UpsertEntityAsync(It.Is<CompanyHouseTableEntity>(e => e.RowKey == "To Delete"), TableUpdateMode.Merge, default), Times.Once);
+    }
+
+    [TestMethod]
+    public async Task WriteToAzureTableStorage_Should_Delete_Old_Data()
+    {
+        // Arrange
+        var records = new List<CompanyHouseTableEntity>
+            {
+                new() { CompanyNumber = "123" },
+                new() { CompanyNumber = "456" }
+            };
+
+        var transactionResponse = new Mock<Response<IReadOnlyList<Response>>>();
+        transactionResponse
+            .Setup(x => x.Value)
+            .Returns(new List<Response>
+            {
+                new Mock<Response>().Object,
+                new Mock<Response>().Object
+            });
+
+        _mockTableClient.Setup(x => x.CreateIfNotExistsAsync(default));
+
+        var toDeletePartitionData = new CompanyHouseTableEntity
+        {
+            PartitionKey = TableStorageProcessor.LatestCHData,
+            RowKey = TableStorageProcessor.ToDelete,
+            Data = "2024-06-01"
+        };
+
+        var toDeletePartitionResponse = new Mock<Response<CompanyHouseTableEntity>>();
+        toDeletePartitionResponse.Setup(x => x.Value).Returns(toDeletePartitionData);
+
+        _mockTableClient.Setup(tc =>
+            tc.GetEntityAsync<CompanyHouseTableEntity>(TableStorageProcessor.LatestCHData, TableStorageProcessor.ToDelete, null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(toDeletePartitionResponse.Object);
+
+        _mockTableClient.Setup(tc =>
+            tc.QueryAsync<CompanyHouseTableEntity>(
+                It.IsAny<Expression<Func<CompanyHouseTableEntity, bool>>>(),
+                It.IsAny<int?>(),
+                It.IsAny<IEnumerable<string>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(new MockAsyncPageable<CompanyHouseTableEntity>(records));
+
+        _mockTableClient.Setup(x => x.DeleteEntityAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<ETag>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Mock.Of<Response>());
+
+        _mockTableClient
+            .Setup(tc => tc.SubmitTransactionAsync(It.IsAny<IEnumerable<TableTransactionAction>>(), default))
+            .ReturnsAsync(transactionResponse.Object);
+
+        // Act
+        await _processor.WriteToAzureTableStorage(records, "TestTable", "TestPartitionKey");
+
+        // Assert
+        _mockTableClient.Verify(x => x.SubmitTransactionAsync(It.IsAny<IEnumerable<TableTransactionAction>>(), default), Times.Exactly(2));
+        _mockTableClient.Verify(
+            x => x.SubmitTransactionAsync(
+                It.Is<IEnumerable<TableTransactionAction>>(
+                    t => t.Count() == 2 &&
+                         t.ToArray()[0].ActionType == TableTransactionActionType.Delete &&
+                         t.ToArray()[1].ActionType == TableTransactionActionType.Delete),
+                default),
+            Times.Exactly(1));
     }
 
     [TestMethod]
@@ -90,6 +260,8 @@ public class TableStorageProcessorTests
         // Act & Assert
         await Assert.ThrowsExceptionAsync<Exception>(async () =>
             await _processor.WriteToAzureTableStorage(records, "TestTable", "TestPartitionKey"));
+
+        _mockTableClient.Verify(x => x.DeleteEntityAsync(It.Is<CompanyHouseTableEntity>(e => e.PartitionKey == "Latest CH Data" && e.RowKey == "Current Ingestion"), It.IsAny<ETag>(), default), Times.Once);
 
         _mockLogger.Verify(
             x => x.Log(
@@ -119,7 +291,7 @@ public class TableStorageProcessorTests
         await _processor.WriteToAzureTableStorage(records, "TestTable", string.Empty);
 
         // Assert
-        _mockTableClient.Verify(x => x.UpsertEntityAsync(It.Is<CompanyHouseTableEntity>(e => e.PartitionKey == "EmptyPartitionKey" && e.RowKey == "Current Ingestion"), TableUpdateMode.Merge, default), Times.Once);
+        _mockTableClient.Verify(x => x.UpsertEntityAsync(It.Is<CompanyHouseTableEntity>(e => e.PartitionKey == "Latest CH Data" && e.RowKey == "Current Ingestion" && e.Data == "EmptyPartitionKey"), TableUpdateMode.Merge, default), Times.Once);
     }
 
     [TestMethod]
@@ -231,18 +403,6 @@ public class TableStorageProcessorTests
 
         // Assert
         actual.Should().BeNull();
-    }
-
-    [TestMethod]
-    public async Task DeleteObsoleteRecords_Should_Return_Count()
-    {
-        // Arrange
-
-        // Act
-        var result = await _processor.DeleteObsoleteRecords("table");
-
-        // Assert
-        result.Should().Be(0);
     }
 
     [TestMethod]

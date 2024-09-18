@@ -7,6 +7,4 @@ public interface ITableStorageProcessor
     Task WriteToAzureTableStorage(IEnumerable<CompanyHouseTableEntity> records, string tableName, string partitionKey);
 
     Task<CompanyHouseTableEntity?> GetByCompanyNumber(string companiesHouseNumber, string tableName);
-
-    Task<int> DeleteObsoleteRecords(string tableName);
 }

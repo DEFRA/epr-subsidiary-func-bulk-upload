@@ -32,8 +32,9 @@ public class TableStorageProcessor(
 
         var currentIngestion = new CompanyHouseTableEntity
         {
-            PartitionKey = partitionKey,
-            RowKey = CurrentIngestion
+            PartitionKey = LatestCHData,
+            RowKey = CurrentIngestion,
+            Data = partitionKey
         };
 
         try
@@ -61,16 +62,7 @@ public class TableStorageProcessor(
                 await tableClient.SubmitTransactionAsync(batch);
             }
 
-            var latestData = new CompanyHouseTableEntity
-            {
-                PartitionKey = LatestCHData,
-                RowKey = Latest,
-                Data = partitionKey
-            };
-
-            await tableClient.UpsertEntityAsync(latestData);
-
-            await tableClient.DeleteEntityAsync(currentIngestion);
+            await CleanupIngestionTable(tableClient);
 
             _logger.LogInformation("C# Table storage processed {Count} records from csv storage table {Name}", records.Count(), tableName);
         }
@@ -89,13 +81,13 @@ public class TableStorageProcessor(
 
         try
         {
-            var partitionKey = await GetLatestPartitionKey(tableName);
+            var tableClient = _tableServiceClient.GetTableClient(tableName);
+            await tableClient.CreateIfNotExistsAsync();
+
+            var partitionKey = await GetLatestPartitionKey(tableClient);
 
             if (partitionKey != null)
             {
-                var tableClient = _tableServiceClient.GetTableClient(tableName);
-                await tableClient.CreateIfNotExistsAsync();
-
                 var result = tableClient.QueryAsync<CompanyHouseTableEntity>(
                     filter: e => e.PartitionKey == partitionKey && e.RowKey == companiesHouseNumber);
 
@@ -109,13 +101,6 @@ public class TableStorageProcessor(
         }
 
         return companiesHouseEntity;
-    }
-
-    public async Task<int> DeleteObsoleteRecords(string tableName)
-    {
-        var deletedRecordsCount = 0;
-
-        return deletedRecordsCount;
     }
 
     public async Task<int> DeleteByPartitionKey(string tableName, string partitionKey)
@@ -132,11 +117,13 @@ public class TableStorageProcessor(
                     select: new List<string> { "PartitionKey", "RowKey" },
                     maxPerPage: 1000);
 
+            var temp = entities.AsPages();
+
             await entities.AsPages()
                 .ForEachAwaitAsync(async page =>
                 {
                     var responses = await BatchManipulateEntities(tableClient, page.Values, TableTransactionActionType.Delete).ConfigureAwait(false);
-                    deleted += responses.Sum(response => response.Value.Count);
+                    deleted += responses.Sum(response => response?.Value?.Count ?? 0);
                 });
         }
         catch (RequestFailedException fex)
@@ -177,16 +164,8 @@ public class TableStorageProcessor(
         return responses;
     }
 
-    private async Task<string?> GetLatestPartitionKey(string tableName)
+    private static async Task<string?> GetPartitionRowValue(TableClient tableClient, string partitionKey, string rowKey)
     {
-        return await GetPartitionRowValue(tableName, LatestCHData, Latest);
-    }
-
-    private async Task<string?> GetPartitionRowValue(string tableName, string partitionKey, string rowKey)
-    {
-        var tableClient = _tableServiceClient.GetTableClient(tableName);
-        await tableClient.CreateIfNotExistsAsync();
-
         try
         {
             var tableResult = await tableClient.GetEntityAsync<CompanyHouseTableEntity>(
@@ -195,11 +174,113 @@ public class TableStorageProcessor(
 
             return tableResult?.Value?.Data;
         }
-        catch(RequestFailedException)
+        catch (RequestFailedException)
         {
             return null;
         }
 
         return null;
+    }
+
+    private static async Task UpsertPartitionRowValue(TableClient tableClient, string partitionKey, string rowKey, string value)
+    {
+        await tableClient.UpsertEntityAsync(new CompanyHouseTableEntity
+        {
+            PartitionKey = partitionKey,
+            RowKey = rowKey,
+            Data = value
+        });
+    }
+
+    private static async Task<string?> GetLatestPartitionKey(TableClient tableClient)
+    {
+        return await GetPartitionRowValue(tableClient, LatestCHData, Latest);
+    }
+
+    private async Task<int> CleanupIngestionTable(TableClient tableClient)
+    {
+        var deletedRecordsCount = 0;
+
+        /*
+         * Acceptance criteria:
+            Scenario #1
+                Older companies house data is removed from table storage
+                When the CH data ingestion is completed
+                Then the older (over 1 month old) will be deleted
+             Example
+                I have June 24 data in table storage
+                I have July 24 data in table storage
+                When I import August 24, I will delete June 24 data from table storage
+
+            [Done] Scenario #2
+                Companies house import file deleted
+                    When the CH data ingestion is completed
+                    Then the CH data file will be deleted from table storage
+
+         * Notes
+         The partition keys and row keys for the additional keys required:
+            Companies house data Previous data ( the previous data held in memory)
+                Partition key:  Latest CH Data
+                Row key: Previous
+                Data csv of the previous months data
+            Companies house data Previous data to be deleted ( the previous data held in memory to be deleted)
+                Partition key:  Latest CH Data
+                Row key: To Delete
+                Data csv of the previous months data to be deleted
+            [Done] Companies house data currently being ingested
+                Partition key:  Latest CH Data
+                Row key : Current Ingestion
+                Data The latest companies house date.
+                So for file BasicCompanyData-2024-07-01.csv, the data will be 2024-07-01
+            When starting to import the CH data use the data in this manner:
+                Once the data has been successfully ingested:
+                    Delete the partition defined in Latest CH Data -> To Delete
+                    Set the Latest CH Data -> To Delete to the value in Latest CH Data -> Previous.
+                    Set the Latest CH Data -> Previous. to the value in Latest CH Data -> Latest.
+                    [Done] Set the value in Latest CH Data -> Latest to the value in Latest CH Data -> Current Ingestion.
+                    [Done] Delete the row for the current ingested  CH Data -> Current Ingestion.
+                If there is an error during the ingestion remove the row  CH Data -> Current Ingestion
+         */
+
+        var currentPartitionValue = await GetPartitionRowValue(tableClient, LatestCHData, CurrentIngestion);
+        var latestPartitionValue = await GetPartitionRowValue(tableClient, LatestCHData, Latest);
+        var previousPartitionValue = await GetPartitionRowValue(tableClient, LatestCHData, Previous);
+        var toDeletePartitionValue = await GetPartitionRowValue(tableClient, LatestCHData, ToDelete);
+
+        if (toDeletePartitionValue is not null)
+        {
+            deletedRecordsCount = await DeleteByPartitionKey(tableClient.Name, toDeletePartitionValue);
+
+            await tableClient.DeleteEntityAsync(new CompanyHouseTableEntity
+            {
+                PartitionKey = LatestCHData,
+                RowKey = ToDelete
+            });
+
+            _logger.LogInformation("C# Table storage deleted {DeletedCount} records from csv storage table {Name}", deletedRecordsCount, tableClient.Name);
+        }
+
+        if (previousPartitionValue is not null)
+        {
+            await UpsertPartitionRowValue(tableClient, LatestCHData, ToDelete, previousPartitionValue);
+        }
+
+        if (latestPartitionValue is not null)
+        {
+            await UpsertPartitionRowValue(tableClient, LatestCHData, Previous, latestPartitionValue);
+        }
+
+        if (currentPartitionValue is not null)
+        {
+            await UpsertPartitionRowValue(tableClient, LatestCHData, Latest, currentPartitionValue);
+        }
+
+        await tableClient.DeleteEntityAsync(new CompanyHouseTableEntity
+        {
+            PartitionKey = LatestCHData,
+            RowKey = CurrentIngestion
+        });
+
+        return deletedRecordsCount;
     }
 }
