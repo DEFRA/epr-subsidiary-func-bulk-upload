@@ -1,10 +1,14 @@
 ﻿namespace EPR.SubsidiaryBulkUpload.Function.Extensions;
 
+using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using Azure.Core;
 using EPR.SubsidiaryBulkUpload.Application.Configs;
 using EPR.SubsidiaryBulkUpload.Application.Handlers;
 using EPR.SubsidiaryBulkUpload.Application.Options;
@@ -13,7 +17,11 @@ using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Polly;
+using Polly.Extensions.Http;
+using Polly.Timeout;
 using StackExchange.Redis;
 
 [ExcludeFromCodeCoverage]
@@ -21,10 +29,6 @@ public static class ConfigurationExtensions
 {
     public static IServiceCollection ConfigureOptions(this IServiceCollection services, IConfiguration configuration)
     {
-        /*
-        services.Configure<AntivirusApiOptions>(configuration.GetSection(AntivirusApiOptions.Section));
-        services.Configure<SubmissionStatusApiOptions>(configuration.GetSection(SubmissionStatusApiOptions.Section));
-        */
         services.Configure<ApiOptions>(configuration.GetSection(ApiOptions.SectionName));
         services.Configure<TableStorageOptions>(configuration.GetSection(TableStorageOptions.SectionName));
         services.Configure<RedisConfig>(configuration.GetSection(RedisConfig.SectionName));
@@ -47,28 +51,6 @@ public static class ConfigurationExtensions
 
     public static IServiceCollection AddHttpClients(this IServiceCollection services, IConfiguration configuration)
     {
-        // var sp = services.BuildServiceProvider();
-
-        /*
-        services.AddHttpClient<ISubmissionStatusApiClient, SubmissionStatusApiClient>((sp, c) =>
-        {
-            var submissionStatusApiOptions = sp.GetRequiredService<IOptions<SubmissionStatusApiOptions>>().Value;
-            c.BaseAddress = new Uri($"{submissionStatusApiOptions.BaseUrl}/v1/");
-            c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        });
-        */
-
-        /*
-        services.AddHttpClient<IAntivirusApiClient, AntivirusApiClient>((sp, client) =>
-        {
-            var options = sp.GetRequiredService<IOptions<AntivirusApiOptions>>().Value;
-
-            client.BaseAddress = new Uri($"{options.BaseUrl}/v1/");
-            client.Timeout = TimeSpan.FromSeconds(options.Timeout);
-            client.DefaultRequestHeaders.Add("OCP-APIM-Subscription-Key", options.SubscriptionKey);
-        }).AddHttpMessageHandler<TradeAntivirusApiAuthorizationHandler>();
-        */
-
         services.AddHttpClient<ISubsidiaryService, SubsidiaryService>((sp, c) =>
         {
             var config = sp.GetRequiredService<IOptions<ApiOptions>>().Value;
@@ -88,7 +70,9 @@ public static class ConfigurationExtensions
                 var apiKey = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{apiOptions.CompaniesHouseDirectApiKey}:"));
                 client.DefaultRequestHeaders.Add("Authorization", $"BASIC {apiKey}");
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            });
+            })
+                .AddPolicyHandler((services, _) => GetRetryPolicy<CompaniesHouseLookupDirectService>(services))
+                .AddPolicyHandler((services, _) => GetTimeoutPolicy(services));
         }
         else
         {
@@ -97,9 +81,10 @@ public static class ConfigurationExtensions
                 var apiOptions = sp.GetRequiredService<IOptions<ApiOptions>>().Value;
 
                 client.BaseAddress = new Uri(apiOptions.CompaniesHouseLookupBaseUrl);
-                client.Timeout = TimeSpan.FromSeconds(apiOptions.Timeout);
             })
-                .ConfigurePrimaryHttpMessageHandler(GetClientCertificateHandler);
+                .ConfigurePrimaryHttpMessageHandler(GetClientCertificateHandler)
+                .AddPolicyHandler((services, _) => GetRetryPolicy<CompaniesHouseLookupService>(services))
+                .AddPolicyHandler((services, _) => GetTimeoutPolicy(services));
         }
 
         return services;
@@ -150,5 +135,32 @@ public static class ConfigurationExtensions
                 Convert.FromBase64String(sp.GetRequiredService<IOptions<ApiOptions>>().Value.Certificate)));
 
         return handler;
+    }
+
+    private static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy<T>(IServiceProvider services) => HttpPolicyExtensions
+        .HandleTransientHttpError()
+        .Or<TimeoutRejectedException>()
+        .WaitAndRetryAsync(
+            3,
+            retryAttempt => TimeSpan.FromSeconds(Math.Pow(3, retryAttempt)),
+            onRetry: (outcome, timespan, retryAttempt, context) =>
+            {
+                services?.GetService<ILogger<T>>()?
+                    .LogWarning(
+                        "{Type} retry policy will attempt retry {Retry} in {Delay}ms after a transient error or timeout. {ExceptionMessage}",
+                        typeof(T).Name,
+                        retryAttempt,
+                        timespan.TotalMilliseconds,
+                        outcome?.Exception?.Message);
+            });
+
+    private static IAsyncPolicy<HttpResponseMessage> GetTimeoutPolicy(IServiceProvider sp)
+    {
+        var apiOptions = sp.GetRequiredService<IOptions<ApiOptions>>().Value;
+
+        return Policy
+            .TimeoutAsync<HttpResponseMessage>(
+                timeout: TimeSpan.FromSeconds(apiOptions.Timeout),
+                timeoutStrategy: TimeoutStrategy.Optimistic);
     }
 }

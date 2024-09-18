@@ -1,7 +1,6 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
-using EPR.SubsidiaryBulkUpload.Application.Exceptions;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -41,8 +40,10 @@ public class SubsidiaryService : ISubsidiaryService
 
             if (problemDetails != null)
             {
-                throw new ProblemResponseException(problemDetails, response.StatusCode);
+                _logger.LogError("Failed to add subsidiary relationship for Parent: {Detail} Subsidiary: {StatusCode}", problemDetails.Detail, response.StatusCode);
             }
+
+            return null;
         }
 
         response.EnsureSuccessStatusCode();
@@ -64,8 +65,10 @@ public class SubsidiaryService : ISubsidiaryService
 
             if (problemDetails != null)
             {
-                throw new ProblemResponseException(problemDetails, response.StatusCode);
+                _logger.LogError("Error occurred in GetSubsidiaryRelationshipAsync call: {Detail} : {StatusCode}", problemDetails.Detail, response.StatusCode);
             }
+
+            return false;
         }
 
         var orgResponse = await response.Content.ReadFromJsonAsync<bool>();
@@ -87,8 +90,10 @@ public class SubsidiaryService : ISubsidiaryService
 
             if (problemDetails != null)
             {
-                throw new ProblemResponseException(problemDetails, response.StatusCode);
+                _logger.LogError("Error occurred in GetCompanyByCompaniesHouseNumber call: {Detail} : {StatusCode}", problemDetails.Detail, response.StatusCode);
             }
+
+            return null;
         }
 
         response.EnsureSuccessStatusCode();
@@ -97,7 +102,7 @@ public class SubsidiaryService : ISubsidiaryService
         return orgResponse.FirstOrDefault();
     }
 
-    public async Task<string?> CreateAndAddSubsidiaryAsync(LinkOrganisationModel linkOrganisationModel)
+    public async Task<HttpStatusCode> CreateAndAddSubsidiaryAsync(LinkOrganisationModel linkOrganisationModel)
     {
         string json = JsonConvert.SerializeObject(linkOrganisationModel);
 
@@ -112,14 +117,10 @@ public class SubsidiaryService : ISubsidiaryService
             if (problemDetails != null)
             {
                 _logger.LogError("Failed to create and add subsidiary for Parent: {Parent} Subsidiary: {Subsidiary}", linkOrganisationModel.ParentOrganisationId, linkOrganisationModel.Subsidiary.Name);
-
-                throw new ProblemResponseException(problemDetails, response.StatusCode);
             }
         }
 
-        response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadAsStringAsync();
-        return result;
+        return response.StatusCode;
     }
 
     public async Task<string?> AddSubsidiaryRelationshipAsync(SubsidiaryAddModel subsidiaryAddModel)
@@ -136,15 +137,12 @@ public class SubsidiaryService : ISubsidiaryService
             if (problemDetails != null)
             {
                 _logger.LogError("Failed to add subsidiary relationship for Parent: {Parent} Subsidiary: {Subsidiary}", subsidiaryAddModel.ParentOrganisationId, subsidiaryAddModel.ChildOrganisationId);
-
-                throw new ProblemResponseException(problemDetails, response.StatusCode);
             }
+
+            return null;
         }
 
-        response.EnsureSuccessStatusCode();
-
         var result = await response.Content.ReadAsStringAsync();
-
         return result;
     }
 }

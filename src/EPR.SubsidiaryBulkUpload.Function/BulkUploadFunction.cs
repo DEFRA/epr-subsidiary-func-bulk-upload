@@ -1,6 +1,5 @@
-﻿using System.Globalization;
-using Azure.Storage.Blobs;
-using CsvHelper.Configuration;
+﻿using Azure.Storage.Blobs;
+using EPR.SubsidiaryBulkUpload.Application.CsvReaderConfiguration;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Services;
@@ -28,10 +27,22 @@ public class BulkUploadFunction
         BlobClient client)
     {
         var downloadStreamingResult = await client.DownloadStreamingAsync();
-        var content = downloadStreamingResult.Value.Content
-            ?? throw new NullReferenceException("Client streaming result is null");
+        var content = downloadStreamingResult.Value.Content;
+        if (content == null)
+        {
+            _logger.LogInformation("File without any data or invalid data");
+            return;
+        }
 
         var metaData = downloadStreamingResult.Value.Details?.Metadata;
+
+        if (metaData is not null && metaData.Count > 0)
+        {
+            foreach (var metadataItem in metaData)
+            {
+                _logger.LogInformation("Blob {Name} has metadata {Key} {Value}", client.Name, metadataItem.Key, metadataItem.Value);
+            }
+        }
 
         var userGuid = metaData.Where(pair => pair.Key.Contains("userId"))
                         .Select(pair => pair.Value).FirstOrDefault();
@@ -42,26 +53,12 @@ public class BulkUploadFunction
             _logger.LogWarning("Missing userId metadata for blob {Name}", client.Name);
         }
 
-        var configuration = new CsvConfiguration(CultureInfo.InvariantCulture)
-        {
-            PrepareHeaderForMatch = args => args.Header.ToLower(),
-            HasHeaderRecord = true,
-            IgnoreBlankLines = false,
-            MissingFieldFound = null,
-            Delimiter = ",",
-            TrimOptions = TrimOptions.Trim,
-            HeaderValidated = (args) =>
-            {
-                ConfigurationFunctions.HeaderValidated(args);
-            },
-            BadDataFound = null
-        };
-
         var userRequestModel = metaData.ToUserRequestModel();
 
         if (userRequestModel != null)
         {
-            var records = await _csvProcessor.ProcessStreamWithMapping<CompaniesHouseCompany, CompaniesHouseCompanyMap>(content, configuration);
+            var records = await _csvProcessor.ProcessStreamWithMapping<CompaniesHouseCompany, CompaniesHouseCompanyMap>(content, CsvConfigurations.BulkUploadCsvConfiguration);
+
             await _orchestration.NotifyErrors(records, userRequestModel);
             await _orchestration.Orchestrate(records, userRequestModel);
 

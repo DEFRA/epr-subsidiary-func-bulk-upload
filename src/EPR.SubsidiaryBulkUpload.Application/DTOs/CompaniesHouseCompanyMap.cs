@@ -1,9 +1,11 @@
-﻿using System.Text;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using CsvHelper.Configuration;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 
 namespace EPR.SubsidiaryBulkUpload.Application.DTOs;
 
+[ExcludeFromCodeCoverage]
 public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
 {
     public CompaniesHouseCompanyMap()
@@ -23,32 +25,31 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
 
             if (string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.organisation_id))))
             {
-                errors.Append("Organisation_id is required.");
-            }
-
-            if (string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.subsidiary_id))))
-            {
-                // errors.Append("/nSubsidiary_id is required.");
+                errors.Append("organisation_id is required.");
             }
 
             if (string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.organisation_name))))
             {
-                errors.Append("/nOrganisation_name is required.");
+                errors.Append("organisation_name is required.");
             }
 
-            if (string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.companies_house_number))))
+            if (string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.companies_house_number))) && string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.franchisee_licensee_tenant))))
             {
-                errors.Append("/nOrganisation_number is required.");
+                errors.Append("companies_house_number is required.");
             }
 
             if (string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.parent_child))))
             {
-                errors.Append("/nparent_or_child is required.");
+                errors.Append("parent_or_child is required.");
             }
 
-            if (string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.franchisee_licensee_tenant))))
+            if (!string.IsNullOrEmpty(theRow.GetField(nameof(CompaniesHouseCompany.franchisee_licensee_tenant))))
             {
-                // errors.Append("/nLicense is required.");
+                var franchiseeVal = theRow.GetField(nameof(CompaniesHouseCompany.franchisee_licensee_tenant)).ToLower();
+                if (franchiseeVal != "yes" && franchiseeVal != "y")
+                {
+                    errors.Append("franchisee_licensee_tenant can only be blank or Yes or Y.");
+                }
             }
 
             errorsInRow = errors.ToString();

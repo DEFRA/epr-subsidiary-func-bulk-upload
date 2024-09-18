@@ -1,9 +1,9 @@
-﻿using System.Globalization;
-using System.Text;
-using CsvHelper.Configuration;
+﻿using System.Text;
+using EPR.SubsidiaryBulkUpload.Application.CsvReaderConfiguration;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
@@ -13,11 +13,13 @@ namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 public class CsvProcessorTests
 {
     private Fixture fixture;
+    private Mock<ILogger<CsvProcessor>> _mockLogger;
 
     [TestInitialize]
     public void TestInitialize()
     {
         fixture = new();
+        _mockLogger = new Mock<ILogger<CsvProcessor>>();
     }
 
     [TestMethod]
@@ -33,10 +35,7 @@ public class CsvProcessorTests
 
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
 
-        var configuration = new CsvConfiguration(CultureInfo.InvariantCulture)
-        {
-            HasHeaderRecord = true,
-        };
+        var configuration = CsvConfigurations.BulkUploadCsvConfiguration;
 
         var parserClass = new Mock<IParserClass>();
         parserClass
@@ -67,6 +66,44 @@ public class CsvProcessorTests
     }
 
     [TestMethod]
+    public async Task ShouldLogIfParsingThrows()
+    {
+        // Arrange
+        var source = fixture.CreateMany<CompaniesHouseCompany>(2).ToArray();
+
+        var header = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
+        var rawSource = source.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
+
+        string[] all = [header, .. rawSource];
+
+        using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
+
+        var configuration = CsvConfigurations.BulkUploadCsvConfiguration;
+
+        var exception = new Exception("Test Exception");
+
+        var parserClass = new Mock<IParserClass>();
+        parserClass
+            .Setup(p => p.ParseWithHelper(It.IsAny<Stream>(), configuration)).Throws(exception);
+
+        var processor = new CsvProcessor(parserClass.Object, _mockLogger.Object);
+
+        // Act & Assert
+        await Assert.ThrowsExceptionAsync<Exception>(() =>
+            processor.ProcessStreamWithMapping<CompaniesHouseCompany, CompaniesHouseCompanyMap>(stream, configuration));
+
+        // Assert
+        _mockLogger.Verify(
+            logger => logger.Log(
+            LogLevel.Error,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => true),
+            exception,
+            It.Is<Func<It.IsAnyType, Exception, string>>((v, t) => true)),
+            Times.Once);
+    }
+
+    [TestMethod]
     public async Task ShouldProcessCsvStream()
     {
         // Arrange
@@ -79,17 +116,10 @@ public class CsvProcessorTests
 
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
 
-        var configuration = new CsvConfiguration(CultureInfo.InvariantCulture)
-        {
-            HasHeaderRecord = true,
-            HeaderValidated = null,
-            MissingFieldFound = null
-        };
-
         var processor = new CsvProcessor(null, NullLogger<CsvProcessor>.Instance);
 
         // Act
-        var actual = (await processor.ProcessStream<CompanyHouseTableEntity>(stream, configuration)).ToArray();
+        var actual = (await processor.ProcessStream<CompanyHouseTableEntity>(stream, CsvConfigurations.BulkUploadCsvConfiguration)).ToArray();
 
         // Assert
         actual.Should().HaveCount(2);

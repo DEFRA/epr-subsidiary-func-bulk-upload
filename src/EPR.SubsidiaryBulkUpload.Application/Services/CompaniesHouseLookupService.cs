@@ -24,10 +24,6 @@ public class CompaniesHouseLookupService : ICompaniesHouseLookupService
         try
         {
             _logger.LogInformation("Calling companies house api {Url}", $"{CompaniesHouseEndpoint}/{id}");
-            if (_httpClient.DefaultRequestHeaders.Authorization != null)
-            {
-                _logger.LogInformation("Has auth header {Scheme}", _httpClient.DefaultRequestHeaders.Authorization.Scheme);
-            }
 
             var response = await _httpClient.GetAsync($"{CompaniesHouseEndpoint}/{id}");
 

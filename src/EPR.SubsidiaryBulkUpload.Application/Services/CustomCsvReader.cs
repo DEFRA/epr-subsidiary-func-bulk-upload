@@ -1,33 +1,18 @@
-﻿using System.Globalization;
-using CsvHelper;
+﻿using CsvHelper;
 using CsvHelper.Configuration;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services;
 
 public class CustomCsvReader : CsvReader
 {
-    public CustomCsvReader(IParser parser)
-        : base(parser)
-    {
-    }
-
     public CustomCsvReader(TextReader reader, IReaderConfiguration configuration)
         : base(reader, configuration)
     {
     }
 
-    public CustomCsvReader(TextReader reader, CultureInfo culture, bool leaveOpen = false)
-        : base(reader, culture, leaveOpen)
-    {
-    }
-
-    public virtual MissingFieldFound MissingFieldMappingFound { get; set; }
-
-    public virtual List<InvalidHeader> InvalidHeaders { get; set; }
-
     public virtual List<string> InvalidHeaderErrors { get; set; }
 
-    protected void ValidateHeader(ClassMap map, List<InvalidHeader> invalidHeaders)
+    protected override void ValidateHeader(ClassMap map, List<InvalidHeader> invalidHeaders)
     {
         base.ValidateHeader(map, invalidHeaders);
         var validationErrors = new List<string>();
