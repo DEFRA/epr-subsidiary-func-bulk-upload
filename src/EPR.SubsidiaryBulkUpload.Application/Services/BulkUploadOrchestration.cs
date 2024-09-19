@@ -27,15 +27,15 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
     {
         if (data.Count() == 0)
         {
-            var fileValidaditon = new List<UploadFileErrorModel>();
+            var fileValidation = new List<UploadFileErrorModel>();
             var newError = new UploadFileErrorModel()
             {
                 FileContent = "No Record found in the file.",
                 Message = "No Record found in the file"
             };
-            fileValidaditon.Add(newError);
+            fileValidation.Add(newError);
             _notificationService.SetStatus(userRequestModel.GenerateKey(SubsidiaryBulkUploadProgress), "Error found in validation. Logging it in Redis storage");
-            _notificationService.SetErrorStatus(userRequestModel.GenerateKey(SubsidiaryBulkUploadInvalidDataErrors), fileValidaditon);
+            _notificationService.SetErrorStatus(userRequestModel.GenerateKey(SubsidiaryBulkUploadInvalidDataErrors), fileValidation);
             return;
         }
 

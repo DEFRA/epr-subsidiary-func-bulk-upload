@@ -44,15 +44,6 @@ public class BulkUploadFunction
             }
         }
 
-        var userGuid = metaData.Where(pair => pair.Key.ToLower().Contains("userid"))
-                        .Select(pair => pair.Value).FirstOrDefault();
-
-        var hasUserId = Guid.TryParse(userGuid, out var userId);
-        if (!hasUserId)
-        {
-            _logger.LogWarning("Missing userId metadata for blob {Name}", client.Name);
-        }
-
         var userRequestModel = metaData.ToUserRequestModel();
 
         if (userRequestModel != null)

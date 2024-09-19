@@ -265,4 +265,25 @@ public class ParserClassTests
         errorRow.UploadFileErrorModel.FileContent.Should().Be("File is empty or in invalid format");
         errorRow.UploadFileErrorModel.Message.Should().Contain("Invalid File");
     }
+
+    [TestMethod]
+    public void ParseClass_InvalidCsvFile_StreamErrorReturnsErrorAndLogs()
+    {
+        // Arrange
+        using var stream = new ErrorThrowingStream(new byte[] { 0x00 });
+
+        // Act
+        var returnValue = _sut.ParseWithHelper(stream, CsvConfigurations.BulkUploadCsvConfiguration);
+
+        // Assert
+        returnValue.Should().NotBeNull();
+
+        returnValue.ResponseClass.Should().NotBeNull();
+        returnValue.ResponseClass.isDone.Should().BeTrue();
+
+        returnValue.CompaniesHouseCompany.Should().NotBeNull();
+        returnValue.CompaniesHouseCompany.Count.Should().Be(1);
+
+        returnValue.CompaniesHouseCompany[0].UploadFileErrorModel.Should().NotBeNull();
+    }
 }
