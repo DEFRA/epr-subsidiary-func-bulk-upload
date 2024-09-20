@@ -5,6 +5,7 @@ using EPR.SubsidiaryBulkUpload.Application.Models.Antivirus;
 using EPR.SubsidiaryBulkUpload.Application.Models.Events;
 using EPR.SubsidiaryBulkUpload.Application.Models.Submission;
 using EPR.SubsidiaryBulkUpload.Application.Options;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
@@ -13,6 +14,7 @@ public class CompaniesHouseFilePostService(
                 ISubmissionStatusClient submissionStatusClient,
                 IAntivirusClient antivirusClient,
                 ISystemDetailsProvider systemDetailsProvider,
+                ILogger<CompaniesHouseFilePostService> logger,
                 IOptions<AntivirusApiOptions> antiVirusOptions,
                 IOptions<BlobStorageOptions> blobOptions) : ICompaniesHouseFilePostService
 {
@@ -20,6 +22,7 @@ public class CompaniesHouseFilePostService(
     private readonly ISubmissionStatusClient submissionStatusClient = submissionStatusClient;
     private readonly IAntivirusClient antivirusClient = antivirusClient;
     private readonly ISystemDetailsProvider systemDetailsProvider = systemDetailsProvider;
+    private readonly ILogger<CompaniesHouseFilePostService> logger = logger;
 
     private readonly AntivirusApiOptions antiVirusOptions = antiVirusOptions.Value;
     private readonly BlobStorageOptions blobOptions = blobOptions.Value;
@@ -28,10 +31,12 @@ public class CompaniesHouseFilePostService(
     {
         var fileId = Guid.NewGuid();
 
+        // var systemUserId = systemDetailsProvider.SystemUserId ?? throw new MissingSystemDetailsException("System user id was not found");
         var systemUserId = systemDetailsProvider.SystemUserId;
-        if (systemUserId == Guid.Empty)
+        if (systemUserId is null)
         {
-            return HttpStatusCode.BadRequest;
+            logger.LogError("System user id was not found");
+            return HttpStatusCode.InternalServerError;
         }
 
         var submission = new CreateSubmission
@@ -58,7 +63,7 @@ public class CompaniesHouseFilePostService(
             Extension = Path.GetExtension(fileName),
             FileName = Path.GetFileNameWithoutExtension(fileName),
             Collection = SubmissionType.CompaniesHouse.GetDisplayName() + (antiVirusOptions.CollectionSuffix ?? string.Empty),
-            UserId = systemUserId,
+            UserId = systemUserId.Value,
             UserEmail = antiVirusOptions.NotificationEmail
         };
 

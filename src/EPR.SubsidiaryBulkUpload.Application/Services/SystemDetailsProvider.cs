@@ -13,15 +13,14 @@ public class SystemDetailsProvider : ISystemDetailsProvider
         _lazySystemUserAndOrganisation = new Lazy<UserOrganisation>(GetSystemUserAndOrganisation);
     }
 
-    public Guid SystemUserId => _systemUserAndOrganisation.UserId ?? Guid.Empty;
+    public Guid? SystemUserId => _systemUserAndOrganisation.UserId;
 
-    public Guid SystemOrganisationId => _systemUserAndOrganisation.OrganisationId ?? Guid.Empty;
+    public Guid? SystemOrganisationId => _systemUserAndOrganisation.OrganisationId;
 
     private UserOrganisation _systemUserAndOrganisation => _lazySystemUserAndOrganisation.Value;
 
     private UserOrganisation GetSystemUserAndOrganisation()
     {
-        var systemUserAndOrganisation = _subsidiaryService.GetSystemUserAndOrganisation().GetAwaiter().GetResult();
-        return systemUserAndOrganisation;
+        return _subsidiaryService.GetSystemUserAndOrganisation().GetAwaiter().GetResult();
     }
 }

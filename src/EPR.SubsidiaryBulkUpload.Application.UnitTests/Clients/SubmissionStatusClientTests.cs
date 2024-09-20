@@ -85,6 +85,7 @@ public class SubmissionStatusClientTests
     [DataRow(HttpStatusCode.InternalServerError)]
     [DataRow(HttpStatusCode.InsufficientStorage)]
     [DataRow(HttpStatusCode.RequestTimeout)]
+    [DataRow(HttpStatusCode.BadRequest)]
     public async Task ShouldReplyHttpRequestExceptionStatus(HttpStatusCode httpStatusCode)
     {
         // Arrange
@@ -104,12 +105,46 @@ public class SubmissionStatusClientTests
     }
 
     [TestMethod]
-    public async Task ShouldReplyInternalServerErrorOnUnhandeledException()
+    public async Task ShouldReplyInternalServerErrorOnUnhandledException()
     {
         // Arrange
         var submission = fixture.Create<CreateSubmission>();
 
         httpMessageHandler.RespondWithException(new Exception());
+
+        var submissionClient = new SubmissionStatusClient(httpClient, systemDetailsProvider.Object, NullLogger<SubmissionStatusClient>.Instance);
+
+        // Act
+        var responseCode = await submissionClient.CreateSubmissionAsync(submission);
+
+        // Assert
+        responseCode.Should().Be(HttpStatusCode.InternalServerError);
+    }
+
+    [TestMethod]
+    public async Task ShouldReplyInternalServerErrorIfSystemOrganisationIdNotFound()
+    {
+        // Arrange
+        var submission = fixture.Create<CreateSubmission>();
+
+        systemDetailsProvider.SetupGet(p => p.SystemOrganisationId).Returns((Guid?)null);
+
+        var submissionClient = new SubmissionStatusClient(httpClient, systemDetailsProvider.Object, NullLogger<SubmissionStatusClient>.Instance);
+
+        // Act
+        var responseCode = await submissionClient.CreateSubmissionAsync(submission);
+
+        // Assert
+        responseCode.Should().Be(HttpStatusCode.InternalServerError);
+    }
+
+    [TestMethod]
+    public async Task ShouldReplyInternalServerErrorIfSystemUserIdNotFound()
+    {
+        // Arrange
+        var submission = fixture.Create<CreateSubmission>();
+
+        systemDetailsProvider.SetupGet(p => p.SystemUserId).Returns((Guid?)null);
 
         var submissionClient = new SubmissionStatusClient(httpClient, systemDetailsProvider.Object, NullLogger<SubmissionStatusClient>.Instance);
 

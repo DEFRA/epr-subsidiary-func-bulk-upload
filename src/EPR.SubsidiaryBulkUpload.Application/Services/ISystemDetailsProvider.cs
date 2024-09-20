@@ -2,7 +2,7 @@
 
 public interface ISystemDetailsProvider
 {
-    Guid SystemOrganisationId { get; }
+    Guid? SystemOrganisationId { get; }
 
-    Guid SystemUserId { get; }
+    Guid? SystemUserId { get; }
 }

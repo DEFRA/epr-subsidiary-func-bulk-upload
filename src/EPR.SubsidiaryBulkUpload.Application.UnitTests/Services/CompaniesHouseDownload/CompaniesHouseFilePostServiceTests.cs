@@ -7,6 +7,7 @@ using EPR.SubsidiaryBulkUpload.Application.Options;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
 using EPR.SubsidiaryBulkUpload.Application.UnitTests.Support;
+using Microsoft.Extensions.Logging;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services.CompaniesHouseDownload;
 
@@ -17,12 +18,14 @@ public class CompaniesHouseFilePostServiceTests
 
     private Fixture fixture;
     private Mock<ISystemDetailsProvider> systemDetailsProvider;
+    private Mock<ILogger<CompaniesHouseFilePostService>> loggerMock;
 
     [TestInitialize]
     public void TestInitialize()
     {
         fixture = new();
 
+        loggerMock = new Mock<ILogger<CompaniesHouseFilePostService>>();
         systemDetailsProvider = new Mock<ISystemDetailsProvider>();
         systemDetailsProvider.SetupGet(p => p.SystemUserId).Returns(_systemUserId);
     }
@@ -46,7 +49,7 @@ public class CompaniesHouseFilePostServiceTests
         antivirusClient.Setup(avc => avc.SendFileAsync(It.IsAny<FileDetails>(), filePath, stream)).ReturnsAsync(HttpStatusCode.OK);
 
         var filePostService = new CompaniesHouseFilePostService(
-                    submissionStatusClient.Object, antivirusClient.Object, systemDetailsProvider.Object, antivirusOptions, blobStorageOptions);
+                    submissionStatusClient.Object, antivirusClient.Object, systemDetailsProvider.Object, loggerMock.Object, antivirusOptions, blobStorageOptions);
 
         // Act
         var response = await filePostService.PostFileAsync(stream, filePath);
@@ -75,7 +78,7 @@ public class CompaniesHouseFilePostServiceTests
         antivirusClient.Setup(avc => avc.SendFileAsync(It.IsAny<FileDetails>(), filePath, stream)).ReturnsAsync(HttpStatusCode.OK);
 
         var filePostService = new CompaniesHouseFilePostService(
-                    submissionStatusClient.Object, antivirusClient.Object, systemDetailsProvider.Object, antivirusOptions, blobStorageOptions);
+                    submissionStatusClient.Object, antivirusClient.Object, systemDetailsProvider.Object, loggerMock.Object, antivirusOptions, blobStorageOptions);
 
         // Act
         var response = await filePostService.PostFileAsync(stream, filePath);
@@ -106,7 +109,7 @@ public class CompaniesHouseFilePostServiceTests
         antivirusClient.Setup(avc => avc.SendFileAsync(It.IsAny<FileDetails>(), filePath, stream)).ReturnsAsync(HttpStatusCode.OK);
 
         var filePostService = new CompaniesHouseFilePostService(
-                    submissionStatusClient.Object, antivirusClient.Object, systemDetailsProvider.Object, antivirusOptions, blobStorageOptions);
+                    submissionStatusClient.Object, antivirusClient.Object, systemDetailsProvider.Object, loggerMock.Object, antivirusOptions, blobStorageOptions);
 
         // Act
         var response = await filePostService.PostFileAsync(stream, filePath);
@@ -118,7 +121,7 @@ public class CompaniesHouseFilePostServiceTests
     }
 
     [TestMethod]
-    public async Task ShouldBeBadRequestIfSystemUserIdNotGuid()
+    public async Task ShouldBeInternalServerErrorIfSystemUserIdNotFound()
     {
         // Arrange
         var filePath = fixture.Create<Uri>().ToString();
@@ -126,7 +129,7 @@ public class CompaniesHouseFilePostServiceTests
         var antivirusOptions = fixture.CreateOptions<AntivirusApiOptions>();
         var blobStorageOptions = fixture.CreateOptions<BlobStorageOptions>();
 
-        systemDetailsProvider.SetupGet(p => p.SystemUserId).Returns(Guid.Empty);
+        systemDetailsProvider.SetupGet(p => p.SystemUserId).Returns((Guid?)null);
 
         using var stream = new MemoryStream();
 
@@ -134,13 +137,14 @@ public class CompaniesHouseFilePostServiceTests
         var antivirusClient = new Mock<IAntivirusClient>();
 
         var filePostService = new CompaniesHouseFilePostService(
-                    submissionStatusClient.Object, antivirusClient.Object, systemDetailsProvider.Object, antivirusOptions, blobStorageOptions);
+                    submissionStatusClient.Object, antivirusClient.Object, systemDetailsProvider.Object, loggerMock.Object, antivirusOptions, blobStorageOptions);
 
         // Act
         var response = await filePostService.PostFileAsync(stream, filePath);
 
         // Assert
-        response.Should().Be(HttpStatusCode.BadRequest);
+        response.Should().Be(HttpStatusCode.InternalServerError);
+        loggerMock.VerifyLog(x => x.LogError("System user id was not found"), Times.Once);
     }
 
     [TestMethod]
@@ -165,7 +169,7 @@ public class CompaniesHouseFilePostServiceTests
         antivirusClient.Setup(avc => avc.SendFileAsync(It.IsAny<FileDetails>(), filePath, stream)).ReturnsAsync(HttpStatusCode.OK);
 
         var filePostService = new CompaniesHouseFilePostService(
-                    submissionStatusClient.Object, antivirusClient.Object, systemDetailsProvider.Object, antivirusOptions, blobStorageOptions);
+                    submissionStatusClient.Object, antivirusClient.Object, systemDetailsProvider.Object, loggerMock.Object, antivirusOptions, blobStorageOptions);
 
         // Act
         var response = await filePostService.PostFileAsync(stream, filePath);

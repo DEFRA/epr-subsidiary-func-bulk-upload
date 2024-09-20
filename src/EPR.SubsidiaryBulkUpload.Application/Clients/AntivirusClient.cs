@@ -42,7 +42,7 @@ public class AntivirusClient(HttpClient httpClient, ILogger<AntivirusClient> log
         }
         catch (Exception exception)
         {
-            _logger.LogError(exception, "Unhandeled error sending file {Filename} to antivirus api", fileName);
+            _logger.LogError(exception, "Unhandled error sending file {Filename} to antivirus api", fileName);
             statusCode = HttpStatusCode.InternalServerError;
         }
 

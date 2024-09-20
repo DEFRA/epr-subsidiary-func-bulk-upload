@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using EPR.SubsidiaryBulkUpload.Application.Exceptions;
 using EPR.SubsidiaryBulkUpload.Application.Models.Events;
 using EPR.SubsidiaryBulkUpload.Application.Models.Submission;
 using EPR.SubsidiaryBulkUpload.Application.Services;
@@ -68,7 +69,10 @@ public class SubmissionStatusClient(
 
     private void ConfigureHttpClientAsync()
     {
-        AddIfMissing(_httpClient.DefaultRequestHeaders, "OrganisationId", _systemDetailsProvider.SystemOrganisationId.ToString());
-        AddIfMissing(_httpClient.DefaultRequestHeaders, "UserId", _systemDetailsProvider.SystemUserId.ToString());
+        var systemUserId = _systemDetailsProvider.SystemUserId?.ToString() ?? throw new MissingSystemDetailsException("System user id was not found");
+        var systemOrganisationId = _systemDetailsProvider.SystemOrganisationId?.ToString() ?? throw new MissingSystemDetailsException("System organisation id was not found");
+
+        AddIfMissing(_httpClient.DefaultRequestHeaders, "OrganisationId", systemOrganisationId);
+        AddIfMissing(_httpClient.DefaultRequestHeaders, "UserId", systemUserId);
     }
 }
