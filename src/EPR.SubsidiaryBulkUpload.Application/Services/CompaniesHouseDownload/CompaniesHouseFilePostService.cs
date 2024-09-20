@@ -31,7 +31,6 @@ public class CompaniesHouseFilePostService(
     {
         var fileId = Guid.NewGuid();
 
-        // var systemUserId = systemDetailsProvider.SystemUserId ?? throw new MissingSystemDetailsException("System user id was not found");
         var systemUserId = systemDetailsProvider.SystemUserId;
         if (systemUserId is null)
         {
