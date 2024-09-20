@@ -33,10 +33,13 @@ public class CompaniesHouseCompany
     public DateTimeOffset? AccountCreatedOn { get; set; }
 
     [Optional]
-    public string? Errors { get; set; }
+    public string RawRow { get; set; }
+
+    [Optional]
+    public int FileLineNumber { get; set; }
 
     [Ignore]
-    public UploadFileErrorModel UploadFileErrorModel { get; set; }
+    public List<UploadFileErrorModel> Errors { get; set; }
 
     public static ValidationResult ValidateName(string organisation_name, ValidationContext context)
     {

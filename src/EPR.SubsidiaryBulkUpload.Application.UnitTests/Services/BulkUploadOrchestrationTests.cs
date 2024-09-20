@@ -30,8 +30,7 @@ public class BulkUploadOrchestrationTests
         // Arrange
         var companyData = _fixture
             .Build<CompaniesHouseCompany>()
-            .With(c => c.Errors, () => null)
-            .With(c => c.UploadFileErrorModel, () => null)
+            .With(c => c.Errors, () => new List<UploadFileErrorModel>())
             .CreateMany<CompaniesHouseCompany>();
 
         var parentAndSubsidiaries = _fixture.CreateMany<ParentAndSubsidiaries>();
@@ -50,7 +49,7 @@ public class BulkUploadOrchestrationTests
             OrganisationId = organisationId
         };
 
-         // Act
+        // Act
         await orchestrator.Orchestrate(companyData, userRequestModel);
 
         // Assert
@@ -66,9 +65,10 @@ public class BulkUploadOrchestrationTests
         // Arrange
         var companyData = _fixture
             .Build<CompaniesHouseCompany>()
-            .With(c => c.Errors, () => "Test Error")
-            .With(c => c.UploadFileErrorModel, () => new UploadFileErrorModel { IsError = true, FileLineNumber = 2, FileContent = "test,test", Message = "Test error" })
+            .With(c => c.Errors, () => new())
             .CreateMany(1);
+
+        companyData.First().Errors.Add(_fixture.Create<UploadFileErrorModel>());
 
         var userId = Guid.NewGuid();
         var organisationId = Guid.NewGuid();
@@ -108,8 +108,7 @@ public class BulkUploadOrchestrationTests
         // Arrange
         var companyData = _fixture
             .Build<CompaniesHouseCompany>()
-            .With(c => c.Errors, () => null)
-            .With(c => c.UploadFileErrorModel, () => null)
+            .With(c => c.Errors, () => new())
             .CreateMany(2);
 
         var userId = Guid.NewGuid();
