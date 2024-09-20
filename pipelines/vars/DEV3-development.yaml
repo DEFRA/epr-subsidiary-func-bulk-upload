@@ -1,0 +1,6 @@
+variables:
+  azureSubscription: 'AZD-RWD-DEV3'
+  docker.imageName: 'subsidiaryupload'
+  acr.azureContainerRegistryName: 'devrwdinfac1401'
+  acr.repositoryName: 'subsidiaryuploadrepository'
+  serviceName: 'DEVRWDWEBFA3408'
