@@ -33,10 +33,8 @@ public class CompaniesHouseFilePostServiceTests
         // Arrange
         var filePath = fixture.Create<Uri>().ToString();
 
-        fixture.Customize<ApiOptions>(ctx => ctx.With(options => options.SystemUserId, Guid.NewGuid().ToString()));
         var antivirusOptions = fixture.CreateOptions<AntivirusApiOptions>();
         var blobStorageOptions = fixture.CreateOptions<BlobStorageOptions>();
-        var apiOptions = fixture.CreateOptions<ApiOptions>();
 
         using var stream = new MemoryStream();
 
@@ -48,7 +46,7 @@ public class CompaniesHouseFilePostServiceTests
         antivirusClient.Setup(avc => avc.SendFileAsync(It.IsAny<FileDetails>(), filePath, stream)).ReturnsAsync(HttpStatusCode.OK);
 
         var filePostService = new CompaniesHouseFilePostService(
-                    submissionStatusClient.Object, antivirusClient.Object, systemDetailsProvider.Object, antivirusOptions, blobStorageOptions, apiOptions);
+                    submissionStatusClient.Object, antivirusClient.Object, systemDetailsProvider.Object, antivirusOptions, blobStorageOptions);
 
         // Act
         var response = await filePostService.PostFileAsync(stream, filePath);
@@ -64,10 +62,8 @@ public class CompaniesHouseFilePostServiceTests
         var filePath = fixture.Create<Uri>().ToString();
         var badResponse = HttpStatusCode.RequestTimeout;
 
-        fixture.Customize<ApiOptions>(ctx => ctx.With(options => options.SystemUserId, Guid.NewGuid().ToString()));
         var antivirusOptions = fixture.CreateOptions<AntivirusApiOptions>();
         var blobStorageOptions = fixture.CreateOptions<BlobStorageOptions>();
-        var apiOptions = fixture.CreateOptions<ApiOptions>();
 
         using var stream = new MemoryStream();
 
@@ -79,7 +75,7 @@ public class CompaniesHouseFilePostServiceTests
         antivirusClient.Setup(avc => avc.SendFileAsync(It.IsAny<FileDetails>(), filePath, stream)).ReturnsAsync(HttpStatusCode.OK);
 
         var filePostService = new CompaniesHouseFilePostService(
-                    submissionStatusClient.Object, antivirusClient.Object, systemDetailsProvider.Object, antivirusOptions, blobStorageOptions, apiOptions);
+                    submissionStatusClient.Object, antivirusClient.Object, systemDetailsProvider.Object, antivirusOptions, blobStorageOptions);
 
         // Act
         var response = await filePostService.PostFileAsync(stream, filePath);
@@ -97,10 +93,8 @@ public class CompaniesHouseFilePostServiceTests
         var filePath = fixture.Create<Uri>().ToString();
         var badResponse = HttpStatusCode.RequestTimeout;
 
-        fixture.Customize<ApiOptions>(ctx => ctx.With(options => options.SystemUserId, Guid.NewGuid().ToString()));
         var antivirusOptions = fixture.CreateOptions<AntivirusApiOptions>();
         var blobStorageOptions = fixture.CreateOptions<BlobStorageOptions>();
-        var apiOptions = fixture.CreateOptions<ApiOptions>();
 
         using var stream = new MemoryStream();
 
@@ -112,7 +106,7 @@ public class CompaniesHouseFilePostServiceTests
         antivirusClient.Setup(avc => avc.SendFileAsync(It.IsAny<FileDetails>(), filePath, stream)).ReturnsAsync(HttpStatusCode.OK);
 
         var filePostService = new CompaniesHouseFilePostService(
-                    submissionStatusClient.Object, antivirusClient.Object, systemDetailsProvider.Object, antivirusOptions, blobStorageOptions, apiOptions);
+                    submissionStatusClient.Object, antivirusClient.Object, systemDetailsProvider.Object, antivirusOptions, blobStorageOptions);
 
         // Act
         var response = await filePostService.PostFileAsync(stream, filePath);
@@ -131,7 +125,6 @@ public class CompaniesHouseFilePostServiceTests
 
         var antivirusOptions = fixture.CreateOptions<AntivirusApiOptions>();
         var blobStorageOptions = fixture.CreateOptions<BlobStorageOptions>();
-        var apiOptions = fixture.CreateOptions<ApiOptions>();
 
         systemDetailsProvider.SetupGet(p => p.SystemUserId).Returns(Guid.Empty);
 
@@ -141,7 +134,7 @@ public class CompaniesHouseFilePostServiceTests
         var antivirusClient = new Mock<IAntivirusClient>();
 
         var filePostService = new CompaniesHouseFilePostService(
-                    submissionStatusClient.Object, antivirusClient.Object, systemDetailsProvider.Object, antivirusOptions, blobStorageOptions, apiOptions);
+                    submissionStatusClient.Object, antivirusClient.Object, systemDetailsProvider.Object, antivirusOptions, blobStorageOptions);
 
         // Act
         var response = await filePostService.PostFileAsync(stream, filePath);
@@ -157,10 +150,8 @@ public class CompaniesHouseFilePostServiceTests
         var filePath = fixture.Create<Uri>().ToString();
         Guid fileGuid = Guid.Empty;
 
-        fixture.Customize<ApiOptions>(ctx => ctx.With(options => options.SystemUserId, Guid.NewGuid().ToString()));
         var antivirusOptions = fixture.CreateOptions<AntivirusApiOptions>();
         var blobStorageOptions = fixture.CreateOptions<BlobStorageOptions>();
-        var apiOptions = fixture.CreateOptions<ApiOptions>();
 
         using var stream = new MemoryStream();
 
@@ -174,7 +165,7 @@ public class CompaniesHouseFilePostServiceTests
         antivirusClient.Setup(avc => avc.SendFileAsync(It.IsAny<FileDetails>(), filePath, stream)).ReturnsAsync(HttpStatusCode.OK);
 
         var filePostService = new CompaniesHouseFilePostService(
-                    submissionStatusClient.Object, antivirusClient.Object, systemDetailsProvider.Object, antivirusOptions, blobStorageOptions, apiOptions);
+                    submissionStatusClient.Object, antivirusClient.Object, systemDetailsProvider.Object, antivirusOptions, blobStorageOptions);
 
         // Act
         var response = await filePostService.PostFileAsync(stream, filePath);

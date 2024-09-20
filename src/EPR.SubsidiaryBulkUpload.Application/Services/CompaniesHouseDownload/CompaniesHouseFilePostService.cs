@@ -14,8 +14,7 @@ public class CompaniesHouseFilePostService(
                 IAntivirusClient antivirusClient,
                 ISystemDetailsProvider systemDetailsProvider,
                 IOptions<AntivirusApiOptions> antiVirusOptions,
-                IOptions<BlobStorageOptions> blobOptions,
-                IOptions<ApiOptions> apiOptions) : ICompaniesHouseFilePostService
+                IOptions<BlobStorageOptions> blobOptions) : ICompaniesHouseFilePostService
 {
     public const string SubmissionPeriodText = "NA Companies house data File Upload";
     private readonly ISubmissionStatusClient submissionStatusClient = submissionStatusClient;
@@ -24,7 +23,6 @@ public class CompaniesHouseFilePostService(
 
     private readonly AntivirusApiOptions antiVirusOptions = antiVirusOptions.Value;
     private readonly BlobStorageOptions blobOptions = blobOptions.Value;
-    private readonly ApiOptions apiOptions = apiOptions.Value;
 
     public async Task<HttpStatusCode> PostFileAsync(Stream stream, string fileName)
     {

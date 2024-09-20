@@ -1,7 +1,6 @@
 ﻿using System.Net;
 using EPR.SubsidiaryBulkUpload.Application.Clients;
 using EPR.SubsidiaryBulkUpload.Application.Models.Submission;
-using EPR.SubsidiaryBulkUpload.Application.Options;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using EPR.SubsidiaryBulkUpload.Application.UnitTests.Support;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -43,7 +42,6 @@ public class SubmissionStatusClientTests
         // Arrange
         var expectedRequestUri = new Uri($"https://example.com/submissions");
         var submission = fixture.Create<CreateSubmission>();
-        var apiOptions = fixture.CreateOptions<ApiOptions>();
         var expectedHeaders = new Dictionary<string, string>
         {
             { "OrganisationId", _systemOrganisationId.ToString() },
@@ -56,7 +54,7 @@ public class SubmissionStatusClientTests
                 StatusCode = HttpStatusCode.OK,
             });
 
-        var submissionClient = new SubmissionStatusClient(httpClient, systemDetailsProvider.Object, apiOptions, NullLogger<SubmissionStatusClient>.Instance);
+        var submissionClient = new SubmissionStatusClient(httpClient, systemDetailsProvider.Object, NullLogger<SubmissionStatusClient>.Instance);
 
         // Act
         var responseCode = await submissionClient.CreateSubmissionAsync(submission);
@@ -71,11 +69,10 @@ public class SubmissionStatusClientTests
     {
         // Arrange
         var submission = fixture.Create<CreateSubmission>();
-        var apiOptions = fixture.CreateOptions<ApiOptions>();
 
         httpMessageHandler.RespondWithException(fixture.Create<TaskCanceledException>());
 
-        var submissionClient = new SubmissionStatusClient(httpClient, systemDetailsProvider.Object, apiOptions, NullLogger<SubmissionStatusClient>.Instance);
+        var submissionClient = new SubmissionStatusClient(httpClient, systemDetailsProvider.Object, NullLogger<SubmissionStatusClient>.Instance);
 
         // Act
         var responseCode = await submissionClient.CreateSubmissionAsync(submission);
@@ -92,13 +89,12 @@ public class SubmissionStatusClientTests
     {
         // Arrange
         var submission = fixture.Create<CreateSubmission>();
-        var apiOptions = fixture.CreateOptions<ApiOptions>();
 
         var exception = new HttpRequestException("message", null, httpStatusCode);
 
         httpMessageHandler.RespondWithException(exception);
 
-        var submissionClient = new SubmissionStatusClient(httpClient, systemDetailsProvider.Object, apiOptions, NullLogger<SubmissionStatusClient>.Instance);
+        var submissionClient = new SubmissionStatusClient(httpClient, systemDetailsProvider.Object, NullLogger<SubmissionStatusClient>.Instance);
 
         // Act
         var responseCode = await submissionClient.CreateSubmissionAsync(submission);
@@ -112,11 +108,10 @@ public class SubmissionStatusClientTests
     {
         // Arrange
         var submission = fixture.Create<CreateSubmission>();
-        var apiOptions = fixture.CreateOptions<ApiOptions>();
 
         httpMessageHandler.RespondWithException(new Exception());
 
-        var submissionClient = new SubmissionStatusClient(httpClient, systemDetailsProvider.Object, apiOptions, NullLogger<SubmissionStatusClient>.Instance);
+        var submissionClient = new SubmissionStatusClient(httpClient, systemDetailsProvider.Object, NullLogger<SubmissionStatusClient>.Instance);
 
         // Act
         var responseCode = await submissionClient.CreateSubmissionAsync(submission);

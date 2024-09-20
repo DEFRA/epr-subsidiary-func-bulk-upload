@@ -3,23 +3,19 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using EPR.SubsidiaryBulkUpload.Application.Models.Events;
 using EPR.SubsidiaryBulkUpload.Application.Models.Submission;
-using EPR.SubsidiaryBulkUpload.Application.Options;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Clients;
 
 public class SubmissionStatusClient(
                 HttpClient httpClient,
                 ISystemDetailsProvider systemDetailsProvider,
-                IOptions<ApiOptions> options,
                 ILogger<SubmissionStatusClient> logger) : ISubmissionStatusClient
 {
     private readonly ILogger<SubmissionStatusClient> _logger = logger;
     private readonly ISystemDetailsProvider _systemDetailsProvider = systemDetailsProvider;
     private readonly HttpClient _httpClient = httpClient;
-    private readonly ApiOptions _apiOptions = options.Value;
 
     public async Task<HttpStatusCode> CreateEventAsync(AntivirusCheckEvent antivirusEvent, Guid submissionId)
     {
