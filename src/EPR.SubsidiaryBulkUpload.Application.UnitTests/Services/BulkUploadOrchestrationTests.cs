@@ -85,6 +85,23 @@ public class BulkUploadOrchestrationTests
     }
 
     [TestMethod]
+    public async Task Should_Notify_Start()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var organisationId = Guid.NewGuid();
+        var userRequestModel = new UserRequestModel { UserId = userId, OrganisationId = organisationId };
+
+        var orchestrator = new BulkUploadOrchestration(_recordExtraction.Object, _subsidiaryService.Object, _bulkSubsidiaryProcessor.Object, _notificationService.Object);
+
+        // Act
+        orchestrator.NotifyStart(userRequestModel);
+
+        // Assert
+        _notificationService.Verify(ns => ns.SetStatus(It.IsAny<string>(), It.IsAny<string>()), Times.Once());
+    }
+
+    [TestMethod]
     public async Task Should_Notify_Errors_On_Empty_File()
     {
         var companyData = new List<CompaniesHouseCompany>();
