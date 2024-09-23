@@ -46,7 +46,7 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
         {
             errors.Add(
                 CreateError(
-                    lineNumber, rawData, BulkUpdateErrors.CompaniewsHouseNumberRequiredMessage, BulkUpdateErrors.CompaniewsHouseNumberRequired));
+                    lineNumber, rawData, BulkUpdateErrors.CompaniesHouseNumberRequiredMessage, BulkUpdateErrors.CompaniesHouseNumberRequired));
         }
 
         if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.parent_child))))
