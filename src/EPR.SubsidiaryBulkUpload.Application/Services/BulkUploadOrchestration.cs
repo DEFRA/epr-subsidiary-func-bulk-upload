@@ -23,6 +23,12 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
         _notificationService = notificationService;
     }
 
+    public async Task NotifyStart(UserRequestModel userRequestModel)
+    {
+        var key = userRequestModel.GenerateKey(SubsidiaryBulkUploadProgress);
+        _notificationService.SetStatus(key, "Uploading");
+    }
+
     public async Task NotifyErrors(IEnumerable<CompaniesHouseCompany> data, UserRequestModel userRequestModel)
     {
         if (data.Count() == 0)
@@ -31,39 +37,35 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
             var newError = new UploadFileErrorModel()
             {
                 FileContent = "No Record found in the file.",
-                Message = "No Record found in the file"
+                Message = "No Record found in the file",
+                ErrorNumber = BulkUpdateErrors.FileEmptyError,
             };
+
             fileValidation.Add(newError);
-            _notificationService.SetStatus(userRequestModel.GenerateKey(SubsidiaryBulkUploadProgress), "Error found in validation. Logging it in Redis storage");
+            _notificationService.SetStatus(userRequestModel.GenerateKey(SubsidiaryBulkUploadProgress), "Error");
             _notificationService.SetErrorStatus(userRequestModel.GenerateKey(SubsidiaryBulkUploadInvalidDataErrors), fileValidation);
             return;
         }
 
-        var notificationErrorList = data
-            .Where(e => e.UploadFileErrorModel != null)
-            .Select(e => e.UploadFileErrorModel)
-            .ToList();
+        var errors = data.Where(d => d.Errors != null).SelectMany(chc => chc.Errors).ToList();
 
-        if(notificationErrorList.Count == 0)
+        if (errors.Any())
         {
-            return;
+            var key = userRequestModel.GenerateKey(SubsidiaryBulkUploadProgress);
+            var keyErrors = userRequestModel.GenerateKey(SubsidiaryBulkUploadErrors);
+
+            _notificationService.SetStatus(key, "Error");
+            _notificationService.SetErrorStatus(keyErrors, errors);
         }
-
-        var key = userRequestModel.GenerateKey(SubsidiaryBulkUploadProgress);
-        var keyErrors = userRequestModel.GenerateKey(SubsidiaryBulkUploadErrors);
-
-        _notificationService.SetStatus(key, "Error found in validation. Logging it in Redis storage");
-        _notificationService.SetErrorStatus(keyErrors, notificationErrorList);
     }
 
     public async Task Orchestrate(IEnumerable<CompaniesHouseCompany> data, UserRequestModel userRequestModel)
     {
         var key = userRequestModel.GenerateKey(SubsidiaryBulkUploadProgress);
-        _notificationService.SetStatus(key, "Uploading");
 
         // this holds all the parents and their children records from csv
         var subsidiaryGroups = recordExtraction
-            .ExtractParentsAndSubsidiaries(data.Where(r => r.UploadFileErrorModel is null))
+            .ExtractParentsAndSubsidiaries(data.Where(r => !r.Errors.Any()))
             .ToAsyncEnumerable();
 
         // this will fetch data from the org database for all the parents and filter to keep the valid ones (org exists in RPD)
