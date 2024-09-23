@@ -97,7 +97,7 @@ public class TableStorageProcessor(
         catch (Exception ex)
         {
             // note: do not rethrow. The CH API will be used instead!
-            _logger.LogError(ex, "An error occurred whilst retrieving a companies house details ");
+            _logger.LogError(ex, "An error occurred whilst retrieving companies house details.");
         }
 
         return companiesHouseEntity;
