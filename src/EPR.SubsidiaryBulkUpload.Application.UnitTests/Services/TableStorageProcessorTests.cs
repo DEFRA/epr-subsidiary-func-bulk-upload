@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using Azure;
 using Azure.Data.Tables;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using EPR.SubsidiaryBulkUpload.Application.UnitTests.Mocks;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 
@@ -444,7 +442,7 @@ public class TableStorageProcessorTests
         // Assert
         actual.Should().Be(companyData.Count);
 
-        _mockLogger.VerifyLog(x => x.LogError(It.IsAny<string>()), Times.Never);
+        _mockLogger.VerifyLog(x => x.LogError(It.IsAny<Exception>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
     [TestMethod]
@@ -488,6 +486,11 @@ public class TableStorageProcessorTests
                 It.Is<Func<It.IsAnyType, Exception, string>>((v, t) => true)),
             Times.Once);
 
-        _mockLogger.VerifyLog(x => x.LogError(It.IsAny<string>()), Times.Once);
+        _mockLogger.VerifyLog(
+            x => x.LogError(
+                It.IsAny<RequestFailedException>(),
+                It.IsAny<string>(),
+                It.IsAny<string>()),
+            Times.Once);
     }
 }
