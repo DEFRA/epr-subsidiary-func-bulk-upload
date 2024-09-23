@@ -1,5 +1,6 @@
 ﻿using CsvHelper.Configuration;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
+using EPR.SubsidiaryBulkUpload.Application.Models;
 using Microsoft.Extensions.Logging;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services
@@ -50,14 +51,17 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                     organisation_name = string.Empty,
                     organisation_id = string.Empty,
                     parent_child = string.Empty,
-                    Errors = errors,
-                    UploadFileErrorModel = new Models.UploadFileErrorModel
-                    {
-                        FileContent = "File is empty or in invalid format",
-                        Message = errors
-                    }
+                    Errors = new List<Models.UploadFileErrorModel>()
                 };
-                _logger.LogError("File is empty or in invalid format");
+
+                fileErrors.Errors.Add(new Models.UploadFileErrorModel
+                {
+                    FileContent = "File is empty or in invalid format",
+                    Message = errors
+                });
+
+                _logger.LogError(ex, "File is empty or in invalid format");
+
                 rows.Add(fileErrors);
                 return rows;
             }
@@ -72,15 +76,17 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                     organisation_name = string.Empty,
                     organisation_id = string.Empty,
                     parent_child = string.Empty,
-                    Errors = errors,
-                    UploadFileErrorModel = new Models.UploadFileErrorModel
-                    {
-                        FileContent = "headererror-Invalid",
-                        Message = errors
-                    }
+                    Errors = new List<Models.UploadFileErrorModel>()
                 };
 
-                _logger.LogError("Invalid header count {Count}. Column header(s) missing: #### {Message} #### ", csv.InvalidHeaderErrors.Count, companyHeaderErrors.UploadFileErrorModel.Message);
+                companyHeaderErrors.Errors.Add(new Models.UploadFileErrorModel
+                {
+                    FileContent = "File is empty or in invalid format",
+                    Message = errors,
+                    ErrorNumber = BulkUpdateErrors.InvalidHeader
+                });
+
+                _logger.LogError("Invalid header count {Count}. Column header(s) missing: #### {Message} #### ", csv.InvalidHeaderErrors.Count, errors);
                 rows.Add(companyHeaderErrors);
                 return rows;
             }

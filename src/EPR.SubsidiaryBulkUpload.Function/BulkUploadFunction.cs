@@ -48,8 +48,9 @@ public class BulkUploadFunction
 
         if (userRequestModel != null)
         {
-            var records = await _csvProcessor.ProcessStreamWithMapping<CompaniesHouseCompany, CompaniesHouseCompanyMap>(content, CsvConfigurations.BulkUploadCsvConfiguration);
+            await _orchestration.NotifyStart(userRequestModel);
 
+            var records = await _csvProcessor.ProcessStreamWithMapping<CompaniesHouseCompany, CompaniesHouseCompanyMap>(content, CsvConfigurations.BulkUploadCsvConfiguration);
             await _orchestration.NotifyErrors(records, userRequestModel);
             await _orchestration.Orchestrate(records, userRequestModel);
 

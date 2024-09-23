@@ -36,7 +36,7 @@ public class CompaniesHouseCompanyMapTests
         // Arrange
         var dataModel = new List<CompaniesHouseCompany>
             {
-                new() { organisation_id = "23123",  subsidiary_id = "Sub1", organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Parent", franchisee_licensee_tenant = string.Empty, Errors = string.Empty }
+                new() { organisation_id = "23123",  subsidiary_id = "Sub1", organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Parent", franchisee_licensee_tenant = string.Empty, Errors = new() }
             };
         var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
         string[] all = [_csvHeader, .. rawSource];
@@ -62,7 +62,7 @@ public class CompaniesHouseCompanyMapTests
         rows[0].companies_house_number.Should().Be("123456");
         rows[0].parent_child.Should().Be("Parent");
         rows[0].franchisee_licensee_tenant.Should().Be(string.Empty);
-        rows[0].UploadFileErrorModel.Should().BeNull();
+        rows[0].Errors.Should().BeEmpty();
     }
 
     [TestMethod]
@@ -71,7 +71,7 @@ public class CompaniesHouseCompanyMapTests
         // Arrange
         var dataModel = new List<CompaniesHouseCompany>
             {
-                new() { organisation_id = "23123",  subsidiary_id = "Sub1", organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Parent", franchisee_licensee_tenant = string.Empty, Errors = string.Empty }
+                new() { organisation_id = "23123",  subsidiary_id = "Sub1", organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Parent", franchisee_licensee_tenant = string.Empty, Errors = new() }
             };
         var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
         string[] all = [_csvHeader, .. rawSource];
@@ -97,7 +97,7 @@ public class CompaniesHouseCompanyMapTests
         rows[0].companies_house_number.Should().Be("123456");
         rows[0].parent_child.Should().Be("Parent");
         rows[0].franchisee_licensee_tenant.Should().Be(string.Empty);
-        rows[0].UploadFileErrorModel.Should().BeNull();
+        rows[0].Errors.Should().BeEmpty();
     }
 
     [TestMethod]
@@ -117,7 +117,7 @@ public class CompaniesHouseCompanyMapTests
         // Arrange
         var dataModel = new List<CompaniesHouseCompany>
             {
-                new() { organisation_id = organisationId,  subsidiary_id = subsidiaryId, organisation_name = organisationName, companies_house_number = companiesHouseNumber, parent_child = parentChild, franchisee_licensee_tenant = franchiseeLicenseeTenant, Errors = string.Empty },
+                new() { organisation_id = organisationId,  subsidiary_id = subsidiaryId, organisation_name = organisationName, companies_house_number = companiesHouseNumber, parent_child = parentChild, franchisee_licensee_tenant = franchiseeLicenseeTenant, Errors = new() },
             };
         var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
         string[] all = [_csvHeader, .. rawSource];
@@ -136,7 +136,7 @@ public class CompaniesHouseCompanyMapTests
 
         // Assert
         rows.Should().NotBeNullOrEmpty();
-        rows[0].UploadFileErrorModel.Should().NotBeNull();
-        rows[0].UploadFileErrorModel.Message.Should().Contain(expectedErrorMessage);
+        rows[0].Errors.Should().HaveCount(1);
+        rows[0].Errors[0].Message.Should().Contain(expectedErrorMessage);
     }
 }
