@@ -106,7 +106,7 @@ public class AntivirusClientTests
     }
 
     [TestMethod]
-    public async Task ShouldReplyInternalServerErrorOnUnhandeledException()
+    public async Task ShouldReplyInternalServerErrorOnUnhandledException()
     {
         // Arrange
         var fileDetails = _fixture.Create<FileDetails>();
