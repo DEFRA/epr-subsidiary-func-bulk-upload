@@ -34,7 +34,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
             {
                 FileContent = "No Record found in the file.",
                 Message = "No Record found in the file",
-                ErrorNumber = BulkUpdateErrors.FileEmptyError,
+                ErrorNumber = BulkUpdateErrors.FileEmptyError
             };
 
             fileValidation.Add(newError);
