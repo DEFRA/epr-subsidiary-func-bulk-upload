@@ -3,7 +3,6 @@
 public static class BulkUpdateErrors
 {
     public const int FileEmptyError = 100;
-
     public const int InvalidHeader = 101;
 
     public const int OrganisationIdRequired = 102;
@@ -23,4 +22,7 @@ public static class BulkUpdateErrors
 
     public const int CompaniesAlreadyBelongsToADifferentParent = 107;
     public const string CompaniesAlreadyBelongsToADifferentParentMessage = "Invalid Request. Subsidiary already has a different parent.";
+
+    public const string SubsidiaryBulkUploadProgress = "Subsidiary bulk upload progress";
+    public const string SubsidiaryBulkUploadErrors = "Subsidiary bulk upload errors";
 }
