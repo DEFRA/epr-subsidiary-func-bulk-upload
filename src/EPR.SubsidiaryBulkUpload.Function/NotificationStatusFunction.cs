@@ -27,8 +27,8 @@ public class NotificationStatusFunction(INotificationService notificationService
                 OrganisationId = organisationId
             };
 
-            var key = userRequestModel.GenerateKey(BulkUpdateErrors.SubsidiaryBulkUploadProgress);
-            var errorsKey = userRequestModel.GenerateKey(BulkUpdateErrors.SubsidiaryBulkUploadErrors);
+            var key = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress);
+            var errorsKey = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrors);
 
             var status = await _notificationService.GetStatus(key);
             var errorStatus = await _notificationService.GetStatus(errorsKey);

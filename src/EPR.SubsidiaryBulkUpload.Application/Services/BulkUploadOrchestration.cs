@@ -21,7 +21,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
 
     public async Task NotifyStart(UserRequestModel userRequestModel)
     {
-        var key = userRequestModel.GenerateKey(BulkUpdateErrors.SubsidiaryBulkUploadProgress);
+        var key = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress);
         _notificationService.SetStatus(key, "Uploading");
     }
 
@@ -38,8 +38,8 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
             };
 
             fileValidation.Add(newError);
-            _notificationService.SetStatus(userRequestModel.GenerateKey(BulkUpdateErrors.SubsidiaryBulkUploadProgress), "Error");
-            _notificationService.SetErrorStatus(userRequestModel.GenerateKey(BulkUpdateErrors.SubsidiaryBulkUploadErrors), fileValidation);
+            _notificationService.SetStatus(userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress), "Error");
+            _notificationService.SetErrorStatus(userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrors), fileValidation);
             return;
         }
 
@@ -47,8 +47,8 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
 
         if (errors.Any())
         {
-            var key = userRequestModel.GenerateKey(BulkUpdateErrors.SubsidiaryBulkUploadProgress);
-            var keyErrors = userRequestModel.GenerateKey(BulkUpdateErrors.SubsidiaryBulkUploadErrors);
+            var key = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress);
+            var keyErrors = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrors);
 
             _notificationService.SetStatus(key, "Error");
             _notificationService.SetErrorStatus(keyErrors, errors);
@@ -57,7 +57,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
 
     public async Task Orchestrate(IEnumerable<CompaniesHouseCompany> data, UserRequestModel userRequestModel)
     {
-        var key = userRequestModel.GenerateKey(BulkUpdateErrors.SubsidiaryBulkUploadProgress);
+        var key = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress);
 
         // this holds all the parents and their children records from csv
         var subsidiaryGroups = recordExtraction

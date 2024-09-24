@@ -80,8 +80,8 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             notificationErrorList.Add(newError);
         }
 
-        var key = userRequestModel.GenerateKey(BulkUpdateErrors.SubsidiaryBulkUploadProgress);
-        var keyErrors = userRequestModel.GenerateKey(BulkUpdateErrors.SubsidiaryBulkUploadErrors);
+        var key = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress);
+        var keyErrors = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrors);
         _notificationService.SetStatus(key, "Started reporting invalid subsidiaries.");
         _notificationService.SetErrorStatus(keyErrors, notificationErrorList);
         _logger.LogInformation(message);
