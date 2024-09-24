@@ -20,4 +20,10 @@ public class ApiOptions
     public int Timeout { get; set; }
 
     public string SubsidiaryServiceBaseUrl { get; set; } = null!;
+
+    public int RetryPolicyMaxRetries { get; set; }
+
+    public int RetryPolicyInitialWaitTime { get; set; }
+
+    public int RetryPolicyTooManyAttemptsWaitTime { get; set; }
 }

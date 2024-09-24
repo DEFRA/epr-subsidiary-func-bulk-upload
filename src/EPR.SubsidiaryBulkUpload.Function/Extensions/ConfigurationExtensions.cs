@@ -1,9 +1,7 @@
 ﻿namespace EPR.SubsidiaryBulkUpload.Function.Extensions;
 
 using System;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
@@ -71,7 +69,7 @@ public static class ConfigurationExtensions
                 client.DefaultRequestHeaders.Add("Authorization", $"BASIC {apiKey}");
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             })
-                .AddPolicyHandler((services, _) => GetRetryPolicy<CompaniesHouseLookupDirectService>(services))
+                .AddPolicyHandler((services, _) => GetRetryPolicy<CompaniesHouseLookupDirectService>(services, configuration))
                 .AddPolicyHandler((services, _) => GetTimeoutPolicy(services));
         }
         else
@@ -83,7 +81,7 @@ public static class ConfigurationExtensions
                 client.BaseAddress = new Uri(apiOptions.CompaniesHouseLookupBaseUrl);
             })
                 .ConfigurePrimaryHttpMessageHandler(GetClientCertificateHandler)
-                .AddPolicyHandler((services, _) => GetRetryPolicy<CompaniesHouseLookupService>(services))
+                .AddPolicyHandler((services, _) => GetRetryPolicy<CompaniesHouseLookupService>(services, configuration))
                 .AddPolicyHandler((services, _) => GetTimeoutPolicy(services));
         }
 
@@ -137,12 +135,12 @@ public static class ConfigurationExtensions
         return handler;
     }
 
-    private static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy<T>(IServiceProvider services) => HttpPolicyExtensions
+    private static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy<T>(IServiceProvider services, IConfiguration configuration) => HttpPolicyExtensions
         .HandleTransientHttpError()
-        .Or<TimeoutRejectedException>()
+        .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
         .WaitAndRetryAsync(
-            3,
-            retryAttempt => TimeSpan.FromSeconds(Math.Pow(3, retryAttempt)),
+            configuration.GetValue<int>("ApiConfig:RetryPolicyMaxRetries"),
+            retryAttempt => TimeSpan.FromSeconds(Math.Pow(configuration.GetValue<int>("ApiConfig:RetryPolicyInitialWaitTime"), retryAttempt)),
             onRetry: (outcome, timespan, retryAttempt, context) =>
             {
                 services?.GetService<ILogger<T>>()?
