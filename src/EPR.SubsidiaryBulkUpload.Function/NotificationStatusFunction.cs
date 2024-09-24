@@ -10,9 +10,6 @@ namespace EPR.SubsidiaryBulkUpload.Function;
 
 public class NotificationStatusFunction(INotificationService notificationService)
 {
-    private const string SubsidiaryBulkUploadProgress = "Subsidiary bulk upload progress";
-    private const string SubsidiaryBulkUploadErrors = "Subsidiary bulk upload errors";
-
     private readonly INotificationService _notificationService = notificationService;
 
     [Function("NotificationStatusFunction")]
@@ -30,8 +27,8 @@ public class NotificationStatusFunction(INotificationService notificationService
                 OrganisationId = organisationId
             };
 
-            var key = userRequestModel.GenerateKey(SubsidiaryBulkUploadProgress);
-            var errorsKey = userRequestModel.GenerateKey(SubsidiaryBulkUploadErrors);
+            var key = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress);
+            var errorsKey = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrors);
 
             var status = await _notificationService.GetStatus(key);
             var errorStatus = await _notificationService.GetStatus(errorsKey);

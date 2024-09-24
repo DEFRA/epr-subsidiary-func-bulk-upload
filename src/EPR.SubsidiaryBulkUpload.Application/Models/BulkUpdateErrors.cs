@@ -3,7 +3,6 @@
 public static class BulkUpdateErrors
 {
     public const int FileEmptyError = 100;
-
     public const int InvalidHeader = 101;
 
     public const int OrganisationIdRequired = 102;
