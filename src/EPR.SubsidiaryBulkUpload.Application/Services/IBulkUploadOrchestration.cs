@@ -5,7 +5,9 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services;
 
 public interface IBulkUploadOrchestration
 {
-    public Task Orchestrate(IEnumerable<CompaniesHouseCompany> data, UserRequestModel userRequestModel);
+    Task NotifyStart(UserRequestModel userRequestModel);
 
-    public Task NotifyErrors(IEnumerable<CompaniesHouseCompany> data, UserRequestModel userRequestModel);
+    Task Orchestrate(IEnumerable<CompaniesHouseCompany> data, UserRequestModel userRequestModel);
+
+    Task NotifyErrors(IEnumerable<CompaniesHouseCompany> data, UserRequestModel userRequestModel);
 }

@@ -11,5 +11,7 @@ public class UploadFileErrorModel
 
     public string Message { get; set; }
 
+    public int ErrorNumber { get; set; }
+
     public bool IsError { get; set; }
 }

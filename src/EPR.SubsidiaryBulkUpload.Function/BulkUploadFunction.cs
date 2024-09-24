@@ -44,21 +44,13 @@ public class BulkUploadFunction
             }
         }
 
-        var userGuid = metaData.Where(pair => pair.Key.Contains("userId"))
-                        .Select(pair => pair.Value).FirstOrDefault();
-
-        var hasUserId = Guid.TryParse(userGuid, out var userId);
-        if (!hasUserId)
-        {
-            _logger.LogWarning("Missing userId metadata for blob {Name}", client.Name);
-        }
-
         var userRequestModel = metaData.ToUserRequestModel();
 
         if (userRequestModel != null)
         {
-            var records = await _csvProcessor.ProcessStreamWithMapping<CompaniesHouseCompany, CompaniesHouseCompanyMap>(content, CsvConfigurations.BulkUploadCsvConfiguration);
+            await _orchestration.NotifyStart(userRequestModel);
 
+            var records = await _csvProcessor.ProcessStreamWithMapping<CompaniesHouseCompany, CompaniesHouseCompanyMap>(content, CsvConfigurations.BulkUploadCsvConfiguration);
             await _orchestration.NotifyErrors(records, userRequestModel);
             await _orchestration.Orchestrate(records, userRequestModel);
 
