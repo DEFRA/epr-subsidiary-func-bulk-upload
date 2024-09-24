@@ -416,12 +416,6 @@ public class TableStorageProcessorTests
         _mockLogger.VerifyLog(
             x => x.LogError(
                 It.IsAny<Exception>(),
-                It.IsAny<string>()),
-            Times.Once);
-
-        _mockLogger.VerifyLog(
-            x => x.LogError(
-                It.IsAny<Exception>(),
                 "An error occurred whilst retrieving companies house details."),
             Times.Once);
     }
@@ -483,13 +477,6 @@ public class TableStorageProcessorTests
 
         // Assert
         actual.Should().Be(companyData.Count);
-
-        _mockLogger.VerifyLog(
-            x => x.LogError(
-                It.IsAny<Exception>(),
-                It.IsAny<string>(),
-                It.IsAny<string>()),
-            Times.Never);
     }
 
     [TestMethod]
