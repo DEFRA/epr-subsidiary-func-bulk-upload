@@ -1,6 +1,7 @@
 ﻿using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Options;
 using Microsoft.Extensions.Options;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
 
@@ -36,7 +37,7 @@ public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadServ
 
         var results = await Task.WhenAll(all);
 
-        return results.All(r => r);
+        return Array.TrueForAll(results, r => r);
     }
 
     private async Task<bool> DownloadFile(int fileCount, int fileNumber, DateTimeOffset now)
