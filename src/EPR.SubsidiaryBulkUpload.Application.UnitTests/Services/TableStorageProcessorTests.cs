@@ -229,7 +229,6 @@ public class TableStorageProcessorTests
         await _processor.WriteToAzureTableStorage(records, "TestTable", "TestPartitionKey");
 
         // Assert
-        _mockTableClient.Verify(x => x.SubmitTransactionAsync(It.IsAny<IEnumerable<TableTransactionAction>>(), default), Times.Exactly(2));
         _mockTableClient.Verify(
             x => x.SubmitTransactionAsync(
                 It.Is<IEnumerable<TableTransactionAction>>(
@@ -238,6 +237,8 @@ public class TableStorageProcessorTests
                          t.ToArray()[1].ActionType == TableTransactionActionType.Delete),
                 default),
             Times.Exactly(1));
+
+        _mockTableClient.Verify(x => x.DeleteEntityAsync(It.Is<CompanyHouseTableEntity>(e => e.PartitionKey == "Latest CH Data" && e.RowKey == "To Delete"), It.IsAny<ETag>(), default), Times.Once);
     }
 
     [TestMethod]
