@@ -30,8 +30,8 @@ public class ParserClassTests
 
         _listDataModel = new List<CompaniesHouseCompany>
             {
-                new() { organisation_id = "23123",  subsidiary_id = string.Empty, organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Parent", franchisee_licensee_tenant = string.Empty, Errors = string.Empty },
-                new() { organisation_id = "23123", subsidiary_id = "Sub1", organisation_name = "OrgB", companies_house_number = "654321", parent_child = "Child", franchisee_licensee_tenant = string.Empty, Errors = string.Empty }
+                new() { organisation_id = "23123",  subsidiary_id = string.Empty, organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Parent", franchisee_licensee_tenant = string.Empty, Errors = new() },
+                new() { organisation_id = "23123", subsidiary_id = "Sub1", organisation_name = "OrgB", companies_house_number = "654321", parent_child = "Child", franchisee_licensee_tenant = string.Empty, Errors = new() }
             };
 
         _sut = new ParserClass(_loggerMock.Object);
@@ -73,10 +73,10 @@ public class ParserClassTests
 
         var errorRow = returnValue.CompaniesHouseCompany[0];
 
-        errorRow.UploadFileErrorModel.Should().NotBeNull();
-        errorRow.UploadFileErrorModel.FileContent.Should().Be("headererror-Invalid");
-        errorRow.UploadFileErrorModel.Message.Should().Contain("organisation_id");
-        errorRow.UploadFileErrorModel.Message.Should().Contain("subsidiary_id");
+        errorRow.Errors.Should().NotBeEmpty();
+        errorRow.Errors[0].FileContent.Should().Be("File is empty or in invalid format");
+        errorRow.Errors[0].Message.Should().Contain("organisation_id");
+        errorRow.Errors[0].Message.Should().Contain("subsidiary_id");
     }
 
     [TestMethod]
@@ -100,9 +100,9 @@ public class ParserClassTests
 
         var errorRow = returnValue.CompaniesHouseCompany[0];
 
-        errorRow.UploadFileErrorModel.Should().NotBeNull();
-        errorRow.UploadFileErrorModel.FileContent.Should().Be("headererror-Invalid");
-        errorRow.UploadFileErrorModel.Message.Should().Contain("subsidiary_id");
+        errorRow.Errors[0].Should().NotBeNull();
+        errorRow.Errors[0].FileContent.Should().Be("File is empty or in invalid format");
+        errorRow.Errors[0].Message.Should().Contain("subsidiary_id");
     }
 
     [TestMethod]
@@ -133,7 +133,7 @@ public class ParserClassTests
         parsedResult[0].companies_house_number.Should().Be("123456");
         parsedResult[0].parent_child.Should().Be("Parent");
         parsedResult[0].franchisee_licensee_tenant.Should().Be(string.Empty);
-        parsedResult[0].UploadFileErrorModel.Should().BeNull();
+        parsedResult[0].Errors.Should().BeNullOrEmpty();
 
         parsedResult[1].organisation_id.Should().Be("23123");
         parsedResult[1].subsidiary_id.Should().Be("Sub1");
@@ -141,7 +141,7 @@ public class ParserClassTests
         parsedResult[1].companies_house_number.Should().Be("654321");
         parsedResult[1].parent_child.Should().Be("Child");
         parsedResult[1].franchisee_licensee_tenant.Should().Be(string.Empty);
-        parsedResult[1].UploadFileErrorModel.Should().BeNull();
+        parsedResult[1].Errors.Should().BeNullOrEmpty();
     }
 
     [TestMethod]
@@ -173,7 +173,7 @@ public class ParserClassTests
         parsedResult[0].companies_house_number.Should().Be("123456");
         parsedResult[0].parent_child.Should().Be("Parent");
         parsedResult[0].franchisee_licensee_tenant.Should().Be(string.Empty);
-        parsedResult[0].UploadFileErrorModel.Should().BeNull();
+        parsedResult[0].Errors.Should().BeNullOrEmpty();
 
         parsedResult[1].organisation_id.Should().Be("23123");
         parsedResult[1].subsidiary_id.Should().Be("Sub1");
@@ -181,7 +181,7 @@ public class ParserClassTests
         parsedResult[1].companies_house_number.Should().Be("654321");
         parsedResult[1].parent_child.Should().Be("Child");
         parsedResult[1].franchisee_licensee_tenant.Should().Be(string.Empty);
-        parsedResult[1].UploadFileErrorModel.Should().BeNull();
+        parsedResult[1].Errors.Should().BeNullOrEmpty();
     }
 
     [TestMethod]
@@ -190,8 +190,8 @@ public class ParserClassTests
         // Arrange
         var badDataModel = new List<CompaniesHouseCompany>
             {
-                new() { organisation_id = "23123",  subsidiary_id = string.Empty, organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Parent", franchisee_licensee_tenant = string.Empty, Errors = string.Empty },
-                new() { organisation_id = "23123", subsidiary_id = "Sub1", organisation_name = string.Empty, companies_house_number = "654321", parent_child = "Child", franchisee_licensee_tenant = "License123", Errors = string.Empty }
+                new() { organisation_id = "23123",  subsidiary_id = string.Empty, organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Parent", franchisee_licensee_tenant = string.Empty, Errors = new() },
+                new() { organisation_id = "23123", subsidiary_id = "Sub1", organisation_name = string.Empty, companies_house_number = "654321", parent_child = "Child", franchisee_licensee_tenant = "License123", Errors = new() }
             };
 
         var rawSource = badDataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
@@ -215,7 +215,7 @@ public class ParserClassTests
         parsedResult[0].companies_house_number.Should().Be("123456");
         parsedResult[0].parent_child.Should().Be("Parent");
         parsedResult[0].franchisee_licensee_tenant.Should().Be(string.Empty);
-        parsedResult[0].UploadFileErrorModel.Should().BeNull();
+        parsedResult[0].Errors.Should().BeNullOrEmpty();
 
         parsedResult[1].organisation_id.Should().Be("23123");
         parsedResult[1].subsidiary_id.Should().Be("Sub1");
@@ -224,8 +224,8 @@ public class ParserClassTests
         parsedResult[1].parent_child.Should().Be("Child");
         parsedResult[1].franchisee_licensee_tenant.Should().Be("License123");
 
-        parsedResult[1].UploadFileErrorModel.Should().NotBeNull();
-        parsedResult[1].UploadFileErrorModel.Message.Should().Contain("organisation_name is required.");
+        parsedResult[1].Errors.Should().NotBeEmpty();
+        parsedResult[1].Errors[0].Message.Should().Contain("organisation_name is required.");
     }
 
     [TestMethod]
@@ -261,9 +261,9 @@ public class ParserClassTests
 
         var errorRow = returnValue.CompaniesHouseCompany[0];
 
-        errorRow.UploadFileErrorModel.Should().NotBeNull();
-        errorRow.UploadFileErrorModel.FileContent.Should().Be("File is empty or in invalid format");
-        errorRow.UploadFileErrorModel.Message.Should().Contain("Invalid File");
+        errorRow.Errors.Should().NotBeEmpty();
+        errorRow.Errors[0].FileContent.Should().Be("File is empty or in invalid format");
+        errorRow.Errors[0].Message.Should().Contain("Invalid File");
     }
 
     [TestMethod]
@@ -284,6 +284,6 @@ public class ParserClassTests
         returnValue.CompaniesHouseCompany.Should().NotBeNull();
         returnValue.CompaniesHouseCompany.Count.Should().Be(1);
 
-        returnValue.CompaniesHouseCompany[0].UploadFileErrorModel.Should().NotBeNull();
+        returnValue.CompaniesHouseCompany[0].Errors.Should().NotBeEmpty();
     }
 }

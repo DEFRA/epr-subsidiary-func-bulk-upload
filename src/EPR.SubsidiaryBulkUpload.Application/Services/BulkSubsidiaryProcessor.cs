@@ -9,8 +9,6 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services;
 public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICompaniesHouseDataProvider companiesHouseDataProvider, ILogger<BulkSubsidiaryProcessor> logger, INotificationService notificationService)
     : IBulkSubsidiaryProcessor
 {
-    private const string SubsidiaryBulkUploadMismatchedProgress = "Subsidiary bulk upload progress";
-    private const string SubsidiaryBulkUploadMismatchedErrors = "Subsidiary bulk upload errors. Mismatched subsidiaries.";
     private readonly ILogger<BulkSubsidiaryProcessor> _logger = logger;
     private readonly ISubsidiaryService organisationService = organisationService;
     private readonly ICompaniesHouseDataProvider companiesHouseDataProvider = companiesHouseDataProvider;
@@ -74,14 +72,16 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             var newError = new UploadFileErrorModel()
             {
                 FileContent = company.organisation_name + "-" + company.companies_house_number,
-                Message = message
+                Message = message,
+                IsError = true,
+                FileLineNumber = company.FileLineNumber
             };
 
             notificationErrorList.Add(newError);
         }
 
-        var key = userRequestModel.GenerateKey(SubsidiaryBulkUploadMismatchedProgress);
-        var keyErrors = userRequestModel.GenerateKey(SubsidiaryBulkUploadMismatchedErrors);
+        var key = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress);
+        var keyErrors = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrors);
         _notificationService.SetStatus(key, "Started reporting invalid subsidiaries.");
         _notificationService.SetErrorStatus(keyErrors, notificationErrorList);
         _logger.LogInformation(message);

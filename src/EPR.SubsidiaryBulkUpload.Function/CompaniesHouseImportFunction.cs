@@ -13,8 +13,6 @@ namespace EPR.SubsidiaryBulkUpload.Function;
 
 public class CompaniesHouseImportFunction(ILogger<CompaniesHouseImportFunction> logger, ICsvProcessor csvProcessor, ITableStorageProcessor tableStorageProcessor, IOptions<TableStorageOptions> configOptions)
 {
-    private const int BatchSize = 100; // Maximum batch size for Azure Table Storage
-
     private readonly ICsvProcessor _csvProcessor = csvProcessor;
     private readonly ITableStorageProcessor _tableStorageProcessor = tableStorageProcessor;
     private readonly ILogger<CompaniesHouseImportFunction> _logger = logger;
@@ -42,7 +40,6 @@ public class CompaniesHouseImportFunction(ILogger<CompaniesHouseImportFunction> 
         {
             var content = downloadStreamingResult.Value.Content;
 
-            var storageConnectionString = _configOptions.ConnectionString;
             var tableName = _configOptions.CompaniesHouseOfflineDataTableName;
 
             var config = new CsvConfiguration(CultureInfo.InvariantCulture)
@@ -56,14 +53,20 @@ public class CompaniesHouseImportFunction(ILogger<CompaniesHouseImportFunction> 
 
             if (records.Any())
             {
-                await _tableStorageProcessor.WriteToAzureTableStorage(records, tableName, partitionKey, storageConnectionString, BatchSize);
+                await _tableStorageProcessor.WriteToAzureTableStorage(records, tableName, partitionKey);
             }
 
-            _logger.LogInformation("C# Blob trigger processed {Count} records from csv blob {Name}", records.Count(), client.Name);
+            _logger.LogInformation("CompaniesHouseImport blob trigger processed {Count} records from csv blob {Name}", records.Count(), client.Name);
         }
         else
         {
-            _logger.LogInformation("C# Blob trigger function did not processed file name doesn't contain partition key {Name}", client.Name);
+            _logger.LogInformation("CompaniesHouseImport blob trigger function did not process file because name '{Name}' doesn't contain partition key", client.Name);
+        }
+
+        var isDeleted = await client.DeleteIfExistsAsync();
+        if (isDeleted?.Value == true)
+        {
+            _logger.LogInformation("Blob {Name} was deleted.", client.Name);
         }
     }
 }
