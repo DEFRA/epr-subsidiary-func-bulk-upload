@@ -11,14 +11,12 @@ using EPR.SubsidiaryBulkUpload.Application.Handlers;
 using EPR.SubsidiaryBulkUpload.Application.Options;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
+using EPR.SubsidiaryBulkUpload.Function.Resilience;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Options;
-using Polly;
-using Polly.Extensions.Http;
-using Polly.Timeout;
 using StackExchange.Redis;
 
 [ExcludeFromCodeCoverage]
@@ -68,8 +66,7 @@ public static class ConfigurationExtensions
                 client.DefaultRequestHeaders.Add("Authorization", $"BASIC {apiKey}");
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             })
-                .AddPolicyHandler((services, _) => GetRetryPolicy<CompaniesHouseLookupDirectService>(services, configuration))
-                .AddPolicyHandler((services, _) => GetTimeoutPolicy(services));
+                .AddCompaniesHouseResilienceHandler();
         }
         else
         {
@@ -80,8 +77,7 @@ public static class ConfigurationExtensions
                 client.BaseAddress = new Uri(apiOptions.CompaniesHouseLookupBaseUrl);
             })
                 .ConfigurePrimaryHttpMessageHandler(GetClientCertificateHandler)
-                .AddPolicyHandler((services, _) => GetRetryPolicy<CompaniesHouseLookupService>(services, configuration))
-                .AddPolicyHandler((services, _) => GetTimeoutPolicy(services));
+                .AddCompaniesHouseResilienceHandler();
         }
 
         return services;
@@ -117,6 +113,9 @@ public static class ConfigurationExtensions
         return services;
     }
 
+    public static IHttpResiliencePipelineBuilder AddCompaniesHouseResilienceHandler(this IHttpClientBuilder builder) =>
+        builder.AddResilienceHandler(Pipelines.CompaniesHouseResiliencePipelineKey, Pipelines.ConfigureCompaniesHouseResilienceHandler<CompaniesHouseLookupService>());
+
     private static HttpMessageHandler GetClientCertificateHandler(IServiceProvider sp)
     {
         if (sp == null)
@@ -132,32 +131,5 @@ public static class ConfigurationExtensions
                 Convert.FromBase64String(sp.GetRequiredService<IOptions<ApiOptions>>().Value.Certificate)));
 
         return handler;
-    }
-
-    private static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy<T>(IServiceProvider services, IConfiguration configuration) => HttpPolicyExtensions
-        .HandleTransientHttpError()
-        .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
-        .WaitAndRetryAsync(
-            configuration.GetValue<int>("ApiConfig:RetryPolicyMaxRetries"),
-            retryAttempt => TimeSpan.FromSeconds(Math.Pow(configuration.GetValue<int>("ApiConfig:RetryPolicyInitialWaitTime"), retryAttempt)),
-            onRetry: (outcome, timespan, retryAttempt, context) =>
-            {
-                services?.GetService<ILogger<T>>()?
-                    .LogWarning(
-                        "{Type} retry policy will attempt retry {Retry} in {Delay}ms after a transient error or timeout. {ExceptionMessage}",
-                        typeof(T).Name,
-                        retryAttempt,
-                        timespan.TotalMilliseconds,
-                        outcome?.Exception?.Message);
-            });
-
-    private static IAsyncPolicy<HttpResponseMessage> GetTimeoutPolicy(IServiceProvider sp)
-    {
-        var apiOptions = sp.GetRequiredService<IOptions<ApiOptions>>().Value;
-
-        return Policy
-            .TimeoutAsync<HttpResponseMessage>(
-                timeout: TimeSpan.FromSeconds(apiOptions.Timeout),
-                timeoutStrategy: TimeoutStrategy.Optimistic);
     }
 }
