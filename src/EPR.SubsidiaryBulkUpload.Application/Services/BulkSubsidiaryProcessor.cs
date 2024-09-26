@@ -21,7 +21,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             .SelectAwait(async subsidiary => (Subsidiary: subsidiary, SubsidiaryOrg: await organisationService.GetCompanyByCompaniesHouseNumber(subsidiary.companies_house_number)));
 
         var subsidiariesAndOrgWithValidName = subsidiariesAndOrg
-            .Where(sub => sub.SubsidiaryOrg != null && sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg.companiesHouseNumber && sub.Subsidiary.organisation_name == sub.SubsidiaryOrg.name);
+            .Where(sub => sub.SubsidiaryOrg != null && sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg.companiesHouseNumber && sub.Subsidiary.organisation_name.ToLower() == sub.SubsidiaryOrg.name.ToLower());
 
         var knownSubsidiariesToAdd = subsidiariesAndOrgWithValidName.Where(co => co.SubsidiaryOrg != null)
             .SelectAwait(async co =>
@@ -36,7 +36,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         }
 
         var subsidiariesAndOrgWith_InValidName = subsidiariesAndOrg
-            .Where(sub => sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg?.companiesHouseNumber && sub.Subsidiary.organisation_name != sub.SubsidiaryOrg?.name);
+            .Where(sub => sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg?.companiesHouseNumber && sub.Subsidiary.organisation_name.ToLower() != sub.SubsidiaryOrg?.name.ToLower());
         var subWithInvalidName = await subsidiariesAndOrgWith_InValidName.Select(s => s.Subsidiary).ToListAsync();
 
         string message = "The subsidiary company house number is in RPD, but the name is different\r\n Note, could this be because the company name has changed.";
@@ -53,11 +53,14 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             subsidiaryandLink.LinkModel.StatusCode = await organisationService.CreateAndAddSubsidiaryAsync(subsidiaryandLink.LinkModel);
         }
 
-        var allAdded = await newSubsidiariesToAdd.Where(sta => sta.LinkModel.StatusCode == System.Net.HttpStatusCode.OK).Select(sta => sta.Subsidiary)
+        var alreadyExistsSubs = await subsidiariesAndOrgWithValidName.ToListAsync();
+        var newAddedSubs = await newSubsidiariesToAdd.ToListAsync();
+
+        var allAddedNewSubsPlusExisting = await newSubsidiariesToAdd.Where(sta => sta.LinkModel.StatusCode == System.Net.HttpStatusCode.OK).Select(sta => sta.Subsidiary)
             .Concat(subsidiariesAndOrgWithValidName.Select(swoan => swoan.Subsidiary))
             .ToListAsync();
 
-        var subsidiariesNotAdded = subsidiaries.Except(allAdded);
+        var subsidiariesNotAdded = subsidiaries.ToList().Except(allAddedNewSubsPlusExisting);
 
         /*Scenario 1: The subsidiary is not found in RPD and not in Local storage and not found on companies house*/
         message = "Subsidiaries not found in RPD and not in Local storage and also not found on companies house.";

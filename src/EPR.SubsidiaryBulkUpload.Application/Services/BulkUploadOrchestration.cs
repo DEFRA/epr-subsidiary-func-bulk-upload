@@ -23,6 +23,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
     {
         var key = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress);
         _notificationService.SetStatus(key, "Uploading");
+        _notificationService.SetErrorStatus(userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrors), new List<UploadFileErrorModel>());
     }
 
     public async Task NotifyErrors(IEnumerable<CompaniesHouseCompany> data, UserRequestModel userRequestModel)
