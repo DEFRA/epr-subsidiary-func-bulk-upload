@@ -1,9 +1,7 @@
 ﻿namespace EPR.SubsidiaryBulkUpload.Function.Extensions;
 
 using System;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
