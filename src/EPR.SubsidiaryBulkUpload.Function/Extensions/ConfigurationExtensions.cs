@@ -7,7 +7,6 @@ using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Azure.Core;
-using EPR.SubsidiaryBulkUpload.Application.Configs;
 using EPR.SubsidiaryBulkUpload.Application.Handlers;
 using EPR.SubsidiaryBulkUpload.Application.Options;
 using EPR.SubsidiaryBulkUpload.Application.Services;
@@ -29,7 +28,7 @@ public static class ConfigurationExtensions
     {
         services.Configure<ApiOptions>(configuration.GetSection(ApiOptions.SectionName));
         services.Configure<TableStorageOptions>(configuration.GetSection(TableStorageOptions.SectionName));
-        services.Configure<RedisConfig>(configuration.GetSection(RedisConfig.SectionName));
+        services.Configure<RedisOptions>(configuration.GetSection(RedisOptions.SectionName));
         return services;
     }
 
@@ -91,7 +90,7 @@ public static class ConfigurationExtensions
     public static IServiceCollection AddServices(this IServiceCollection services, IConfiguration configuration)
     {
         var sp = services.BuildServiceProvider();
-        var redisConfig = sp.GetRequiredService<IOptions<RedisConfig>>().Value;
+        var redisOptions = sp.GetRequiredService<IOptions<RedisOptions>>().Value;
 
         services.AddTransient<AccountServiceAuthorisationHandler>();
         services.AddTransient<IBulkUploadOrchestration, BulkUploadOrchestration>();
@@ -103,7 +102,7 @@ public static class ConfigurationExtensions
         services.AddTransient<ITableStorageProcessor, TableStorageProcessor>();
         services.AddTransient<ISubsidiaryService, SubsidiaryService>();
         services.AddTransient<INotificationService, NotificationService>();
-        services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConfig.ConnectionString));
+        services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisOptions.ConnectionString));
 
         var isDevMode = configuration.GetValue<bool?>("ApiConfig:DeveloperMode");
         if (isDevMode is true)
