@@ -53,9 +53,6 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             subsidiaryandLink.LinkModel.StatusCode = await organisationService.CreateAndAddSubsidiaryAsync(subsidiaryandLink.LinkModel);
         }
 
-        var alreadyExistsSubs = await subsidiariesAndOrgWithValidName.ToListAsync();
-        var newAddedSubs = await newSubsidiariesToAdd.ToListAsync();
-
         var allAddedNewSubsPlusExisting = await newSubsidiariesToAdd.Where(sta => sta.LinkModel.StatusCode == System.Net.HttpStatusCode.OK).Select(sta => sta.Subsidiary)
             .Concat(subsidiariesAndOrgWithValidName.Select(swoan => swoan.Subsidiary))
             .ToListAsync();
