@@ -9,9 +9,9 @@ using System.Text;
 using Azure.Core;
 using EPR.SubsidiaryBulkUpload.Application.Handlers;
 using EPR.SubsidiaryBulkUpload.Application.Options;
+using EPR.SubsidiaryBulkUpload.Application.Resilience;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
-using EPR.SubsidiaryBulkUpload.Function.Resilience;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -112,9 +112,6 @@ public static class ConfigurationExtensions
 
         return services;
     }
-
-    public static IHttpResiliencePipelineBuilder AddCompaniesHouseResilienceHandler(this IHttpClientBuilder builder) =>
-        builder.AddResilienceHandler(Pipelines.CompaniesHouseResiliencePipelineKey, Pipelines.ConfigureCompaniesHouseResilienceHandler<CompaniesHouseLookupService>());
 
     private static HttpMessageHandler GetClientCertificateHandler(IServiceProvider sp)
     {

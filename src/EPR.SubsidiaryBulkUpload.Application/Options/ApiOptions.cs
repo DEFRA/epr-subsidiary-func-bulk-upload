@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using EPR.SubsidiaryBulkUpload.Application.Models;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Options;
 
@@ -18,6 +19,8 @@ public class ApiOptions
     public string Certificate { get; set; } = null!;
 
     public int Timeout { get; set; }
+
+    public TimeUnit TimeUnits { get; set; } = TimeUnit.Seconds;
 
     public string SubsidiaryServiceBaseUrl { get; set; } = null!;
 

@@ -1,6 +1,7 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Net;
+﻿using System.Net;
+using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Options;
+using EPR.SubsidiaryBulkUpload.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Logging;
@@ -8,12 +9,20 @@ using Polly;
 using Polly.Retry;
 using Polly.Timeout;
 
-namespace EPR.SubsidiaryBulkUpload.Function.Resilience;
+namespace EPR.SubsidiaryBulkUpload.Application.Resilience;
 
-[ExcludeFromCodeCoverage]
 public static class Pipelines
 {
     public const string CompaniesHouseResiliencePipelineKey = "CompaniesHouseResiliencePipeline";
+
+    public static IHttpResiliencePipelineBuilder AddCompaniesHouseResilienceHandler(this IHttpClientBuilder builder) =>
+    builder.AddResilienceHandler(CompaniesHouseResiliencePipelineKey, ConfigureCompaniesHouseResilienceHandler<CompaniesHouseLookupService>());
+
+    public static IHttpClientBuilder AddCompaniesHouseResilienceHandlerToHttpClientBuilder(this IHttpClientBuilder builder)
+    {
+        builder.AddResilienceHandler(CompaniesHouseResiliencePipelineKey, ConfigureCompaniesHouseResilienceHandler<CompaniesHouseLookupService>());
+        return builder;
+    }
 
     public static Action<ResiliencePipelineBuilder<HttpResponseMessage>, ResilienceHandlerContext> ConfigureCompaniesHouseResilienceHandler<T>()
     {
@@ -24,7 +33,7 @@ public static class Pipelines
             builder
             .AddRetry(new HttpRetryStrategyOptions
             {
-                Delay = TimeSpan.FromSeconds(apiOptions.RetryPolicyInitialWaitTime),
+                Delay = apiOptions.ConvertToTimespan(apiOptions.RetryPolicyInitialWaitTime),
                 ShouldHandle = new PredicateBuilder<HttpResponseMessage>()
                     .HandleResult(response => response.StatusCode != HttpStatusCode.TooManyRequests),
                 BackoffType = DelayBackoffType.Exponential,
@@ -32,14 +41,8 @@ public static class Pipelines
                 UseJitter = true,
                 OnRetry = args =>
                 {
-                    var logger = context.ServiceProvider.GetService<ILogger<T>>();
-
-                    if (args.Outcome.Exception is TimeoutRejectedException)
-                    {
-                        logger?.LogInformation("Timeout encountered");
-                    }
-
-                    logger?.LogWarning(
+                    context.ServiceProvider.GetService<ILogger<T>>()?
+                        .LogWarning(
                             "{Type} retry policy will attempt retry {Retry} in {Delay}ms after a transient error or timeout. {ExceptionMessage}",
                             typeof(T).Name,
                             args.AttemptNumber,
@@ -53,7 +56,7 @@ public static class Pipelines
             {
                 ShouldHandle = new PredicateBuilder<HttpResponseMessage>()
                     .HandleResult(response => response.StatusCode == HttpStatusCode.TooManyRequests),
-                Delay = TimeSpan.FromSeconds(apiOptions.RetryPolicyTooManyAttemptsWaitTime),
+                Delay = apiOptions.ConvertToTimespan(apiOptions.RetryPolicyTooManyAttemptsWaitTime),
                 MaxRetryAttempts = apiOptions.RetryPolicyMaxRetries,
                 UseJitter = true,
                 BackoffType = DelayBackoffType.Exponential,
@@ -72,7 +75,7 @@ public static class Pipelines
             })
             .AddTimeout(new TimeoutStrategyOptions
             {
-                Timeout = TimeSpan.FromSeconds(apiOptions.Timeout)
+                Timeout = apiOptions.ConvertToTimespan(apiOptions.Timeout)
             });
         };
     }
