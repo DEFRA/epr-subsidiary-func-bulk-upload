@@ -34,8 +34,6 @@ public static class Pipelines
             .AddRetry(new HttpRetryStrategyOptions
             {
                 Delay = apiOptions.ConvertToTimespan(apiOptions.RetryPolicyInitialWaitTime),
-                ShouldHandle = new PredicateBuilder<HttpResponseMessage>()
-                    .HandleResult(response => response.StatusCode != HttpStatusCode.TooManyRequests),
                 BackoffType = DelayBackoffType.Exponential,
                 MaxRetryAttempts = apiOptions.RetryPolicyMaxRetries,
                 UseJitter = true,
@@ -57,7 +55,7 @@ public static class Pipelines
                 ShouldHandle = new PredicateBuilder<HttpResponseMessage>()
                     .HandleResult(response => response.StatusCode == HttpStatusCode.TooManyRequests),
                 Delay = apiOptions.ConvertToTimespan(apiOptions.RetryPolicyTooManyAttemptsWaitTime),
-                MaxRetryAttempts = apiOptions.RetryPolicyMaxRetries,
+                MaxRetryAttempts = apiOptions.RetryPolicyTooManyAttemptsMaxRetries,
                 UseJitter = true,
                 BackoffType = DelayBackoffType.Exponential,
                 OnRetry = args =>

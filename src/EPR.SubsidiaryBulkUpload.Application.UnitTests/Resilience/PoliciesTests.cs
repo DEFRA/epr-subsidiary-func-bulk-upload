@@ -2,8 +2,8 @@
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Options;
 using EPR.SubsidiaryBulkUpload.Application.Services;
-using EPR.SubsidiaryBulkUpload.Application.UnitTests.TestHelpers;
 using Microsoft.Extensions.DependencyInjection;
+using Moq.Protected;
 using PollyResilience = EPR.SubsidiaryBulkUpload.Application.Resilience;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Resilience;
@@ -13,7 +13,9 @@ public class PoliciesTests
 {
     private const string BaseAddress = "http://any.localhost";
     private const string HttpClientName = "my-httpClient";
-    private const int MaxRetries = 3;
+    private const int MaxRetries = 2;
+
+    private readonly Mock<DelegatingHandler> _httpMessageHandlerMock = new();
 
     [TestMethod]
     [DataRow(HttpStatusCode.GatewayTimeout)]
@@ -23,27 +25,34 @@ public class PoliciesTests
     public async Task ConfigureCompaniesHouseResilienceHandlerTest(HttpStatusCode statusCode)
     {
         // Arrange
+        var attempts = 0;
         var services = new ServiceCollection();
-        var fakeHttpDelegatingHandler = new FakeHttpDelegatingHandler(
-            _ => Task.FromResult(new HttpResponseMessage(statusCode)));
 
         services.Configure<ApiOptions>(x =>
         {
             x.CompaniesHouseLookupBaseUrl = BaseAddress;
-            x.RetryPolicyInitialWaitTime = 2;
+            x.RetryPolicyInitialWaitTime = 1;
             x.RetryPolicyMaxRetries = MaxRetries;
-            x.RetryPolicyTooManyAttemptsWaitTime = 2;
+            x.RetryPolicyTooManyAttemptsWaitTime = 1;
             x.Timeout = 10; // Minimum value 10ms required for this
             x.TimeUnits = TimeUnit.Milliseconds;
         });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(statusCode))
+            .Callback<HttpRequestMessage, CancellationToken>((m, c) => attempts++);
 
         services.AddHttpClient(HttpClientName, client =>
         {
             client.BaseAddress = new Uri(BaseAddress);
         })
-                .AddPolicyHandler((services, _) => PollyResilience.Policies.GetRetryPolicy<CompaniesHouseLookupDirectService>(services))
-                .AddPolicyHandler((services, _) => PollyResilience.Policies.GetTimeoutPolicy(services))
-            .AddHttpMessageHandler(() => fakeHttpDelegatingHandler);
+             .AddPolicyHandler((services, _) => PollyResilience.Policies.GetRetryPolicy<CompaniesHouseLookupDirectService>(services))
+             .AddPolicyHandler((services, _) => PollyResilience.Policies.GetTimeoutPolicy(services))
+             .AddHttpMessageHandler(() => _httpMessageHandlerMock.Object);
 
         var serviceProvider = services.BuildServiceProvider();
         using var scope = serviceProvider.CreateScope();
@@ -56,6 +65,6 @@ public class PoliciesTests
 
         // Assert
         result.StatusCode.Should().Be(statusCode);
-        fakeHttpDelegatingHandler.Attempts.Should().Be(MaxRetries + 1);
+        attempts.Should().Be(MaxRetries + 1);
     }
 }

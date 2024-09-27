@@ -28,5 +28,7 @@ public class ApiOptions
 
     public int RetryPolicyInitialWaitTime { get; set; }
 
+    public int RetryPolicyTooManyAttemptsMaxRetries { get; set; }
+
     public int RetryPolicyTooManyAttemptsWaitTime { get; set; }
 }
