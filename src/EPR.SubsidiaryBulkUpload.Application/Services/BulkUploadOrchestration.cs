@@ -33,8 +33,9 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
             var fileValidation = new List<UploadFileErrorModel>();
             var newError = new UploadFileErrorModel()
             {
-                FileContent = "No Record found in the file.",
-                Message = "No Record found in the file",
+                FileLineNumber = 2,
+                FileContent = "The file has no data.",
+                Message = "File has no records.",
                 ErrorNumber = BulkUpdateErrors.FileEmptyError,
                 IsError = true
             };
