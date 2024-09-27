@@ -74,9 +74,8 @@ public class ParserClassTests
         var errorRow = returnValue.CompaniesHouseCompany[0];
 
         errorRow.Errors.Should().NotBeEmpty();
-        errorRow.Errors[0].FileContent.Should().Be("File is empty or in invalid format");
-        errorRow.Errors[0].Message.Should().Contain("organisation_id");
-        errorRow.Errors[0].Message.Should().Contain("subsidiary_id");
+        errorRow.Errors[0].FileContent.Should().Be("The file line has missing columns : ");
+        errorRow.Errors[0].Message.Should().Contain("The file line has missing columns: organisation_id,subsidiary_id");
     }
 
     [TestMethod]
@@ -101,8 +100,8 @@ public class ParserClassTests
         var errorRow = returnValue.CompaniesHouseCompany[0];
 
         errorRow.Errors[0].Should().NotBeNull();
-        errorRow.Errors[0].FileContent.Should().Be("File is empty or in invalid format");
-        errorRow.Errors[0].Message.Should().Contain("subsidiary_id");
+        errorRow.Errors[0].FileContent.Should().Be("The file line has missing columns : ");
+        errorRow.Errors[0].Message.Should().Contain("The file line has missing columns: subsidiary_id");
     }
 
     [TestMethod]
@@ -123,25 +122,15 @@ public class ParserClassTests
         returnValue.ResponseClass.isDone.Should().BeTrue();
 
         returnValue.CompaniesHouseCompany.Should().NotBeNull();
-        returnValue.CompaniesHouseCompany.Count.Should().Be(2);
+        returnValue.CompaniesHouseCompany.Count.Should().Be(1);
+
+        var errorRow = returnValue.CompaniesHouseCompany[0];
+
+        errorRow.Errors[0].Should().NotBeNull();
+        errorRow.Errors[0].FileContent.Should().Be("The file line has extra columns");
+        errorRow.Errors[0].Message.Should().Contain("The file line has extra columns:invalid_item");
 
         var parsedResult = returnValue.CompaniesHouseCompany;
-
-        parsedResult[0].organisation_id.Should().Be("23123");
-        parsedResult[0].subsidiary_id.Should().Be(string.Empty);
-        parsedResult[0].organisation_name.Should().Be("OrgA");
-        parsedResult[0].companies_house_number.Should().Be("123456");
-        parsedResult[0].parent_child.Should().Be("Parent");
-        parsedResult[0].franchisee_licensee_tenant.Should().Be(string.Empty);
-        parsedResult[0].Errors.Should().BeNullOrEmpty();
-
-        parsedResult[1].organisation_id.Should().Be("23123");
-        parsedResult[1].subsidiary_id.Should().Be("Sub1");
-        parsedResult[1].organisation_name.Should().Be("OrgB");
-        parsedResult[1].companies_house_number.Should().Be("654321");
-        parsedResult[1].parent_child.Should().Be("Child");
-        parsedResult[1].franchisee_licensee_tenant.Should().Be(string.Empty);
-        parsedResult[1].Errors.Should().BeNullOrEmpty();
     }
 
     [TestMethod]
@@ -262,8 +251,8 @@ public class ParserClassTests
         var errorRow = returnValue.CompaniesHouseCompany[0];
 
         errorRow.Errors.Should().NotBeEmpty();
-        errorRow.Errors[0].FileContent.Should().Be("File is empty or in invalid format");
-        errorRow.Errors[0].Message.Should().Contain("Invalid File");
+        errorRow.Errors[0].FileContent.Should().Be("The file is empty. It does not contain headers and data rows.");
+        errorRow.Errors[0].Message.Should().Contain("The file is empty. It does not contain headers and data rows");
     }
 
     [TestMethod]
