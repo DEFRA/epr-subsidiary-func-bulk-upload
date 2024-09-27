@@ -16,11 +16,11 @@ public static class Pipelines
     public const string CompaniesHouseResiliencePipelineKey = "CompaniesHouseResiliencePipeline";
 
     public static IHttpResiliencePipelineBuilder AddCompaniesHouseResilienceHandler(this IHttpClientBuilder builder) =>
-    builder.AddResilienceHandler(CompaniesHouseResiliencePipelineKey, ConfigureCompaniesHouseResilienceHandler<CompaniesHouseLookupService>());
+        builder.AddResilienceHandler(CompaniesHouseResiliencePipelineKey, ConfigureCompaniesHouseResilienceHandler<CompaniesHouseLookupService>());
 
     public static IHttpClientBuilder AddCompaniesHouseResilienceHandlerToHttpClientBuilder(this IHttpClientBuilder builder)
     {
-        builder.AddResilienceHandler(CompaniesHouseResiliencePipelineKey, ConfigureCompaniesHouseResilienceHandler<CompaniesHouseLookupService>());
+        builder.AddCompaniesHouseResilienceHandler();
         return builder;
     }
 
