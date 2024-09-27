@@ -39,9 +39,8 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             .Where(sub => sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg?.companiesHouseNumber && sub.Subsidiary.organisation_name.ToLower() != sub.SubsidiaryOrg?.name.ToLower());
         var subWithInvalidName = await subsidiariesAndOrgWith_InValidName.Select(s => s.Subsidiary).ToListAsync();
 
-        string message = "The subsidiary company house number is in RPD, but the name is different\r\n Note, could this be because the company name has changed.";
         /*Scenario 2: The subsidiary found in companies house. name not match*/
-        await ReportCompanies(subWithInvalidName, userRequestModel, message);
+        await ReportCompanies(subWithInvalidName, userRequestModel, BulkUpdateErrors.CompanyNameIsDifferentInRPDMessage, BulkUpdateErrors.CompanyNameIsDifferentInRPD);
 
         var newSubsidiariesToAdd = subsidiariesAndOrg.Where(co => co.SubsidiaryOrg == null)
             .SelectAwait(async subsidiary =>
@@ -60,21 +59,21 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         var subsidiariesNotAdded = subsidiaries.ToList().Except(allAddedNewSubsPlusExisting);
 
         /*Scenario 1: The subsidiary is not found in RPD and not in Local storage and not found on companies house*/
-        message = "Subsidiaries not found in RPD and not in Local storage and also not found on companies house.";
-        await ReportCompanies(subsidiariesNotAdded, userRequestModel, message);
+        await ReportCompanies(subsidiariesNotAdded, userRequestModel, BulkUpdateErrors.CompanyNameNofoundAnywhereMessage, BulkUpdateErrors.CompanyNameNofoundAnywhere);
     }
 
-    private async Task ReportCompanies(IEnumerable<CompaniesHouseCompany> subsidiaries, UserRequestModel userRequestModel, string message)
+    private async Task ReportCompanies(IEnumerable<CompaniesHouseCompany> subsidiaries, UserRequestModel userRequestModel, string errorMessage, int errorNumber)
     {
         var notificationErrorList = new List<UploadFileErrorModel>();
         foreach (var company in subsidiaries)
         {
             var newError = new UploadFileErrorModel()
             {
-                FileContent = company.organisation_name + "-" + company.companies_house_number,
-                Message = message,
+                FileLineNumber = company.FileLineNumber,
+                FileContent = company.RawRow,
+                Message = errorMessage,
                 IsError = true,
-                FileLineNumber = company.FileLineNumber
+                ErrorNumber = errorNumber
             };
 
             notificationErrorList.Add(newError);
@@ -84,7 +83,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         var keyErrors = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrors);
         _notificationService.SetStatus(key, "Started reporting invalid subsidiaries.");
         _notificationService.SetErrorStatus(keyErrors, notificationErrorList);
-        _logger.LogInformation(message);
+        _logger.LogInformation(errorMessage);
     }
 
     private async Task<LinkOrganisationModel?> GetLinkModelForCompaniesHouseData(CompaniesHouseCompany subsidiary, OrganisationResponseModel parentOrg, Guid userId)
