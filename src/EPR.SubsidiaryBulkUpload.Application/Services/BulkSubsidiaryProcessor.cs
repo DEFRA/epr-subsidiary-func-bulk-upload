@@ -39,7 +39,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             .Where(sub => sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg?.companiesHouseNumber && sub.Subsidiary.organisation_name.ToLower() != sub.SubsidiaryOrg?.name.ToLower());
         var subWithInvalidName = await subsidiariesAndOrgWith_InValidName.Select(s => s.Subsidiary).ToListAsync();
 
-        /*Scenario 2: The subsidiary found in companies house. name not match*/
+        /*Scenario 2: The subsidiary found in RPD. name not match*/
         await ReportCompanies(subWithInvalidName, userRequestModel, BulkUpdateErrors.CompanyNameIsDifferentInRPDMessage, BulkUpdateErrors.CompanyNameIsDifferentInRPD);
 
         var newSubsidiariesToAdd = subsidiariesAndOrg.Where(co => co.SubsidiaryOrg == null)
@@ -56,7 +56,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             .Concat(subsidiariesAndOrgWithValidName.Select(swoan => swoan.Subsidiary))
             .ToListAsync();
 
-        var subsidiariesNotAdded = subsidiaries.ToList().Except(allAddedNewSubsPlusExisting);
+        var subsidiariesNotAdded = subsidiaries.ToList().Except(allAddedNewSubsPlusExisting).Except(subWithInvalidName);
 
         /*Scenario 1: The subsidiary is not found in RPD and not in Local storage and not found on companies house*/
         await ReportCompanies(subsidiariesNotAdded, userRequestModel, BulkUpdateErrors.CompanyNameNofoundAnywhereMessage, BulkUpdateErrors.CompanyNameNofoundAnywhere);
@@ -77,6 +77,11 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             };
 
             notificationErrorList.Add(newError);
+        }
+
+        if (notificationErrorList.Count == 0)
+        {
+            return;
         }
 
         var key = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress);

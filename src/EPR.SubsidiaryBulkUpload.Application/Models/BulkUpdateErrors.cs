@@ -32,5 +32,5 @@ public static class BulkUpdateErrors
     public const string CompanyNameIsDifferentInOfflineDataMessage = "Company Name is different in Offline Data.";
 
     public const int CompanyNameNofoundAnywhere = 111;
-    public const string CompanyNameNofoundAnywhereMessage = "Company Name is different in Offline Data.";
+    public const string CompanyNameNofoundAnywhereMessage = "Company Name is different in Offline Data and different in Companies house API data.";
 }

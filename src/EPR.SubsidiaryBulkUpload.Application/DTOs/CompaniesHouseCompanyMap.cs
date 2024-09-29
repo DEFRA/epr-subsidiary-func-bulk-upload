@@ -19,6 +19,8 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
         Map(m => m.parent_child).Validate(field => !field.Equals(string.Empty));
         Map(m => m.franchisee_licensee_tenant);
         Map(m => m.Errors).Index(6).Convert(args => GetRowValidationErrors(args.Row));
+        Map(m => m.RawRow).Convert(args => args.Row.Context.Reader.Parser.RawRecord);
+        Map(m => m.FileLineNumber).Convert(args => args.Row.Context.Reader.Parser.Row);
     }
 
     private static List<UploadFileErrorModel> GetRowValidationErrors(IReaderRow row)
