@@ -19,7 +19,7 @@ public class CompaniesHouseDataProvider(ICompaniesHouseLookupService companiesHo
         // Try get locally...
         var response = await GetCompanyFromTableStorage(subsidiaryModel.CompaniesHouseNumber);
 
-        if (response != null)
+        if (response != null && response.Name.ToLower() == subsidiaryModel.Name.ToLower())
         {
             dataRetrieved = true;
             subsidiaryModel.Address = response.Address;
