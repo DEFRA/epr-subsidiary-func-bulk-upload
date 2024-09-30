@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using EPR.SubsidiaryBulkUpload.Application.Models;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Options;
 
@@ -19,5 +20,15 @@ public class ApiOptions
 
     public int Timeout { get; set; }
 
+    public TimeUnit TimeUnits { get; set; } = TimeUnit.Seconds;
+
     public string SubsidiaryServiceBaseUrl { get; set; } = null!;
+
+    public int RetryPolicyMaxRetries { get; set; }
+
+    public int RetryPolicyInitialWaitTime { get; set; }
+
+    public int RetryPolicyTooManyAttemptsMaxRetries { get; set; }
+
+    public int RetryPolicyTooManyAttemptsWaitTime { get; set; }
 }
