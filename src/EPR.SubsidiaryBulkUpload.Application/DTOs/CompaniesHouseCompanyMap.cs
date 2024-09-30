@@ -69,6 +69,13 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
             }
         }
 
+        if (row.ColumnCount > CsvFileValidationConditions.MaxNoofColumnsAllowed)
+        {
+            errors.Add(
+                   CreateError(
+                       lineNumber, rawData, BulkUpdateErrors.InvalidDatafoundinRowMessage, BulkUpdateErrors.InvalidDatafoundinRow));
+        }
+
         return errors;
     }
 

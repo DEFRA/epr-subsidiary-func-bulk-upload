@@ -251,8 +251,8 @@ public class ParserClassTests
         var errorRow = returnValue.CompaniesHouseCompany[0];
 
         errorRow.Errors.Should().NotBeEmpty();
-        errorRow.Errors[0].FileContent.Should().Be("The file is empty.");
-        errorRow.Errors[0].Message.Should().Contain("The file is empty. It does not contain headers and data rows.");
+        errorRow.Errors[0].FileContent.Should().BeEmpty();
+        errorRow.Errors[0].Message.Should().Contain("The file is empty. It does not contain headers or data rows.");
     }
 
     [TestMethod]

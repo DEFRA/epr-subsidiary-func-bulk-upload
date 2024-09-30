@@ -44,7 +44,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             }
             catch (Exception ex)
             {
-                var errors = "The file is empty. It does not contain headers and data rows.";
+                var errors = "The file is empty. It does not contain headers or data rows.";
                 var fileErrors = new CompaniesHouseCompany
                 {
                     companies_house_number = string.Empty,
@@ -56,14 +56,14 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
 
                 fileErrors.Errors.Add(new Models.UploadFileErrorModel
                 {
-                    FileContent = "The file is empty.",
+                    FileContent = string.Empty,
                     Message = errors,
                     ErrorNumber = BulkUpdateErrors.FileisInvalidNoHeaderNoData,
                     IsError = true,
                     FileLineNumber = 0
                 });
 
-                _logger.LogError(ex, "The file is empty. It does not contain headers and data rows.");
+                _logger.LogError(ex, "The file is empty. It does not contain headers or data rows.");
 
                 rows.Add(fileErrors);
                 return rows;

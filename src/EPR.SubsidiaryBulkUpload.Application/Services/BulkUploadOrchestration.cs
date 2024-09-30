@@ -35,7 +35,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
             var newError = new UploadFileErrorModel()
             {
                 FileLineNumber = 2,
-                FileContent = "The file has no data.",
+                FileContent = string.Empty,
                 Message = "File has no records.",
                 ErrorNumber = BulkUpdateErrors.FileEmptyError,
                 IsError = true

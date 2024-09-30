@@ -1,5 +1,7 @@
-﻿namespace EPR.SubsidiaryBulkUpload.Application.Models;
+﻿using System.Diagnostics.CodeAnalysis;
 
+namespace EPR.SubsidiaryBulkUpload.Application.Models;
+[ExcludeFromCodeCoverage]
 public static class BulkUpdateErrors
 {
     public const int FileEmptyError = 100;
@@ -34,4 +36,7 @@ public static class BulkUpdateErrors
 
     public const int FileisInvalidNoHeaderNoData = 112;
     public const int FileisInvalidWithExtraHeaders = 113;
+
+    public const int InvalidDatafoundinRow = 114;
+    public const string InvalidDatafoundinRowMessage = "Extra column value in the file.";
 }
