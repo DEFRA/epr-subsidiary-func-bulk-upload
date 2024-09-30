@@ -20,7 +20,10 @@ public static class CsvConfigurations
             {
                 if (args.Context?.Reader is CustomCsvReader csvReader)
                 {
-                    csvReader.InvalidHeaderErrors = args.InvalidHeaders?.Select(x => x.Names[0]).ToList();
+                    if (args.InvalidHeaders.Count() > 0)
+                    {
+                        csvReader.InvalidHeaderErrors = args.InvalidHeaders?.Select(x => x.Names[0]).ToList();
+                    }
                 }
             },
         };

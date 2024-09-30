@@ -1,9 +1,7 @@
 ﻿namespace EPR.SubsidiaryBulkUpload.Function.Extensions;
 
 using System;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
@@ -71,8 +69,7 @@ public static class ConfigurationExtensions
                 client.DefaultRequestHeaders.Add("Authorization", $"BASIC {apiKey}");
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             })
-                .AddPolicyHandler((services, _) => GetRetryPolicy<CompaniesHouseLookupDirectService>(services))
-                .AddPolicyHandler((services, _) => GetTimeoutPolicy(services));
+                ;
         }
         else
         {
