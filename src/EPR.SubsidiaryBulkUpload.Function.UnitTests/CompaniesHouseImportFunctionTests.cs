@@ -84,7 +84,7 @@ public class CompaniesHouseImportFunctionTests
 
         // Assert
         _csvProcessorMock.Verify(x => x.ProcessStream<CompanyHouseTableEntity>(It.IsAny<Stream>(), It.IsAny<CsvConfiguration>()), Times.Once);
-        _tableStorageProcessor.Verify(x => x.WriteToAzureTableStorage(It.IsAny<List<CompanyHouseTableEntity>>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Once);
+        _tableStorageProcessor.Verify(x => x.WriteToAzureTableStorage(It.IsAny<List<CompanyHouseTableEntity>>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
     }
 
     [TestMethod]
@@ -99,7 +99,7 @@ public class CompaniesHouseImportFunctionTests
 
         // Assert
         _loggerMock.VerifyLog(x => x.LogInformation("Blob {Name} has metadata {Key} {Value}", CsvBlobName, "test", "test"), Times.Once);
-        _loggerMock.VerifyLog(x => x.LogInformation("C# Blob trigger processed {Count} records from csv blob {Name}", CsvRowCount, CsvBlobName), Times.Once);
+        _loggerMock.VerifyLog(x => x.LogInformation("CompaniesHouseImport blob trigger processed {Count} records from csv blob {Name}", CsvRowCount, CsvBlobName), Times.Once);
     }
 
     [TestMethod]
@@ -114,6 +114,28 @@ public class CompaniesHouseImportFunctionTests
         await _systemUnderTest.Run(_blobClientMock.Object);
 
         // Assert
-        _loggerMock.VerifyLog(x => x.LogInformation("C# Blob trigger function did not processed file name doesn't contain partition key {Name}", "test.csv"), Times.Once);
+        _loggerMock.VerifyLog(x => x.LogInformation("CompaniesHouseImport blob trigger function did not process file because name '{Name}' doesn't contain partition key", "test.csv"), Times.Once);
+    }
+
+    [TestMethod]
+    public async Task CompaniesHouseImportFunction_Deletes_Blob_And_Logs_Result()
+    {
+        // Arrange
+        var mockResponse = new Mock<Response<bool>>();
+        mockResponse.SetupGet(x => x.Value).Returns(true);
+
+        var response = Response.FromValue(true, new Mock<Response>().Object);
+
+        _blobClientMock
+            .Setup(client => client.DeleteIfExistsAsync(It.IsAny<DeleteSnapshotsOption>(), It.IsAny<BlobRequestConditions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(response);
+
+        // Act
+        await _systemUnderTest.Run(_blobClientMock.Object);
+
+        // Assert
+        _blobClientMock.Verify(client => client.DeleteIfExistsAsync(It.IsAny<DeleteSnapshotsOption>(), It.IsAny<BlobRequestConditions>(), It.IsAny<CancellationToken>()), Times.Once());
+
+        _loggerMock.VerifyLog(x => x.LogInformation("Blob {Name} was deleted.", CsvBlobName), Times.Once);
     }
 }

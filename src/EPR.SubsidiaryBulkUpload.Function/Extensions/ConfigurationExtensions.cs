@@ -6,21 +6,17 @@ using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using EPR.SubsidiaryBulkUpload.Application.Clients;
-using EPR.SubsidiaryBulkUpload.Application.Configs;
 using EPR.SubsidiaryBulkUpload.Application.Handlers;
 using EPR.SubsidiaryBulkUpload.Application.Options;
+using EPR.SubsidiaryBulkUpload.Application.Resilience;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Polly;
-using Polly.Extensions.Http;
 using Polly.Retry;
-using Polly.Timeout;
 using StackExchange.Redis;
 
 [ExcludeFromCodeCoverage]
@@ -33,7 +29,7 @@ public static class ConfigurationExtensions
         services.Configure<BlobStorageOptions>(configuration.GetSection(BlobStorageOptions.SectionName));
         services.Configure<ApiOptions>(configuration.GetSection(ApiOptions.SectionName));
         services.Configure<TableStorageOptions>(configuration.GetSection(TableStorageOptions.SectionName));
-        services.Configure<RedisConfig>(configuration.GetSection(RedisConfig.SectionName));
+        services.Configure<RedisOptions>(configuration.GetSection(RedisOptions.SectionName));
         return services;
     }
 
@@ -90,8 +86,7 @@ public static class ConfigurationExtensions
                 client.DefaultRequestHeaders.Add("Authorization", $"BASIC {apiKey}");
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             })
-            .AddPolicyHandler((services, _) => GetRetryPolicy<CompaniesHouseLookupDirectService>(services))
-            .AddPolicyHandler((services, _) => GetTimeoutPolicy(services));
+                .AddCompaniesHouseResilienceHandler();
         }
         else
         {
@@ -103,8 +98,7 @@ public static class ConfigurationExtensions
                 client.Timeout = TimeSpan.FromSeconds(apiOptions.Timeout);
             })
                 .ConfigurePrimaryHttpMessageHandler(GetClientCertificateHandler)
-                .AddPolicyHandler((services, _) => GetRetryPolicy<CompaniesHouseLookupService>(services))
-                .AddPolicyHandler((services, _) => GetTimeoutPolicy(services));
+                .AddCompaniesHouseResilienceHandler();
         }
 
         return services;
@@ -113,7 +107,7 @@ public static class ConfigurationExtensions
     public static IServiceCollection AddServices(this IServiceCollection services, IConfiguration configuration)
     {
         var sp = services.BuildServiceProvider();
-        var redisConfig = sp.GetRequiredService<IOptions<RedisConfig>>().Value;
+        var redisOptions = sp.GetRequiredService<IOptions<RedisOptions>>().Value;
 
         services.AddScoped<AntivirusApiAuthorizationHandler>();
         services.AddTransient<AccountServiceAuthorisationHandler>();
@@ -126,7 +120,7 @@ public static class ConfigurationExtensions
         services.AddTransient<ITableStorageProcessor, TableStorageProcessor>();
         services.AddTransient<ISubsidiaryService, SubsidiaryService>();
         services.AddTransient<INotificationService, NotificationService>();
-        services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConfig.ConnectionString));
+        services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisOptions.ConnectionString));
         services.AddSingleton<TimeProvider>(TimeProvider.System);
         services.AddTransient<ICompaniesHouseDownloadService, CompaniesHouseDownloadService>();
         services.AddTransient<ICompaniesHouseFilePostService, CompaniesHouseFilePostService>();
@@ -165,31 +159,3 @@ public static class ConfigurationExtensions
 
         return handler;
     }
-
-    private static AsyncRetryPolicy<HttpResponseMessage> GetRetryPolicy<T>(IServiceProvider services) => HttpPolicyExtensions
-       .HandleTransientHttpError()
-       .Or<TimeoutRejectedException>()
-       .WaitAndRetryAsync(
-           3,
-           retryAttempt => TimeSpan.FromSeconds(Math.Pow(3, retryAttempt)),
-           onRetry: (outcome, timespan, retryAttempt, context) =>
-           {
-               services?.GetService<ILogger<T>>()?
-                   .LogWarning(
-                       "{Type} retry policy will attempt retry {Retry} in {Delay}ms after a transient error or timeout. {ExceptionMessage}",
-                       typeof(T).Name,
-                       retryAttempt,
-                       timespan.TotalMilliseconds,
-                       outcome?.Exception?.Message);
-           });
-
-    private static AsyncTimeoutPolicy<HttpResponseMessage> GetTimeoutPolicy(IServiceProvider sp)
-    {
-        var apiOptions = sp.GetRequiredService<IOptions<ApiOptions>>().Value;
-
-        return Policy
-            .TimeoutAsync<HttpResponseMessage>(
-                timeout: TimeSpan.FromSeconds(apiOptions.Timeout),
-                timeoutStrategy: TimeoutStrategy.Optimistic);
-    }
-}

@@ -1,9 +1,9 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
-namespace EPR.SubsidiaryBulkUpload.Application.Configs;
+namespace EPR.SubsidiaryBulkUpload.Application.Options;
 
 [ExcludeFromCodeCoverage]
-public class RedisConfig
+public class RedisOptions
 {
     public const string SectionName = "Redis";
 

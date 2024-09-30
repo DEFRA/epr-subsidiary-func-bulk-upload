@@ -1,4 +1,5 @@
-﻿using Azure.Data.Tables;
+﻿using Azure;
+using Azure.Data.Tables;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using Microsoft.Extensions.Logging;
 
@@ -9,26 +10,31 @@ public class TableStorageProcessor(
     ILogger<TableStorageProcessor> logger) : ITableStorageProcessor
 {
     public const string CurrentIngestion = "Current Ingestion";
+    public const string EmptyPartitionKey = "EmptyPartitionKey";
     public const string LatestCHData = "Latest CH Data";
     public const string Latest = "Latest";
+    public const string Previous = "Previous";
+    public const string ToDelete = "To Delete";
+    private const int BatchSize = 100; // Maximum batch size for Azure Table Storage
 
     private readonly TableServiceClient _tableServiceClient = tableServiceClient;
     private readonly ILogger<TableStorageProcessor> _logger = logger;
 
-    public async Task WriteToAzureTableStorage(IEnumerable<CompanyHouseTableEntity> records, string tableName, string partitionKey, string connectionString, int batchSize)
+    public async Task WriteToAzureTableStorage(IEnumerable<CompanyHouseTableEntity> records, string tableName, string partitionKey)
     {
         var tableClient = _tableServiceClient.GetTableClient(tableName);
         await tableClient.CreateIfNotExistsAsync();
 
         if (string.IsNullOrEmpty(partitionKey))
         {
-            partitionKey = "EmptyPartitionKey";
+            partitionKey = EmptyPartitionKey;
         }
 
         var currentIngestion = new CompanyHouseTableEntity
         {
-            PartitionKey = partitionKey,
-            RowKey = CurrentIngestion
+            PartitionKey = LatestCHData,
+            RowKey = CurrentIngestion,
+            Data = partitionKey
         };
 
         try
@@ -44,7 +50,7 @@ public class TableStorageProcessor(
 
                 batch.Add(new TableTransactionAction(TableTransactionActionType.UpdateReplace, record));
 
-                if (batch.Count >= batchSize)
+                if (batch.Count >= BatchSize)
                 {
                     await tableClient.SubmitTransactionAsync(batch);
                     batch.Clear();
@@ -56,16 +62,7 @@ public class TableStorageProcessor(
                 await tableClient.SubmitTransactionAsync(batch);
             }
 
-            var latestData = new CompanyHouseTableEntity
-            {
-                PartitionKey = LatestCHData,
-                RowKey = Latest,
-                Data = partitionKey
-            };
-
-            await tableClient.UpsertEntityAsync(latestData);
-
-            await tableClient.DeleteEntityAsync(currentIngestion);
+            await CleanupIngestionTable(tableClient);
 
             _logger.LogInformation("C# Table storage processed {Count} records from csv storage table {Name}", records.Count(), tableName);
         }
@@ -80,42 +77,167 @@ public class TableStorageProcessor(
 
     public async Task<CompanyHouseTableEntity?> GetByCompanyNumber(string companiesHouseNumber, string tableName)
     {
-        CompanyHouseTableEntity? chEntity = null;
+        CompanyHouseTableEntity? companiesHouseEntity = null;
 
         try
         {
-            var partitionKey = await GetLatestPartitionKey(tableName);
+            var tableClient = _tableServiceClient.GetTableClient(tableName);
+            await tableClient.CreateIfNotExistsAsync();
+
+            var partitionKey = await GetLatestPartitionKey(tableClient);
 
             if (partitionKey != null)
             {
-                var tableClient = _tableServiceClient.GetTableClient(tableName);
-                await tableClient.CreateIfNotExistsAsync();
+                var result = tableClient.QueryAsync<CompanyHouseTableEntity>(
+                    filter: e => e.PartitionKey == partitionKey && e.RowKey == companiesHouseNumber);
 
-                var result = await tableClient.GetEntityAsync<CompanyHouseTableEntity>(
-                    partitionKey: partitionKey,
-                    rowKey: companiesHouseNumber);
-
-                chEntity = result?.Value;
+                companiesHouseEntity = await result.SingleOrDefaultAsync();
             }
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             // note: do not rethrow. The CH API will be used instead!
-            _logger.LogError(ex, "An error occurred whilst retrieving a companies house details ");
+            _logger.LogError(ex, "An error occurred whilst retrieving companies house details.");
         }
 
-        return chEntity;
+        return companiesHouseEntity;
     }
 
-    private async Task<string?> GetLatestPartitionKey(string tableName)
+    public async Task<int> DeleteByPartitionKey(string tableName, string partitionKey)
     {
-        var tableClient = _tableServiceClient.GetTableClient(tableName);
-        await tableClient.CreateIfNotExistsAsync();
+        var deleted = 0;
 
-        var tableResult = await tableClient.GetEntityAsync<CompanyHouseTableEntity>(
-            partitionKey: LatestCHData,
-            rowKey: Latest);
+        try
+        {
+            var tableClient = _tableServiceClient.GetTableClient(tableName);
 
-        return tableResult?.Value?.Data;
+            var entities = tableClient
+                .QueryAsync<CompanyHouseTableEntity>(
+                    filter: e => e.PartitionKey == partitionKey,
+                    select: new List<string> { "PartitionKey", "RowKey" },
+                    maxPerPage: 1000);
+
+            await entities.AsPages()
+                .ForEachAwaitAsync(async page =>
+                {
+                    var responses = await BatchManipulateEntities(tableClient, page.Values, TableTransactionActionType.Delete).ConfigureAwait(false);
+                    deleted += responses.Sum(response => response?.Value?.Count ?? 0);
+                });
+        }
+        catch (RequestFailedException fex)
+        {
+            _logger.LogError(
+                fex,
+                "DeleteByPartitionKey: error for table '{TableName}' partition key '{PartitionKey}'. Returning 0 results.",
+                tableName,
+                partitionKey);
+        }
+
+        return deleted;
+    }
+
+    private static async Task<List<Response<IReadOnlyList<Response>>>> BatchManipulateEntities<TEntity>(
+            TableClient tableClient,
+            IEnumerable<TEntity> entities,
+            TableTransactionActionType tableTransactionActionType)
+        where TEntity : class, ITableEntity, new()
+    {
+        var groups = entities.GroupBy(x => x.PartitionKey);
+        var responses = new List<Response<IReadOnlyList<Response>>>();
+        foreach (var group in groups)
+        {
+            var items = group.AsEnumerable();
+            while (items.Any())
+            {
+                var batch = items.Take(BatchSize);
+                items = items.Skip(BatchSize);
+
+                var actions = new List<TableTransactionAction>();
+                actions.AddRange(batch.Select(e => new TableTransactionAction(tableTransactionActionType, e)));
+                var response = await tableClient.SubmitTransactionAsync(actions).ConfigureAwait(false);
+                responses.Add(response);
+            }
+        }
+
+        return responses;
+    }
+
+    private static async Task<string?> GetPartitionRowValue(TableClient tableClient, string partitionKey, string rowKey)
+    {
+        try
+        {
+            var tableResult = await tableClient.GetEntityAsync<CompanyHouseTableEntity>(
+                 partitionKey: partitionKey,
+                 rowKey: rowKey);
+
+            return tableResult?.Value?.Data;
+        }
+        catch (RequestFailedException)
+        {
+            return null;
+        }
+
+        return null;
+    }
+
+    private static async Task UpsertPartitionRowValue(TableClient tableClient, string partitionKey, string rowKey, string value)
+    {
+        await tableClient.UpsertEntityAsync(new CompanyHouseTableEntity
+        {
+            PartitionKey = partitionKey,
+            RowKey = rowKey,
+            Data = value
+        });
+    }
+
+    private static async Task<string?> GetLatestPartitionKey(TableClient tableClient)
+    {
+        return await GetPartitionRowValue(tableClient, LatestCHData, Latest);
+    }
+
+    private async Task<int> CleanupIngestionTable(TableClient tableClient)
+    {
+        var deletedRecordsCount = 0;
+
+        var currentPartitionValue = await GetPartitionRowValue(tableClient, LatestCHData, CurrentIngestion);
+        var latestPartitionValue = await GetPartitionRowValue(tableClient, LatestCHData, Latest);
+        var previousPartitionValue = await GetPartitionRowValue(tableClient, LatestCHData, Previous);
+        var toDeletePartitionValue = await GetPartitionRowValue(tableClient, LatestCHData, ToDelete);
+
+        if (toDeletePartitionValue is not null)
+        {
+            deletedRecordsCount = await DeleteByPartitionKey(tableClient.Name, toDeletePartitionValue);
+
+            await tableClient.DeleteEntityAsync(new CompanyHouseTableEntity
+            {
+                PartitionKey = LatestCHData,
+                RowKey = ToDelete
+            });
+
+            _logger.LogInformation("C# Table storage deleted {DeletedCount} records from csv storage table {Name}", deletedRecordsCount, tableClient.Name);
+        }
+
+        if (previousPartitionValue is not null)
+        {
+            await UpsertPartitionRowValue(tableClient, LatestCHData, ToDelete, previousPartitionValue);
+        }
+
+        if (latestPartitionValue is not null)
+        {
+            await UpsertPartitionRowValue(tableClient, LatestCHData, Previous, latestPartitionValue);
+        }
+
+        if (currentPartitionValue is not null)
+        {
+            await UpsertPartitionRowValue(tableClient, LatestCHData, Latest, currentPartitionValue);
+        }
+
+        await tableClient.DeleteEntityAsync(new CompanyHouseTableEntity
+        {
+            PartitionKey = LatestCHData,
+            RowKey = CurrentIngestion
+        });
+
+        return deletedRecordsCount;
     }
 }
