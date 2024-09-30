@@ -69,8 +69,7 @@ public static class ConfigurationExtensions
                 client.DefaultRequestHeaders.Add("Authorization", $"BASIC {apiKey}");
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             })
-                .AddPolicyHandler((services, _) => GetRetryPolicy<CompaniesHouseLookupDirectService>(services))
-                .AddPolicyHandler((services, _) => GetTimeoutPolicy(services));
+                ;
         }
         else
         {

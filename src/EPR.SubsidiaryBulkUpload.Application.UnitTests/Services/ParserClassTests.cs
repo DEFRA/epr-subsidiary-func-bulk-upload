@@ -74,8 +74,8 @@ public class ParserClassTests
         var errorRow = returnValue.CompaniesHouseCompany[0];
 
         errorRow.Errors.Should().NotBeEmpty();
-        errorRow.Errors[0].FileContent.Should().Be("The file line has missing columns : ");
-        errorRow.Errors[0].Message.Should().Contain("The file line has missing columns: organisation_id,subsidiary_id");
+        errorRow.Errors[0].FileContent.Should().Be("organisation,subsidiary,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant");
+        errorRow.Errors[0].Message.Should().Contain("The headers are missing : organisation_id,subsidiary_id");
     }
 
     [TestMethod]
@@ -100,12 +100,12 @@ public class ParserClassTests
         var errorRow = returnValue.CompaniesHouseCompany[0];
 
         errorRow.Errors[0].Should().NotBeNull();
-        errorRow.Errors[0].FileContent.Should().Be("The file line has missing columns : ");
-        errorRow.Errors[0].Message.Should().Contain("The file line has missing columns: subsidiary_id");
+        errorRow.Errors[0].FileContent.Should().Be("organisation_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant");
+        errorRow.Errors[0].Message.Should().Contain("The headers are missing : subsidiary_id");
     }
 
     [TestMethod]
-    public void ParseClass_ExtraColumn_IsIgnored()
+    public void ParseClass_ExtraColumn_IsError()
     {
         var rawSource = _listDataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
 
@@ -127,8 +127,8 @@ public class ParserClassTests
         var errorRow = returnValue.CompaniesHouseCompany[0];
 
         errorRow.Errors[0].Should().NotBeNull();
-        errorRow.Errors[0].FileContent.Should().Be("The file line has extra columns");
-        errorRow.Errors[0].Message.Should().Contain("The file line has extra columns:invalid_item");
+        errorRow.Errors[0].FileContent.Should().Be("organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,invalid_item");
+        errorRow.Errors[0].Message.Should().Contain("The file has additional column headers:invalid_item");
 
         var parsedResult = returnValue.CompaniesHouseCompany;
     }
@@ -251,8 +251,8 @@ public class ParserClassTests
         var errorRow = returnValue.CompaniesHouseCompany[0];
 
         errorRow.Errors.Should().NotBeEmpty();
-        errorRow.Errors[0].FileContent.Should().Be("The file is empty. It does not contain headers and data rows.");
-        errorRow.Errors[0].Message.Should().Contain("The file is empty. It does not contain headers and data rows");
+        errorRow.Errors[0].FileContent.Should().Be("The file is empty.");
+        errorRow.Errors[0].Message.Should().Contain("The file is empty. It does not contain headers and data rows.");
     }
 
     [TestMethod]
