@@ -42,6 +42,8 @@ public class CompaniesHouseDataProvider(ICompaniesHouseLookupService companiesHo
                 };
 
                 subsidiaryModel.Name = companyHouseResponse.Name;
+                subsidiaryModel.CHName = companyHouseResponse.Name;
+                subsidiaryModel.LocalStorageName = response?.Name;
                 subsidiaryModel.OrganisationType = OrganisationType.CompaniesHouseCompany;
             }
         }
@@ -61,6 +63,9 @@ public class CompaniesHouseDataProvider(ICompaniesHouseLookupService companiesHo
             orgModel = new OrganisationModel()
             {
                 Name = companiesHouseCompany.CompanyName,
+                CHName = string.Empty,
+                LocalStorageName = companiesHouseCompany.CompanyName,
+                OrganisationType = OrganisationType.CompaniesHouseCompany,
                 CompaniesHouseNumber = companiesHouseCompany.CompanyNumber,
                 Address = new AddressModel
                 {

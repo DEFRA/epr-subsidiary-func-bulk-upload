@@ -42,21 +42,32 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         /*Scenario 2: The subsidiary found in RPD. name not match*/
         await ReportCompanies(subWithInvalidName, userRequestModel, BulkUpdateErrors.CompanyNameIsDifferentInRPDMessage, BulkUpdateErrors.CompanyNameIsDifferentInRPD);
 
-        var newSubsidiariesToAdd = subsidiariesAndOrg.Where(co => co.SubsidiaryOrg == null)
-            .SelectAwait(async subsidiary =>
-                (Subsidiary: subsidiary.Subsidiary, LinkModel: await GetLinkModelForCompaniesHouseData(subsidiary.Subsidiary, parentOrg, userRequestModel.UserId)))
+        /*Scenario 3: The subsidiary found in Offline data. name matches then Add OR name not match then get it from CH API and name matches with CH API data*/
+        var newSubsidiariesToAdd_DatafromLocalStorageOrCH = subsidiariesAndOrg.Where(co => co.SubsidiaryOrg == null)
+        .SelectAwait(async subsidiary =>
+            (Subsidiary: subsidiary.Subsidiary, LinkModel: await GetLinkModelForCompaniesHouseData(subsidiary.Subsidiary, parentOrg, userRequestModel.UserId)))
             .Where(subAndLink => subAndLink.LinkModel != null);
 
-        await foreach (var subsidiaryandLink in newSubsidiariesToAdd)
+        var newSubsidiariesToAdd_DatafromLocalStorageOrCHWithNameMatch = newSubsidiariesToAdd_DatafromLocalStorageOrCH
+            .Where(subAndLink => subAndLink.LinkModel != null && (subAndLink.Subsidiary.organisation_name == subAndLink.LinkModel.Subsidiary.LocalStorageName || subAndLink.Subsidiary.organisation_name == subAndLink.LinkModel.Subsidiary.CHName));
+
+        await foreach (var subsidiaryandLink in newSubsidiariesToAdd_DatafromLocalStorageOrCHWithNameMatch)
         {
             subsidiaryandLink.LinkModel.StatusCode = await organisationService.CreateAndAddSubsidiaryAsync(subsidiaryandLink.LinkModel);
         }
 
-        var allAddedNewSubsPlusExisting = await newSubsidiariesToAdd.Where(sta => sta.LinkModel.StatusCode == System.Net.HttpStatusCode.OK).Select(sta => sta.Subsidiary)
+        /*Scenario 4: The subsidiary found in Offline data. name not match. get it from CH API and name not matches with CH API data. Report Error*/
+        var newSubsidiariesToAdd_DatafromLocalStorageOrCH_NameNoMatch = newSubsidiariesToAdd_DatafromLocalStorageOrCH
+        .Where(subAndLink => subAndLink.LinkModel != null && subAndLink.Subsidiary.companies_house_number != subAndLink.LinkModel.Subsidiary.CHName);
+        var newSubsidiariesToAdd_DatafromLocalStorageOrCH_NameNoMatchList = await newSubsidiariesToAdd_DatafromLocalStorageOrCH_NameNoMatch.Select(s => s.Subsidiary).ToListAsync();
+
+        await ReportCompanies(newSubsidiariesToAdd_DatafromLocalStorageOrCH_NameNoMatchList, userRequestModel, BulkUpdateErrors.CompanyNameIsDifferentInOfflineDataAndDifferentInCHAPIMessage, BulkUpdateErrors.CompanyNameIsDifferentInOfflineDataAndDifferentInCHAPI);
+
+        var allAddedNewSubsPlusExisting = await newSubsidiariesToAdd_DatafromLocalStorageOrCH.Where(sta => sta.LinkModel.StatusCode == System.Net.HttpStatusCode.OK).Select(sta => sta.Subsidiary)
             .Concat(subsidiariesAndOrgWithValidName.Select(swoan => swoan.Subsidiary))
             .ToListAsync();
 
-        var subsidiariesNotAdded = subsidiaries.ToList().Except(allAddedNewSubsPlusExisting).Except(subWithInvalidName);
+        var subsidiariesNotAdded = subsidiaries.ToList().Except(allAddedNewSubsPlusExisting).Except(subWithInvalidName).Except(newSubsidiariesToAdd_DatafromLocalStorageOrCH_NameNoMatchList);
 
         /*Scenario 1: The subsidiary is not found in RPD and not in Local storage and not found on companies house*/
         await ReportCompanies(subsidiariesNotAdded, userRequestModel, BulkUpdateErrors.CompanyNameNofoundAnywhereMessage, BulkUpdateErrors.CompanyNameNofoundAnywhere);

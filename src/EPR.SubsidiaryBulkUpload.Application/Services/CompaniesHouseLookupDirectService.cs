@@ -19,7 +19,7 @@ public class CompaniesHouseLookupDirectService : ICompaniesHouseLookupService
     public async Task<Company?> GetCompaniesHouseResponseAsync(string id)
     {
         var response = await _httpClient.GetAsync($"{CompaniesHouseEndpoint}/{id}");
-        if (response.StatusCode == HttpStatusCode.NoContent)
+        if (response.StatusCode == HttpStatusCode.NoContent || response.StatusCode == HttpStatusCode.NotFound)
         {
             return null;
         }

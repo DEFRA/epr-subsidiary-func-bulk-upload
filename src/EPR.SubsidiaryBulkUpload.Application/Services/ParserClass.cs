@@ -44,7 +44,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             }
             catch (Exception ex)
             {
-                var errors = "The file is empty. It does not contain headers and data rows";
+                var errors = "The file is empty. It does not contain headers and data rows.";
                 var fileErrors = new CompaniesHouseCompany
                 {
                     companies_house_number = string.Empty,
@@ -56,8 +56,11 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
 
                 fileErrors.Errors.Add(new Models.UploadFileErrorModel
                 {
-                    FileContent = "The file is empty. It does not contain headers and data rows.",
-                    Message = errors
+                    FileContent = "The file is empty.",
+                    Message = errors,
+                    ErrorNumber = BulkUpdateErrors.FileisInvalidNoHeaderNoData,
+                    IsError = true,
+                    FileLineNumber = 0
                 });
 
                 _logger.LogError(ex, "The file is empty. It does not contain headers and data rows.");
@@ -70,7 +73,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             if (csv.InvalidHeaderErrors is { Count: > 0 })
             {
                 StringBuilder errMess = new StringBuilder();
-                errMess.Append("The file line has missing columns: ");
+                errMess.Append("The headers are missing : ");
                 errMess.Append(string.Join(",", csv.InvalidHeaderErrors));
                 var companyHeaderErrors = new CompaniesHouseCompany
                 {
@@ -83,7 +86,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
 
                 companyHeaderErrors.Errors.Add(new Models.UploadFileErrorModel
                 {
-                    FileContent = "The file line has missing columns : ",
+                    FileContent = string.Join(",", csv.HeaderRecord),
                     Message = errMess.ToString(),
                     ErrorNumber = BulkUpdateErrors.InvalidHeader,
                     IsError = true,
@@ -98,7 +101,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             if (csv.ExtraHeaderErrors is { Count: > 0 })
             {
                 StringBuilder errMess = new StringBuilder();
-                errMess.Append("The file line has extra columns:");
+                errMess.Append("The file has additional column headers:");
                 errMess.Append(string.Join(",", csv.ExtraHeaderErrors));
                 var companyHeaderErrors = new CompaniesHouseCompany
                 {
@@ -111,7 +114,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
 
                 companyHeaderErrors.Errors.Add(new Models.UploadFileErrorModel
                 {
-                    FileContent = "The file line has extra columns",
+                    FileContent = string.Join(",", csv.HeaderRecord),
                     Message = errMess.ToString(),
                     ErrorNumber = BulkUpdateErrors.FileisInvalidWithExtraHeaders,
                     IsError = true,

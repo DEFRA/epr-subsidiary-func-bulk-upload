@@ -4,8 +4,6 @@ public static class BulkUpdateErrors
 {
     public const int FileEmptyError = 100;
     public const int InvalidHeader = 101;
-    public const int FileisInvalidNoHeaderNoData = 108;
-    public const int FileisInvalidWithExtraHeaders = 108;
 
     public const int OrganisationIdRequired = 102;
     public const string OrganisationIdRequiredMessage = "organisation_id is required.";
@@ -28,9 +26,12 @@ public static class BulkUpdateErrors
     public const int CompanyNameIsDifferentInRPD = 109;
     public const string CompanyNameIsDifferentInRPDMessage = "Company Name is different in RPD.";
 
-    public const int CompanyNameIsDifferentInOfflineData = 110;
-    public const string CompanyNameIsDifferentInOfflineDataMessage = "Company Name is different in Offline Data.";
+    public const int CompanyNameIsDifferentInOfflineDataAndDifferentInCHAPI = 110;
+    public const string CompanyNameIsDifferentInOfflineDataAndDifferentInCHAPIMessage = "Company Name is different in Offline Data and CH Data.";
 
     public const int CompanyNameNofoundAnywhere = 111;
-    public const string CompanyNameNofoundAnywhereMessage = "Company Name is different in Offline Data and different in Companies house API data.";
+    public const string CompanyNameNofoundAnywhereMessage = "Company Name not found in RPD, Offline Data and Companies house API data.";
+
+    public const int FileisInvalidNoHeaderNoData = 112;
+    public const int FileisInvalidWithExtraHeaders = 113;
 }
