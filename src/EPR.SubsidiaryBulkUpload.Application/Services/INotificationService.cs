@@ -9,4 +9,8 @@ public interface INotificationService
     Task SetStatus(string key, string status);
 
     Task SetErrorStatus(string key, List<UploadFileErrorModel> errorsModel);
+
+    Task<UploadFileErrorResponse> GetNotificationErrorsAsync(string key);
+
+    Task ClearRedisKeyAsync(string key);
 }

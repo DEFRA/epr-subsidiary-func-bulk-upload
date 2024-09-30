@@ -22,8 +22,9 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
     public async Task NotifyStart(UserRequestModel userRequestModel)
     {
         var key = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress);
+        var keyErrors = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrors);
         _notificationService.SetStatus(key, "Uploading");
-        _notificationService.SetErrorStatus(userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrors), new List<UploadFileErrorModel>());
+        _notificationService.ClearRedisKeyAsync(keyErrors);
     }
 
     public async Task NotifyErrors(IEnumerable<CompaniesHouseCompany> data, UserRequestModel userRequestModel)
