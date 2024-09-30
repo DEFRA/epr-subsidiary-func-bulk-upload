@@ -28,7 +28,7 @@ public class DownloadStatusStorageTests
     }
 
     [TestMethod]
-    public async Task ShouldGetTheLateststatus()
+    public async Task ShouldGetTheLatestStatus()
     {
         // Arrange
         var month = 3;
