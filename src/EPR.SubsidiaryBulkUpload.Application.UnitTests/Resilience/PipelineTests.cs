@@ -20,7 +20,6 @@ public class PipelineTests
     [TestMethod]
     [DataRow(HttpStatusCode.GatewayTimeout)]
     [DataRow(HttpStatusCode.InternalServerError)]
-
     public async Task ConfigureCompaniesHouseResilienceHandlerTest_For_TransientError(HttpStatusCode statusCode)
     {
         // Arrange

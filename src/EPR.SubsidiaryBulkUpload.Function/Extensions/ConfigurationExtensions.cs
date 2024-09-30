@@ -16,7 +16,6 @@ using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Polly.Retry;
 using StackExchange.Redis;
 
 [ExcludeFromCodeCoverage]
@@ -54,16 +53,17 @@ public static class ConfigurationExtensions
             var options = sp.GetRequiredService<IOptions<SubmissionApiOptions>>().Value;
             client.BaseAddress = new Uri($"{options.BaseUrl}/v1/");
         })
-            .AddPolicyHandler((services, _) => GetRetryPolicy<SubmissionStatusClient>(services));
+            .AddPolicyHandler((services, _) => Policies.DefaultRetryPolicy<SubmissionStatusClient>(services));
 
         var antivirusOptions = services.BuildServiceProvider().GetRequiredService<IOptions<AntivirusApiOptions>>().Value;
 
         services.AddHttpClient<IAntivirusClient, AntivirusClient>(client =>
         {
             client.BaseAddress = new Uri($"{antivirusOptions.BaseUrl}/v1/");
-            client.Timeout = TimeSpan.FromSeconds(antivirusOptions.Timeout);
             client.DefaultRequestHeaders.Add("OCP-APIM-Subscription-Key", antivirusOptions.SubscriptionKey);
         })
+            .AddPolicyHandler((services, _) => Policies.DefaultRetryPolicy<AntivirusClient>(services))
+            .AddPolicyHandler((services, _) => Policies.AntivirusTimeoutPolicy(services))
             .AddHttpMessageHandler<AntivirusApiAuthorizationHandler>();
 
         services.AddHttpClient<ISubsidiaryService, SubsidiaryService>((sp, c) =>
@@ -159,3 +159,4 @@ public static class ConfigurationExtensions
 
         return handler;
     }
+}
