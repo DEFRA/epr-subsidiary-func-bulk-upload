@@ -18,7 +18,7 @@ public class CompaniesHouseDownloadFunction(ICompaniesHouseDownloadService compa
 
         if (timerInfo.ScheduleStatus is not null)
         {
-            _logger.LogInformation("Next ompanies house data download schedule at: {NextTime}", timerInfo.ScheduleStatus.Next);
+            _logger.LogInformation("Next companies house data download schedule at: {NextTime}", timerInfo.ScheduleStatus.Next);
         }
     }
 }

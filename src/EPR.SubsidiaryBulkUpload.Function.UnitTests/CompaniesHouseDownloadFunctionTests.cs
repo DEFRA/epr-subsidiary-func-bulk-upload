@@ -59,6 +59,6 @@ public class CompaniesHouseDownloadFunctionTests
         await _systemUnderTest.Run(timerInfo);
 
         // Assert
-        _loggerMock.VerifyLog(x => x.LogInformation("Next ompanies house data download schedule at: {NextTime}", nextScheduledTime), Times.Once);
+        _loggerMock.VerifyLog(x => x.LogInformation("Next companies house data download schedule at: {NextTime}", nextScheduledTime), Times.Once);
     }
 }

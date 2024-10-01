@@ -1,7 +1,6 @@
 ﻿using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Options;
 using Microsoft.Extensions.Options;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
 

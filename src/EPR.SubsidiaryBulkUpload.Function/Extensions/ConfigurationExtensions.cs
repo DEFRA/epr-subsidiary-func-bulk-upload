@@ -66,6 +66,8 @@ public static class ConfigurationExtensions
             .AddPolicyHandler((services, _) => Policies.AntivirusTimeoutPolicy(services))
             .AddHttpMessageHandler<AntivirusApiAuthorizationHandler>();
 
+        services.AddHttpClient<IFileDownloadService, FileDownloadService>();
+
         services.AddHttpClient<ISubsidiaryService, SubsidiaryService>((sp, c) =>
         {
             var config = sp.GetRequiredService<IOptions<ApiOptions>>().Value;
