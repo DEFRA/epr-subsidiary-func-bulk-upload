@@ -19,13 +19,13 @@ public class CompaniesHouseLookupDirectService : ICompaniesHouseLookupService
     public async Task<Company?> GetCompaniesHouseResponseAsync(string id)
     {
         var response = await _httpClient.GetAsync($"{CompaniesHouseEndpoint}/{id}");
-        if (response.StatusCode == HttpStatusCode.NoContent || response.StatusCode == HttpStatusCode.NotFound)
+
+        if (response.StatusCode == HttpStatusCode.NoContent || response.StatusCode == HttpStatusCode.NotFound || response.StatusCode == HttpStatusCode.InternalServerError)
         {
             return null;
         }
 
         response.EnsureSuccessStatusCode();
-
         var jsonDocument = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync());
         var root = jsonDocument.RootElement;
 
