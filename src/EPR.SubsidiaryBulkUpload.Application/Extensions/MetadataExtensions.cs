@@ -2,7 +2,7 @@
 
 namespace EPR.SubsidiaryBulkUpload.Application.Extensions;
 
-public static class UserRequestModelExtensions
+public static class MetadataExtensions
 {
     public static UserRequestModel ToUserRequestModel(this IDictionary<string, string> metadata)
     {
@@ -33,6 +33,23 @@ public static class UserRequestModelExtensions
             UserId = userId,
             OrganisationId = organisationId
         };
+    }
+
+    public static string GetFileName(this IDictionary<string, string> metadata)
+    {
+        if (metadata is null)
+        {
+            return null;
+        }
+
+        var caseInsensitiveMetadata = new Dictionary<string, string>(metadata, StringComparer.OrdinalIgnoreCase);
+
+        if (!caseInsensitiveMetadata.TryGetValue("FileName", out var fileName))
+        {
+            return null;
+        }
+
+        return fileName;
     }
 
     public static string GenerateKey(this UserRequestModel userRequestModel, string suffix)
