@@ -2,6 +2,7 @@
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using Microsoft.Extensions.Logging;
+using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
 using StackExchange.Redis;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
@@ -175,18 +176,18 @@ public class NotificationServiceTests
         var result = await _notificationService.GetNotificationErrorsAsync(key);
 
         // Assert
-        Assert.IsNotNull(result);
-        Assert.AreEqual(2, result.Errors.Count);
-        Assert.AreEqual(1, result.Errors[0].FileLineNumber);
-        Assert.AreEqual("Content1", result.Errors[0].FileContent);
-        Assert.AreEqual("Message1", result.Errors[0].Message);
-        Assert.AreEqual(6, result.Errors[0].ErrorNumber);
-        Assert.IsTrue(result.Errors[0].IsError);
-        Assert.AreEqual(2, result.Errors[1].FileLineNumber);
-        Assert.AreEqual("Content2", result.Errors[1].FileContent);
-        Assert.AreEqual("Message2", result.Errors[1].Message);
-        Assert.IsFalse(result.Errors[1].IsError);
-        Assert.AreEqual(9, result.Errors[1].ErrorNumber);
+        result.Should().NotBeNull();
+        result.Errors.Count().Should().Be(2);
+        result.Errors[0].FileLineNumber.Should().Be(1);
+        result.Errors[0].FileContent.Should().Be("Content1");
+        result.Errors[0].Message.Should().Be("Message1");
+        result.Errors[0].ErrorNumber.Should().Be(6);
+        result.Errors[0].IsError.Should().BeTrue();
+        result.Errors[1].FileLineNumber.Should().Be(2);
+        result.Errors[1].FileContent.Should().Be("Content2");
+        result.Errors[1].Message.Should().Be("Message2");
+        result.Errors[1].IsError.Should().BeFalse();
+        result.Errors[1].ErrorNumber.Should().Be(9);
 
         _loggerMock.VerifyLog(x => x.LogInformation("Redis errors response key: {Key} errors: {Value}", key, json), Times.Once);
     }
