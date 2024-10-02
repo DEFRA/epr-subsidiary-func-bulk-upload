@@ -18,12 +18,9 @@ public static class CsvConfigurations
             BadDataFound = null,
             HeaderValidated = args =>
             {
-                if (args.Context?.Reader is CustomCsvReader csvReader)
+                if (args.Context?.Reader is CustomCsvReader csvReader && args.InvalidHeaders.Length > 0)
                 {
-                    if (args.InvalidHeaders.Count() > 0)
-                    {
-                        csvReader.InvalidHeaderErrors = args.InvalidHeaders?.Select(x => x.Names[0]).ToList();
-                    }
+                    csvReader.InvalidHeaderErrors = args.InvalidHeaders?.Select(x => x.Names[0]).ToList();
                 }
             },
         };
