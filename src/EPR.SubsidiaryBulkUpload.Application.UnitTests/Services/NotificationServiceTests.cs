@@ -1,7 +1,6 @@
 ﻿using System.Text.Json;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services;
-using FluentAssertions.Common;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 
@@ -149,8 +148,9 @@ public class NotificationServiceTests
         var result = await _notificationService.GetNotificationErrorsAsync(key);
 
         // Assert
-        Assert.IsNotNull(result);
-        Assert.AreEqual(result.Errors.Count, 0);
+        result.Should().NotBeNull();
+        result.Errors.Should().NotBeNull();
+        result.Errors.Count.Should().Be(0);
     }
 
     [TestMethod]
@@ -188,14 +188,7 @@ public class NotificationServiceTests
         Assert.IsFalse(result.Errors[1].IsError);
         Assert.AreEqual(9, result.Errors[1].ErrorNumber);
 
-        _loggerMock.Verify(
-            x => x.Log(
-                It.Is<LogLevel>(l => l == LogLevel.Information),
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString() == $"Redis errors response key: {key} errors: {json}"),
-                It.IsAny<Exception>(),
-                It.Is<Func<It.IsAnyType, Exception, string>>((v, t) => true)),
-            Times.Once);
+        _loggerMock.VerifyLog(x => x.LogInformation("Redis errors response key: {Key} errors: {Value}", key, json), Times.Once);
     }
 
     [TestMethod]
@@ -212,14 +205,7 @@ public class NotificationServiceTests
 
         // Assert
         _redisDatabaseMock.Verify(db => db.KeyDeleteAsync(key, It.IsAny<CommandFlags>()), Times.Once);
-        _loggerMock.Verify(
-            log => log.Log(
-                LogLevel.Information,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Redis key testKey deleted successfully.")),
-                null,
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
-            Times.Once);
+        _loggerMock.VerifyLog(x => x.LogInformation("Redis key {Key} deleted successfully.", key), Times.Once);
     }
 
     [TestMethod]
@@ -236,13 +222,6 @@ public class NotificationServiceTests
 
         // Assert
         _redisDatabaseMock.Verify(db => db.KeyDeleteAsync(key, It.IsAny<CommandFlags>()), Times.Once);
-        _loggerMock.Verify(
-            log => log.Log(
-                LogLevel.Warning,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Redis key testKey not found.")),
-                null,
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
-            Times.Once);
+        _loggerMock.VerifyLog(x => x.LogWarning("Redis key testKey not found."), Times.Once);
     }
 }

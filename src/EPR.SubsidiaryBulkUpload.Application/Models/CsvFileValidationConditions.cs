@@ -1,6 +1,6 @@
 ﻿namespace EPR.SubsidiaryBulkUpload.Application.Models;
 
-public class CsvFileValidationConditions
+public static class CsvFileValidationConditions
 {
-    public const int MaxNoofColumnsAllowed = 6;
+    public const int MaxNumberOfColumnsAllowed = 6;
 }

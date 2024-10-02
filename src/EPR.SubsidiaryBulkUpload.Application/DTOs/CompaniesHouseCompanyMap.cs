@@ -69,7 +69,7 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
             }
         }
 
-        if (row.ColumnCount > CsvFileValidationConditions.MaxNoofColumnsAllowed)
+        if (row.ColumnCount > CsvFileValidationConditions.MaxNumberOfColumnsAllowed)
         {
             errors.Add(
                    CreateError(
