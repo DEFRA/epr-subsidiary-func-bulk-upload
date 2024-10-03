@@ -18,11 +18,15 @@ public class CompaniesHouseDataProviderTests
     }
 
     [TestMethod]
-    public void ShouldSetCompaniesHouseDataFromLocalStorage()
+    public void ShouldSetCompaniesHouseDataFromLocalStorageWithNameMatching()
     {
         // Arrange
         var organisationModel = fixture.Create<OrganisationModel>();
         var companyHouseEntity = fixture.Create<CompanyHouseTableEntity>();
+
+        companyHouseEntity.CompanyName = organisationModel.Name;
+
+        var companyHouseEntity1 = fixture.Create<CompanyHouseTableEntity>();
         var config = fixture.Create<TableStorageOptions>();
         var options = new Mock<IOptions<TableStorageOptions>>();
         options.Setup(o => o.Value).Returns(config);

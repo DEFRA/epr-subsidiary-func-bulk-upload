@@ -27,7 +27,6 @@ public class CompaniesHouseLookupDirectService : ICompaniesHouseLookupService
         }
 
         response.EnsureSuccessStatusCode();
-
         var jsonDocument = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync());
         var root = jsonDocument.RootElement;
 

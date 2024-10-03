@@ -22,7 +22,9 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
     public async Task NotifyStart(UserRequestModel userRequestModel)
     {
         var key = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress);
+        var keyErrors = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrors);
         _notificationService.SetStatus(key, "Uploading");
+        _notificationService.ClearRedisKeyAsync(keyErrors);
     }
 
     public async Task NotifyErrors(IEnumerable<CompaniesHouseCompany> data, UserRequestModel userRequestModel)
@@ -32,9 +34,11 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
             var fileValidation = new List<UploadFileErrorModel>();
             var newError = new UploadFileErrorModel()
             {
-                FileContent = "No Record found in the file.",
-                Message = "No Record found in the file",
-                ErrorNumber = BulkUpdateErrors.FileEmptyError
+                FileLineNumber = 2,
+                FileContent = string.Empty,
+                Message = "File has no records.",
+                ErrorNumber = BulkUpdateErrors.FileEmptyError,
+                IsError = true
             };
 
             fileValidation.Add(newError);
