@@ -133,9 +133,8 @@ public class CompaniesHouseLookupServiceTests
     }
 
     [TestMethod]
-    [DataRow(HttpStatusCode.NotFound)]
     [DataRow(HttpStatusCode.BadRequest)]
-    [DataRow(HttpStatusCode.InternalServerError)]
+    [DataRow(HttpStatusCode.Unauthorized)]
     public async Task Should_Throw_Exception_On_ApiReturns_Error(HttpStatusCode returnedStatusCode)
     {
         // Arrange
