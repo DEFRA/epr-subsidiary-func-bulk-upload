@@ -12,6 +12,11 @@ public class NotificationService(
     private readonly ILogger<NotificationService> _logger = logger;
     private readonly IDatabase _redisDatabase = redisConnectionMultiplexer.GetDatabase();
 
+    private readonly JsonSerializerOptions _caseInsensitiveJsonSerializerOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
     public async Task SetStatus(string key, string status)
     {
         await _redisDatabase.StringSetAsync(key, status);
@@ -50,12 +55,7 @@ public class NotificationService(
 
         _logger.LogInformation("Redis errors response key: {Key} errors: {Value}", key, value);
 
-        var options = new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        };
-
-        return JsonSerializer.Deserialize<UploadFileErrorResponse>(value, options);
+        return JsonSerializer.Deserialize<UploadFileErrorResponse>(value, _caseInsensitiveJsonSerializerOptions);
     }
 
     public async Task ClearRedisKeyAsync(string key)

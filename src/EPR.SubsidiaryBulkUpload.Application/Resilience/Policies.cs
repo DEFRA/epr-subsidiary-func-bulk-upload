@@ -6,15 +6,14 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Polly;
 using Polly.Extensions.Http;
+using Polly.Retry;
 using Polly.Timeout;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Resilience;
 
 public static class Policies
 {
-    public const string CompaniesHouseResiliencePipelineKey = "CompaniesHouseResiliencePipeline";
-
-    public static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy<T>(IServiceProvider sp)
+    public static AsyncRetryPolicy<HttpResponseMessage> DefaultRetryPolicy<T>(IServiceProvider sp)
     {
         var apiOptions = sp.GetRequiredService<IOptions<ApiOptions>>().Value;
 
@@ -36,13 +35,24 @@ public static class Policies
                 });
     }
 
-    public static IAsyncPolicy<HttpResponseMessage> GetTimeoutPolicy(IServiceProvider sp)
+    public static AsyncTimeoutPolicy<HttpResponseMessage> DefaultTimeoutPolicy(IServiceProvider sp)
     {
         var apiOptions = sp.GetRequiredService<IOptions<ApiOptions>>().Value;
 
         return Policy
             .TimeoutAsync<HttpResponseMessage>(
                 timeout: apiOptions.ConvertToTimespan(apiOptions.Timeout),
+                timeoutStrategy: TimeoutStrategy.Optimistic);
+    }
+
+    public static AsyncTimeoutPolicy<HttpResponseMessage> AntivirusTimeoutPolicy(IServiceProvider sp)
+    {
+        var apiOptions = sp.GetRequiredService<IOptions<ApiOptions>>().Value;
+        var antivirusApiOptions = sp.GetRequiredService<IOptions<AntivirusApiOptions>>().Value;
+
+        return Policy
+            .TimeoutAsync<HttpResponseMessage>(
+                timeout: apiOptions.ConvertToTimespan(antivirusApiOptions.Timeout),
                 timeoutStrategy: TimeoutStrategy.Optimistic);
     }
 }

@@ -232,7 +232,7 @@ public class ParserClassTests
     [TestMethod]
     public void ParseClass_Exception_EmptyFile_ReturnsMessage()
     {
-        var rawSource = new string[] { };
+        var rawSource = Array.Empty<string>();
         string[] all = [_csvHeaderWithNullValues, .. rawSource];
 
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
@@ -259,7 +259,7 @@ public class ParserClassTests
     public void ParseClass_InvalidCsvFile_StreamErrorReturnsErrorAndLogs()
     {
         // Arrange
-        using var stream = new ErrorThrowingStream(new byte[] { 0x00 });
+        using var stream = new ErrorThrowingStream([0x00]);
 
         // Act
         var returnValue = _sut.ParseWithHelper(stream, CsvConfigurations.BulkUploadCsvConfiguration);
