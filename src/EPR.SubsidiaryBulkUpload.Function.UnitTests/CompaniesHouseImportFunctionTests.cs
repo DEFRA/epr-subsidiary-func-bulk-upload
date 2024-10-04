@@ -173,14 +173,9 @@ public class CompaniesHouseImportFunctionTests
         _blobClientMock.Setup(client => client.DownloadStreamingAsync(It.IsAny<BlobDownloadOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(response);
 
-        var mockResponse = new Mock<Response<bool>>();
-        mockResponse.SetupGet(x => x.Value).Returns(true);
-
-        var response = Response.FromValue(true, new Mock<Response>().Object);
-
         _blobClientMock
             .Setup(client => client.DeleteIfExistsAsync(It.IsAny<DeleteSnapshotsOption>(), It.IsAny<BlobRequestConditions>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(response);
+            .ReturnsAsync(Response.FromValue(true, new Mock<Response>().Object));
 
         // Act
         await _systemUnderTest.Run(_blobClientMock.Object);
@@ -192,7 +187,7 @@ public class CompaniesHouseImportFunctionTests
     }
 
     private Response<BlobDownloadStreamingResult> CreateDownloadStreamingResponse(Stream stream, string fileName = null)
-    */
+    {
         var metadata = new Dictionary<string, string>();
         if (fileName is not null)
         {
