@@ -10,8 +10,6 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
 {
     public CompaniesHouseCompanyMap()
     {
-        var errorsInRow = string.Empty;
-
         Map(m => m.organisation_id).Index(0).Validate(field => !field.Equals(null));
         Map(m => m.subsidiary_id);
         Map(m => m.organisation_name).Validate(field => !field.Equals(string.Empty));
