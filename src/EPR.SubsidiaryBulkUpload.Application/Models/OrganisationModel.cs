@@ -26,4 +26,8 @@ public class OrganisationModel
     public Nation? Nation { get; set; }
 
     public string? SubsidiaryOrganisationId { get; set; }
+
+    public string? CompaniesHouseCompanyName { get; set; }
+
+    public string? LocalStorageName { get; set; }
 }
