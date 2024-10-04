@@ -5,7 +5,6 @@ using Newtonsoft.Json;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Clients;
 
-// Note, this code was cloned from WebApiGateway.
 public class AntivirusClient(HttpClient httpClient, ILogger<AntivirusClient> logger) : IAntivirusClient
 {
     private readonly HttpClient _httpClient = httpClient;
