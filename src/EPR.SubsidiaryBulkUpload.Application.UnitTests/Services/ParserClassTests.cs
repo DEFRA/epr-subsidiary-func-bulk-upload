@@ -259,7 +259,7 @@ public class ParserClassTests
     public void ParseClass_InvalidCsvFile_StreamErrorReturnsErrorAndLogs()
     {
         // Arrange
-        using var stream = new ErrorThrowingStream(new byte[] { 0x00 });
+        using var stream = new ErrorThrowingStream([0x00]);
 
         // Act
         var returnValue = _sut.ParseWithHelper(stream, CsvConfigurations.BulkUploadCsvConfiguration);
