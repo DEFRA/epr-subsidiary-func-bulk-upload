@@ -164,7 +164,6 @@ public class CompaniesHouseImportFunctionTests
         _loggerMock.VerifyLog(x => x.LogInformation("CompaniesHouseImport blob trigger function did not process file because name '{Name}' doesn't contain partition key", "test.csv"), Times.Once);
     }
 
-    /*
     [TestMethod]
     public async Task CompaniesHouseImportFunction_Deletes_Blob_And_Logs_Result()
     {
@@ -177,11 +176,11 @@ public class CompaniesHouseImportFunctionTests
         var mockResponse = new Mock<Response<bool>>();
         mockResponse.SetupGet(x => x.Value).Returns(true);
 
-        var deletionResponse = Response.FromValue(true, new Mock<Response>().Object);
+        var response = Response.FromValue(true, new Mock<Response>().Object);
 
         _blobClientMock
             .Setup(client => client.DeleteIfExistsAsync(It.IsAny<DeleteSnapshotsOption>(), It.IsAny<BlobRequestConditions>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(deletionResponse);
+            .ReturnsAsync(response);
 
         // Act
         await _systemUnderTest.Run(_blobClientMock.Object);
@@ -193,7 +192,7 @@ public class CompaniesHouseImportFunctionTests
     }
 
     private Response<BlobDownloadStreamingResult> CreateDownloadStreamingResponse(Stream stream, string fileName = null)
-    {
+    */
         var metadata = new Dictionary<string, string>();
         if (fileName is not null)
         {
