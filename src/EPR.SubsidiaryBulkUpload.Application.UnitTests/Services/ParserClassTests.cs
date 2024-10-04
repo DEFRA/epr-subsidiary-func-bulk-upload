@@ -232,7 +232,7 @@ public class ParserClassTests
     [TestMethod]
     public void ParseClass_Exception_EmptyFile_ReturnsMessage()
     {
-        var rawSource = new string[] { };
+        var rawSource = Array.Empty<string>();
         string[] all = [_csvHeaderWithNullValues, .. rawSource];
 
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());

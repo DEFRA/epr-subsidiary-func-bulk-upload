@@ -177,7 +177,7 @@ public class NotificationServiceTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Errors.Count().Should().Be(2);
+        result.Errors.Count.Should().Be(2);
         result.Errors[0].FileLineNumber.Should().Be(1);
         result.Errors[0].FileContent.Should().Be("Content1");
         result.Errors[0].Message.Should().Be("Message1");
