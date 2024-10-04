@@ -15,6 +15,8 @@ public class SubsidiaryService : ISubsidiaryService
     private const string OrganisationCreateAddSubsidiaryUri = "api/bulkuploadorganisations/create-subsidiary-and-add-relationship";
     private const string OrganisationAddSubsidiaryUri = "api/bulkuploadorganisations/add-subsidiary-relationship";
     private const string OrganisationRelationshipsByIdUri = "api/bulkuploadorganisations/organisation-by-relationship";
+    private const string SystemUserAndOrganisationUri = "api/users/system-user-and-organisation";
+
     private readonly ILogger<SubsidiaryService> _logger;
     private readonly HttpClient _httpClient;
 
@@ -144,5 +146,28 @@ public class SubsidiaryService : ISubsidiaryService
 
         var result = await response.Content.ReadAsStringAsync();
         return result;
+    }
+
+    public async Task<UserOrganisation> GetSystemUserAndOrganisation()
+    {
+        var response = await _httpClient.GetAsync($"{SystemUserAndOrganisationUri}");
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return new();
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+
+            if (problemDetails != null)
+            {
+                _logger.LogError("Error occurred in GetSystemUserAndOrganisation call: Status code {StatusCode}, details {Details}", response.StatusCode, problemDetails.Detail);
+            }
+
+            return new();
+        }
+
+        return await response.Content.ReadFromJsonAsync<UserOrganisation>();
     }
 }

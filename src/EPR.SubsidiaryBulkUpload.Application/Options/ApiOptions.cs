@@ -14,6 +14,8 @@ public class ApiOptions
 
     public string CompaniesHouseDirectApiKey { get; set; }
 
+    public string CompaniesHouseDataDownloadUrl { get; set; } = null!;
+
     public string AccountServiceClientId { get; set; } = null!;
 
     public string Certificate { get; set; } = null!;
