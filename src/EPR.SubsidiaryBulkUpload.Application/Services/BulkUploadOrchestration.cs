@@ -29,7 +29,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
 
     public async Task NotifyErrors(IEnumerable<CompaniesHouseCompany> data, UserRequestModel userRequestModel)
     {
-        if (data.Count() == 0)
+        if (data.Any())
         {
             var fileValidation = new List<UploadFileErrorModel>();
             var newError = new UploadFileErrorModel()
