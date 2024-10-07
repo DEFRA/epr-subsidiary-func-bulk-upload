@@ -51,7 +51,7 @@ public class CompaniesHouseImportFunction(ILogger<CompaniesHouseImportFunction> 
                     {
                         using (var entryStream = zipArchive.Entries[0].Open())
                         {
-                            records = await _csvProcessor.ProcessStream<CompanyHouseTableEntity>(content, config);
+                            records = await _csvProcessor.ProcessStream<CompanyHouseTableEntity>(entryStream, config);
                         }
                     }
                 }
