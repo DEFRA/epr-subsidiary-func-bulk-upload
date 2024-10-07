@@ -5,7 +5,7 @@ using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Logging;
 using Moq.Protected;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
@@ -18,12 +18,14 @@ public class SubsidiaryServiceTests
     private const string OrganisationCreateAddSubsidiaryUri = "api/bulkuploadorganisations/create-subsidiary-and-add-relationship";
     private const string OrganisationAddSubsidiaryUri = "api/bulkuploadorganisations/add-subsidiary-relationship";
     private const string OrganisationRelationshipsByIdUri = "api/bulkuploadorganisations/organisation-by-relationship";
+    private const string SystemUserAndOrganisationUri = "api/users/system-user-and-organisation";
 
     private Fixture _fixture;
 
     private SubsidiaryService _sut;
     private Mock<HttpMessageHandler> _httpMessageHandlerMock;
     private HttpClient _httpClient;
+    private Mock<ILogger<SubsidiaryService>> _loggerMock;
 
     [TestInitialize]
     public void TestInitialize()
@@ -36,7 +38,9 @@ public class SubsidiaryServiceTests
             BaseAddress = new Uri(BaseAddress)
         };
 
-        _sut = new SubsidiaryService(_httpClient, new NullLogger<SubsidiaryService>());
+        _loggerMock = new Mock<ILogger<SubsidiaryService>>();
+
+        _sut = new SubsidiaryService(_httpClient, _loggerMock.Object);
     }
 
     [TestMethod]
@@ -415,5 +419,94 @@ public class SubsidiaryServiceTests
 
         // Assert
         response.Should().Be(response);
+    }
+
+    [TestMethod]
+    public async Task GetSystemUserAndOrganisation_Returns_Expected_Result()
+    {
+        // Arrange
+        var systemUserId = Guid.NewGuid();
+        var systemOrganisationId = Guid.NewGuid();
+        var apiResponse = new UserOrganisation
+        {
+            OrganisationId = systemOrganisationId,
+            UserId = systemUserId
+        };
+
+        var expectedUri = $"{BaseAddress}/{SystemUserAndOrganisationUri}";
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(x => x.RequestUri != null && x.RequestUri.ToString() == expectedUri),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = apiResponse.ToJsonContent()
+            }).Verifiable();
+
+        // Act
+        var result = await _sut.GetSystemUserAndOrganisation();
+
+        // Assert
+        result.Should().NotBeNull();
+        result.UserId.Should().Be(systemUserId);
+        result.OrganisationId.Should().Be(systemOrganisationId);
+    }
+
+    [TestMethod]
+    public async Task GetSystemUserAndOrganisation_ReturnsNullGuids_When_NotFound()
+    {
+        // Arrange
+        var expectedUri = $"{BaseAddress}/{SystemUserAndOrganisationUri}";
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(x => x.RequestUri != null && x.RequestUri.ToString() == expectedUri),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.NotFound,
+            }).Verifiable();
+
+        // Act
+        var result = await _sut.GetSystemUserAndOrganisation();
+
+        // Assert
+        result.Should().NotBeNull();
+        result.UserId.Should().BeNull();
+        result.OrganisationId.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task GetSystemUserAndOrganisation_ReturnsNullGuids_When_NoSuccessResponse()
+    {
+        // Arrange
+        var apiResponse = _fixture.Create<ProblemDetails>();
+
+        var expectedUri = $"{BaseAddress}/{SystemUserAndOrganisationUri}";
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(x => x.RequestUri != null && x.RequestUri.ToString() == expectedUri),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.BadRequest,
+                Content = apiResponse.ToJsonContent()
+            }).Verifiable();
+
+        // Act
+        var result = await _sut.GetSystemUserAndOrganisation();
+
+        // Assert
+        result.Should().NotBeNull();
+        result.UserId.Should().BeNull();
+        result.OrganisationId.Should().BeNull();
+
+        _loggerMock.VerifyLog(x => x.LogError("Error occurred in GetSystemUserAndOrganisation call: Status code {StatusCode}, details {Details}", HttpStatusCode.BadRequest, apiResponse.Detail), Times.Once);
     }
 }

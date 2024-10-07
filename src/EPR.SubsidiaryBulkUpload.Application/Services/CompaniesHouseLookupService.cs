@@ -29,7 +29,9 @@ public class CompaniesHouseLookupService : ICompaniesHouseLookupService
 
             _logger.LogInformation("Got response {Status}", response.StatusCode);
 
-            if (response.StatusCode == HttpStatusCode.NoContent || response.StatusCode == HttpStatusCode.NotFound || response.StatusCode == HttpStatusCode.InternalServerError)
+            if (response.StatusCode == HttpStatusCode.NoContent ||
+                response.StatusCode == HttpStatusCode.NotFound ||
+                response.StatusCode == HttpStatusCode.InternalServerError)
             {
                 return new Company
                 {

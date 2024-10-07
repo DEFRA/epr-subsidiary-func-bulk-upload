@@ -1,7 +1,7 @@
-﻿namespace EPR.SubsidiaryBulkUpload.Application.Extensions;
-
-using System.Net.Mime;
+﻿using System.Net.Mime;
 using Microsoft.Net.Http.Headers;
+
+namespace EPR.SubsidiaryBulkUpload.Application.Extensions;
 
 public static class HttpClientExtensions
 {

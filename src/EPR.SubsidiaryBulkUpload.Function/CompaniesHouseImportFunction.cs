@@ -63,10 +63,12 @@ public class CompaniesHouseImportFunction(ILogger<CompaniesHouseImportFunction> 
             _logger.LogInformation("CompaniesHouseImport blob trigger function did not process file because name '{Name}' doesn't contain partition key", client.Name);
         }
 
+        /*
         var isDeleted = await client.DeleteIfExistsAsync();
         if (isDeleted?.Value == true)
         {
             _logger.LogInformation("Blob {Name} was deleted.", client.Name);
         }
+        */
     }
 }

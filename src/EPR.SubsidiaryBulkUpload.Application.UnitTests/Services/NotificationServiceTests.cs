@@ -2,7 +2,6 @@
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
 using StackExchange.Redis;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
@@ -88,7 +87,7 @@ public class NotificationServiceTests
     {
         // Arrange
         var key = "testKey";
-        var errorsModel = new List<UploadFileErrorModel> { new UploadFileErrorModel() { FileLineNumber = 1, Message = "testMessage", IsError = true } };
+        var errorsModel = new List<UploadFileErrorModel> { new() { FileLineNumber = 1, Message = "testMessage", IsError = true } };
         var serializedErrors = JsonSerializer.Serialize(new { Errors = errorsModel });
 
         _redisDatabaseMock.Setup(db => db.StringSetAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<When>()))
@@ -112,11 +111,11 @@ public class NotificationServiceTests
         {
             Errors = new List<UploadFileErrorModel>
                 {
-                    new UploadFileErrorModel { FileLineNumber = 1, FileContent = "Content1", Message = "Message1", IsError = true, ErrorNumber = 6 },
-                    new UploadFileErrorModel { FileLineNumber = 2, FileContent = "Content2", Message = "Message2", IsError = false, ErrorNumber = 9 }
+                    new() { FileLineNumber = 1, FileContent = "Content1", Message = "Message1", IsError = true, ErrorNumber = 6 },
+                    new() { FileLineNumber = 2, FileContent = "Content2", Message = "Message2", IsError = false, ErrorNumber = 9 }
                 }
         };
-        var errorsModel = new List<UploadFileErrorModel> { new UploadFileErrorModel() { FileLineNumber = 1, Message = "testMessage", IsError = true } };
+        var errorsModel = new List<UploadFileErrorModel> { new() { FileLineNumber = 1, Message = "testMessage", IsError = true } };
 
         _redisDatabaseMock.Setup(db => db.StringSetAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<When>()))
             .ReturnsAsync(true);
@@ -163,8 +162,8 @@ public class NotificationServiceTests
         {
             Errors = new List<UploadFileErrorModel>
                 {
-                    new UploadFileErrorModel { FileLineNumber = 1, FileContent = "Content1", Message = "Message1", IsError = true, ErrorNumber = 6 },
-                    new UploadFileErrorModel { FileLineNumber = 2, FileContent = "Content2", Message = "Message2", IsError = false, ErrorNumber = 9 }
+                    new() { FileLineNumber = 1, FileContent = "Content1", Message = "Message1", IsError = true, ErrorNumber = 6 },
+                    new() { FileLineNumber = 2, FileContent = "Content2", Message = "Message2", IsError = false, ErrorNumber = 9 }
                 }
         };
 
@@ -177,7 +176,7 @@ public class NotificationServiceTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Errors.Count().Should().Be(2);
+        result.Errors.Count.Should().Be(2);
         result.Errors[0].FileLineNumber.Should().Be(1);
         result.Errors[0].FileContent.Should().Be("Content1");
         result.Errors[0].Message.Should().Be("Message1");
