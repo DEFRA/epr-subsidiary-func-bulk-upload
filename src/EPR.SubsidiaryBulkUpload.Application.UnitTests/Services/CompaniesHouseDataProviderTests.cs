@@ -57,6 +57,7 @@ public class CompaniesHouseDataProviderTests
         // Arrange
         var organisationModel = fixture.Create<OrganisationModel>();
         var companiesHouseResponse = fixture.Create<Company>();
+        companiesHouseResponse.Error = null;
         var config = fixture.Create<TableStorageOptions>();
         var options = new Mock<IOptions<TableStorageOptions>>();
         options.Setup(o => o.Value).Returns(config);

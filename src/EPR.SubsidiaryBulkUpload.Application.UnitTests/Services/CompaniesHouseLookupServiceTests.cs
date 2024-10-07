@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Text.Json;
 using AutoFixture.AutoMoq;
+using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using Microsoft.Extensions.Logging;
@@ -70,7 +71,7 @@ public class CompaniesHouseLookupServiceTests
     }
 
     [TestMethod]
-    public async Task Should_Return_Null_When_ApiReturns_NoContent()
+    public async Task Should_Return_NotNull_When_ApiReturns_NoContent()
     {
         // Arrange
         _httpMessageHandlerMock.Protected()
@@ -94,7 +95,8 @@ public class CompaniesHouseLookupServiceTests
         // Assert
         _httpMessageHandlerMock.Protected().Verify("SendAsync", Times.Once(), ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get && req.RequestUri != null && req.RequestUri.ToString() == ExpectedUrl), ItExpr.IsAny<CancellationToken>());
 
-        result.Should().BeNull();
+        result.Should().BeOfType<Company>();
+        result.Error.Should().NotBeNull();
     }
 
     [TestMethod]

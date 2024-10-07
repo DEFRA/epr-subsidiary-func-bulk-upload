@@ -20,9 +20,34 @@ public class CompaniesHouseLookupDirectService : ICompaniesHouseLookupService
     {
         var response = await _httpClient.GetAsync($"{CompaniesHouseEndpoint}/{id}");
 
-        if (response.StatusCode == HttpStatusCode.NoContent || response.StatusCode == HttpStatusCode.NotFound || response.StatusCode == HttpStatusCode.InternalServerError)
+        if (response.StatusCode == HttpStatusCode.NoContent || response.StatusCode == HttpStatusCode.NotFound)
         {
-            return null;
+            return new Company
+            {
+               Error = new UploadFileErrorModel
+                {
+                   FileLineNumber = 1,
+                   FileContent = string.Empty,
+                   Message = BulkUpdateErrors.ResourceNotFoundErrorMessage,
+                   ErrorNumber = BulkUpdateErrors.ResourceNotFoundError,
+                   IsError = true
+                }
+            };
+        }
+
+        if (response.StatusCode == HttpStatusCode.InternalServerError)
+        {
+            return new Company
+            {
+               Error = new UploadFileErrorModel
+               {
+                   FileLineNumber = 1,
+                   FileContent = string.Empty,
+                   Message = BulkUpdateErrors.ResourceNotReachableErrorMessage,
+                   ErrorNumber = BulkUpdateErrors.ResourceNotReachableError,
+                   IsError = true
+               }
+            };
         }
 
         response.EnsureSuccessStatusCode();
@@ -33,6 +58,7 @@ public class CompaniesHouseLookupDirectService : ICompaniesHouseLookupService
         {
             Name = root.GetStringFromJsonElement("company_name"),
             CompaniesHouseNumber = root.GetStringFromJsonElement("company_number"),
+            Error = null,
             BusinessAddress = root.TryGetProperty("registered_office_address", out var address)
                 ? new Address
                 {
