@@ -137,6 +137,7 @@ public class CompaniesHouseLookupServiceTests
     [TestMethod]
     [DataRow(HttpStatusCode.BadRequest)]
     [DataRow(HttpStatusCode.Unauthorized)]
+    [DataRow(HttpStatusCode.InternalServerError)]
     public async Task Should_Throw_Exception_On_ApiReturns_Error(HttpStatusCode returnedStatusCode)
     {
         // Arrange
@@ -165,10 +166,10 @@ public class CompaniesHouseLookupServiceTests
         var sut = new CompaniesHouseLookupService(httpClient, _loggerMock.Object);
 
         // Act
-        var exception = await Assert.ThrowsExceptionAsync<HttpRequestException>(() => sut.GetCompaniesHouseResponseAsync(CompaniesHouseNumber));
+        var result = await sut.GetCompaniesHouseResponseAsync(CompaniesHouseNumber);
 
         // Assert
-        _httpMessageHandlerMock.Protected().Verify("SendAsync", Times.Once(), ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get && req.RequestUri != null && req.RequestUri.ToString() == ExpectedUrl), ItExpr.IsAny<CancellationToken>());
-        exception.Should().BeOfType<HttpRequestException>();
+        result.Should().BeOfType<Company>();
+        result.Error.Should().NotBeNull();
     }
 }

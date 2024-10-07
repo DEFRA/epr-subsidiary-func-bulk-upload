@@ -174,7 +174,7 @@ public class CompaniesHouseLookupDirectServiceTests
     [TestMethod]
     [DataRow(HttpStatusCode.BadRequest)]
     [DataRow(HttpStatusCode.Unauthorized)]
-    public async Task Should_Throw_Exception_On_ApiReturns_Error(HttpStatusCode returnedStatusCode)
+    public async Task Should_return_Error_On_ApiReturns_Error(HttpStatusCode returnedStatusCode)
     {
         // Arrange
         _httpMessageHandlerMock.Protected()
@@ -194,10 +194,11 @@ public class CompaniesHouseLookupDirectServiceTests
         var sut = new CompaniesHouseLookupDirectService(httpClient);
 
         // Act
-        var exception = await Assert.ThrowsExceptionAsync<HttpRequestException>(() => sut.GetCompaniesHouseResponseAsync(CompaniesHouseNumber));
+        var result = await sut.GetCompaniesHouseResponseAsync(CompaniesHouseNumber);
 
         // Assert
-        _httpMessageHandlerMock.Protected().Verify("SendAsync", Times.Once(), ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get && req.RequestUri != null && req.RequestUri.ToString() == ExpectedUrl), ItExpr.IsAny<CancellationToken>());
-        exception.Should().BeOfType<HttpRequestException>();
+        result.Should().BeOfType<Company>();
+        result.Error.Should().NotBeNull();
+        result.Error.Message.Should().BeSameAs("Unexpected error when retrieving data from Companies House. Try again later.");
     }
 }
