@@ -30,4 +30,10 @@ public class OrganisationModel
     public string? CompaniesHouseCompanyName { get; set; }
 
     public string? LocalStorageName { get; set; }
+
+    public UploadFileErrorModel Error { get; set; }
+
+    public string? RawContent { get; set; }
+
+    public int FileLineNumber { get; set; }
 }
