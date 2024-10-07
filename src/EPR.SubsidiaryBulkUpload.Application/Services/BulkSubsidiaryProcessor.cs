@@ -51,7 +51,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             .Where(subAndLink => subAndLink.LinkModel != null);
 
         /*Scenario : Companies house API Errors*/
-        await ReportCompanies(await newSubsidiariesToAdd_DatafromLocalStorageOrCH.Where(subAndLink => subAndLink.LinkModel != null && subAndLink.LinkModel.Subsidiary.Error != null).Select(s => s.LinkModel).ToListAsync(), userRequestModel, null, 0);
+        await ReportCompanies(await newSubsidiariesToAdd_DatafromLocalStorageOrCH.Where(subAndLink => subAndLink.LinkModel != null && subAndLink.LinkModel.Subsidiary.Error != null).Select(s => s.LinkModel).ToListAsync(), userRequestModel);
 
         var newSubsidiariesToAdd_DatafromLocalStorageOrCompaniesHouseWithNameMatch = newSubsidiariesToAdd_DatafromLocalStorageOrCH
             .Where(subAndLink => subAndLink.LinkModel != null && subAndLink.LinkModel.Subsidiary.Error == null &&
@@ -82,7 +82,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         await ReportCompanies(subsidiariesNotAdded, userRequestModel, BulkUpdateErrors.CompanyNameNofoundAnywhereMessage, BulkUpdateErrors.CompanyNameNofoundAnywhere);
     }
 
-    private async Task ReportCompanies(IEnumerable<LinkOrganisationModel> linkSubsidiaries, UserRequestModel userRequestModel, string errorMessage, int errorNumber)
+    private async Task ReportCompanies(IEnumerable<LinkOrganisationModel> linkSubsidiaries, UserRequestModel userRequestModel)
     {
         var notificationErrorList = new List<UploadFileErrorModel>();
         foreach (var company in linkSubsidiaries)
@@ -99,7 +99,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         var keyErrors = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrors);
         _notificationService.SetStatus(key, "Error Reporting.");
         _notificationService.SetErrorStatus(keyErrors, notificationErrorList);
-        _logger.LogInformation(errorMessage);
+        _logger.LogInformation(BulkUpdateErrors.ResourceNotReachableOrAllOtherPossibleErrorMessage);
     }
 
     private async Task ReportCompanies(IEnumerable<CompaniesHouseCompany> subsidiaries, UserRequestModel userRequestModel, string errorMessage, int errorNumber)
