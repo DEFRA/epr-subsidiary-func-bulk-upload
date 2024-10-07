@@ -51,10 +51,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             .Where(subAndLink => subAndLink.LinkModel != null);
 
         /*Scenario : Companies house API Errors*/
-        var subsidiariesToAdd_LSOrCH_withAPIErrors = await newSubsidiariesToAdd_DatafromLocalStorageOrCH
-           .Where(subAndLink => subAndLink.LinkModel != null && subAndLink.LinkModel.Subsidiary.Error != null).Select(s => s.LinkModel).ToListAsync();
-
-        await ReportCompanies(subsidiariesToAdd_LSOrCH_withAPIErrors, userRequestModel, null, 0);
+        await ReportCompanies(await newSubsidiariesToAdd_DatafromLocalStorageOrCH.Where(subAndLink => subAndLink.LinkModel != null && subAndLink.LinkModel.Subsidiary.Error != null).Select(s => s.LinkModel).ToListAsync(), userRequestModel, null, 0);
 
         var newSubsidiariesToAdd_DatafromLocalStorageOrCompaniesHouseWithNameMatch = newSubsidiariesToAdd_DatafromLocalStorageOrCH
             .Where(subAndLink => subAndLink.LinkModel != null && subAndLink.LinkModel.Subsidiary.Error == null &&
@@ -90,14 +87,6 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         var notificationErrorList = new List<UploadFileErrorModel>();
         foreach (var company in linkSubsidiaries)
         {
-           /* var newError = new UploadFileErrorModel()
-            {
-                FileLineNumber = company.FileLineNumber,
-                FileContent = company.RawRow,
-                Message = errorMessage,
-                IsError = true,
-                ErrorNumber = errorNumber
-            };*/
             notificationErrorList.Add(company.Subsidiary.Error);
         }
 

@@ -20,7 +20,7 @@ public class CompaniesHouseLookupDirectService : ICompaniesHouseLookupService
     {
         var response = await _httpClient.GetAsync($"{CompaniesHouseEndpoint}/{id}");
 
-        if (response.StatusCode == HttpStatusCode.NoContent || response.StatusCode == HttpStatusCode.NotFound)
+        if (response.StatusCode == HttpStatusCode.NoContent || response.StatusCode == HttpStatusCode.NotFound || response.StatusCode == HttpStatusCode.InternalServerError)
         {
             return new Company
             {
@@ -35,18 +35,18 @@ public class CompaniesHouseLookupDirectService : ICompaniesHouseLookupService
             };
         }
 
-        if (response.StatusCode == HttpStatusCode.InternalServerError)
+        if (!response.IsSuccessStatusCode)
         {
             return new Company
             {
-               Error = new UploadFileErrorModel
-               {
-                   FileLineNumber = 1,
-                   FileContent = string.Empty,
-                   Message = BulkUpdateErrors.ResourceNotReachableErrorMessage,
-                   ErrorNumber = BulkUpdateErrors.ResourceNotReachableError,
-                   IsError = true
-               }
+                Error = new UploadFileErrorModel
+                {
+                    FileLineNumber = 1,
+                    FileContent = string.Empty,
+                    Message = BulkUpdateErrors.ResourceNotReachableOrAllOtherPossibleErrorMessage,
+                    ErrorNumber = BulkUpdateErrors.ResourceNotReachableOrAllOtherPossibleError,
+                    IsError = true
+                }
             };
         }
 

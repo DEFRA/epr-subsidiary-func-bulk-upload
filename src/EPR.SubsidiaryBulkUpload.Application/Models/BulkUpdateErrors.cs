@@ -41,8 +41,14 @@ public static class BulkUpdateErrors
     public const string InvalidDatafoundinRowMessage = "Extra column value in the file.";
 
     public const int ResourceNotFoundError = 118;
-    public const string ResourceNotFoundErrorMessage = "Information cannot be retrieved.Try again later.";
+    public const string ResourceNotFoundErrorMessage = "Information cannot be retrieved. Try again later.";
 
     public const int ResourceNotReachableError = 119;
-    public const string ResourceNotReachableErrorMessage = "There is a problem with our service.Try again later.";
+    public const string ResourceNotReachableErrorMessage = "There is a problem with our service. Try again later.";
+
+    public const int InvalidFieldLengthError = 120;
+    public const string InvalidFieldLengthErrorMessage = "Field length is invalid. 8 Characters allowed.";
+
+    public const int ResourceNotReachableOrAllOtherPossibleError = 121;
+    public const string ResourceNotReachableOrAllOtherPossibleErrorMessage = "Unexpected error when retrieving data from Companies House. Try again later.";
 }

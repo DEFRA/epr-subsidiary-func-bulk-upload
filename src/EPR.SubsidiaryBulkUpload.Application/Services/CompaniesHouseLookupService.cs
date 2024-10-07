@@ -29,7 +29,7 @@ public class CompaniesHouseLookupService : ICompaniesHouseLookupService
 
             _logger.LogInformation("Got response {Status}", response.StatusCode);
 
-            if (response.StatusCode == HttpStatusCode.NoContent || response.StatusCode == HttpStatusCode.NotFound)
+            if (response.StatusCode == HttpStatusCode.NoContent || response.StatusCode == HttpStatusCode.NotFound || response.StatusCode == HttpStatusCode.InternalServerError)
             {
                 return new Company
                 {
@@ -44,21 +44,6 @@ public class CompaniesHouseLookupService : ICompaniesHouseLookupService
                 };
             }
 
-            if (response.StatusCode == HttpStatusCode.InternalServerError)
-            {
-                return new Company
-                {
-                    Error = new UploadFileErrorModel
-                    {
-                        FileLineNumber = 1,
-                        FileContent = string.Empty,
-                        Message = BulkUpdateErrors.ResourceNotReachableErrorMessage,
-                        ErrorNumber = BulkUpdateErrors.ResourceNotReachableError,
-                        IsError = true
-                    }
-                };
-            }
-
             if (response.StatusCode == HttpStatusCode.BadRequest)
             {
                 var errorResponse = await response.Content.ReadFromJsonAsync<CompaniesHouseErrorResponse>();
@@ -66,6 +51,21 @@ public class CompaniesHouseLookupService : ICompaniesHouseLookupService
                 {
                     return null;
                 }
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return new Company
+                {
+                    Error = new UploadFileErrorModel
+                    {
+                        FileLineNumber = 1,
+                        FileContent = string.Empty,
+                        Message = BulkUpdateErrors.ResourceNotReachableOrAllOtherPossibleErrorMessage,
+                        ErrorNumber = BulkUpdateErrors.ResourceNotReachableOrAllOtherPossibleError,
+                        IsError = true
+                    }
+                };
             }
 
             response.EnsureSuccessStatusCode();
