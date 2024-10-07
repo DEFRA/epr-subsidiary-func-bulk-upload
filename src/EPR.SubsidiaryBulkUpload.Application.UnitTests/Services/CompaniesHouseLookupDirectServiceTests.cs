@@ -173,8 +173,11 @@ public class CompaniesHouseLookupDirectServiceTests
 
     [TestMethod]
     [DataRow(HttpStatusCode.BadRequest)]
+    [DataRow(HttpStatusCode.ServiceUnavailable)]
     [DataRow(HttpStatusCode.Unauthorized)]
-    public async Task Should_return_Error_On_ApiReturns_Error(HttpStatusCode returnedStatusCode)
+    [DataRow(HttpStatusCode.BadGateway)]
+    [DataRow(HttpStatusCode.Forbidden)]
+    public async Task Should_return_Generic_Error_On_ApiReturns_Error(HttpStatusCode returnedStatusCode)
     {
         // Arrange
         _httpMessageHandlerMock.Protected()
@@ -200,5 +203,37 @@ public class CompaniesHouseLookupDirectServiceTests
         result.Should().BeOfType<Company>();
         result.Error.Should().NotBeNull();
         result.Error.Message.Should().BeSameAs("Unexpected error when retrieving data from Companies House. Try again later.");
+    }
+
+    [TestMethod]
+    [DataRow(HttpStatusCode.NoContent)]
+    [DataRow(HttpStatusCode.NotFound)]
+    [DataRow(HttpStatusCode.InternalServerError)]
+    public async Task Should_return_Error_On_ApiReturns_Error(HttpStatusCode returnedStatusCode)
+    {
+        // Arrange
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(x => x.RequestUri != null && x.RequestUri.ToString() == ExpectedUrl),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = returnedStatusCode,
+                Content = new StringContent(CompaniesHouseErrorResponseJson)
+            }).Verifiable();
+
+        var httpClient = new HttpClient(_httpMessageHandlerMock.Object);
+        httpClient.BaseAddress = new Uri(BaseAddress);
+
+        var sut = new CompaniesHouseLookupDirectService(httpClient);
+
+        // Act
+        var result = await sut.GetCompaniesHouseResponseAsync(CompaniesHouseNumber);
+
+        // Assert
+        result.Should().BeOfType<Company>();
+        result.Error.Should().NotBeNull();
+        result.Error.Message.Should().BeSameAs("Information cannot be retrieved. Try again later.");
     }
 }
