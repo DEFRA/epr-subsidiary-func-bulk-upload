@@ -56,7 +56,7 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
                     lineNumber, rawData, BulkUpdateErrors.InvalidCompaniesHouseNumberLengthErrorMessage, BulkUpdateErrors.InvalidCompaniesHouseNumberLengthError));
         }
 
-        if (string.IsNullOrWhiteSpace(row.GetField(nameof(CompaniesHouseCompany.companies_house_number))) && row.GetField(nameof(CompaniesHouseCompany.companies_house_number)).Any(char.IsWhiteSpace))
+        if (row.GetField(nameof(CompaniesHouseCompany.companies_house_number)).Any(char.IsWhiteSpace))
         {
             errors.Add(
                 CreateError(
