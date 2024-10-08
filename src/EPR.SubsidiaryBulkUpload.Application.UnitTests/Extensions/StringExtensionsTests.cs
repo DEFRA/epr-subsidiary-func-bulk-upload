@@ -17,4 +17,20 @@ public class StringExtensionsTests
 
         result.Should().Be(expectedResult);
     }
+
+    [TestMethod]
+    [DataRow(null, 0, 0)]
+    [DataRow("", 0, 0)]
+    [DataRow("CompanyDataFile-2024-08-01.csv", 0, 0)]
+    [DataRow("BasicCompanyData-2024-12-01-part18.zip", 0, 0)]
+    [DataRow("BasicCompanyData-2024-12-01-part1_8.zip", 1, 8)]
+    [DataRow("BasicCompanyData-2024-12-01-part5_10.zip", 5, 10)]
+    public void ToFilePartNumberAndCounty_ShouldFormatCorrectly(string input, int expectedFilePart, int expectedFileCount)
+    {
+        var result = input.ToFilePartNumberAndCount();
+
+        result.Should().NotBeNull();
+        result.PartNumber.Should().Be(expectedFilePart);
+        result.TotalFiles.Should().Be(expectedFileCount);
+    }
 }

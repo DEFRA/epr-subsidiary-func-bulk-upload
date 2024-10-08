@@ -11,17 +11,34 @@ public static class StringExtensions
             return string.Empty;
         }
 
-        string pattern = @"\d{4}-\d{2}-\d{2}";
-
+        const string pattern = @"\d{4}-\d{2}-\d{2}";
         var match = Regex.Match(str, pattern, RegexOptions.None, TimeSpan.FromSeconds(2));
 
         if (match.Success)
         {
             return match.Value;
         }
-        else
+
+        return string.Empty;
+    }
+
+    public static (int PartNumber, int TotalFiles) ToFilePartNumberAndCount(this string? str)
+    {
+        if (str is null)
         {
-            return string.Empty;
+            return (0, 0);
         }
+
+        const string pattern = "part(?<Part>\\d+)_(?<Total>\\d+)";
+        var matches = Regex.Match(str, pattern, RegexOptions.None, TimeSpan.FromSeconds(2));
+
+        if (matches.Success &&
+            int.TryParse(matches.Groups["Part"].Value, out var part) &&
+            int.TryParse(matches.Groups["Total"].Value, out var total))
+        {
+            return (part, total);
+        }
+
+        return (0, 0);
     }
 }
