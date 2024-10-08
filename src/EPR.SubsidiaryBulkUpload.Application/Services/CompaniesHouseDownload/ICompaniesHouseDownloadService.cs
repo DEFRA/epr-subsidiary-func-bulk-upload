@@ -2,5 +2,5 @@
 
 public interface ICompaniesHouseDownloadService
 {
-    Task<bool> StartDownload();
+    Task StartDownload();
 }

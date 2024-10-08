@@ -1,4 +1,7 @@
-﻿using EPR.SubsidiaryBulkUpload.Application.Extensions;
+﻿/*using Microsoft.AspNetCore.Http;*/
+using System.Net;
+using EPR.SubsidiaryBulkUpload.Application.Extensions;
+using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Options;
 using Microsoft.Extensions.Options;
 
@@ -10,49 +13,62 @@ public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadServ
     IOptions<ApiOptions> apiOptions,
     TimeProvider timeProvider) : ICompaniesHouseDownloadService
 {
-    public const string PartialFilename = "BasicCompanyData";
-
     private readonly IFileDownloadService fileDownloadService = fileDownloadService;
     private readonly IDownloadStatusStorage downloadStatusStorage = downloadStatusStorage;
     private readonly ICompaniesHouseFilePostService companiesHouseFilePostService = companiesHouseFilePostService;
     private readonly TimeProvider timeProvider = timeProvider;
     private readonly ApiOptions apiOptions = apiOptions.Value;
 
-    public async Task<bool> StartDownload()
+    public async Task StartDownload()
     {
-        var downloadStatus = await downloadStatusStorage.GetCompaniesHouseFileDownloadStatusAsync();
+        var partitionKey = timeProvider.GetUtcNow().Month.ToString();
 
-        return downloadStatus != null &&
-            downloadStatus.CurrentRunExpectedFileCount != null &&
-            await DownloadFiles(downloadStatus.CurrentRunExpectedFileCount.Value);
+        if (await downloadStatusStorage.GetCompaniesHouseFileDownloadStatusAsync(partitionKey))
+        {
+            await DownloadFiles(partitionKey);
+        }
     }
 
-    private async Task<bool> DownloadFiles(int currentRunExpectedFileCount)
+    private async Task DownloadFiles(string partitionKey)
     {
         var now = timeProvider.GetUtcNow();
+        await downloadStatusStorage.CreateCompaniesHouseFileDownloadLogAsync(partitionKey);
 
-        var all = Enumerable.Range(1, currentRunExpectedFileCount)
-            .Select(i => DownloadFile(currentRunExpectedFileCount, i, now));
+        var filesDownloadList = await downloadStatusStorage.GetCompaniesHouseFileDownloadListAsync(partitionKey);
 
-        var results = await Task.WhenAll(all);
-
-        return Array.TrueForAll(results, r => r);
+        foreach (var fileStatus in filesDownloadList)
+        {
+            await DownloadFile(fileStatus, now);
+        }
     }
 
-    private async Task<bool> DownloadFile(int fileCount, int fileNumber, DateTimeOffset now)
+    private async Task<bool> DownloadFile(CompaniesHouseFileSetDownloadStatus fileStatus, DateTimeOffset now)
     {
         var succeeded = false;
-        var fileName = $"{PartialFilename}-{now.Year}-{now.Month.ToString("00")}-01-part{fileNumber}_{fileCount}.zip";
 
-        var filePath = $"{apiOptions.CompaniesHouseDataDownloadUrl}{fileName}";
-
+        var filePath = $"{apiOptions.CompaniesHouseDataDownloadUrl}{fileStatus.DownloadedFileName}";
         var download = await fileDownloadService.GetStreamAsync(filePath);
 
         if(download.ResponseCode == Models.FileDownloadResponseCode.Succeeded)
         {
-            var status = await companiesHouseFilePostService.PostFileAsync(download.Stream, fileName);
+            /*var status = await companiesHouseFilePostService.PostFileAsync(download.Stream, fileStatus.DownloadedFileName);  // TODO: */
+            var status = HttpStatusCode.OK;
 
             succeeded = status.IsSuccessStatusCode();
+            if (succeeded)
+            {
+                fileStatus.Timestamp = timeProvider.GetUtcNow();
+                fileStatus.DownloadStatus = download.ResponseCode;
+
+                await downloadStatusStorage.SetCompaniesHouseFileDownloadStatusAsync(fileStatus);
+            }
+            else
+            {
+                fileStatus.Timestamp = timeProvider.GetUtcNow();
+                fileStatus.DownloadStatus = download.ResponseCode;
+
+                await downloadStatusStorage.SetCompaniesHouseFileDownloadStatusAsync(fileStatus);
+            }
         }
 
         return succeeded;
