@@ -55,7 +55,14 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
         {
             errors.Add(
                 CreateError(
-                    lineNumber, rawData, BulkUpdateErrors.InvalidFieldLengthErrorMessage, BulkUpdateErrors.InvalidFieldLengthError));
+                    lineNumber, rawData, BulkUpdateErrors.InvalidCompaniesHouseNumberLengthErrorMessage, BulkUpdateErrors.InvalidCompaniesHouseNumberLengthError));
+        }
+
+        if (!string.IsNullOrWhiteSpace(row.GetField(nameof(CompaniesHouseCompany.companies_house_number))))
+        {
+            errors.Add(
+                CreateError(
+                    lineNumber, rawData, BulkUpdateErrors.SpacesInCompaniesHouseNumberErrorMessage, BulkUpdateErrors.SpacesInCompaniesHouseNumberError));
         }
 
         if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.parent_child))))
@@ -67,8 +74,8 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
 
         if (!string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.franchisee_licensee_tenant))))
         {
-            var franchiseeVal = row.GetField(nameof(CompaniesHouseCompany.franchisee_licensee_tenant)).ToLower();
-            if (franchiseeVal != "yes" && franchiseeVal != "y")
+            var franchiseeVal = row.GetField(nameof(CompaniesHouseCompany.franchisee_licensee_tenant));
+            if (franchiseeVal != "Y")
             {
                 errors.Add(
                     CreateError(
