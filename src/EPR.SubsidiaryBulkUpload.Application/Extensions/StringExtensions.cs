@@ -4,30 +4,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Extensions;
 
 public static class StringExtensions
 {
-    public static string ToPartitionKeyFormat(this string? str)
-    {
-        if (str is null)
-        {
-            return string.Empty;
-        }
-
-        var firstDashIndex = str.IndexOf('-');
-
-        var dotIndex = str.LastIndexOf('.');
-
-        if (firstDashIndex >= 0 && dotIndex > firstDashIndex)
-        {
-            str = str.Substring(firstDashIndex + 1, dotIndex - firstDashIndex - 1);
-        }
-        else
-        {
-            str = string.Empty;
-        }
-
-        return str;
-    }
-
-    public static string ToFindPartitionKey(this string? str)
+    public static string ToPartitionKey(this string? str)
     {
         if (str is null)
         {

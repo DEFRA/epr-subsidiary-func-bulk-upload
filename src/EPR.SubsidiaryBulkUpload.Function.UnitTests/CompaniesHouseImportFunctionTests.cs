@@ -92,7 +92,7 @@ public class CompaniesHouseImportFunctionTests
             using (var entryStream = entry.Open())
             {
                 var bytes = Encoding.UTF8.GetBytes(CsvContent);
-                await entryStream.WriteAsync(bytes, 0, bytes.Length);
+                await entryStream.WriteAsync(bytes.AsMemory(0), default(CancellationToken));
             }
         }
 

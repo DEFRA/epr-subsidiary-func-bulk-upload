@@ -64,7 +64,7 @@ public class TableStorageProcessor(
 
             await CleanupIngestionTable(tableClient);
 
-            _logger.LogInformation("C# Table storage processed {Count} records from csv storage table {Name}", records.Count(), tableName);
+            _logger.LogInformation("C# Table storage processed {Count} records into storage table {Name}", records.Count(), tableName);
         }
         catch (Exception ex)
         {
@@ -214,7 +214,7 @@ public class TableStorageProcessor(
                 RowKey = ToDelete
             });
 
-            _logger.LogInformation("C# Table storage deleted {DeletedCount} records from csv storage table {Name}", deletedRecordsCount, tableClient.Name);
+            _logger.LogInformation("C# Table storage deleted {DeletedCount} records from storage table {Name}", deletedRecordsCount, tableClient.Name);
         }
 
         if (previousPartitionValue is not null)

@@ -29,7 +29,7 @@ public class CompaniesHouseImportFunction(ILogger<CompaniesHouseImportFunction> 
 
         var fileName = metadata.GetFileName() ?? client.Name;
 
-        var partitionKey = fileName.ToFindPartitionKey();
+        var partitionKey = fileName.ToPartitionKey();
 
         if (!string.IsNullOrEmpty(partitionKey))
         {
@@ -43,7 +43,7 @@ public class CompaniesHouseImportFunction(ILogger<CompaniesHouseImportFunction> 
             };
 
             IEnumerable<CompanyHouseTableEntity> records = null;
-            if (string.Compare(Path.GetExtension(fileName), ".zip", StringComparison.OrdinalIgnoreCase) == 0)
+            if (string.Equals(Path.GetExtension(fileName), ".zip", StringComparison.OrdinalIgnoreCase))
             {
                 using (var zipArchive = new ZipArchive(content, ZipArchiveMode.Read))
                 {
