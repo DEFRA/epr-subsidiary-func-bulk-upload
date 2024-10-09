@@ -205,73 +205,19 @@ public class TableStorageProcessor(
         return null;
     }
 
-    private static async Task<(string? Value, ETag? ETag)> GetPartitionRowValueWithETag(TableClient tableClient, string partitionKey, string rowKey)
+    private static async Task UpsertPartitionRowValue(TableClient tableClient, string partitionKey, string rowKey, string value)
     {
-        try
+        await tableClient.UpsertEntityAsync(new CompanyHouseTableEntity
         {
-            var tableResult = await tableClient.GetEntityAsync<CompanyHouseTableEntity>(
-                 partitionKey: partitionKey,
-                 rowKey: rowKey);
-
-            return (tableResult?.Value?.Data, tableResult?.Value?.ETag);
-        }
-        catch (RequestFailedException)
-        {
-            return (null, null);
-        }
-
-        return (null, null);
+            PartitionKey = partitionKey,
+            RowKey = rowKey,
+            Data = value
+        });
     }
 
     private static async Task<string?> GetLatestPartitionKey(TableClient tableClient)
     {
         return await GetPartitionRowValue(tableClient, LatestCompaniesHouseData, Latest);
-    }
-
-    private async Task UpsertPartitionRowValue(TableClient tableClient, string partitionKey, string rowKey, string value, ETag? etag = null)
-    {
-        try
-        {
-            var entity = new CompanyHouseTableEntity
-            {
-                PartitionKey = partitionKey,
-                RowKey = rowKey,
-                Data = value
-            };
-
-            if (etag is not null)
-            {
-                entity.ETag = etag.Value;
-            }
-
-            var existingEntity = await tableClient.GetEntityIfExistsAsync<CompanyHouseTableEntity>(partitionKey, rowKey);
-            if (existingEntity.HasValue)
-            {
-                var response = await tableClient.UpdateEntityAsync(
-                    entity,
-                    etag ?? ETag.All,
-                    TableUpdateMode.Merge);
-
-                if (response.IsError)
-                {
-                    _logger.LogInformation("Table storage UpdateEntityAsync returned error response {Status} for partition key {PartitionKey} row key {RowKey} in storage table {Name}", response.Status, partitionKey, rowKey, tableClient.Name);
-                }
-            }
-            else
-            {
-                var response = await tableClient.AddEntityAsync(
-                    new CompanyHouseTableEntity
-                    {
-                        PartitionKey = partitionKey,
-                        RowKey = rowKey,
-                        Data = value
-                    });
-            }
-        }
-        catch (Azure.RequestFailedException ex)
-        {
-            _logger.LogError(ex, "Table storage AddEntityAsync or UpdateEntityAsync request failed for partition key {PartitionKey} row key {RowKey} in storage table {Name}", partitionKey, rowKey, tableClient.Name);
-        }
     }
 
     private async Task<int> CleanupIngestionTable(TableClient tableClient, int filePart, int totalFiles)
@@ -300,17 +246,17 @@ public class TableStorageProcessor(
             }
         }
 
-        var currentPartition = await GetPartitionRowValueWithETag(tableClient, LatestCompaniesHouseData, CurrentIngestion);
-        if (currentPartition is { Value: null })
+        var currentPartitionValue = await GetPartitionRowValue(tableClient, LatestCompaniesHouseData, CurrentIngestion);
+        if (currentPartitionValue is null)
         {
             _logger.LogInformation("Table storage {Partition} {RowKey} not found in table {Name}. Returning from the function.", LatestCompaniesHouseData, CurrentIngestion, tableClient.Name);
             return 0;
         }
 
-        var toDeletePartition = await GetPartitionRowValueWithETag(tableClient, LatestCompaniesHouseData, ToDelete);
-        if (toDeletePartition is not { Value: null })
+        var toDeletePartitionValue = await GetPartitionRowValue(tableClient, LatestCompaniesHouseData, ToDelete);
+        if (toDeletePartitionValue is not null)
         {
-            deletedRecordsCount = await DeleteByPartitionKey(tableClient.Name, toDeletePartition.Value);
+            deletedRecordsCount = await DeleteByPartitionKey(tableClient.Name, toDeletePartitionValue);
 
             await tableClient.DeleteEntityAsync(new CompanyHouseTableEntity
             {
@@ -321,27 +267,27 @@ public class TableStorageProcessor(
             _logger.LogInformation("Table storage deleted {DeletedCount} records from storage table {Name}.", deletedRecordsCount, tableClient.Name);
         }
 
-        var latestPartition = await GetPartitionRowValueWithETag(tableClient, LatestCompaniesHouseData, Latest);
-        var previousPartition = await GetPartitionRowValueWithETag(tableClient, LatestCompaniesHouseData, Previous);
+        var latestPartitionValue = await GetPartitionRowValue(tableClient, LatestCompaniesHouseData, Latest);
+        var previousPartitionValue = await GetPartitionRowValue(tableClient, LatestCompaniesHouseData, Previous);
 
-        if (latestPartition.Value != currentPartition.Value)
+        if (latestPartitionValue != currentPartitionValue)
         {
-            if (previousPartition is not { Value: null } && previousPartition.Value != toDeletePartition.Value)
+            if (previousPartitionValue is not null && previousPartitionValue != toDeletePartitionValue)
             {
-                _logger.LogInformation("Table storage setting {Partition} {RowKey} to {Value} in table {Name}.", LatestCompaniesHouseData, ToDelete, previousPartition.Value, tableClient.Name);
-                await UpsertPartitionRowValue(tableClient, LatestCompaniesHouseData, ToDelete, previousPartition.Value);
+                _logger.LogInformation("Table storage setting {Partition} {RowKey} to {Value} in table {Name}.", LatestCompaniesHouseData, ToDelete, previousPartitionValue, tableClient.Name);
+                await UpsertPartitionRowValue(tableClient, LatestCompaniesHouseData, ToDelete, previousPartitionValue);
             }
 
-            if (latestPartition is not { Value: null } && latestPartition.Value != previousPartition.Value)
+            if (latestPartitionValue is not null && latestPartitionValue != previousPartitionValue)
             {
-                _logger.LogInformation("Table storage setting {Partition} {RowKey} to {Value} in table {Name}.", LatestCompaniesHouseData, ToDelete, previousPartition.Value, tableClient.Name);
-                await UpsertPartitionRowValue(tableClient, LatestCompaniesHouseData, Previous, latestPartition.Value, previousPartition.ETag);
+                _logger.LogInformation("Table storage setting {Partition} {RowKey} to {Value} in table {Name}.", LatestCompaniesHouseData, ToDelete, previousPartitionValue, tableClient.Name);
+                await UpsertPartitionRowValue(tableClient, LatestCompaniesHouseData, Previous, latestPartitionValue);
             }
 
-            if (currentPartition is not { Value: null } && currentPartition.Value != latestPartition.Value)
+            if (currentPartitionValue is not null && currentPartitionValue != latestPartitionValue)
             {
-                _logger.LogInformation("Table storage setting {Partition} {RowKey} to {Value} in table {Name}.", LatestCompaniesHouseData, ToDelete, previousPartition.Value, tableClient.Name);
-                await UpsertPartitionRowValue(tableClient, LatestCompaniesHouseData, Latest, currentPartition.Value, latestPartition.ETag);
+                _logger.LogInformation("Table storage setting {Partition} {RowKey} to {Value} in table {Name}.", LatestCompaniesHouseData, ToDelete, previousPartitionValue, tableClient.Name);
+                await UpsertPartitionRowValue(tableClient, LatestCompaniesHouseData, Latest, currentPartitionValue);
             }
         }
 

@@ -4,7 +4,6 @@ using Azure.Data.Tables;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using EPR.SubsidiaryBulkUpload.Application.UnitTests.Mocks;
-using Microsoft.Extensions.Diagnostics.Latency;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
@@ -68,11 +67,12 @@ public class TableStorageProcessorTests
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(Mock.Of<Response>());
 
-        _mockTableClient.Setup(x => x.DeleteEntityAsync(
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<ETag>(),
-            It.IsAny<CancellationToken>()))
+        _mockTableClient.Setup(x =>
+            x.DeleteEntityAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<ETag>(),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(Mock.Of<Response>());
 
         // Act
@@ -169,17 +169,6 @@ public class TableStorageProcessorTests
             .Returns(new MockAsyncPageable<CompanyHouseTableEntity>(records))
             .Returns(new MockAsyncPageable<CompanyHouseTableEntity>(new List<CompanyHouseTableEntity>()));
 
-        var getEntityIfExistsResponse = new Mock<NullableResponse<CompanyHouseTableEntity>>();
-        getEntityIfExistsResponse.SetupGet(x => x.HasValue).Returns(false);
-
-        _mockTableClient.Setup(tc =>
-            tc.GetEntityIfExistsAsync<CompanyHouseTableEntity>(
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                null,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(getEntityIfExistsResponse.Object);
-
         _mockTableClient.Setup(x =>
             x.DeleteEntityAsync(
                 It.IsAny<string>(),
@@ -197,9 +186,9 @@ public class TableStorageProcessorTests
 
         // Assert
         _mockTableClient.Verify(x => x.UpsertEntityAsync(It.Is<CompanyHouseTableEntity>(e => e.RowKey == "Current Ingestion"), TableUpdateMode.Merge, It.IsAny<CancellationToken>()), Times.Once);
-        _mockTableClient.Verify(x => x.AddEntityAsync(It.Is<CompanyHouseTableEntity>(e => e.RowKey == "Previous"), default), Times.Once);
-        _mockTableClient.Verify(x => x.AddEntityAsync(It.Is<CompanyHouseTableEntity>(e => e.RowKey == "Latest"), default), Times.Once);
-        _mockTableClient.Verify(x => x.AddEntityAsync(It.Is<CompanyHouseTableEntity>(e => e.RowKey == "To Delete"), default), Times.Once);
+        _mockTableClient.Verify(x => x.UpsertEntityAsync(It.Is<CompanyHouseTableEntity>(e => e.RowKey == "Previous"), TableUpdateMode.Merge, default), Times.Once);
+        _mockTableClient.Verify(x => x.UpsertEntityAsync(It.Is<CompanyHouseTableEntity>(e => e.RowKey == "Latest"), TableUpdateMode.Merge, default), Times.Once);
+        _mockTableClient.Verify(x => x.UpsertEntityAsync(It.Is<CompanyHouseTableEntity>(e => e.RowKey == "To Delete"), TableUpdateMode.Merge, default), Times.Once);
     }
 
     [TestMethod]
@@ -241,12 +230,6 @@ public class TableStorageProcessorTests
         var toDeletePartitionResponse = new Mock<Response<CompanyHouseTableEntity>>();
         toDeletePartitionResponse.Setup(x => x.Value).Returns(toDeletePartitionData);
 
-        var getEntityIfExistsResponse = new Mock<NullableResponse<CompanyHouseTableEntity>>();
-        getEntityIfExistsResponse.SetupGet(x => x.HasValue).Returns(true);
-
-        var updateEntityResponse = new Mock<Response>();
-        updateEntityResponse.SetupGet(x => x.IsError).Returns(false);
-
         _mockTableClient.Setup(x => x.CreateIfNotExistsAsync(default));
 
         _mockTableClient.Setup(tc =>
@@ -273,22 +256,6 @@ public class TableStorageProcessorTests
                 It.IsAny<ETag>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(Mock.Of<Response>());
-
-        _mockTableClient.Setup(tc =>
-            tc.GetEntityIfExistsAsync<CompanyHouseTableEntity>(
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                null,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(getEntityIfExistsResponse.Object);
-
-        _mockTableClient.Setup(x => x
-            .UpdateEntityAsync<CompanyHouseTableEntity>(
-                It.IsAny<CompanyHouseTableEntity>(),
-                It.IsAny<ETag>(),
-                It.IsAny<TableUpdateMode>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(updateEntityResponse.Object);
 
         _mockTableClient
             .Setup(tc => tc.SubmitTransactionAsync(It.IsAny<IEnumerable<TableTransactionAction>>(), default))
