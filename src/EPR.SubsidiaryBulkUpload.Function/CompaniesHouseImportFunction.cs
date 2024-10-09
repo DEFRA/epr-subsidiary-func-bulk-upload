@@ -30,6 +30,7 @@ public class CompaniesHouseImportFunction(ILogger<CompaniesHouseImportFunction> 
         var fileName = metadata.GetFileName() ?? client.Name;
 
         var partitionKey = fileName.ToPartitionKey();
+        var fileParts = fileName.ToFilePartNumberAndCount();
 
         if (!string.IsNullOrEmpty(partitionKey))
         {
@@ -63,7 +64,7 @@ public class CompaniesHouseImportFunction(ILogger<CompaniesHouseImportFunction> 
 
             if (records is not null && records.Any())
             {
-                await _tableStorageProcessor.WriteToAzureTableStorage(records, _tableStorageOptions.CompaniesHouseOfflineDataTableName, partitionKey);
+                await _tableStorageProcessor.WriteToAzureTableStorage(records, _tableStorageOptions.CompaniesHouseOfflineDataTableName, partitionKey, fileParts.PartNumber, fileParts.TotalFiles);
             }
 
             _logger.LogInformation("CompaniesHouseImport blob trigger processed {Count} records from csv blob {Name}", records?.Count() ?? 0, client.Name);

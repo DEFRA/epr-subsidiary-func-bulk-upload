@@ -78,7 +78,7 @@ public class CompaniesHouseImportFunctionTests
 
         // Assert
         _csvProcessorMock.Verify(x => x.ProcessStream<CompanyHouseTableEntity>(It.IsAny<Stream>(), It.IsAny<CsvConfiguration>()), Times.Once);
-        _tableStorageProcessor.Verify(x => x.WriteToAzureTableStorage(It.IsAny<List<CompanyHouseTableEntity>>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        _tableStorageProcessor.Verify(x => x.WriteToAzureTableStorage(It.IsAny<List<CompanyHouseTableEntity>>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>()), Times.Once);
     }
 
     [TestMethod]
@@ -106,7 +106,7 @@ public class CompaniesHouseImportFunctionTests
 
         // Assert
         _csvProcessorMock.Verify(x => x.ProcessStream<CompanyHouseTableEntity>(It.IsAny<Stream>(), It.IsAny<CsvConfiguration>()), Times.Once);
-        _tableStorageProcessor.Verify(x => x.WriteToAzureTableStorage(It.IsAny<List<CompanyHouseTableEntity>>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        _tableStorageProcessor.Verify(x => x.WriteToAzureTableStorage(It.IsAny<List<CompanyHouseTableEntity>>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>()), Times.Once);
     }
 
     [TestMethod]
@@ -126,7 +126,27 @@ public class CompaniesHouseImportFunctionTests
 
         // Assert
         _csvProcessorMock.Verify(x => x.ProcessStream<CompanyHouseTableEntity>(It.IsAny<Stream>(), It.IsAny<CsvConfiguration>()), Times.Once);
-        _tableStorageProcessor.Verify(x => x.WriteToAzureTableStorage(It.IsAny<List<CompanyHouseTableEntity>>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _tableStorageProcessor.Verify(x => x.WriteToAzureTableStorage(It.IsAny<List<CompanyHouseTableEntity>>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>()), Times.Never);
+    }
+
+    [TestMethod]
+    public async Task CompaniesHouseImportFunction_Passes_File_Parts_To_TableStorageService()
+    {
+        // Arrange
+        const int filePartNumber = 2;
+        const int fileCount = 9;
+        var fileName = $"Test-2024-10-01-part{filePartNumber}_{fileCount}.csv";
+
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(CsvContent));
+        var response = CreateDownloadStreamingResponse(stream, fileName);
+        _blobClientMock.Setup(client => client.DownloadStreamingAsync(It.IsAny<BlobDownloadOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(response);
+
+        // Act
+        await _systemUnderTest.Run(_blobClientMock.Object);
+
+        // Assert
+        _tableStorageProcessor.Verify(x => x.WriteToAzureTableStorage(It.IsAny<List<CompanyHouseTableEntity>>(), It.IsAny<string>(), It.IsAny<string>(), filePartNumber, fileCount), Times.Once);
     }
 
     [TestMethod]
@@ -195,7 +215,7 @@ public class CompaniesHouseImportFunctionTests
         }
 
         var downloadStreamingDetails = BlobsModelBuilder.CreateBlobDownloadDetails(
-            (int)stream.Length, /* CsvContent.Length, */
+            (int)stream.Length,
             new Dictionary<string, string> { { "fileName", fileName } });
 
         var downloadStreamingResult = BlobsModelFactory.BlobDownloadStreamingResult(stream, downloadStreamingDetails);

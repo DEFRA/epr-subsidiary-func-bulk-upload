@@ -111,7 +111,13 @@ public static class ConfigurationExtensions
         var sp = services.BuildServiceProvider();
         var redisOptions = sp.GetRequiredService<IOptions<RedisOptions>>().Value;
 
+        services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisOptions.ConnectionString));
+        services.AddSingleton<ITableStorageProcessor, TableStorageProcessor>();
+        services.AddSingleton<TimeProvider>(TimeProvider.System);
+
         services.AddScoped<AntivirusApiAuthorizationHandler>();
+        services.AddScoped<ISystemDetailsProvider, SystemDetailsProvider>();
+
         services.AddTransient<AccountServiceAuthorisationHandler>();
         services.AddTransient<IBulkUploadOrchestration, BulkUploadOrchestration>();
         services.AddTransient<IBulkSubsidiaryProcessor, BulkSubsidiaryProcessor>();
@@ -119,18 +125,14 @@ public static class ConfigurationExtensions
         services.AddTransient<IRecordExtraction, RecordExtraction>();
         services.AddTransient<ICsvProcessor, CsvProcessor>();
         services.AddTransient<IParserClass, ParserClass>();
-        services.AddTransient<ITableStorageProcessor, TableStorageProcessor>();
         services.AddTransient<ISubsidiaryService, SubsidiaryService>();
         services.AddTransient<INotificationService, NotificationService>();
-        services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisOptions.ConnectionString));
-        services.AddSingleton<TimeProvider>(TimeProvider.System);
         services.AddTransient<ICompaniesHouseDownloadService, CompaniesHouseDownloadService>();
         services.AddTransient<ICompaniesHouseFilePostService, CompaniesHouseFilePostService>();
         services.AddTransient<IDownloadStatusStorage, DownloadStatusStorage>();
         services.AddTransient<IFileDownloadService, FileDownloadService>();
         services.AddTransient<IAntivirusClient, AntivirusClient>();
         services.AddTransient<ISubmissionStatusClient, SubmissionStatusClient>();
-        services.AddScoped<ISystemDetailsProvider, SystemDetailsProvider>();
 
         var isDevMode = configuration.GetValue<bool?>("ApiConfig:DeveloperMode");
         if (isDevMode is true)
