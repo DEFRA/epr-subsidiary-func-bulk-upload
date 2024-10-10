@@ -12,6 +12,8 @@ public class CustomCsvReader : CsvReader
 
     public virtual List<string> InvalidHeaderErrors { get; set; }
 
+    public virtual List<string> ExtraHeaderErrors { get; set; }
+
     protected override void ValidateHeader(ClassMap map, List<InvalidHeader> invalidHeaders)
     {
         base.ValidateHeader(map, invalidHeaders);
@@ -30,7 +32,7 @@ public class CustomCsvReader : CsvReader
 
             if (validationErrors.Count != 0)
             {
-                InvalidHeaderErrors = validationErrors;
+                ExtraHeaderErrors = validationErrors;
             }
         }
     }

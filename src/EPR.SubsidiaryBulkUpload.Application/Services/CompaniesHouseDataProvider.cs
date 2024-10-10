@@ -19,7 +19,7 @@ public class CompaniesHouseDataProvider(ICompaniesHouseLookupService companiesHo
         // Try get locally...
         var response = await GetCompanyFromTableStorage(subsidiaryModel.CompaniesHouseNumber);
 
-        if (response != null)
+        if (response != null && string.Equals(response.Name, subsidiaryModel.Name, StringComparison.OrdinalIgnoreCase))
         {
             dataRetrieved = true;
             subsidiaryModel.Address = response.Address;
@@ -29,7 +29,7 @@ public class CompaniesHouseDataProvider(ICompaniesHouseLookupService companiesHo
             // Try get remotely through CH API
             var companyHouseResponse = await companiesHouseLookupService.GetCompaniesHouseResponseAsync(subsidiaryModel.CompaniesHouseNumber);
 
-            if (companyHouseResponse != null)
+            if (companyHouseResponse != null && companyHouseResponse.Error == null)
             {
                 dataRetrieved = true;
                 subsidiaryModel.Address = new AddressModel()
@@ -42,7 +42,16 @@ public class CompaniesHouseDataProvider(ICompaniesHouseLookupService companiesHo
                 };
 
                 subsidiaryModel.Name = companyHouseResponse.Name;
+                subsidiaryModel.CompaniesHouseCompanyName = companyHouseResponse.Name;
+                subsidiaryModel.LocalStorageName = response?.Name;
                 subsidiaryModel.OrganisationType = OrganisationType.CompaniesHouseCompany;
+            }
+            else if (companyHouseResponse != null && companyHouseResponse.Error != null)
+            {
+                dataRetrieved = true;
+                subsidiaryModel.Error = companyHouseResponse.Error;
+                subsidiaryModel.Error.FileLineNumber = subsidiaryModel.FileLineNumber;
+                subsidiaryModel.Error.FileContent = subsidiaryModel.RawContent;
             }
         }
 
@@ -61,6 +70,9 @@ public class CompaniesHouseDataProvider(ICompaniesHouseLookupService companiesHo
             orgModel = new OrganisationModel()
             {
                 Name = companiesHouseCompany.CompanyName,
+                CompaniesHouseCompanyName = string.Empty,
+                LocalStorageName = companiesHouseCompany.CompanyName,
+                OrganisationType = OrganisationType.CompaniesHouseCompany,
                 CompaniesHouseNumber = companiesHouseCompany.CompanyNumber,
                 Address = new AddressModel
                 {

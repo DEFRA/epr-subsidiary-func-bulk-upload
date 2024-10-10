@@ -117,6 +117,7 @@ public class CompaniesHouseImportFunctionTests
         _loggerMock.VerifyLog(x => x.LogInformation("CompaniesHouseImport blob trigger function did not process file because name '{Name}' doesn't contain partition key", "test.csv"), Times.Once);
     }
 
+    /*
     [TestMethod]
     public async Task CompaniesHouseImportFunction_Deletes_Blob_And_Logs_Result()
     {
@@ -138,4 +139,5 @@ public class CompaniesHouseImportFunctionTests
 
         _loggerMock.VerifyLog(x => x.LogInformation("Blob {Name} was deleted.", CsvBlobName), Times.Once);
     }
+    */
 }

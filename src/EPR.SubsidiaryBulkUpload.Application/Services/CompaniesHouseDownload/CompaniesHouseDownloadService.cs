@@ -25,7 +25,7 @@ public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadServ
         if (await _downloadStatusStorage.GetCompaniesHouseFileDownloadStatusAsync(partitionKey))
         {
             await DownloadFiles(partitionKey);
-        }
+    }
     }
 
     private async Task DownloadFiles(string partitionKey)

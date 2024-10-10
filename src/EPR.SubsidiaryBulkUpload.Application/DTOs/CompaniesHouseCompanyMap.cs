@@ -10,8 +10,6 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
 {
     public CompaniesHouseCompanyMap()
     {
-        var errorsInRow = string.Empty;
-
         Map(m => m.organisation_id).Index(0).Validate(field => !field.Equals(null));
         Map(m => m.subsidiary_id);
         Map(m => m.organisation_name).Validate(field => !field.Equals(string.Empty));
@@ -19,6 +17,8 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
         Map(m => m.parent_child).Validate(field => !field.Equals(string.Empty));
         Map(m => m.franchisee_licensee_tenant);
         Map(m => m.Errors).Index(6).Convert(args => GetRowValidationErrors(args.Row));
+        Map(m => m.RawRow).Convert(args => args.Row.Context.Reader.Parser.RawRecord);
+        Map(m => m.FileLineNumber).Convert(args => args.Row.Context.Reader.Parser.Row);
     }
 
     private static List<UploadFileErrorModel> GetRowValidationErrors(IReaderRow row)
@@ -49,6 +49,20 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
                     lineNumber, rawData, BulkUpdateErrors.CompaniesHouseNumberRequiredMessage, BulkUpdateErrors.CompaniesHouseNumberRequired));
         }
 
+        if (!string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.companies_house_number))) && row.GetField(nameof(CompaniesHouseCompany.companies_house_number)).Length > 8)
+        {
+            errors.Add(
+                CreateError(
+                    lineNumber, rawData, BulkUpdateErrors.InvalidCompaniesHouseNumberLengthErrorMessage, BulkUpdateErrors.InvalidCompaniesHouseNumberLengthError));
+        }
+
+        if (row.GetField(nameof(CompaniesHouseCompany.companies_house_number)).Any(char.IsWhiteSpace))
+        {
+            errors.Add(
+                CreateError(
+                    lineNumber, rawData, BulkUpdateErrors.SpacesInCompaniesHouseNumberErrorMessage, BulkUpdateErrors.SpacesInCompaniesHouseNumberError));
+        }
+
         if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.parent_child))))
         {
             errors.Add(
@@ -58,13 +72,20 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
 
         if (!string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.franchisee_licensee_tenant))))
         {
-            var franchiseeVal = row.GetField(nameof(CompaniesHouseCompany.franchisee_licensee_tenant)).ToLower();
-            if (franchiseeVal != "yes" && franchiseeVal != "y")
+            var franchiseeVal = row.GetField(nameof(CompaniesHouseCompany.franchisee_licensee_tenant));
+            if (franchiseeVal != "Y")
             {
                 errors.Add(
                     CreateError(
                         lineNumber, rawData, BulkUpdateErrors.FranchiseeLicenseeTenantInvalidMessage, BulkUpdateErrors.FranchiseeLicenseeTenantInvalid));
             }
+        }
+
+        if (row.ColumnCount > CsvFileValidationConditions.MaxNumberOfColumnsAllowed)
+        {
+            errors.Add(
+                   CreateError(
+                       lineNumber, rawData, BulkUpdateErrors.InvalidDatafoundinRowMessage, BulkUpdateErrors.InvalidDatafoundinRow));
         }
 
         return errors;

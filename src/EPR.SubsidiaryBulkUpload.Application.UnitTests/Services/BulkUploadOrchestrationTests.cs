@@ -145,7 +145,7 @@ public class BulkUploadOrchestrationTests
     public async Task Should_Notify_Errors_When_No_Data()
     {
         // Arrange
-        var companyData = new CompaniesHouseCompany[] { };
+        var companyData = Array.Empty<CompaniesHouseCompany>();
 
         var userId = Guid.NewGuid();
         var organisationId = Guid.NewGuid();

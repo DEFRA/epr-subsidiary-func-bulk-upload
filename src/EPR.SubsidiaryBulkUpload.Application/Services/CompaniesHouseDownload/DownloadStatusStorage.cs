@@ -35,7 +35,7 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
             return downloadProgressList.Where(x => x.DownloadStatus != FileDownloadResponseCode.Succeeded).Any();
         }
         catch (RequestFailedException ex)
-        {
+            {
             _logger.LogError(ex, "Cannot get or create table {TableName}", CompaniesHouseDownloadTableName);
         }
 
@@ -43,7 +43,7 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
     }
 
     public async Task<List<CompaniesHouseFileSetDownloadStatus>> GetCompaniesHouseFileDownloadListAsync(string partitionKey)
-    {
+                {
         CompaniesHouseFileSetDownloadStatus result = null;
         var tableClient = _tableServiceClient.GetTableClient(CompaniesHouseDownloadTableName);
         var now = _timeProvider.GetUtcNow();
@@ -53,7 +53,7 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
             var downloadProgressList = await tableClient.QueryAsync<CompaniesHouseFileSetDownloadStatus>(x => x.PartitionKey == partitionKey).ToListAsync();
 
             return downloadProgressList.Where(x => x.DownloadStatus != FileDownloadResponseCode.Succeeded).ToList();
-        }
+            }
         catch (RequestFailedException ex)
         {
             _logger.LogError(ex, "Cannot get or create table {TableName}", CompaniesHouseDownloadTableName);
@@ -87,9 +87,9 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
         var downloadsLog = await tableClient.QueryAsync<CompaniesHouseFileSetDownloadStatus>(x => x.PartitionKey == partitionKey).ToListAsync();
 
         if (downloadsLog.Count == 0)
+    {
+        try
         {
-            try
-            {
                 var now = _timeProvider.GetUtcNow();
                 var entities = new List<CompaniesHouseFileSetDownloadStatus>();
 
@@ -108,13 +108,13 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
                 var batchTransactions = new List<TableTransactionAction>();
                 batchTransactions.AddRange(entities.Select(e => new TableTransactionAction(TableTransactionActionType.Add, e)));
                 await tableClient.SubmitTransactionAsync(batchTransactions);
-            }
-            catch (RequestFailedException ex)
-            {
+        }
+        catch (RequestFailedException ex)
+        {
                 _logger.LogError(ex, "Cannot get or create table {TableName}", CompaniesHouseDownloadTableName);
             }
         }
-    }
+        }
 
     private static string RowKeyForThisMonth(DateTimeOffset now, int filePart) => RowKeyForMonth(now, filePart);
 

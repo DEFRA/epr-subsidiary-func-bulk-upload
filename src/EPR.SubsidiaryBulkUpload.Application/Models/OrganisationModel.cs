@@ -26,4 +26,14 @@ public class OrganisationModel
     public Nation? Nation { get; set; }
 
     public string? SubsidiaryOrganisationId { get; set; }
+
+    public string? CompaniesHouseCompanyName { get; set; }
+
+    public string? LocalStorageName { get; set; }
+
+    public UploadFileErrorModel Error { get; set; }
+
+    public string? RawContent { get; set; }
+
+    public int FileLineNumber { get; set; }
 }

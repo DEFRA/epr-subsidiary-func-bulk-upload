@@ -23,11 +23,35 @@ public class CompaniesHouseLookupDirectService : ICompaniesHouseLookupService
             response.StatusCode == HttpStatusCode.NotFound ||
             response.StatusCode == HttpStatusCode.InternalServerError)
         {
-            return null;
+            return new Company
+            {
+               Error = new UploadFileErrorModel
+                {
+                   FileLineNumber = 1,
+                   FileContent = string.Empty,
+                   Message = BulkUpdateErrors.ResourceNotFoundErrorMessage,
+                   ErrorNumber = BulkUpdateErrors.ResourceNotFoundError,
+                   IsError = true
+                }
+            };
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return new Company
+            {
+                Error = new UploadFileErrorModel
+                {
+                    FileLineNumber = 1,
+                    FileContent = string.Empty,
+                    Message = BulkUpdateErrors.ResourceNotReachableOrAllOtherPossibleErrorMessage,
+                    ErrorNumber = BulkUpdateErrors.ResourceNotReachableOrAllOtherPossibleError,
+                    IsError = true
+                }
+            };
         }
 
         response.EnsureSuccessStatusCode();
-
         var jsonDocument = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync());
         var root = jsonDocument.RootElement;
 
@@ -35,6 +59,7 @@ public class CompaniesHouseLookupDirectService : ICompaniesHouseLookupService
         {
             Name = root.GetStringFromJsonElement("company_name"),
             CompaniesHouseNumber = root.GetStringFromJsonElement("company_number"),
+            Error = null,
             BusinessAddress = root.TryGetProperty("registered_office_address", out var address)
                 ? new Address
                 {
