@@ -57,6 +57,7 @@ public class CompaniesHouseDataProviderTests
         // Arrange
         var organisationModel = fixture.Create<OrganisationModel>();
         var companiesHouseResponse = fixture.Create<Company>();
+        companiesHouseResponse.Error = null;
         var config = fixture.Create<TableStorageOptions>();
         var options = new Mock<IOptions<TableStorageOptions>>();
         options.Setup(o => o.Value).Returns(config);
@@ -84,5 +85,35 @@ public class CompaniesHouseDataProviderTests
         organisationModel.Address.Country.Should().Be(companiesHouseResponse.BusinessAddress.Country);
         organisationModel.Address.Locality.Should().Be(companiesHouseResponse.BusinessAddress.Locality);
         organisationModel.Address.Postcode.Should().Be(companiesHouseResponse.BusinessAddress.Postcode);
+    }
+
+    [TestMethod]
+    public void ShouldSetCompaniesHouseDataFromCompaniesHouseApiWithErrors()
+    {
+        // Arrange
+        var organisationModel = fixture.Create<OrganisationModel>();
+        var companiesHouseResponse = fixture.Create<Company>();
+        var config = fixture.Create<TableStorageOptions>();
+        var options = new Mock<IOptions<TableStorageOptions>>();
+        options.Setup(o => o.Value).Returns(config);
+
+        var companiesHouseLookup = new Mock<ICompaniesHouseLookupService>();
+
+        var tableStorage = new Mock<ITableStorageProcessor>();
+
+        tableStorage.Setup(ts => ts.GetByCompanyNumber(organisationModel.CompaniesHouseNumber, config.CompaniesHouseOfflineDataTableName))
+            .ReturnsAsync((CompanyHouseTableEntity)null);
+
+        companiesHouseLookup.Setup(chl => chl.GetCompaniesHouseResponseAsync(organisationModel.CompaniesHouseNumber))
+            .ReturnsAsync(companiesHouseResponse);
+
+        var dataProvider = new CompaniesHouseDataProvider(companiesHouseLookup.Object, tableStorage.Object, options.Object);
+
+        // Act
+        dataProvider.SetCompaniesHouseData(organisationModel);
+
+        // Assert
+        organisationModel.Error.Should().NotBeNull();
+        organisationModel.Error.FileContent.Should().NotBeNull();
     }
 }
