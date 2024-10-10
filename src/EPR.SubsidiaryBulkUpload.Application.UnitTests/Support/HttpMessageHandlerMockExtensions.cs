@@ -4,7 +4,6 @@ using Moq.Protected;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Support;
 
-// Note, these extensiona were cloned from WebApiGateway.
 public static class HttpMessageHandlerMockExtensions
 {
     public static void RespondWith(

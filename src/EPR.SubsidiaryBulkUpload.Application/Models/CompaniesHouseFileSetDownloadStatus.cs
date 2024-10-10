@@ -7,7 +7,7 @@ public class CompaniesHouseFileSetDownloadStatus : ITableEntity
 {
     public int? CurrentRunExpectedFileCount { get; set; }
 
-    public string DownloadedFileName { get; set; }
+    public string DownloadFileName { get; set; }
 
     public FileDownloadResponseCode? DownloadStatus { get; set; }
 

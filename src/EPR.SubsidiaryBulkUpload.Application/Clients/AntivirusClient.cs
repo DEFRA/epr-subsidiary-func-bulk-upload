@@ -5,7 +5,6 @@ using Newtonsoft.Json;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Clients;
 
-// Note, this code was cloned from WebApiGateway.
 public class AntivirusClient(HttpClient httpClient, ILogger<AntivirusClient> logger) : IAntivirusClient
 {
     private readonly HttpClient _httpClient = httpClient;
@@ -14,7 +13,6 @@ public class AntivirusClient(HttpClient httpClient, ILogger<AntivirusClient> log
     public async Task<HttpStatusCode> SendFileAsync(FileDetails fileDetails, string fileName, Stream fileStream)
     {
         HttpStatusCode statusCode;
-        return HttpStatusCode.OK;   // TODO:
 
         try
         {

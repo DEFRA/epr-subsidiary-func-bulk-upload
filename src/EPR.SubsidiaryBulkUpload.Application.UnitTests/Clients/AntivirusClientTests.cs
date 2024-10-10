@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Clients;
 
-// Note, these tests were cloned from WebApiGateway.
 [TestClass]
 public class AntivirusClientTests
 {

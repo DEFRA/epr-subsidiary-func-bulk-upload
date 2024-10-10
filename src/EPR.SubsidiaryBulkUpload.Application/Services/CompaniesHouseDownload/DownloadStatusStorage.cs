@@ -2,7 +2,6 @@
 using Azure.Data.Tables;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using Microsoft.Extensions.Logging;
-/* using Microsoft.WindowsAzure.Storage.Table; */
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
 
@@ -13,20 +12,20 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
     public const string PartialFilename = "BasicCompanyData";
     public const int InitialExpectedFileCountSeed = 7; // This is the number of files whilst developing
 
-    private readonly TableServiceClient tableServiceClient = tableServiceClient;
-    private readonly TimeProvider timeProvider = timeProvider;
-    private readonly ILogger<DownloadStatusStorage> logger = logger;
+    private readonly TableServiceClient _tableServiceClient = tableServiceClient;
+    private readonly TimeProvider _timeProvider = timeProvider;
+    private readonly ILogger<DownloadStatusStorage> _logger = logger;
 
     public async Task<bool> GetCompaniesHouseFileDownloadStatusAsync(string partitionKey)
     {
         CompaniesHouseFileSetDownloadStatus result = null;
-        var tableClient = tableServiceClient.GetTableClient(CompaniesHouseDownloadTableName);
-        var now = timeProvider.GetUtcNow();
+        var tableClient = _tableServiceClient.GetTableClient(CompaniesHouseDownloadTableName);
+        var now = _timeProvider.GetUtcNow();
 
         try
         {
             await tableClient.CreateIfNotExistsAsync();
-            var downloadProgressList = await GetCompaniesHouseDownloadsList(tableClient, partitionKey);
+            var downloadProgressList = await tableClient.QueryAsync<CompaniesHouseFileSetDownloadStatus>(x => x.PartitionKey == partitionKey).ToListAsync();
 
             if (downloadProgressList == null || downloadProgressList.Count <= 0)
             {
@@ -37,7 +36,7 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
         }
         catch (RequestFailedException ex)
         {
-            logger.LogError(ex, "Cannot get or create table {TableName}", CompaniesHouseDownloadTableName);
+            _logger.LogError(ex, "Cannot get or create table {TableName}", CompaniesHouseDownloadTableName);
         }
 
         return false;
@@ -46,18 +45,18 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
     public async Task<List<CompaniesHouseFileSetDownloadStatus>> GetCompaniesHouseFileDownloadListAsync(string partitionKey)
     {
         CompaniesHouseFileSetDownloadStatus result = null;
-        var tableClient = tableServiceClient.GetTableClient(CompaniesHouseDownloadTableName);
-        var now = timeProvider.GetUtcNow();
+        var tableClient = _tableServiceClient.GetTableClient(CompaniesHouseDownloadTableName);
+        var now = _timeProvider.GetUtcNow();
 
         try
         {
-            var downloadProgressList = await GetCompaniesHouseDownloadsList(tableClient, partitionKey);
+            var downloadProgressList = await tableClient.QueryAsync<CompaniesHouseFileSetDownloadStatus>(x => x.PartitionKey == partitionKey).ToListAsync();
 
             return downloadProgressList.Where(x => x.DownloadStatus != FileDownloadResponseCode.Succeeded).ToList();
         }
         catch (RequestFailedException ex)
         {
-            logger.LogError(ex, "Cannot get or create table {TableName}", CompaniesHouseDownloadTableName);
+            _logger.LogError(ex, "Cannot get or create table {TableName}", CompaniesHouseDownloadTableName);
         }
 
         return new List<CompaniesHouseFileSetDownloadStatus>();
@@ -66,7 +65,7 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
     public async Task<bool> SetCompaniesHouseFileDownloadStatusAsync(CompaniesHouseFileSetDownloadStatus status)
     {
         var success = false;
-        var tableClient = tableServiceClient.GetTableClient(CompaniesHouseDownloadTableName);
+        var tableClient = _tableServiceClient.GetTableClient(CompaniesHouseDownloadTableName);
 
         try
         {
@@ -75,7 +74,7 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
         }
         catch (RequestFailedException ex)
         {
-            logger.LogError(ex, "Cannot get or create table {TableName}", CompaniesHouseDownloadTableName);
+            _logger.LogError(ex, "Cannot get or create table {TableName}", CompaniesHouseDownloadTableName);
         }
 
         return success;
@@ -83,16 +82,15 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
 
     public async Task CreateCompaniesHouseFileDownloadLogAsync(string partitionKey)
     {
-        var tableClient = tableServiceClient.GetTableClient(CompaniesHouseDownloadTableName);
+        var tableClient = _tableServiceClient.GetTableClient(CompaniesHouseDownloadTableName);
         await tableClient.CreateIfNotExistsAsync();
-
-        var downloadsLog = await GetCompaniesHouseDownloadsList(tableClient, partitionKey);
+        var downloadsLog = await tableClient.QueryAsync<CompaniesHouseFileSetDownloadStatus>(x => x.PartitionKey == partitionKey).ToListAsync();
 
         if (downloadsLog.Count == 0)
         {
             try
             {
-                var now = timeProvider.GetUtcNow();
+                var now = _timeProvider.GetUtcNow();
                 var entities = new List<CompaniesHouseFileSetDownloadStatus>();
 
                 for (int i = 1; i <= InitialExpectedFileCountSeed; i++)
@@ -102,7 +100,7 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
                     {
                         PartitionKey = partitionKey,
                         RowKey = RowKeyForThisMonth(now, i),
-                        DownloadedFileName = fileName,
+                        DownloadFileName = fileName,
                         DownloadStatus = null
                     });
                 }
@@ -113,7 +111,7 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
             }
             catch (RequestFailedException ex)
             {
-                logger.LogError(ex, "Cannot get or create table {TableName}", CompaniesHouseDownloadTableName);
+                _logger.LogError(ex, "Cannot get or create table {TableName}", CompaniesHouseDownloadTableName);
             }
         }
     }
@@ -124,8 +122,9 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
 
     private static string RowKeyForMonth(DateTimeOffset when, int filePart) => $"Part-{filePart}-{when.Month}-{when.Year}";
 
-    private async Task<List<CompaniesHouseFileSetDownloadStatus>> GetCompaniesHouseDownloadsList(TableClient tableClient, string partitionKey)
+    private async Task<List<CompaniesHouseFileSetDownloadStatus>> GetCompaniesHouseDownloadsList(string partitionKey)
     {
+        var tableClient = _tableServiceClient.GetTableClient(CompaniesHouseDownloadTableName);
         return await tableClient.QueryAsync<CompaniesHouseFileSetDownloadStatus>(x => x.PartitionKey == partitionKey).ToListAsync();
     }
 }
