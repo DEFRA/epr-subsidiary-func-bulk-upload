@@ -14,7 +14,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
     private readonly ICompaniesHouseDataProvider companiesHouseDataProvider = companiesHouseDataProvider;
     private readonly INotificationService _notificationService = notificationService;
 
-    public async Task Process(IEnumerable<CompaniesHouseCompany> subsidiaries, CompaniesHouseCompany parent, OrganisationResponseModel parentOrg, UserRequestModel userRequestModel)
+    public async Task<int> Process(IEnumerable<CompaniesHouseCompany> subsidiaries, CompaniesHouseCompany parent, OrganisationResponseModel parentOrg, UserRequestModel userRequestModel)
     {
         var subsidiariesAndOrg = subsidiaries
             .ToAsyncEnumerable()
@@ -81,6 +81,8 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         /*Scenario 1: The subsidiary is not found in RPD and not in Local storage and not found on companies house*/
         await ReportCompanies(subsidiariesNotAdded, userRequestModel, BulkUpdateErrors.CompanyNameNofoundAnywhereMessage, BulkUpdateErrors.CompanyNameNofoundAnywhere);
+
+        return allAddedNewSubsPlusExisting.Count;
     }
 
     private async Task ReportCompanies(IEnumerable<LinkOrganisationModel> linkSubsidiaries, UserRequestModel userRequestModel)

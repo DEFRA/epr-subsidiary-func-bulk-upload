@@ -61,8 +61,6 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
 
     public async Task Orchestrate(IEnumerable<CompaniesHouseCompany> data, UserRequestModel userRequestModel)
     {
-        var key = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress);
-
         // this holds all the parents and their children records from csv
         var subsidiaryGroups = recordExtraction
             .ExtractParentsAndSubsidiaries(data.Where(r => !r.Errors.Any()))
@@ -73,15 +71,18 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
             async sg => (SubsidiaryGroup: sg, Org: await organisationService.GetCompanyByCompaniesHouseNumber(sg.Parent.companies_house_number)))
             .Where(sg => sg.Org != null);
 
+        var addedSubsidiariesCount = 0;
+
         await foreach (var subsidiaryGroupAndParentOrg in subsidiaryGroupsAndParentOrg)
         {
-            await childProcessor.Process(
+            addedSubsidiariesCount += await childProcessor.Process(
                 subsidiaryGroupAndParentOrg.SubsidiaryGroup.Subsidiaries,
                 subsidiaryGroupAndParentOrg.SubsidiaryGroup.Parent,
                 subsidiaryGroupAndParentOrg.Org,
                 userRequestModel);
         }
 
-        _notificationService.SetStatus(key, "Finished");
+        _notificationService.SetStatus(userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress), "Finished");
+        _notificationService.SetStatus(userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadRowsAdded), addedSubsidiariesCount.ToString());
     }
 }

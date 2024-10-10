@@ -68,10 +68,11 @@ public class BulkSubsidiaryProcessorTests
         var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
 
         // Act
-        await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
+        var result = await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
 
         // Assert
         updates.Should().HaveCount(2);
+        result.Should().Be(2);
     }
 
     [TestMethod]
@@ -122,10 +123,11 @@ public class BulkSubsidiaryProcessorTests
         };
 
         // Act
-        await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
+        var result = await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
 
         // Assert
         inserts.Should().HaveCount(2);
+        result.Should().Be(2);
     }
 
     [TestMethod]
@@ -173,10 +175,11 @@ public class BulkSubsidiaryProcessorTests
         };
 
         // Act
-        await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
+        var result = await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
 
         // Assert
         inserts.Should().HaveCount(0);
+        result.Should().Be(0);
 
         // "At least once" because the implementation of Process (controversially) calls SetCompaniesHouseData twice due to how the code is structured
         companiesHouseDataProvider.Verify(chdp => chdp.SetCompaniesHouseData(It.Is<OrganisationModel>(org => org.CompaniesHouseNumber == subsidiaries[0].companies_house_number)), Times.AtLeastOnce);
