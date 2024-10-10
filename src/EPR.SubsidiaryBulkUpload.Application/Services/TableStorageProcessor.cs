@@ -229,14 +229,11 @@ public class TableStorageProcessor(
 
         if (allFileParts.Count > 0)
         {
-            var groups = allFileParts.GroupBy(x => x.TotalFiles);
-            foreach (var group in groups)
+            foreach (var group in allFileParts.GroupBy(x => x.TotalFiles))
             {
-                var total = group.Key;
-                int[] all = [.. Enumerable.Range(1, total)];
+                int[] all = [.. Enumerable.Range(1, group.Key)];
                 var items = group.AsEnumerable();
-                var allFound = Array.TrueForAll(all, a => items.Any(x => x.PartNumber == a));
-                if (!allFound)
+                if (!Array.TrueForAll(all, a => items.Any(x => x.PartNumber == a)))
                 {
                     return false;
                 }

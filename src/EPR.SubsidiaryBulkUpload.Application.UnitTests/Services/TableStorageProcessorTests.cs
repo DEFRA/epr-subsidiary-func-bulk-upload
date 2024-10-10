@@ -49,6 +49,7 @@ public class TableStorageProcessorTests
                 new() { Data = JsonConvert.SerializeObject(new FilePart(2, 3, "2024-09=-0")) },
                 new() { Data = JsonConvert.SerializeObject(new FilePart(3, 3, "2024-09=-0")) },
             };
+        fileParts = new List<CompanyHouseTableEntity>();
 
         _mockTableClient.Setup(x => x.CreateIfNotExistsAsync(default));
 
@@ -77,6 +78,62 @@ public class TableStorageProcessorTests
 
         // Act
         await _processor.WriteToAzureTableStorage(records, "TestTable", "TestPartitionKey");
+
+        // Assert
+        _mockTableClient.Verify(x => x.CreateIfNotExistsAsync(default), Times.Once);
+        _mockTableClient.Verify(
+            x => x.UpsertEntityAsync(
+            It.Is<CompanyHouseTableEntity>(e => e.RowKey == "Current Ingestion"),
+            TableUpdateMode.Merge,
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+        _mockTableClient.Verify(x => x.SubmitTransactionAsync(It.IsAny<IEnumerable<TableTransactionAction>>(), default), Times.Exactly(1));
+    }
+
+    [TestMethod]
+    public async Task WriteToAzureTableStorage_ShouldProcessRecordsSuccessfully_With_Multiple_FileParts()
+    {
+        // Arrange
+        var records = new List<CompanyHouseTableEntity>
+            {
+                new() { CompanyNumber = "123" },
+                new() { CompanyNumber = "456" }
+            };
+
+        var fileParts = new List<CompanyHouseTableEntity>
+            {
+                new() { Data = JsonConvert.SerializeObject(new FilePart(1, 3, "2024-09=-0")) },
+                new() { Data = JsonConvert.SerializeObject(new FilePart(2, 3, "2024-09=-0")) },
+                new() { Data = JsonConvert.SerializeObject(new FilePart(3, 3, "2024-09=-0")) },
+            };
+
+        _mockTableClient.Setup(x => x.CreateIfNotExistsAsync(default));
+
+        _mockTableClient.SetupSequence(tc =>
+            tc.QueryAsync<CompanyHouseTableEntity>(
+                It.IsAny<Expression<Func<CompanyHouseTableEntity, bool>>>(),
+                It.IsAny<int?>(),
+                It.IsAny<IEnumerable<string>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(new MockAsyncPageable<CompanyHouseTableEntity>(fileParts))
+            .Returns(new MockAsyncPageable<CompanyHouseTableEntity>(records));
+
+        _mockTableClient.Setup(x => x.UpsertEntityAsync(
+            It.Is<CompanyHouseTableEntity>(e => e.RowKey == "Current Ingestion"),
+            TableUpdateMode.Merge,
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Mock.Of<Response>());
+
+        _mockTableClient.Setup(x =>
+            x.DeleteEntityAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<ETag>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Mock.Of<Response>());
+
+        // Act
+        await _processor.WriteToAzureTableStorage(records, "TestTable", "TestPartitionKey", 1, 3);
 
         // Assert
         _mockTableClient.Verify(x => x.CreateIfNotExistsAsync(default), Times.Once);
@@ -189,6 +246,47 @@ public class TableStorageProcessorTests
         _mockTableClient.Verify(x => x.UpsertEntityAsync(It.Is<CompanyHouseTableEntity>(e => e.RowKey == "Previous"), TableUpdateMode.Merge, default), Times.Once);
         _mockTableClient.Verify(x => x.UpsertEntityAsync(It.Is<CompanyHouseTableEntity>(e => e.RowKey == "Latest"), TableUpdateMode.Merge, default), Times.Once);
         _mockTableClient.Verify(x => x.UpsertEntityAsync(It.Is<CompanyHouseTableEntity>(e => e.RowKey == "To Delete"), TableUpdateMode.Merge, default), Times.Once);
+    }
+
+    [TestMethod]
+    public async Task WriteToAzureTableStorage_Should_NotWrite_Status_Records_IfNotAllFilePartsCompleted()
+    {
+        // Arrange
+        var records = new List<CompanyHouseTableEntity>
+            {
+                new() { CompanyNumber = "123" },
+                new() { CompanyNumber = "456" }
+            };
+
+        var fileParts = new List<CompanyHouseTableEntity>
+            {
+                new() { Data = JsonConvert.SerializeObject(new FilePart(1, 3, "2024-09=-0")) },
+                new() { Data = JsonConvert.SerializeObject(new FilePart(2, 3, "2024-09=-0")) },
+            };
+
+        _mockTableClient.Setup(x => x.CreateIfNotExistsAsync(default));
+
+        _mockTableClient.SetupSequence(tc =>
+            tc.QueryAsync<CompanyHouseTableEntity>(
+                It.IsAny<Expression<Func<CompanyHouseTableEntity, bool>>>(),
+                It.IsAny<int?>(),
+                It.IsAny<IEnumerable<string>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(new MockAsyncPageable<CompanyHouseTableEntity>(fileParts));
+
+        _mockTableClient.Setup(x => x.UpsertEntityAsync(
+            It.Is<CompanyHouseTableEntity>(e => e.RowKey == "Current Ingestion"),
+            TableUpdateMode.Merge,
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Mock.Of<Response>());
+
+        // Act
+        await _processor.WriteToAzureTableStorage(records, "TestTable", "TestPartitionKey");
+
+        // Assert
+        _mockTableClient.Verify(x => x.UpsertEntityAsync(It.Is<CompanyHouseTableEntity>(e => e.RowKey == "Previous"), TableUpdateMode.Merge, default), Times.Never);
+        _mockTableClient.Verify(x => x.UpsertEntityAsync(It.Is<CompanyHouseTableEntity>(e => e.RowKey == "Latest"), TableUpdateMode.Merge, default), Times.Never);
+        _mockTableClient.Verify(x => x.UpsertEntityAsync(It.Is<CompanyHouseTableEntity>(e => e.RowKey == "To Delete"), TableUpdateMode.Merge, default), Times.Never);
     }
 
     [TestMethod]
