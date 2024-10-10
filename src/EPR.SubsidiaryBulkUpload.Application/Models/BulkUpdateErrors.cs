@@ -39,4 +39,19 @@ public static class BulkUpdateErrors
 
     public const int InvalidDatafoundinRow = 114;
     public const string InvalidDatafoundinRowMessage = "Extra column value in the file.";
+
+    public const int ResourceNotFoundError = 118;
+    public const string ResourceNotFoundErrorMessage = "Information cannot be retrieved. Try again later.";
+
+    public const int ResourceNotReachableError = 119;
+    public const string ResourceNotReachableErrorMessage = "There is a problem with our service. Try again later.";
+
+    public const int InvalidCompaniesHouseNumberLengthError = 120;
+    public const string InvalidCompaniesHouseNumberLengthErrorMessage = "Companies House Number Field length is invalid. 8 Characters allowed.";
+
+    public const int ResourceNotReachableOrAllOtherPossibleError = 121;
+    public const string ResourceNotReachableOrAllOtherPossibleErrorMessage = "Unexpected error when retrieving data from Companies House. Try again later.";
+
+    public const int SpacesInCompaniesHouseNumberError = 122;
+    public const string SpacesInCompaniesHouseNumberErrorMessage = "Spaces in Companies House Number not allowed. Invalid Number.";
 }

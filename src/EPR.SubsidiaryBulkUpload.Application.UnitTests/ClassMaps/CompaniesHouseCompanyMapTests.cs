@@ -65,7 +65,7 @@ public class CompaniesHouseCompanyMapTests
     }
 
     [TestMethod]
-    public void ClassMap_Returns_Valid_hearder_Data()
+    public void ClassMap_Returns_Valid_header_Data()
     {
         // Arrange
         var dataModel = new List<CompaniesHouseCompany>
@@ -103,7 +103,12 @@ public class CompaniesHouseCompanyMapTests
     [DataRow("", "", "OrgA", "123456", "Child", "", "organisation_id is required.")]
     [DataRow("23123", "", "", "123456", "Child", "", "organisation_name is required.")]
     [DataRow("23123", "", "OrgA", "", "Child", "", "companies_house_number is required.")]
+    [DataRow("23123", "", "OrgA", " ", "Child", "", "companies_house_number is required.")]
     [DataRow("23123", "", "OrgA", "123456", "", "", "parent_or_child is required.")]
+    [DataRow("23123", "", "OrgA", "123456789", "Child", "", "Companies House Number Field length is invalid. 8 Characters allowed.")]
+    [DataRow("23123", "", "OrgA", " 123 456", "Child", "", "Spaces in Companies House Number not allowed. Invalid Number.")]
+    [DataRow("23123", "", "OrgA", "A123 456 ", "Child", "", "Spaces in Companies House Number not allowed. Invalid Number.")]
+    [DataRow("23123", "", "OrgA", "B123 456", "Child", "", "Spaces in Companies House Number not allowed. Invalid Number.")]
     public void ClassMap_Returns_Error(
         string organisationId,
         string subsidiaryId,

@@ -33,7 +33,17 @@ public class CompaniesHouseLookupService : ICompaniesHouseLookupService
                 response.StatusCode == HttpStatusCode.NotFound ||
                 response.StatusCode == HttpStatusCode.InternalServerError)
             {
-                return null;
+                return new Company
+                {
+                    Error = new UploadFileErrorModel
+                    {
+                        FileLineNumber = 1,
+                        FileContent = string.Empty,
+                        Message = BulkUpdateErrors.ResourceNotFoundErrorMessage,
+                        ErrorNumber = BulkUpdateErrors.ResourceNotFoundError,
+                        IsError = true
+                    }
+                };
             }
 
             if (response.StatusCode == HttpStatusCode.BadRequest)
@@ -43,6 +53,21 @@ public class CompaniesHouseLookupService : ICompaniesHouseLookupService
                 {
                     return null;
                 }
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return new Company
+                {
+                    Error = new UploadFileErrorModel
+                    {
+                        FileLineNumber = 1,
+                        FileContent = string.Empty,
+                        Message = BulkUpdateErrors.ResourceNotReachableOrAllOtherPossibleErrorMessage,
+                        ErrorNumber = BulkUpdateErrors.ResourceNotReachableOrAllOtherPossibleError,
+                        IsError = true
+                    }
+                };
             }
 
             response.EnsureSuccessStatusCode();
