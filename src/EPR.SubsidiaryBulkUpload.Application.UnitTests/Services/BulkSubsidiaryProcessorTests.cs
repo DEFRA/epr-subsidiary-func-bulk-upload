@@ -199,7 +199,6 @@ public class BulkSubsidiaryProcessorTests
             .CreateMany(1)
             .ToArray();
 
-        // var subsidiaries = _fixture.buuil.CreateMany<CompaniesHouseCompany>(1).ToArray();
         var subsidiaryOrganisations = _fixture.CreateMany<OrganisationResponseModel>(1).ToArray();
 
         subsidiaryOrganisations[0].companiesHouseNumber = subsidiaries[0].companies_house_number;
