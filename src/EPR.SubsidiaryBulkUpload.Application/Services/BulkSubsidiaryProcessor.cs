@@ -16,8 +16,6 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
     public async Task<int> Process(IEnumerable<CompaniesHouseCompany> subsidiaries, CompaniesHouseCompany parent, OrganisationResponseModel parentOrg, UserRequestModel userRequestModel)
     {
-        var addedSubsidiariesCount = 0;
-
         var subsidiariesAndOrg = subsidiaries
             .ToAsyncEnumerable()
             .SelectAwait(async subsidiary => (Subsidiary: subsidiary, SubsidiaryOrg: await organisationService.GetCompanyByCompaniesHouseNumber(subsidiary.companies_house_number)));
@@ -36,7 +34,6 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         await foreach (var subsidiaryAddModel in knownSubsidiariesToAdd)
         {
             await AddSubsidiary(parentOrg, subsidiaryAddModel!.SubsidiaryOrg, userRequestModel.UserId, subsidiaryAddModel.Subsidiary);
-            addedSubsidiariesCount++;
         }
 
         var subsidiariesAndOrgWith_InValidName = subsidiariesAndOrg
@@ -65,7 +62,6 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         await foreach (var subsidiaryandLink in newSubsidiariesToAdd_DatafromLocalStorageOrCompaniesHouseWithNameMatch)
         {
             subsidiaryandLink.LinkModel.StatusCode = await organisationService.CreateAndAddSubsidiaryAsync(subsidiaryandLink.LinkModel);
-            addedSubsidiariesCount++;
         }
 
         /*Scenario 4: The subsidiary found in Offline data. name not match. get it from CH API and name not matches with CH API data. Report Error.*/
@@ -86,7 +82,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         /*Scenario 1: The subsidiary is not found in RPD and not in Local storage and not found on companies house*/
         await ReportCompanies(subsidiariesNotAdded, userRequestModel, BulkUpdateErrors.CompanyNameNofoundAnywhereMessage, BulkUpdateErrors.CompanyNameNofoundAnywhere);
 
-        return addedSubsidiariesCount;
+        return allAddedNewSubsPlusExisting.Count;
     }
 
     private async Task ReportCompanies(IEnumerable<LinkOrganisationModel> linkSubsidiaries, UserRequestModel userRequestModel)
