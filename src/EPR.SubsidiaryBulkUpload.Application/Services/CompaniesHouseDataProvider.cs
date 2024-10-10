@@ -29,7 +29,7 @@ public class CompaniesHouseDataProvider(ICompaniesHouseLookupService companiesHo
             // Try get remotely through CH API
             var companyHouseResponse = await companiesHouseLookupService.GetCompaniesHouseResponseAsync(subsidiaryModel.CompaniesHouseNumber);
 
-            if (companyHouseResponse != null)
+            if (companyHouseResponse != null && companyHouseResponse.Error == null)
             {
                 dataRetrieved = true;
                 subsidiaryModel.Address = new AddressModel()
@@ -45,6 +45,13 @@ public class CompaniesHouseDataProvider(ICompaniesHouseLookupService companiesHo
                 subsidiaryModel.CompaniesHouseCompanyName = companyHouseResponse.Name;
                 subsidiaryModel.LocalStorageName = response?.Name;
                 subsidiaryModel.OrganisationType = OrganisationType.CompaniesHouseCompany;
+            }
+            else if (companyHouseResponse != null && companyHouseResponse.Error != null)
+            {
+                dataRetrieved = true;
+                subsidiaryModel.Error = companyHouseResponse.Error;
+                subsidiaryModel.Error.FileLineNumber = subsidiaryModel.FileLineNumber;
+                subsidiaryModel.Error.FileContent = subsidiaryModel.RawContent;
             }
         }
 

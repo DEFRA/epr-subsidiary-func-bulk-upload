@@ -45,4 +45,6 @@ public class Company
     public DateTimeOffset? AccountCreatedOn { get; set; }
 
     public Address BusinessAddress { get; set; }
+
+    public UploadFileErrorModel Error { get; set; }
 }
