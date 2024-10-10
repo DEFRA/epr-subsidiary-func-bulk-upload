@@ -40,7 +40,7 @@ public class DownloadStatusStorageTests
         var partitionKey = now.ToString("yyyyMM");
 
         var downloadLog = new List<CompaniesHouseFileSetDownloadStatus>
-    {
+        {
             new CompaniesHouseFileSetDownloadStatus { DownloadFileName = "test_file_1.zip" },
             new CompaniesHouseFileSetDownloadStatus { DownloadFileName = "test_file_2.zip" },
             new CompaniesHouseFileSetDownloadStatus { DownloadFileName = "test_file_3.zip" }
