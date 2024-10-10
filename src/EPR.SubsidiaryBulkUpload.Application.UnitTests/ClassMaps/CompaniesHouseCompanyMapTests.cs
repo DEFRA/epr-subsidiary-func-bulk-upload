@@ -65,7 +65,7 @@ public class CompaniesHouseCompanyMapTests
     }
 
     [TestMethod]
-    public void ClassMap_Returns_Valid_header_Data()
+    public void ClassMap_Returns_Valid_Header_Data()
     {
         // Arrange
         var dataModel = new List<CompaniesHouseCompany>
