@@ -6,7 +6,9 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <CodeAnalysisRuleSet>..\stylecop.ruleset</CodeAnalysisRuleSet>
-    </PropertyGroup>
+		<!-- Ignore SA1010 - style cop rules don't yet support collection expressions -->
+		<NoWarn>SA1010</NoWarn>
+	</PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.435">

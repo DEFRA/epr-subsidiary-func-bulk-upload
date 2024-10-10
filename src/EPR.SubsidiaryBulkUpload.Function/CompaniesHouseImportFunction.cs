@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.IO.Compression;
 using Azure.Storage.Blobs;
 using CsvHelper.Configuration;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
@@ -11,12 +12,12 @@ using Microsoft.Extensions.Options;
 
 namespace EPR.SubsidiaryBulkUpload.Function;
 
-public class CompaniesHouseImportFunction(ILogger<CompaniesHouseImportFunction> logger, ICsvProcessor csvProcessor, ITableStorageProcessor tableStorageProcessor, IOptions<TableStorageOptions> configOptions)
+public class CompaniesHouseImportFunction(ILogger<CompaniesHouseImportFunction> logger, ICsvProcessor csvProcessor, ITableStorageProcessor tableStorageProcessor, IOptions<TableStorageOptions> tableStorageOptions)
 {
     private readonly ICsvProcessor _csvProcessor = csvProcessor;
     private readonly ITableStorageProcessor _tableStorageProcessor = tableStorageProcessor;
     private readonly ILogger<CompaniesHouseImportFunction> _logger = logger;
-    private readonly TableStorageOptions _configOptions = configOptions.Value;
+    private readonly TableStorageOptions _tableStorageOptions = tableStorageOptions.Value;
 
     [Function(nameof(CompaniesHouseImportFunction))]
     public async Task Run(
@@ -26,21 +27,14 @@ public class CompaniesHouseImportFunction(ILogger<CompaniesHouseImportFunction> 
         var downloadStreamingResult = await client.DownloadStreamingAsync();
         var metadata = downloadStreamingResult.Value.Details?.Metadata;
 
-        if (metadata is not null && metadata.Count > 0)
-        {
-            foreach (var metadataItem in metadata)
-            {
-                _logger.LogInformation("Blob {Name} has metadata {Key} {Value}", client.Name, metadataItem.Key, metadataItem.Value);
-            }
-        }
+        var fileName = metadata.GetFileName() ?? client.Name;
 
-        var partitionKey = client.Name.ToFindPartitionKey();
+        var partitionKey = fileName.ToPartitionKey();
+        var fileParts = fileName.ToFilePartNumberAndCount();
 
         if (!string.IsNullOrEmpty(partitionKey))
         {
             var content = downloadStreamingResult.Value.Content;
-
-            var tableName = _configOptions.CompaniesHouseOfflineDataTableName;
 
             var config = new CsvConfiguration(CultureInfo.InvariantCulture)
             {
@@ -49,18 +43,41 @@ public class CompaniesHouseImportFunction(ILogger<CompaniesHouseImportFunction> 
                 MissingFieldFound = null
             };
 
-            var records = await _csvProcessor.ProcessStream<CompanyHouseTableEntity>(content, config);
-
-            if (records.Any())
+            IEnumerable<CompanyHouseTableEntity> records = null;
+            if (string.Equals(Path.GetExtension(fileName), ".zip", StringComparison.OrdinalIgnoreCase))
             {
-                await _tableStorageProcessor.WriteToAzureTableStorage(records, tableName, partitionKey);
+                using (var zipArchive = new ZipArchive(content, ZipArchiveMode.Read))
+                {
+                    if (zipArchive.Entries.Count > 0)
+                    {
+                        using (var entryStream = zipArchive.Entries[0].Open())
+                        {
+                            records = await _csvProcessor.ProcessStream<CompanyHouseTableEntity>(entryStream, config);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                records = await _csvProcessor.ProcessStream<CompanyHouseTableEntity>(content, config);
             }
 
-            _logger.LogInformation("CompaniesHouseImport blob trigger processed {Count} records from csv blob {Name}", records.Count(), client.Name);
+            if (records is not null && records.Any())
+            {
+                await _tableStorageProcessor.WriteToAzureTableStorage(records, _tableStorageOptions.CompaniesHouseOfflineDataTableName, partitionKey, fileParts.PartNumber, fileParts.TotalFiles);
+            }
+
+            _logger.LogInformation("CompaniesHouseImport blob trigger processed {Count} records from csv blob {Name}", records?.Count() ?? 0, client.Name);
         }
         else
         {
-            _logger.LogInformation("CompaniesHouseImport blob trigger function did not process file because name '{Name}' doesn't contain partition key", client.Name);
+            _logger.LogInformation("CompaniesHouseImport blob trigger function did not process file because name '{Name}' doesn't contain partition key", fileName);
+        }
+
+        var isDeleted = await client.DeleteIfExistsAsync();
+        if (isDeleted?.Value == true)
+        {
+            _logger.LogInformation("Blob {Name} was deleted.", client.Name);
         }
     }
 }

@@ -4,8 +4,53 @@ using EPR.SubsidiaryBulkUpload.Application.Models;
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Extensions;
 
 [TestClass]
-public class UserRequestModelExtensionsTests
+public class MetadataExtensionsTests
 {
+    [TestMethod]
+    public void GetFileName_ReturnsNull_WhenMetadataIsNull()
+    {
+        // Arrange
+        IDictionary<string, string> metadata = null;
+
+        // Act
+        var result = metadata.GetFileName();
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [TestMethod]
+    public void GetFileName_ReturnsNull_WhenMetadataMissingFileName()
+    {
+        // Arrange
+        var metadata = new Dictionary<string, string>
+            {
+                { "UserId", "d2c12e8a-0d47-4cd9-b8e1-1f766a5c6e4b" }
+            };
+
+        // Act
+        var result = metadata.GetFileName();
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [TestMethod]
+    public void GetFileName_ReturnsFileName_WhenValidFileName()
+    {
+        // Arrange
+        var metadata = new Dictionary<string, string>
+            {
+                { "fileName", "test.csv" },
+            };
+
+        // Act
+        var result = metadata.GetFileName();
+
+        // Assert
+        result.Should().Be("test.csv");
+    }
+
     [TestMethod]
     public void ToUserRequestModel_ReturnsNull_WhenMetadataIsNull()
     {
@@ -16,7 +61,7 @@ public class UserRequestModelExtensionsTests
         var result = metadata.ToUserRequestModel();
 
         // Assert
-        Assert.IsNull(result);
+        result.Should().BeNull();
     }
 
     [TestMethod]
@@ -32,7 +77,7 @@ public class UserRequestModelExtensionsTests
         var result = metadata.ToUserRequestModel();
 
         // Assert
-        Assert.IsNull(result);
+        result.Should().BeNull();
     }
 
     [TestMethod]
@@ -48,7 +93,7 @@ public class UserRequestModelExtensionsTests
         var result = metadata.ToUserRequestModel();
 
         // Assert
-        Assert.IsNull(result);
+        result.Should().BeNull();
     }
 
     [TestMethod]
@@ -65,7 +110,7 @@ public class UserRequestModelExtensionsTests
         var result = metadata.ToUserRequestModel();
 
         // Assert
-        Assert.IsNull(result);
+        result.Should().BeNull();
     }
 
     [TestMethod]
@@ -82,7 +127,7 @@ public class UserRequestModelExtensionsTests
         var result = metadata.ToUserRequestModel();
 
         // Assert
-        Assert.IsNull(result);
+        result.Should().BeNull();
     }
 
     [TestMethod]
@@ -99,9 +144,9 @@ public class UserRequestModelExtensionsTests
         var result = metadata.ToUserRequestModel();
 
         // Assert
-        Assert.IsNotNull(result);
-        Assert.AreEqual(Guid.Parse("d2c12e8a-0d47-4cd9-b8e1-1f766a5c6e4b"), result.UserId);
-        Assert.AreEqual(Guid.Parse("f2c12e8a-1d47-4cd9-b8e1-2f766a5c6e4c"), result.OrganisationId);
+        result.Should().NotBeNull();
+        result.UserId.Should().Be("d2c12e8a-0d47-4cd9-b8e1-1f766a5c6e4b");
+        result.OrganisationId.Should().Be("f2c12e8a-1d47-4cd9-b8e1-2f766a5c6e4c");
     }
 
     [TestMethod]
@@ -115,7 +160,7 @@ public class UserRequestModelExtensionsTests
         var result = userRequestModel.GenerateKey(suffix);
 
         // Assert
-        Assert.IsNull(result);
+        result.Should().BeNull();
     }
 
     [TestMethod]
@@ -134,7 +179,7 @@ public class UserRequestModelExtensionsTests
 
         // Assert
         var expected = "d2c12e8a-0d47-4cd9-b8e1-1f766a5c6e4bf2c12e8a-1d47-4cd9-b8e1-2f766a5c6e4cTestSuffix";
-        Assert.AreEqual(expected, result);
+        result.Should().Be(expected);
     }
 
     [TestMethod]
@@ -153,7 +198,7 @@ public class UserRequestModelExtensionsTests
 
         // Assert
         var expected = "d2c12e8a-0d47-4cd9-b8e1-1f766a5c6e4bf2c12e8a-1d47-4cd9-b8e1-2f766a5c6e4c";
-        Assert.AreEqual(expected, result);
+        result.Should().Be(expected);
     }
 
     [TestMethod]
@@ -172,6 +217,6 @@ public class UserRequestModelExtensionsTests
 
         // Assert
         var expected = "d2c12e8a-0d47-4cd9-b8e1-1f766a5c6e4bf2c12e8a-1d47-4cd9-b8e1-2f766a5c6e4c";
-        Assert.AreEqual(expected, result);
+        result.Should().Be(expected);
     }
 }

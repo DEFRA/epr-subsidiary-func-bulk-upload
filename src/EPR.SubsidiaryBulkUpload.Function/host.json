@@ -3,7 +3,8 @@
   "logging": {
     "logLevel": {
       "default": "Information",
-      "Azure.Core": "Error"
+      "Azure.Core": "Error",
+      "Azure.Storage.Tables": "Error"
     },
     "applicationInsights": {
       "samplingSettings": {

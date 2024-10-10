@@ -5,7 +5,6 @@ using EPR.SubsidiaryBulkUpload.Application.CsvReaderConfiguration;
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 
 [TestClass]
-[System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1010:Opening square brackets should be spaced correctly", Justification = "Style cop rules dont yet support collection expressions")]
 public class CustomCsvReaderTests
 {
     private Fixture fixture;
