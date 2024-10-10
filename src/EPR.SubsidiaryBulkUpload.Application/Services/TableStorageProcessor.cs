@@ -65,7 +65,7 @@ public class TableStorageProcessor(
                 await tableClient.UpsertEntityAsync(currentFilePart);
             }
 
-            await CleanupIngestionTable(tableClient, filePart, totalFiles);
+            await CleanupIngestionTable(tableClient);
 
             _logger.LogInformation("Table storage processed {Count} records into storage table {Name}", records.Count(), tableName);
         }
@@ -220,10 +220,8 @@ public class TableStorageProcessor(
         return await GetPartitionRowValue(tableClient, LatestCompaniesHouseData, Latest);
     }
 
-    private async Task<int> CleanupIngestionTable(TableClient tableClient, int filePart, int totalFiles)
+    private static async Task<bool> AllFilePartsCompleted(TableClient tableClient)
     {
-        var deletedRecordsCount = 0;
-
         var allFileParts = await tableClient
             .QueryAsync<CompanyHouseTableEntity>(filter: e => e.PartitionKey == CurrentIngestionFileParts)
             .Select(x => JsonSerializer.Deserialize<FilePart>(x.Data))
@@ -240,10 +238,20 @@ public class TableStorageProcessor(
                 var allFound = Array.TrueForAll(all, a => items.Any(x => x.PartNumber == a));
                 if (!allFound)
                 {
-                    _logger.LogInformation("Table storage {Partition} {RowKey} did not contain all parts in table {Name}. Returning from the function.", LatestCompaniesHouseData, CurrentIngestionFileParts, tableClient.Name);
-                    return 0;
+                    return false;
                 }
             }
+        }
+
+        return true;
+    }
+
+    private async Task<int> CleanupIngestionTable(TableClient tableClient)
+    {
+        if (!(await AllFilePartsCompleted(tableClient)))
+        {
+            _logger.LogInformation("Table storage {Partition} {RowKey} did not contain all parts in table {Name}. Returning from the function.", LatestCompaniesHouseData, CurrentIngestionFileParts, tableClient.Name);
+            return 0;
         }
 
         var currentPartitionValue = await GetPartitionRowValue(tableClient, LatestCompaniesHouseData, CurrentIngestion);
@@ -254,18 +262,7 @@ public class TableStorageProcessor(
         }
 
         var toDeletePartitionValue = await GetPartitionRowValue(tableClient, LatestCompaniesHouseData, ToDelete);
-        if (toDeletePartitionValue is not null)
-        {
-            deletedRecordsCount = await DeleteByPartitionKey(tableClient.Name, toDeletePartitionValue);
-
-            await tableClient.DeleteEntityAsync(new CompanyHouseTableEntity
-            {
-                PartitionKey = LatestCompaniesHouseData,
-                RowKey = ToDelete
-            });
-
-            _logger.LogInformation("Table storage deleted {DeletedCount} records from storage table {Name}.", deletedRecordsCount, tableClient.Name);
-        }
+        var deletedRecordsCount = await DeleteOldData(tableClient, toDeletePartitionValue);
 
         var latestPartitionValue = await GetPartitionRowValue(tableClient, LatestCompaniesHouseData, Latest);
         var previousPartitionValue = await GetPartitionRowValue(tableClient, LatestCompaniesHouseData, Previous);
@@ -284,11 +281,8 @@ public class TableStorageProcessor(
                 await UpsertPartitionRowValue(tableClient, LatestCompaniesHouseData, Previous, latestPartitionValue);
             }
 
-            if (currentPartitionValue is not null && currentPartitionValue != latestPartitionValue)
-            {
-                _logger.LogInformation("Table storage setting {Partition} {RowKey} to {Value} in table {Name}.", LatestCompaniesHouseData, ToDelete, previousPartitionValue, tableClient.Name);
-                await UpsertPartitionRowValue(tableClient, LatestCompaniesHouseData, Latest, currentPartitionValue);
-            }
+            _logger.LogInformation("Table storage setting {Partition} {RowKey} to {Value} in table {Name}.", LatestCompaniesHouseData, ToDelete, previousPartitionValue, tableClient.Name);
+            await UpsertPartitionRowValue(tableClient, LatestCompaniesHouseData, Latest, currentPartitionValue);
         }
 
         _logger.LogInformation("Table storage deleting partition {Partition} from table {Name}.", CurrentIngestionFileParts, tableClient.Name);
@@ -299,6 +293,26 @@ public class TableStorageProcessor(
             PartitionKey = LatestCompaniesHouseData,
             RowKey = CurrentIngestion
         });
+
+        return deletedRecordsCount;
+    }
+
+    private async Task<int> DeleteOldData(TableClient tableClient, string? toDeletePartitionValue)
+    {
+        if (toDeletePartitionValue is null)
+        {
+            return 0;
+        }
+
+        var deletedRecordsCount = await DeleteByPartitionKey(tableClient.Name, toDeletePartitionValue);
+
+        await tableClient.DeleteEntityAsync(new CompanyHouseTableEntity
+        {
+            PartitionKey = LatestCompaniesHouseData,
+            RowKey = ToDelete
+        });
+
+        _logger.LogInformation("Table storage deleted {DeletedCount} records from storage table {Name}.", deletedRecordsCount, tableClient.Name);
 
         return deletedRecordsCount;
     }
