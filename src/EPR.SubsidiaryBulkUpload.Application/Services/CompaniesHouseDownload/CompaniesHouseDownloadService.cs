@@ -45,6 +45,9 @@ public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadServ
     private async Task<bool> DownloadFile(CompaniesHouseFileSetDownloadStatus fileStatus, DateTimeOffset now)
     {
         var succeeded = false;
+        var fileName = $"{PartialFilename}-{now.Year}-{now.Month.ToString("00")}-01-part{fileNumber}_{fileCount}.zip";
+
+        var filePath = $"{apiOptions.CompaniesHouseDataDownloadUrl}{fileName}";
 
         var filePath = $"{_apiOptions.CompaniesHouseDataDownloadUrl}{fileStatus.DownloadFileName}";
         var download = await _fileDownloadService.GetStreamAsync(filePath);
