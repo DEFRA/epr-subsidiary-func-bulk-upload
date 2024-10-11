@@ -16,7 +16,7 @@ public class CompaniesHouseCompany
     [CustomValidation(typeof(CompaniesHouseCompany), nameof(ValidateName))]
     required public string organisation_name { get; set; }
 
-    required public string companies_house_number { get; set; }
+    public string companies_house_number { get; set; }
 
     required public string parent_child { get; set; }
 
