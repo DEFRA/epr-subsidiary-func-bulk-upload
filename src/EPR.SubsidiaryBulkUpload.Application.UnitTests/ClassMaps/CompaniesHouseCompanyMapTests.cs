@@ -7,7 +7,6 @@ using EPR.SubsidiaryBulkUpload.Application.Services;
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.ClassMaps;
 
 [TestClass]
-[System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1010:Opening square brackets should be spaced correctly", Justification = "Style cop rules don't yet support collection expressions")]
 public class CompaniesHouseCompanyMapTests
 {
     private const string _csvHeader = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
@@ -66,7 +65,7 @@ public class CompaniesHouseCompanyMapTests
     }
 
     [TestMethod]
-    public void ClassMap_Returns_Valid_header_Data()
+    public void ClassMap_Returns_Valid_Header_Data()
     {
         // Arrange
         var dataModel = new List<CompaniesHouseCompany>

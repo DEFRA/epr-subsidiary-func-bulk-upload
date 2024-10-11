@@ -42,7 +42,7 @@ public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadServ
     private async Task<bool> DownloadFile(int fileCount, int fileNumber, DateTimeOffset now)
     {
         var succeeded = false;
-        var fileName = $"{PartialFilename}-{now.Year}-{now.Month.ToString("00")}-01-part{fileNumber}_{fileCount}.zip";
+        var fileName = $"{PartialFilename}-{now.Year}-{now.Month:00}-01-part{fileNumber}_{fileCount}.zip";
 
         var filePath = $"{apiOptions.CompaniesHouseDataDownloadUrl}{fileName}";
 
