@@ -8,19 +8,19 @@ public static class BulkUpdateErrors
     public const int InvalidHeader = 101;
 
     public const int OrganisationIdRequired = 102;
-    public const string OrganisationIdRequiredMessage = "organisation_id is required.";
+    public const string OrganisationIdRequiredMessage = "organisation id is required.";
 
     public const int OrganisationNameRequired = 103;
-    public const string OrganisationNameRequiredMessage = "organisation_name is required.";
+    public const string OrganisationNameRequiredMessage = "organisation name is required.";
 
     public const int CompaniesHouseNumberRequired = 104;
-    public const string CompaniesHouseNumberRequiredMessage = "companies_house_number is required.";
+    public const string CompaniesHouseNumberRequiredMessage = "companies house number is required.";
 
     public const int ParentOrChildRequired = 105;
     public const string ParentOrChildRequiredMessage = "parent_or_child is required.";
 
     public const int FranchiseeLicenseeTenantInvalid = 106;
-    public const string FranchiseeLicenseeTenantInvalidMessage = "You can only enter 'Y' to the franchisee_licensee_tenant column, or leave it blank.";
+    public const string FranchiseeLicenseeTenantInvalidMessage = "Franchisee licensee tenant column can only be 'Y' or blank.";
 
     public const int CompaniesAlreadyBelongsToADifferentParent = 107;
     public const string CompaniesAlreadyBelongsToADifferentParentMessage = "Invalid Request. Subsidiary already has a different parent.";
