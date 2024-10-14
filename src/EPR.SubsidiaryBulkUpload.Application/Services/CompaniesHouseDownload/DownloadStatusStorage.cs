@@ -95,7 +95,8 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
 
                 for (int i = 1; i <= InitialExpectedFileCountSeed; i++)
                 {
-                    var fileName = $"{PartialFilename}-{now.Year}-{now.Month.ToString("00")}-01-part{i}_{InitialExpectedFileCountSeed}.zip";
+                    var fileName = $"{PartialFilename}-{now.Year}-{now.Month:00}-01-part{i}_{InitialExpectedFileCountSeed}.zip";
+
                     entities.Add(new CompaniesHouseFileSetDownloadStatus
                     {
                         PartitionKey = partitionKey,

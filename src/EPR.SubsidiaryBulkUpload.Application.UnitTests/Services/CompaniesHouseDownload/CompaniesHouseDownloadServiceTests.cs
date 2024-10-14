@@ -46,10 +46,12 @@ public class CompaniesHouseDownloadServiceTests
         var downloadStatusStorage = new Mock<IDownloadStatusStorage>();
         downloadStatusStorage.Setup(dss => dss.GetCompaniesHouseFileDownloadStatusAsync(partitionKey)).ReturnsAsync(true);
 
-        var downloadLog = new List<CompaniesHouseFileSetDownloadStatus>();
-        downloadLog.Add(new CompaniesHouseFileSetDownloadStatus { DownloadFileName = $"{partialFileName}1_{numberOfDownloads}.zip" });
-        downloadLog.Add(new CompaniesHouseFileSetDownloadStatus { DownloadFileName = $"{partialFileName}2_{numberOfDownloads}.zip" });
-        downloadLog.Add(new CompaniesHouseFileSetDownloadStatus { DownloadFileName = $"{partialFileName}3_{numberOfDownloads}.zip" });
+        var downloadLog = new List<CompaniesHouseFileSetDownloadStatus>
+        {
+            new() { DownloadFileName = $"{partialFileName}1_{numberOfDownloads}.zip" },
+            new() { DownloadFileName = $"{partialFileName}2_{numberOfDownloads}.zip" },
+            new() { DownloadFileName = $"{partialFileName}3_{numberOfDownloads}.zip" }
+        };
         downloadStatusStorage.Setup(dss => dss.GetCompaniesHouseFileDownloadListAsync(partitionKey)).ReturnsAsync(downloadLog);
 
         var fileDownloadService = new Mock<IFileDownloadService>();
@@ -100,9 +102,9 @@ public class CompaniesHouseDownloadServiceTests
 
         var downloadLog = new List<CompaniesHouseFileSetDownloadStatus>
         {
-            new CompaniesHouseFileSetDownloadStatus { DownloadFileName = $"{partialFileName}1_{numberOfDownloads}.zip" },
-            new CompaniesHouseFileSetDownloadStatus { DownloadFileName = $"{partialFileName}2_{numberOfDownloads}.zip" },
-            new CompaniesHouseFileSetDownloadStatus { DownloadFileName = $"{partialFileName}3_{numberOfDownloads}.zip" }
+            new() { DownloadFileName = $"{partialFileName}1_{numberOfDownloads}.zip" },
+            new() { DownloadFileName = $"{partialFileName}2_{numberOfDownloads}.zip" },
+            new() { DownloadFileName = $"{partialFileName}3_{numberOfDownloads}.zip" }
         };
         downloadStatusStorage.Setup(dss => dss.GetCompaniesHouseFileDownloadListAsync(partitionKey)).ReturnsAsync(downloadLog);
 
@@ -155,11 +157,11 @@ public class CompaniesHouseDownloadServiceTests
         downloadStatusStorage.Setup(dss => dss.GetCompaniesHouseFileDownloadStatusAsync(partitionKey)).ReturnsAsync(true);
         var downloadLog = new List<CompaniesHouseFileSetDownloadStatus>
         {
-            new CompaniesHouseFileSetDownloadStatus { DownloadFileName = $"{partialFileName}1_{numberOfDownloads}.zip", DownloadStatus = null },
-            new CompaniesHouseFileSetDownloadStatus { DownloadFileName = $"{partialFileName}2_{numberOfDownloads}.zip", DownloadStatus = FileDownloadResponseCode.InvalidFilePathUrl },
-            new CompaniesHouseFileSetDownloadStatus { DownloadFileName = $"{partialFileName}3_{numberOfDownloads}.zip", DownloadStatus = FileDownloadResponseCode.DownloadTimedOut },
-            new CompaniesHouseFileSetDownloadStatus { DownloadFileName = $"{partialFileName}3_{numberOfDownloads}.zip", DownloadStatus = FileDownloadResponseCode.Succeeded },
-            new CompaniesHouseFileSetDownloadStatus { DownloadFileName = $"{partialFileName}3_{numberOfDownloads}.zip", DownloadStatus = FileDownloadResponseCode.Succeeded }
+            new() { DownloadFileName = $"{partialFileName}1_{numberOfDownloads}.zip", DownloadStatus = null },
+            new() { DownloadFileName = $"{partialFileName}2_{numberOfDownloads}.zip", DownloadStatus = FileDownloadResponseCode.InvalidFilePathUrl },
+            new() { DownloadFileName = $"{partialFileName}3_{numberOfDownloads}.zip", DownloadStatus = FileDownloadResponseCode.DownloadTimedOut },
+            new() { DownloadFileName = $"{partialFileName}3_{numberOfDownloads}.zip", DownloadStatus = FileDownloadResponseCode.Succeeded },
+            new() { DownloadFileName = $"{partialFileName}3_{numberOfDownloads}.zip", DownloadStatus = FileDownloadResponseCode.Succeeded }
         };
         downloadStatusStorage.Setup(dss => dss.GetCompaniesHouseFileDownloadListAsync(partitionKey)).ReturnsAsync(downloadLog);
 
@@ -205,9 +207,9 @@ public class CompaniesHouseDownloadServiceTests
         downloadStatusStorage.Setup(dss => dss.GetCompaniesHouseFileDownloadStatusAsync(partitionKey)).ReturnsAsync(true);
         var downloadLog = new List<CompaniesHouseFileSetDownloadStatus>
         {
-            new CompaniesHouseFileSetDownloadStatus { DownloadFileName = $"{partialFileName}1_{numberOfDownloads}.zip", DownloadStatus = null },
-            new CompaniesHouseFileSetDownloadStatus { DownloadFileName = $"{partialFileName}2_{numberOfDownloads}.zip", DownloadStatus = null },
-            new CompaniesHouseFileSetDownloadStatus { DownloadFileName = $"{partialFileName}3_{numberOfDownloads}.zip", DownloadStatus = null }
+            new() { DownloadFileName = $"{partialFileName}1_{numberOfDownloads}.zip", DownloadStatus = null },
+            new() { DownloadFileName = $"{partialFileName}2_{numberOfDownloads}.zip", DownloadStatus = null },
+            new() { DownloadFileName = $"{partialFileName}3_{numberOfDownloads}.zip", DownloadStatus = null }
         };
         downloadStatusStorage.Setup(dss => dss.GetCompaniesHouseFileDownloadListAsync(partitionKey)).ReturnsAsync(downloadLog);
 
@@ -254,7 +256,7 @@ public class CompaniesHouseDownloadServiceTests
         downloadStatusStorage.Setup(dss => dss.GetCompaniesHouseFileDownloadStatusAsync(partitionKey)).ReturnsAsync(true);
         var downloadLog = new List<CompaniesHouseFileSetDownloadStatus>
         {
-            new CompaniesHouseFileSetDownloadStatus { DownloadFileName = $"{partialFileName}1_{numberOfDownloads}.zip", DownloadStatus = null }
+            new() { DownloadFileName = $"{partialFileName}1_{numberOfDownloads}.zip", DownloadStatus = null }
         };
         downloadStatusStorage.Setup(dss => dss.GetCompaniesHouseFileDownloadListAsync(partitionKey)).ReturnsAsync(downloadLog);
 

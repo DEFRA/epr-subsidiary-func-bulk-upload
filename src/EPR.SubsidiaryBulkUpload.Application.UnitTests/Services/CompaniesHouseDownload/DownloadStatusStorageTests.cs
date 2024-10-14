@@ -41,9 +41,9 @@ public class DownloadStatusStorageTests
 
         var downloadLog = new List<CompaniesHouseFileSetDownloadStatus>
         {
-            new CompaniesHouseFileSetDownloadStatus { DownloadFileName = "test_file_1.zip" },
-            new CompaniesHouseFileSetDownloadStatus { DownloadFileName = "test_file_2.zip" },
-            new CompaniesHouseFileSetDownloadStatus { DownloadFileName = "test_file_3.zip" }
+            new() { DownloadFileName = "test_file_1.zip" },
+            new() { DownloadFileName = "test_file_2.zip" },
+            new() { DownloadFileName = "test_file_3.zip" }
         };
 
         tableClient.SetupSequence(tc =>
@@ -188,9 +188,9 @@ public class DownloadStatusStorageTests
 
         var downloadLog = new List<CompaniesHouseFileSetDownloadStatus>
         {
-            new CompaniesHouseFileSetDownloadStatus { DownloadFileName = "test_file_1.zip" },
-            new CompaniesHouseFileSetDownloadStatus { DownloadFileName = "test_file_2.zip" },
-            new CompaniesHouseFileSetDownloadStatus { DownloadFileName = "test_file_3.zip" }
+            new() { DownloadFileName = "test_file_1.zip" },
+            new() { DownloadFileName = "test_file_2.zip" },
+            new() { DownloadFileName = "test_file_3.zip" }
         };
 
         tableClient.SetupSequence(tc =>
