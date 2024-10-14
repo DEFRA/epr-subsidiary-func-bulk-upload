@@ -11,9 +11,6 @@
   </PropertyGroup>
   <ItemGroup>
 	  <FrameworkReference Include="Microsoft.AspNetCore.App" />
-	  <None Include="NotificationStatusFunction.cs">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </None>
 	  <PackageReference Include="Azure.Storage.Blobs" Version="12.22.2" />
 	  <PackageReference Include="Azure.Storage.Files.Shares" Version="12.20.1" />
 	  <PackageReference Include="Azure.Storage.Queues" Version="12.20.1" />
