@@ -51,7 +51,7 @@ public static class ConfigurationExtensions
         services.AddHttpClient<ISubmissionStatusClient, SubmissionStatusClient>((sp, client) =>
         {
             var options = sp.GetRequiredService<IOptions<SubmissionApiOptions>>().Value;
-            client.BaseAddress = new Uri($"{options.BaseUrl}/v1/");
+            client.BaseAddress = new Uri($"{options.BaseUrl?.TrimEnd('/')}/v1/");
         })
             .AddPolicyHandler((services, _) => Policies.DefaultRetryPolicy<SubmissionStatusClient>(services));
 
@@ -60,6 +60,7 @@ public static class ConfigurationExtensions
         services.AddHttpClient<IAntivirusClient, AntivirusClient>(client =>
         {
             client.BaseAddress = new Uri($"{antivirusOptions.BaseUrl}/v1/");
+            client.BaseAddress = new Uri($"{antivirusOptions.BaseUrl?.TrimEnd('/')}/v1/");
             client.DefaultRequestHeaders.Add("OCP-APIM-Subscription-Key", antivirusOptions.SubscriptionKey);
         })
             .AddPolicyHandler((services, _) => Policies.DefaultRetryPolicy<AntivirusClient>(services))
