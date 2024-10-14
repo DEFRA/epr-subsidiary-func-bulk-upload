@@ -182,7 +182,7 @@ public class CompaniesHouseCompanyMapTests
 
     [TestMethod]
     [DataRow("23123", "", "OrgA", "", "Child", "", "companies_house_number is required.")]
-    [DataRow("23123", "", "OrgA", "123456", "Child", "NO", "franchisee_licensee_tenant can only be blank or Yes or Y.")]
+    [DataRow("23123", "", "OrgA", "123456", "Child", "NO", "You can only enter 'Y' to the franchisee_licensee_tenant column, or leave it blank.")]
     [DataRow("23123", "", "OrgA", "123456", "", "", "parent_or_child is required.")]
     [DataRow("23123", "", "OrgA", "123456789", "Child", "", "Companies House Number Field length is invalid. 8 Characters allowed.")]
     [DataRow("23123", "", "OrgA", " 123 456", "Child", "", "Spaces in Companies House Number not allowed. Invalid Number.")]

@@ -20,7 +20,7 @@ public static class BulkUpdateErrors
     public const string ParentOrChildRequiredMessage = "parent_or_child is required.";
 
     public const int FranchiseeLicenseeTenantInvalid = 106;
-    public const string FranchiseeLicenseeTenantInvalidMessage = "franchisee_licensee_tenant can only be blank or Yes or Y.";
+    public const string FranchiseeLicenseeTenantInvalidMessage = "You can only enter 'Y' to the franchisee_licensee_tenant column, or leave it blank.";
 
     public const int CompaniesAlreadyBelongsToADifferentParent = 107;
     public const string CompaniesAlreadyBelongsToADifferentParentMessage = "Invalid Request. Subsidiary already has a different parent.";
