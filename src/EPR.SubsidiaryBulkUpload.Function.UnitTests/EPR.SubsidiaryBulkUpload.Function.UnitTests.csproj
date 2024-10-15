@@ -7,6 +7,9 @@
 
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+
+      <!-- Suppress grcp compatibility warning. See https://learn.microsoft.com/en-gb/dotnet/core/resilience/http-resilience?tabs=dotnet-cli#known-issues -->
+      <SuppressCheckGrpcNetClientFactoryVersion>true</SuppressCheckGrpcNetClientFactoryVersion>
   </PropertyGroup>
 
   <ItemGroup>
