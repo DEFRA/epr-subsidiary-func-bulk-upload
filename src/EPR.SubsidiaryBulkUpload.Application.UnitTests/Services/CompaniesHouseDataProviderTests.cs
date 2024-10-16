@@ -48,7 +48,7 @@ public class CompaniesHouseDataProviderTests
         organisationModel.Address.Postcode.Should().Be(companyHouseEntity.RegAddressPostCode);
         organisationModel.Address.Town.Should().Be(companyHouseEntity.RegAddressPostTown);
         organisationModel.Address.Country.Should().Be(companyHouseEntity.RegAddressCountry);
-        organisationModel.OrganisationType.Should().Be(OrganisationType.NotSet);
+        organisationModel.OrganisationType.Should().Be(OrganisationType.CompaniesHouseCompany);
     }
 
     [TestMethod]
