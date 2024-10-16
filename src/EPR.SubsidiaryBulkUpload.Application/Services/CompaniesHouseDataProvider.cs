@@ -23,6 +23,9 @@ public class CompaniesHouseDataProvider(ICompaniesHouseLookupService companiesHo
         {
             dataRetrieved = true;
             subsidiaryModel.Address = response.Address;
+            subsidiaryModel.Name = response.Name;
+            subsidiaryModel.LocalStorageName = response?.Name;
+            subsidiaryModel.OrganisationType = OrganisationType.CompaniesHouseCompany;
         }
         else
         {
