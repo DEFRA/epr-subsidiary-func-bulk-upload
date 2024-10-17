@@ -33,7 +33,7 @@ public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadServ
     private async Task DownloadFiles(string partitionKey)
     {
         var now = _timeProvider.GetUtcNow();
-        var expectedFileCount = _webCrawlerService.GetCompaniesHouseFileDownloadCount("_apiOptions.CompaniesHouseDataDownloadUrl");
+        var expectedFileCount = _webCrawlerService.GetCompaniesHouseFileDownloadCount(_apiOptions.CompaniesHouseDataDownloadUrl);
         await _downloadStatusStorage.CreateCompaniesHouseFileDownloadLogAsync(partitionKey);
 
         var filesDownloadList = await _downloadStatusStorage.GetCompaniesHouseFileDownloadListAsync(partitionKey);
@@ -41,11 +41,11 @@ public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadServ
 
         foreach (var fileStatus in filesDownloadList)
         {
-            await DownloadFile(fileStatus, now);
+            await DownloadFile(fileStatus);
         }
     }
 
-    private async Task<bool> DownloadFile(CompaniesHouseFileSetDownloadStatus fileStatus, DateTimeOffset now)
+    private async Task<bool> DownloadFile(CompaniesHouseFileSetDownloadStatus fileStatus)
     {
         var succeeded = false;
         var filePath = $"{_apiOptions.CompaniesHouseDataDownloadUrl}{fileStatus.DownloadFileName}";
