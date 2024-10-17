@@ -2,6 +2,6 @@
 {
     public interface IWebCrawlerService
     {
-        int GetCompaniesHouseFileDownloadCount(string path);
+        int GetCompaniesHouseFileDownloadCount(string downloadPagePath);
     }
 }

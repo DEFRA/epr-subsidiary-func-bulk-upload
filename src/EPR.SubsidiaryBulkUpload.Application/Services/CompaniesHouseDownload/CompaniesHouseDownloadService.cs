@@ -33,6 +33,7 @@ public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadServ
     private async Task DownloadFiles(string partitionKey)
     {
         var now = _timeProvider.GetUtcNow();
+        var expectedFileCount = _webCrawlerService.GetCompaniesHouseFileDownloadCount("_apiOptions.CompaniesHouseDataDownloadUrl");
         await _downloadStatusStorage.CreateCompaniesHouseFileDownloadLogAsync(partitionKey);
 
         var filesDownloadList = await _downloadStatusStorage.GetCompaniesHouseFileDownloadListAsync(partitionKey);
