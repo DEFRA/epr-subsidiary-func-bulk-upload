@@ -10,7 +10,7 @@ public class CompaniesHouseDownloadFunction(ICompaniesHouseDownloadService compa
     private readonly ILogger<CompaniesHouseDownloadFunction> _logger = logger;
 
     [Function("CompaniesHouseDownloadFunction")]
-    public async Task Run([TimerTrigger("%CompaniesHouseDownload:Schedule%", RunOnStartup = false)] TimerInfo timerInfo)
+    public async Task Run([TimerTrigger("%CompaniesHouseDownload:Schedule%", RunOnStartup = true)] TimerInfo timerInfo)
     {
         _logger.LogInformation("Companies house data download starting at: {ExecutionTime}", DateTime.Now);
 

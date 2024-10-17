@@ -10,7 +10,7 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
 {
     public const string CompaniesHouseDownloadTableName = "CompaniesHouseDownload";
     public const string PartialFilename = "BasicCompanyData";
-    public const int InitialExpectedFileCountSeed = 7; // This is the number of files whilst developing
+    public const int InitialExpectedFileCountSeed = 7;
 
     private readonly TableServiceClient _tableServiceClient = tableServiceClient;
     private readonly TimeProvider _timeProvider = timeProvider;

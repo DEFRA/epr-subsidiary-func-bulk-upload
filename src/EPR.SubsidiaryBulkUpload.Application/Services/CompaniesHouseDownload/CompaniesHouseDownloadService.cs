@@ -8,12 +8,14 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
 public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadService,
     IDownloadStatusStorage downloadStatusStorage,
     ICompaniesHouseFilePostService companiesHouseFilePostService,
+    IWebCrawlerService webCrawlerService,
     IOptions<ApiOptions> apiOptions,
     TimeProvider timeProvider) : ICompaniesHouseDownloadService
 {
     private readonly IFileDownloadService _fileDownloadService = fileDownloadService;
     private readonly IDownloadStatusStorage _downloadStatusStorage = downloadStatusStorage;
     private readonly ICompaniesHouseFilePostService _companiesHouseFilePostService = companiesHouseFilePostService;
+    private readonly IWebCrawlerService _webCrawlerService = webCrawlerService;
     private readonly TimeProvider _timeProvider = timeProvider;
     private readonly ApiOptions _apiOptions = apiOptions.Value;
 
