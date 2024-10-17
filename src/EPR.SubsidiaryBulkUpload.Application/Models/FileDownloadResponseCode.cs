@@ -6,5 +6,6 @@ public enum FileDownloadResponseCode
     InvalidFilePathUrl,
     FailedToFindFile,
     DownloadTimedOut,
-    DownloadCancelled
+    DownloadCancelled,
+    UploadFailed
 }

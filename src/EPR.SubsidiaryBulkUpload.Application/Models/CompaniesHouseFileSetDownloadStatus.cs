@@ -5,11 +5,11 @@ namespace EPR.SubsidiaryBulkUpload.Application.Models;
 
 public class CompaniesHouseFileSetDownloadStatus : ITableEntity
 {
-    public int LastRunFileCount { get; set; }
-
     public int? CurrentRunExpectedFileCount { get; set; }
 
-    public string DownlaodedFileNamesCsv { get; set; }
+    public string DownloadFileName { get; set; }
+
+    public FileDownloadResponseCode? DownloadStatus { get; set; }
 
     public string PartitionKey { get; set; }
 
