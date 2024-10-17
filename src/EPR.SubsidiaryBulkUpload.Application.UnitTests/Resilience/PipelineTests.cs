@@ -112,6 +112,6 @@ public class PipelineTests
 
         // Assert
         result.StatusCode.Should().Be(statusCode);
-        attempts.Should().BeGreaterThanOrEqualTo(MaxRetriesFor429 + 1);
+        attempts.Should().Be(MaxRetriesFor429 + 1);
     }
 }

@@ -31,8 +31,27 @@ public static class Pipelines
             var apiOptions = context.GetOptions<ApiOptions>();
 
             builder
-            .AddRetry(new HttpRetryStrategyOptions
+            .AddRetry(new RetryStrategyOptions<HttpResponseMessage>
             {
+                ShouldHandle = (RetryPredicateArguments<HttpResponseMessage> args) =>
+                {
+                    bool shouldHandle;
+                    var exception = args.Outcome.Exception;
+                    if (exception is OperationCanceledException && exception.Source == "System.Private.CoreLib" && exception.InnerException is TimeoutException)
+                    {
+                        shouldHandle = true;
+                    }
+                    else if(args.Outcome.Result.StatusCode == HttpStatusCode.TooManyRequests)
+                    {
+                        shouldHandle = false;
+                    }
+                    else
+                    {
+                        shouldHandle = HttpClientResiliencePredicates.IsTransient(args.Outcome);
+                    }
+
+                    return new ValueTask<bool>(shouldHandle);
+                },
                 Delay = apiOptions.ConvertToTimespan(apiOptions.RetryPolicyInitialWaitTime),
                 BackoffType = DelayBackoffType.Exponential,
                 MaxRetryAttempts = apiOptions.RetryPolicyMaxRetries,
