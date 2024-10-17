@@ -30,7 +30,6 @@ public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadServ
 
     private async Task DownloadFiles(string partitionKey)
     {
-        var now = _timeProvider.GetUtcNow();
         await _downloadStatusStorage.CreateCompaniesHouseFileDownloadLogAsync(partitionKey);
 
         var filesDownloadList = await _downloadStatusStorage.GetCompaniesHouseFileDownloadListAsync(partitionKey);

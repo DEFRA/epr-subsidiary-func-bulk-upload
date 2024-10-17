@@ -42,7 +42,6 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
 
     public async Task<List<CompaniesHouseFileSetDownloadStatus>> GetCompaniesHouseFileDownloadListAsync(string partitionKey)
     {
-        CompaniesHouseFileSetDownloadStatus result = null;
         var tableClient = _tableServiceClient.GetTableClient(CompaniesHouseDownloadTableName);
 
         try
