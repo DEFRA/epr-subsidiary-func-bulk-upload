@@ -146,7 +146,7 @@ public class DownloadStatusStorageTests
         var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, NullLogger<DownloadStatusStorage>.Instance);
 
         // Act
-        await downloadStatusStorage.CreateCompaniesHouseFileDownloadLogAsync(partitionKey);
+        await downloadStatusStorage.CreateCompaniesHouseFileDownloadLogAsync(partitionKey, 7);
 
         // Assert
         tableClient.Verify(tc => tc.CreateIfNotExistsAsync(It.IsAny<CancellationToken>()));
@@ -174,7 +174,7 @@ public class DownloadStatusStorageTests
 
         // Act & Assert
         await Assert.ThrowsExceptionAsync<RequestFailedException>(async () =>
-            await downloadStatusStorage.CreateCompaniesHouseFileDownloadLogAsync(partitionKey));
+            await downloadStatusStorage.CreateCompaniesHouseFileDownloadLogAsync(partitionKey, 7));
 
         tableClient.Verify(tc => tc.CreateIfNotExistsAsync(It.IsAny<CancellationToken>()));
         tableClient.Verify(tc => tc.SubmitTransactionAsync(It.IsAny<IEnumerable<TableTransactionAction>>(), It.IsAny<CancellationToken>()));

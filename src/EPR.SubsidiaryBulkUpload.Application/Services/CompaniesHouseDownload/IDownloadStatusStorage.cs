@@ -10,5 +10,5 @@ public interface IDownloadStatusStorage
 
     Task<bool> SetCompaniesHouseFileDownloadStatusAsync(CompaniesHouseFileSetDownloadStatus status);
 
-    Task CreateCompaniesHouseFileDownloadLogAsync(string partitionKey);
+    Task CreateCompaniesHouseFileDownloadLogAsync(string partitionKey, int expectedFileCount);
 }

@@ -10,8 +10,6 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
 {
     public const string CompaniesHouseDownloadTableName = "CompaniesHouseDownload";
     public const string PartialFilename = "BasicCompanyData";
-    public const int InitialExpectedFileCountSeed = 7;
-
     private readonly TableServiceClient _tableServiceClient = tableServiceClient;
     private readonly TimeProvider _timeProvider = timeProvider;
     private readonly ILogger<DownloadStatusStorage> _logger = logger;
@@ -78,7 +76,7 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
         return success;
     }
 
-    public async Task CreateCompaniesHouseFileDownloadLogAsync(string partitionKey)
+    public async Task CreateCompaniesHouseFileDownloadLogAsync(string partitionKey, int expectedFileCount)
     {
         var tableClient = _tableServiceClient.GetTableClient(CompaniesHouseDownloadTableName);
         await tableClient.CreateIfNotExistsAsync();
@@ -91,9 +89,9 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
                 var now = _timeProvider.GetUtcNow();
                 var entities = new List<CompaniesHouseFileSetDownloadStatus>();
 
-                for (int i = 1; i <= InitialExpectedFileCountSeed; i++)
+                for (int i = 1; i <= expectedFileCount; i++)
                 {
-                    var fileName = $"{PartialFilename}-{now.Year}-{now.Month:00}-01-part{i}_{InitialExpectedFileCountSeed}.zip";
+                    var fileName = $"{PartialFilename}-{now.Year}-{now.Month:00}-01-part{i}_{expectedFileCount}.zip";
 
                     entities.Add(new CompaniesHouseFileSetDownloadStatus
                     {

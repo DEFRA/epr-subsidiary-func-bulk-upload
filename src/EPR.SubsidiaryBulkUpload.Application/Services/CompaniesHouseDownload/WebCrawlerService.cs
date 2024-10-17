@@ -1,26 +1,40 @@
 ﻿using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using HtmlAgilityPack;
+using Microsoft.Extensions.Logging;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
 
-public class WebCrawlerService : IWebCrawlerService
+public class WebCrawlerService(ILogger<FileDownloadService> logger, HtmlWeb htmlWeb)
+    : IWebCrawlerService
 {
-    public int GetCompaniesHouseFileDownloadCount(string downloadPagePath)
-    {
-        var web = new HtmlWeb();
-        var htmlDocument = web.Load(downloadPagePath);
-        var listItems = htmlDocument.DocumentNode.SelectNodes("//ul/li");
-        var expectedFileCount = 99;
+    private const int DefaultFileCount = 7;
+    private readonly ILogger<FileDownloadService> _logger = logger;
+    private readonly HtmlWeb _htmlWeb = htmlWeb;
 
-        for (int i = 0; i < listItems.Count; i++)
+    public async Task<int> GetCompaniesHouseFileDownloadCount(string downloadPagePath)
+    {
+        var expectedFileCount = DefaultFileCount;
+
+        try
         {
-            HtmlNode? item = listItems[i];
-            if (item.InnerText.Contains("part"))
+            var htmlDocument = await _htmlWeb.LoadFromWebAsync(downloadPagePath);
+            var listItems = htmlDocument.DocumentNode.SelectNodes("//ul/li");
+
+            for (int i = 0; i < listItems.Count; i++)
             {
-                var filePart = item.InnerText.ToFilePartNumberAndCount();
-                expectedFileCount = filePart.TotalFiles;
-                break;
+                HtmlNode? item = listItems[i];
+                if (item.InnerText.Contains("part"))
+                {
+                    var filePart = item.InnerText.ToFilePartNumberAndCount();
+                    expectedFileCount = filePart.TotalFiles;
+                    break;
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to access downlod page at {DownloadPagePath}", downloadPagePath);
+            expectedFileCount = 0;
         }
 
         return expectedFileCount;
