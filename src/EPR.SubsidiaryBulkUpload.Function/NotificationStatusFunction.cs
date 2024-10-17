@@ -27,10 +27,12 @@ public class NotificationStatusFunction(INotificationService notificationService
                 OrganisationId = organisationId
             };
 
-            var key = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress);
+            var progressKey = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress);
+            var rowsAddedKey = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadRowsAdded);
             var errorsKey = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrors);
 
-            var status = await _notificationService.GetStatus(key);
+            var status = await _notificationService.GetStatus(progressKey);
+            var rowsAdded = await _notificationService.GetStatus(rowsAddedKey);
             var errorStatus = await _notificationService.GetStatus(errorsKey);
 
             var errors = !string.IsNullOrEmpty(errorStatus)
@@ -42,6 +44,7 @@ public class NotificationStatusFunction(INotificationService notificationService
                 : new JsonResult(new
                 {
                     Status = status,
+                    RowsAdded = (int?)(int.TryParse(rowsAdded, out int parsedRowsAdded) ? parsedRowsAdded : null),
                     Errors = errors
                 });
         }

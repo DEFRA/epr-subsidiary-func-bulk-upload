@@ -213,7 +213,7 @@ public class ParserClassTests
         parsedResult[1].franchisee_licensee_tenant.Should().Be("License123");
 
         parsedResult[1].Errors.Should().NotBeEmpty();
-        parsedResult[1].Errors[0].Message.Should().Contain("organisation_name is required.");
+        parsedResult[1].Errors[0].Message.Should().Contain("organisation name is required.");
     }
 
     [TestMethod]
