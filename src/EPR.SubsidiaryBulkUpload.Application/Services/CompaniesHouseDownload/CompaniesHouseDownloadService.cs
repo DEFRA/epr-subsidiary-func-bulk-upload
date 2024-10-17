@@ -38,11 +38,11 @@ public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadServ
 
         foreach (var fileStatus in filesDownloadList)
         {
-            await DownloadFile(fileStatus, now);
+            await DownloadFile(fileStatus);
         }
     }
 
-    private async Task<bool> DownloadFile(CompaniesHouseFileSetDownloadStatus fileStatus, DateTimeOffset now)
+    private async Task<bool> DownloadFile(CompaniesHouseFileSetDownloadStatus fileStatus)
     {
         var succeeded = false;
         var filePath = $"{_apiOptions.CompaniesHouseDataDownloadUrl}{fileStatus.DownloadFileName}";

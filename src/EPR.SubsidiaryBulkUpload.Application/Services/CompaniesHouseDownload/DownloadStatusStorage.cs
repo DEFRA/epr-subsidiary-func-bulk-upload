@@ -18,9 +18,7 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
 
     public async Task<bool> GetCompaniesHouseFileDownloadStatusAsync(string partitionKey)
     {
-        CompaniesHouseFileSetDownloadStatus result = null;
         var tableClient = _tableServiceClient.GetTableClient(CompaniesHouseDownloadTableName);
-        var now = _timeProvider.GetUtcNow();
 
         try
         {
@@ -32,7 +30,7 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
                 return true;
             }
 
-            return downloadProgressList.Where(x => x.DownloadStatus != FileDownloadResponseCode.Succeeded).Any();
+            return downloadProgressList.Exists(x => x.DownloadStatus != FileDownloadResponseCode.Succeeded);
         }
         catch (RequestFailedException ex)
             {
@@ -46,7 +44,6 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
     {
         CompaniesHouseFileSetDownloadStatus result = null;
         var tableClient = _tableServiceClient.GetTableClient(CompaniesHouseDownloadTableName);
-        var now = _timeProvider.GetUtcNow();
 
         try
         {
