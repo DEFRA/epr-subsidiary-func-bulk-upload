@@ -16,8 +16,8 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
 
     public async Task<bool> GetCompaniesHouseFileDownloadStatusAsync(string partitionKey)
     {
-        CompaniesHouseFileSetDownloadStatus result = null;
         var tableClient = _tableServiceClient.GetTableClient(CompaniesHouseDownloadTableName);
+        var now = timeProvider.GetUtcNow();
 
         try
         {
@@ -38,10 +38,8 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
 
         return false;
     }
-
     public async Task<List<CompaniesHouseFileSetDownloadStatus>> GetCompaniesHouseFileDownloadListAsync(string partitionKey)
     {
-        CompaniesHouseFileSetDownloadStatus result = null;
         var tableClient = _tableServiceClient.GetTableClient(CompaniesHouseDownloadTableName);
 
         try
@@ -49,6 +47,7 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
             var downloadProgressList = await tableClient.QueryAsync<CompaniesHouseFileSetDownloadStatus>(x => x.PartitionKey == partitionKey).ToListAsync();
 
             return downloadProgressList.Where(x => x.DownloadStatus != FileDownloadResponseCode.Succeeded).ToList();
+        }
         }
         catch (RequestFailedException ex)
         {
@@ -75,13 +74,12 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
 
         return success;
     }
-
     public async Task CreateCompaniesHouseFileDownloadLogAsync(string partitionKey, int expectedFileCount)
     {
         var tableClient = _tableServiceClient.GetTableClient(CompaniesHouseDownloadTableName);
         await tableClient.CreateIfNotExistsAsync();
         var downloadsLog = await tableClient.QueryAsync<CompaniesHouseFileSetDownloadStatus>(x => x.PartitionKey == partitionKey).ToListAsync();
-
+    private static string RowKeyForMonth(DateTimeOffset when) => $"{MonthPartialRowKey}-{when.Month}-{when.Year}";
         if (downloadsLog.Count == 0)
         {
             try
@@ -112,6 +110,7 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
 
                 throw;
             }
+            logger.LogError(ex, "Cannot get or table entity from {Table} row {Row}", CompaniesHouseDownloadTableName, rowKey);
         }
     }
 
