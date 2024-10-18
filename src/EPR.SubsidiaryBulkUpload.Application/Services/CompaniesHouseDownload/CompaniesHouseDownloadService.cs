@@ -1,4 +1,5 @@
 ﻿using EPR.SubsidiaryBulkUpload.Application.Extensions;
+using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Options;
 using Microsoft.Extensions.Options;
 
@@ -10,49 +11,56 @@ public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadServ
     IOptions<CompaniesHouseDownloadOptions> downloadOptions,
     TimeProvider timeProvider) : ICompaniesHouseDownloadService
 {
-    public const string PartialFilename = "BasicCompanyData";
-
-    private readonly IFileDownloadService fileDownloadService = fileDownloadService;
-    private readonly IDownloadStatusStorage downloadStatusStorage = downloadStatusStorage;
-    private readonly ICompaniesHouseFilePostService companiesHouseFilePostService = companiesHouseFilePostService;
-    private readonly TimeProvider timeProvider = timeProvider;
+    private readonly IFileDownloadService _fileDownloadService = fileDownloadService;
+    private readonly IDownloadStatusStorage _downloadStatusStorage = downloadStatusStorage;
+    private readonly ICompaniesHouseFilePostService _companiesHouseFilePostService = companiesHouseFilePostService;
+    private readonly TimeProvider _timeProvider = timeProvider;
     private readonly CompaniesHouseDownloadOptions apiOptions = downloadOptions.Value;
 
-    public async Task<bool> StartDownload()
+    public async Task StartDownload()
     {
-        var downloadStatus = await downloadStatusStorage.GetCompaniesHouseFileDownloadStatusAsync();
+        var now = _timeProvider.GetUtcNow();
+        var partitionKey = now.ToString("yyyyMM");
 
-        return downloadStatus != null &&
-            downloadStatus.CurrentRunExpectedFileCount != null &&
-            await DownloadFiles(downloadStatus.CurrentRunExpectedFileCount.Value);
+        if (await _downloadStatusStorage.GetCompaniesHouseFileDownloadStatusAsync(partitionKey))
+        {
+            await DownloadFiles(partitionKey);
+    }
     }
 
-    private async Task<bool> DownloadFiles(int currentRunExpectedFileCount)
+    private async Task DownloadFiles(string partitionKey)
     {
-        var now = timeProvider.GetUtcNow();
+        await _downloadStatusStorage.CreateCompaniesHouseFileDownloadLogAsync(partitionKey);
 
-        var all = Enumerable.Range(1, currentRunExpectedFileCount)
-            .Select(i => DownloadFile(currentRunExpectedFileCount, i, now));
+        var filesDownloadList = await _downloadStatusStorage.GetCompaniesHouseFileDownloadListAsync(partitionKey);
+        filesDownloadList = filesDownloadList.Where(x => x.DownloadStatus != FileDownloadResponseCode.Succeeded).ToList();
 
-        var results = await Task.WhenAll(all);
-
-        return Array.TrueForAll(results, r => r);
+        foreach (var fileStatus in filesDownloadList)
+        {
+            await DownloadFile(fileStatus);
+        }
     }
 
-    private async Task<bool> DownloadFile(int fileCount, int fileNumber, DateTimeOffset now)
+    private async Task<bool> DownloadFile(CompaniesHouseFileSetDownloadStatus fileStatus)
     {
         var succeeded = false;
-        var fileName = $"{PartialFilename}-{now.Year}-{now.Month:00}-01-part{fileNumber}_{fileCount}.zip";
+        var filePath = $"{_apiOptions.CompaniesHouseDataDownloadUrl}{fileStatus.DownloadFileName}";
+        var download = await _fileDownloadService.GetStreamAsync(filePath);
 
-        var filePath = $"{apiOptions.CompaniesHouseDataDownloadUrl}{fileName}";
-
-        var download = await fileDownloadService.GetStreamAsync(filePath);
-
-        if(download.ResponseCode == Models.FileDownloadResponseCode.Succeeded)
+        if (download.ResponseCode == FileDownloadResponseCode.Succeeded)
         {
-            var status = await companiesHouseFilePostService.PostFileAsync(download.Stream, fileName);
-
+            var status = await _companiesHouseFilePostService.PostFileAsync(download.Stream, fileStatus.DownloadFileName);
             succeeded = status.IsSuccessStatusCode();
+
+            fileStatus.DownloadStatus = succeeded ? FileDownloadResponseCode.Succeeded : FileDownloadResponseCode.UploadFailed;
+            fileStatus.Timestamp = _timeProvider.GetUtcNow();
+            await _downloadStatusStorage.SetCompaniesHouseFileDownloadStatusAsync(fileStatus);
+        }
+        else
+        {
+            fileStatus.Timestamp = _timeProvider.GetUtcNow();
+            fileStatus.DownloadStatus = download.ResponseCode;
+            await _downloadStatusStorage.SetCompaniesHouseFileDownloadStatusAsync(fileStatus);
         }
 
         return succeeded;
