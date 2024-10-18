@@ -12,9 +12,9 @@ public class ApiOptions
 
     public string CompaniesHouseDirectBaseUri { get; set; }
 
-    public string CompaniesHouseDirectApiKey { get; set; }
+    public bool UseDirectCompaniesHouseLookup { get; set; } = false;
 
-    public string CompaniesHouseDataDownloadUrl { get; set; } = null!;
+    public string CompaniesHouseDirectApiKey { get; set; }
 
     public string AccountServiceClientId { get; set; } = null!;
 
@@ -26,11 +26,11 @@ public class ApiOptions
 
     public string SubsidiaryServiceBaseUrl { get; set; } = null!;
 
-    public int RetryPolicyMaxRetries { get; set; }
-
     public int RetryPolicyInitialWaitTime { get; set; }
 
-    public int RetryPolicyTooManyAttemptsMaxRetries { get; set; }
+    public int RetryPolicyMaxRetries { get; set; }
 
     public int RetryPolicyTooManyAttemptsWaitTime { get; set; }
+
+    public int RetryPolicyTooManyAttemptsMaxRetries { get; set; }
 }

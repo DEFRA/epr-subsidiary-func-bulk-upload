@@ -52,7 +52,7 @@ public static class Pipelines
 
                     return new ValueTask<bool>(shouldHandle);
                 },
-                Delay = apiOptions.ConvertToTimespan(apiOptions.RetryPolicyInitialWaitTime),
+                Delay = apiOptions.RetryPolicyInitialWaitTime.ToTimespan(apiOptions.TimeUnits),
                 BackoffType = DelayBackoffType.Exponential,
                 MaxRetryAttempts = apiOptions.RetryPolicyMaxRetries,
                 UseJitter = true,
@@ -73,7 +73,7 @@ public static class Pipelines
             {
                 ShouldHandle = new PredicateBuilder<HttpResponseMessage>()
                     .HandleResult(response => response.StatusCode == HttpStatusCode.TooManyRequests),
-                Delay = apiOptions.ConvertToTimespan(apiOptions.RetryPolicyTooManyAttemptsWaitTime),
+                Delay = apiOptions.RetryPolicyTooManyAttemptsWaitTime.ToTimespan(apiOptions.TimeUnits),
                 MaxRetryAttempts = apiOptions.RetryPolicyTooManyAttemptsMaxRetries,
                 UseJitter = true,
                 BackoffType = DelayBackoffType.Exponential,
@@ -92,7 +92,7 @@ public static class Pipelines
             })
             .AddTimeout(new TimeoutStrategyOptions
             {
-                Timeout = apiOptions.ConvertToTimespan(apiOptions.Timeout)
+                Timeout = apiOptions.Timeout.ToTimespan(apiOptions.TimeUnits)
             });
         };
     }

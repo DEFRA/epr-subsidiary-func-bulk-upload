@@ -23,12 +23,14 @@ public static class ConfigurationExtensions
 {
     public static IServiceCollection ConfigureOptions(this IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<SubmissionApiOptions>(configuration.GetSection(SubmissionApiOptions.SectionName));
         services.Configure<AntivirusApiOptions>(configuration.GetSection(AntivirusApiOptions.SectionName));
-        services.Configure<BlobStorageOptions>(configuration.GetSection(BlobStorageOptions.SectionName));
         services.Configure<ApiOptions>(configuration.GetSection(ApiOptions.SectionName));
-        services.Configure<TableStorageOptions>(configuration.GetSection(TableStorageOptions.SectionName));
+        services.Configure<BlobStorageOptions>(configuration.GetSection(BlobStorageOptions.SectionName));
+        services.Configure<CompaniesHouseDownloadOptions>(configuration.GetSection(CompaniesHouseDownloadOptions.SectionName));
         services.Configure<RedisOptions>(configuration.GetSection(RedisOptions.SectionName));
+        services.Configure<SubmissionApiOptions>(configuration.GetSection(SubmissionApiOptions.SectionName));
+        services.Configure<TableStorageOptions>(configuration.GetSection(TableStorageOptions.SectionName));
+
         return services;
     }
 
@@ -48,6 +50,9 @@ public static class ConfigurationExtensions
 
     public static IServiceCollection AddHttpClients(this IServiceCollection services, IConfiguration configuration)
     {
+        var sp = services.BuildServiceProvider();
+        var apiOptions = sp.GetRequiredService<IOptions<ApiOptions>>().Value;
+
         services.AddHttpClient<ISubmissionStatusClient, SubmissionStatusClient>((sp, client) =>
         {
             var options = sp.GetRequiredService<IOptions<SubmissionApiOptions>>().Value;
@@ -63,11 +68,12 @@ public static class ConfigurationExtensions
             client.BaseAddress = new Uri($"{antivirusOptions.BaseUrl?.TrimEnd('/')}/v1/");
             client.DefaultRequestHeaders.Add("OCP-APIM-Subscription-Key", antivirusOptions.SubscriptionKey);
         })
-            .AddPolicyHandler((services, _) => Policies.DefaultRetryPolicy<AntivirusClient>(services))
+            .AddPolicyHandler((services, _) => Policies.AntivirusRetryPolicy<AntivirusClient>(services))
             .AddPolicyHandler((services, _) => Policies.AntivirusTimeoutPolicy(services))
             .AddHttpMessageHandler<AntivirusApiAuthorizationHandler>();
 
-        services.AddHttpClient<IFileDownloadService, FileDownloadService>();
+        services.AddHttpClient<IFileDownloadService, FileDownloadService>()
+            .AddPolicyHandler((services, _) => Policies.CompaniesHouseDownloadRetryPolicy<FileDownloadService>(services));
 
         services.AddHttpClient<ISubsidiaryService, SubsidiaryService>((sp, c) =>
         {
@@ -77,8 +83,7 @@ public static class ConfigurationExtensions
         })
             .AddHttpMessageHandler<AccountServiceAuthorisationHandler>();
 
-        var isDevMode = configuration.GetValue<bool?>("ApiConfig:DeveloperMode");
-        if (isDevMode is true)
+        if (apiOptions.UseDirectCompaniesHouseLookup is true)
         {
             services.AddHttpClient<ICompaniesHouseLookupService, CompaniesHouseLookupDirectService>((sp, client) =>
             {
@@ -98,7 +103,6 @@ public static class ConfigurationExtensions
                 var apiOptions = sp.GetRequiredService<IOptions<ApiOptions>>().Value;
 
                 client.BaseAddress = new Uri(apiOptions.CompaniesHouseLookupBaseUrl);
-                client.Timeout = TimeSpan.FromSeconds(apiOptions.Timeout);
             })
                 .ConfigurePrimaryHttpMessageHandler(GetClientCertificateHandler)
                 .AddCompaniesHouseResilienceHandler();
@@ -110,6 +114,7 @@ public static class ConfigurationExtensions
     public static IServiceCollection AddServices(this IServiceCollection services, IConfiguration configuration)
     {
         var sp = services.BuildServiceProvider();
+        var apiOptions = sp.GetRequiredService<IOptions<ApiOptions>>().Value;
         var redisOptions = sp.GetRequiredService<IOptions<RedisOptions>>().Value;
 
         services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisOptions.ConnectionString));
@@ -120,23 +125,14 @@ public static class ConfigurationExtensions
         services.AddScoped<ISystemDetailsProvider, SystemDetailsProvider>();
 
         services.AddTransient<AccountServiceAuthorisationHandler>();
-        services.AddTransient<IBulkUploadOrchestration, BulkUploadOrchestration>();
+        services.AddTransient<IAntivirusClient, AntivirusClient>();
         services.AddTransient<IBulkSubsidiaryProcessor, BulkSubsidiaryProcessor>();
+        services.AddTransient<IBulkUploadOrchestration, BulkUploadOrchestration>();
         services.AddTransient<ICompaniesHouseDataProvider, CompaniesHouseDataProvider>();
-        services.AddTransient<IRecordExtraction, RecordExtraction>();
-        services.AddTransient<ICsvProcessor, CsvProcessor>();
-        services.AddTransient<IParserClass, ParserClass>();
-        services.AddTransient<ISubsidiaryService, SubsidiaryService>();
-        services.AddTransient<INotificationService, NotificationService>();
         services.AddTransient<ICompaniesHouseDownloadService, CompaniesHouseDownloadService>();
         services.AddTransient<ICompaniesHouseFilePostService, CompaniesHouseFilePostService>();
-        services.AddTransient<IDownloadStatusStorage, DownloadStatusStorage>();
-        services.AddTransient<IFileDownloadService, FileDownloadService>();
-        services.AddTransient<IAntivirusClient, AntivirusClient>();
-        services.AddTransient<ISubmissionStatusClient, SubmissionStatusClient>();
 
-        var isDevMode = configuration.GetValue<bool?>("ApiConfig:DeveloperMode");
-        if (isDevMode is true)
+        if (apiOptions.UseDirectCompaniesHouseLookup is true)
         {
             services.AddTransient<ICompaniesHouseLookupService, CompaniesHouseLookupDirectService>();
         }
@@ -144,6 +140,15 @@ public static class ConfigurationExtensions
         {
             services.AddTransient<ICompaniesHouseLookupService, CompaniesHouseLookupService>();
         }
+
+        services.AddTransient<ICsvProcessor, CsvProcessor>();
+        services.AddTransient<IDownloadStatusStorage, DownloadStatusStorage>();
+        services.AddTransient<IFileDownloadService, FileDownloadService>();
+        services.AddTransient<INotificationService, NotificationService>();
+        services.AddTransient<IParserClass, ParserClass>();
+        services.AddTransient<IRecordExtraction, RecordExtraction>();
+        services.AddTransient<ISubsidiaryService, SubsidiaryService>();
+        services.AddTransient<ISubmissionStatusClient, SubmissionStatusClient>();
 
         return services;
     }

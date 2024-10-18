@@ -30,8 +30,8 @@ public class CompaniesHouseDownloadServiceTests
 
         var downloadPath = "https://download/";
 
-        fixture.Customize<ApiOptions>(ctx => ctx.With(a => a.CompaniesHouseDataDownloadUrl, downloadPath));
-        var options = fixture.CreateOptions<ApiOptions>();
+        fixture.Customize<CompaniesHouseDownloadOptions>(ctx => ctx.With(a => a.CompaniesHouseDataDownloadUrl, downloadPath));
+        var options = fixture.CreateOptions<CompaniesHouseDownloadOptions>();
 
         using var stream = new MemoryStream();
 
@@ -76,8 +76,8 @@ public class CompaniesHouseDownloadServiceTests
 
         var downloadPath = "https://download/";
 
-        fixture.Customize<ApiOptions>(ctx => ctx.With(a => a.CompaniesHouseDataDownloadUrl, downloadPath));
-        var options = fixture.CreateOptions<ApiOptions>();
+        fixture.Customize<CompaniesHouseDownloadOptions>(ctx => ctx.With(a => a.CompaniesHouseDataDownloadUrl, downloadPath));
+        var options = fixture.CreateOptions<CompaniesHouseDownloadOptions>();
 
         using var stream = new MemoryStream();
 

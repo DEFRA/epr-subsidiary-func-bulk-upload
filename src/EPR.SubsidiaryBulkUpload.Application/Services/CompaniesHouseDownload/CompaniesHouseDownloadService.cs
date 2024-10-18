@@ -7,7 +7,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
 public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadService,
     IDownloadStatusStorage downloadStatusStorage,
     ICompaniesHouseFilePostService companiesHouseFilePostService,
-    IOptions<ApiOptions> apiOptions,
+    IOptions<CompaniesHouseDownloadOptions> downloadOptions,
     TimeProvider timeProvider) : ICompaniesHouseDownloadService
 {
     public const string PartialFilename = "BasicCompanyData";
@@ -16,7 +16,7 @@ public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadServ
     private readonly IDownloadStatusStorage downloadStatusStorage = downloadStatusStorage;
     private readonly ICompaniesHouseFilePostService companiesHouseFilePostService = companiesHouseFilePostService;
     private readonly TimeProvider timeProvider = timeProvider;
-    private readonly ApiOptions apiOptions = apiOptions.Value;
+    private readonly CompaniesHouseDownloadOptions apiOptions = downloadOptions.Value;
 
     public async Task<bool> StartDownload()
     {

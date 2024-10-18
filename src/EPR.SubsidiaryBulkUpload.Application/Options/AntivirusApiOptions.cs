@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using EPR.SubsidiaryBulkUpload.Application.Models;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Options;
 
@@ -21,7 +22,11 @@ public class AntivirusApiOptions
 
     public int Timeout { get; set; }
 
-    public bool EnableDirectAccess { get; set; } = false;
+    public TimeUnit TimeUnits { get; set; } = TimeUnit.Seconds;
+
+    public int RetryPolicyInitialWaitTime { get; set; }
+
+    public int RetryPolicyMaxRetries { get; set; }
 
     public string CollectionSuffix { get; set; }
 
