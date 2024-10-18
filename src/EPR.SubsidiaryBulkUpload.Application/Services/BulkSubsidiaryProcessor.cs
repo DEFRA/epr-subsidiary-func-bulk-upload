@@ -16,7 +16,18 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
     public async Task Process(IEnumerable<CompaniesHouseCompany> subsidiaries, CompaniesHouseCompany parent, OrganisationResponseModel parentOrg, UserRequestModel userRequestModel)
     {
-        var subsidiariesAndOrg = subsidiaries
+        // companies with null company house number
+        // this is straight addition into the RPD
+        var nullCompaniesHouseNumberRecords = subsidiaries.Where(ch => !string.IsNullOrEmpty(ch.franchisee_licensee_tenant) && string.Equals(ch.franchisee_licensee_tenant, "Y", StringComparison.OrdinalIgnoreCase));
+        foreach (var subsidiaryandLink in nullCompaniesHouseNumberRecords)
+        {
+            var franchisee = await GetLinkModelForNonCompaniesHouseData(subsidiaryandLink, parentOrg, userRequestModel.UserId);
+            await organisationService.CreateAndAddSubsidiaryAsync(franchisee);
+        }
+
+        // companeis with none null company house number
+        var noneNullCompaniesHouseNumberRecords = subsidiaries.Where(ch => !string.IsNullOrEmpty(ch.companies_house_number) && string.IsNullOrEmpty(ch.franchisee_licensee_tenant));
+        var subsidiariesAndOrg = noneNullCompaniesHouseNumberRecords
             .ToAsyncEnumerable()
             .SelectAwait(async subsidiary => (Subsidiary: subsidiary, SubsidiaryOrg: await organisationService.GetCompanyByCompaniesHouseNumber(subsidiary.companies_house_number)));
 
@@ -142,7 +153,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
                 ReferenceNumber = subsidiary.organisation_id,
                 Name = subsidiary.organisation_name,
                 CompaniesHouseNumber = subsidiary.companies_house_number,
-                OrganisationType = OrganisationType.NotSet,
+                OrganisationType = OrganisationType.CompaniesHouseCompany,
                 ProducerType = ProducerType.Other,
                 IsComplianceScheme = false,
                 Nation = Nation.NotSet,
@@ -158,8 +169,46 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         return modelLoaded ? newSubsidiaryModel : null;
     }
 
+    private async Task<LinkOrganisationModel?> GetLinkModelForNonCompaniesHouseData(CompaniesHouseCompany subsidiary, OrganisationResponseModel parentOrg, Guid userId)
+    {
+        var newSubsidiaryModel = new LinkOrganisationModel()
+        {
+            UserId = userId,
+            Subsidiary = new OrganisationModel()
+            {
+                ReferenceNumber = subsidiary.organisation_id,
+                Name = subsidiary.organisation_name,
+                CompaniesHouseNumber = subsidiary.companies_house_number,
+                OrganisationType = OrganisationType.NonCompaniesHouseCompany,
+                ProducerType = ProducerType.Other,
+                IsComplianceScheme = false,
+                Nation = Nation.NotSet,
+                SubsidiaryOrganisationId = subsidiary.subsidiary_id,
+                RawContent = subsidiary.RawRow,
+                FileLineNumber = subsidiary.FileLineNumber
+            },
+            ParentOrganisationId = parentOrg.ExternalId.Value
+        };
+
+        return newSubsidiaryModel;
+    }
+
     private async Task AddSubsidiary(OrganisationResponseModel parent, OrganisationResponseModel subsidiary, Guid userId, CompaniesHouseCompany subsidiaryFileData)
     {
+        if (subsidiary == null && subsidiaryFileData != null)
+        {
+            var franchisee = new SubsidiaryAddModel
+            {
+                UserId = userId,
+                ParentOrganisationId = parent.referenceNumber,
+                ChildOrganisationId = subsidiary.referenceNumber,
+                ParentOrganisationExternalId = parent.ExternalId,
+                ChildOrganisationExternalId = subsidiary.ExternalId
+            };
+            await organisationService.AddSubsidiaryRelationshipAsync(franchisee);
+            return;
+        }
+
         var subsidiaryModel = new SubsidiaryAddModel
         {
             UserId = userId,
