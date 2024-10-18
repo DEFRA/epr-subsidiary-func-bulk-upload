@@ -62,6 +62,7 @@ public class CompaniesHouseDownloadServiceTests
         companiesHouseFilePostService.Setup(chfps => chfps.PostFileAsync(It.IsAny<Stream>(), It.IsAny<string>())).ReturnsAsync(HttpStatusCode.OK);
 
         var webCrawlerService = new Mock<IWebCrawlerService>();
+        webCrawlerService.Setup(hw => hw.GetCompaniesHouseFileDownloadCount(It.IsAny<string>())).ReturnsAsync(numberOfDownloads);
 
         var downloadService = new CompaniesHouseDownloadService(
             fileDownloadService.Object,
@@ -117,6 +118,7 @@ public class CompaniesHouseDownloadServiceTests
 
         var companiesHouseFilePostService = new Mock<ICompaniesHouseFilePostService>();
         var webCrawlerService = new Mock<IWebCrawlerService>();
+        webCrawlerService.Setup(hw => hw.GetCompaniesHouseFileDownloadCount(It.IsAny<string>())).ReturnsAsync(numberOfDownloads);
 
         var downloadService = new CompaniesHouseDownloadService(
             fileDownloadService.Object,
@@ -172,6 +174,7 @@ public class CompaniesHouseDownloadServiceTests
 
         var companiesHouseFilePostService = new Mock<ICompaniesHouseFilePostService>();
         var webCrawlerService = new Mock<IWebCrawlerService>();
+        webCrawlerService.Setup(hw => hw.GetCompaniesHouseFileDownloadCount(It.IsAny<string>())).ReturnsAsync(numberOfDownloads);
 
         var downloadService = new CompaniesHouseDownloadService(
             fileDownloadService.Object,
@@ -222,6 +225,7 @@ public class CompaniesHouseDownloadServiceTests
 
         var companiesHouseFilePostService = new Mock<ICompaniesHouseFilePostService>();
         var webCrawlerService = new Mock<IWebCrawlerService>();
+        webCrawlerService.Setup(hw => hw.GetCompaniesHouseFileDownloadCount(It.IsAny<string>())).ReturnsAsync(numberOfDownloads);
 
         var downloadService = new CompaniesHouseDownloadService(
             fileDownloadService.Object,
@@ -271,6 +275,7 @@ public class CompaniesHouseDownloadServiceTests
 
         var companiesHouseFilePostService = new Mock<ICompaniesHouseFilePostService>();
         var webCrawlerService = new Mock<IWebCrawlerService>();
+        webCrawlerService.Setup(hw => hw.GetCompaniesHouseFileDownloadCount(It.IsAny<string>())).ReturnsAsync(numberOfDownloads);
 
         var downloadService = new CompaniesHouseDownloadService(
             fileDownloadService.Object,
@@ -286,5 +291,49 @@ public class CompaniesHouseDownloadServiceTests
         // Assert
         fileDownloadService.Verify(fds => fds.GetStreamAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         companiesHouseFilePostService.Verify(chfps => chfps.PostFileAsync(It.IsAny<Stream>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [TestMethod]
+    public async Task DownloadFiles_ShouldGetNumberOfFilesFromCompaniesHouse()
+    {
+        // Arrange
+        var month = 3;
+        var year = 2024;
+        var now = new DateTimeOffset(year, month, 5, 7, 9, 11, TimeSpan.Zero);
+        timeProvider.SetUtcNow(now);
+        var partitionKey = now.ToString("yyyyMM");
+        var partialFileName = $"{PartialFilename}-2024-03-01-part";
+
+        var numberOfDownloads = 3;
+        var options = fixture.CreateOptions<ApiOptions>();
+        var fileDownloadService = new Mock<IFileDownloadService>();
+
+        var downloadStatusStorage = new Mock<IDownloadStatusStorage>();
+        var downloadLog = new List<CompaniesHouseFileSetDownloadStatus>
+        {
+            new() { DownloadFileName = $"{partialFileName}1_{numberOfDownloads}.zip", DownloadStatus = null },
+            new() { DownloadFileName = $"{partialFileName}2_{numberOfDownloads}.zip", DownloadStatus = null },
+            new() { DownloadFileName = $"{partialFileName}3_{numberOfDownloads}.zip", DownloadStatus = null }
+        };
+        downloadStatusStorage.Setup(dss => dss.GetCompaniesHouseFileDownloadListAsync(partitionKey)).ReturnsAsync(downloadLog);
+
+        var companiesHouseFilePostService = new Mock<ICompaniesHouseFilePostService>();
+
+        var webCrawlerService = new Mock<IWebCrawlerService>();
+        webCrawlerService.Setup(hw => hw.GetCompaniesHouseFileDownloadCount(It.IsAny<string>())).ReturnsAsync(numberOfDownloads);
+
+        var downloadService = new CompaniesHouseDownloadService(
+            fileDownloadService.Object,
+            downloadStatusStorage.Object,
+            companiesHouseFilePostService.Object,
+            webCrawlerService.Object,
+            options,
+            timeProvider);
+
+        // Act
+        await downloadService.DownloadFiles(partitionKey);
+
+        // Assert
+        downloadStatusStorage.Verify(dlss => dlss.GetCompaniesHouseFileDownloadListAsync(It.IsAny<string>()), Times.Once);
     }
 }

@@ -30,9 +30,8 @@ public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadServ
     }
     }
 
-    private async Task DownloadFiles(string partitionKey)
+    public async Task DownloadFiles(string partitionKey)
     {
-        var now = _timeProvider.GetUtcNow();
         var expectedFileCount = await _webCrawlerService.GetCompaniesHouseFileDownloadCount(_apiOptions.CompaniesHouseFileDownloadPath);
 
         if (expectedFileCount == 0)
