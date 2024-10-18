@@ -12,7 +12,7 @@ public class ApiOptions
 
     public string CompaniesHouseDirectBaseUri { get; set; }
 
-    public bool UseDirectCompaniesHouseLookup { get; set; } = false;
+    public bool UseDirectCompaniesHouseLookup { get; set; }
 
     public string CompaniesHouseDirectApiKey { get; set; }
 

@@ -83,7 +83,7 @@ public static class ConfigurationExtensions
         })
             .AddHttpMessageHandler<AccountServiceAuthorisationHandler>();
 
-        if (apiOptions.UseDirectCompaniesHouseLookup is true)
+        if (apiOptions.UseDirectCompaniesHouseLookup)
         {
             services.AddHttpClient<ICompaniesHouseLookupService, CompaniesHouseLookupDirectService>((sp, client) =>
             {
@@ -132,7 +132,7 @@ public static class ConfigurationExtensions
         services.AddTransient<ICompaniesHouseDownloadService, CompaniesHouseDownloadService>();
         services.AddTransient<ICompaniesHouseFilePostService, CompaniesHouseFilePostService>();
 
-        if (apiOptions.UseDirectCompaniesHouseLookup is true)
+        if (apiOptions.UseDirectCompaniesHouseLookup)
         {
             services.AddTransient<ICompaniesHouseLookupService, CompaniesHouseLookupDirectService>();
         }
