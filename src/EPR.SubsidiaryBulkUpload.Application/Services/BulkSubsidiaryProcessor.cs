@@ -16,8 +16,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
     public async Task Process(IEnumerable<CompaniesHouseCompany> subsidiaries, CompaniesHouseCompany parent, OrganisationResponseModel parentOrg, UserRequestModel userRequestModel)
     {
-        // companies with null company house number
-        // this is straight addition into the RPD
+        // companies with null company house number. adding to RPD
         var nullCompaniesHouseNumberRecords = subsidiaries.Where(ch => !string.IsNullOrEmpty(ch.franchisee_licensee_tenant) && string.Equals(ch.franchisee_licensee_tenant, "Y", StringComparison.OrdinalIgnoreCase));
         foreach (var subsidiaryandLink in nullCompaniesHouseNumberRecords)
         {
