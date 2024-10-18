@@ -89,7 +89,7 @@ public class CompaniesHouseDownloadServiceTests
         timeProvider.SetUtcNow(now);
         var partitionKey = now.ToString("yyyyMM");
 
-        fixture.Customize<CompaniesHouseDownloadOptions>(ctx => ctx.With(a => a.CompaniesHouseDataDownloadUrl, downloadPath));
+        fixture.Customize<CompaniesHouseDownloadOptions>(ctx => ctx.With(a => a.CompaniesHouseDataDownloadUrl, DownloadPath));
         var options = fixture.CreateOptions<CompaniesHouseDownloadOptions>();
 
         using var stream = new MemoryStream();
@@ -142,8 +142,8 @@ public class CompaniesHouseDownloadServiceTests
         timeProvider.SetUtcNow(now);
         var partitionKey = now.ToString("yyyyMM");
 
-        fixture.Customize<ApiOptions>(ctx => ctx.With(a => a.CompaniesHouseDataDownloadUrl, DownloadPath));
-        var options = fixture.CreateOptions<ApiOptions>();
+        fixture.Customize<CompaniesHouseDownloadOptions>(ctx => ctx.With(a => a.CompaniesHouseDataDownloadUrl, DownloadPath));
+        var options = fixture.CreateOptions<CompaniesHouseDownloadOptions>();
 
         using var stream = new MemoryStream();
         var partialFileName = $"{PartialFilename}-2024-03-01-part";
@@ -192,8 +192,8 @@ public class CompaniesHouseDownloadServiceTests
         timeProvider.SetUtcNow(now);
         var partitionKey = now.ToString("yyyyMM");
 
-        fixture.Customize<ApiOptions>(ctx => ctx.With(a => a.CompaniesHouseDataDownloadUrl, DownloadPath));
-        var options = fixture.CreateOptions<ApiOptions>();
+        fixture.Customize<CompaniesHouseDownloadOptions>(ctx => ctx.With(a => a.CompaniesHouseDataDownloadUrl, DownloadPath));
+        var options = fixture.CreateOptions<CompaniesHouseDownloadOptions>();
 
         using var stream = new MemoryStream();
         var partialFileName = $"{PartialFilename}-2024-03-01-part";
@@ -241,8 +241,8 @@ public class CompaniesHouseDownloadServiceTests
         timeProvider.SetUtcNow(now);
         var partitionKey = now.ToString("yyyyMM");
 
-        fixture.Customize<ApiOptions>(ctx => ctx.With(a => a.CompaniesHouseDataDownloadUrl, DownloadPath));
-        var options = fixture.CreateOptions<ApiOptions>();
+        fixture.Customize<CompaniesHouseDownloadOptions>(ctx => ctx.With(a => a.CompaniesHouseDataDownloadUrl, DownloadPath));
+        var options = fixture.CreateOptions<CompaniesHouseDownloadOptions>();
 
         using var stream = new MemoryStream();
         var partialFileName = $"{PartialFilename}-2024-03-01-part";

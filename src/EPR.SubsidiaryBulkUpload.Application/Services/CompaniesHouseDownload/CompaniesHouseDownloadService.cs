@@ -15,7 +15,7 @@ public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadServ
     private readonly IDownloadStatusStorage _downloadStatusStorage = downloadStatusStorage;
     private readonly ICompaniesHouseFilePostService _companiesHouseFilePostService = companiesHouseFilePostService;
     private readonly TimeProvider _timeProvider = timeProvider;
-    private readonly CompaniesHouseDownloadOptions apiOptions = downloadOptions.Value;
+    private readonly CompaniesHouseDownloadOptions _downloadOptions = downloadOptions.Value;
 
     public async Task StartDownload()
     {
@@ -44,7 +44,7 @@ public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadServ
     private async Task<bool> DownloadFile(CompaniesHouseFileSetDownloadStatus fileStatus)
     {
         var succeeded = false;
-        var filePath = $"{_apiOptions.CompaniesHouseDataDownloadUrl}{fileStatus.DownloadFileName}";
+        var filePath = $"{_downloadOptions.CompaniesHouseDataDownloadUrl}{fileStatus.DownloadFileName}";
         var download = await _fileDownloadService.GetStreamAsync(filePath);
 
         if (download.ResponseCode == FileDownloadResponseCode.Succeeded)
