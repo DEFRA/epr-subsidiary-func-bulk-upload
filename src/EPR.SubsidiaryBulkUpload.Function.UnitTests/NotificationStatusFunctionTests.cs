@@ -27,22 +27,29 @@ public class NotificationStatusFunctionTests
     public async Task NotificationStatusFunction_Calls_CsvService()
     {
         // Arrange
-        var key = $"{_userId}{_organisationId}Subsidiary bulk upload progress";
+        var progressKey = $"{_userId}{_organisationId}Subsidiary bulk upload progress";
+        var rowsAddedKey = $"{_userId}{_organisationId}Subsidiary bulk upload rows added";
         var errorKey = $"{_userId}{_organisationId}Subsidiary bulk upload errors";
 
         var status = "Working";
+        var rowsAdded = "1";
         var errorStatus = default(string);
 
         var statusJson =
             """
             {
                 "status": "Working",
+                "rowsAdded": 1,
                 "errors": []
             }
             """;
 
-        _notificationServiceMock.Setup(x => x.GetStatus(key))
+        _notificationServiceMock.Setup(x => x.GetStatus(progressKey))
             .ReturnsAsync(status);
+
+        _notificationServiceMock.Setup(x => x.GetStatus(rowsAddedKey))
+            .ReturnsAsync(rowsAdded);
+
         _notificationServiceMock.Setup(x => x.GetStatus(errorKey))
             .ReturnsAsync(errorStatus);
 
@@ -53,7 +60,8 @@ public class NotificationStatusFunctionTests
         result.Should().NotBeNull();
         result.Should().BeOfType<JsonResult>();
 
-        _notificationServiceMock.Verify(x => x.GetStatus(key), Times.Once);
+        _notificationServiceMock.Verify(x => x.GetStatus(progressKey), Times.Once);
+        _notificationServiceMock.Verify(x => x.GetStatus(rowsAddedKey), Times.Once);
         _notificationServiceMock.Verify(x => x.GetStatus(errorKey), Times.Once);
     }
 

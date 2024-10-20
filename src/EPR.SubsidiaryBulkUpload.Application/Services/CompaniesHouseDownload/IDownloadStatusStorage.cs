@@ -4,7 +4,11 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
 
 public interface IDownloadStatusStorage
 {
-    Task<CompaniesHouseFileSetDownloadStatus?> GetCompaniesHouseFileDownloadStatusAsync();
+    Task<bool> GetCompaniesHouseFileDownloadStatusAsync(string partitionKey);
+
+    Task<List<CompaniesHouseFileSetDownloadStatus>> GetCompaniesHouseFileDownloadListAsync(string partitionKey);
 
     Task<bool> SetCompaniesHouseFileDownloadStatusAsync(CompaniesHouseFileSetDownloadStatus status);
+
+    Task CreateCompaniesHouseFileDownloadLogAsync(string partitionKey);
 }
