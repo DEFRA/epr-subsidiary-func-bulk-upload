@@ -16,16 +16,9 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
     public async Task<int> Process(IEnumerable<CompaniesHouseCompany> subsidiaries, CompaniesHouseCompany parent, OrganisationResponseModel parentOrg, UserRequestModel userRequestModel)
     {
-        // companies with null company house number. adding to RPD
-        var nullCompaniesHouseNumberRecords = subsidiaries.Where(ch => !string.IsNullOrEmpty(ch.franchisee_licensee_tenant) && string.Equals(ch.franchisee_licensee_tenant, "Y", StringComparison.OrdinalIgnoreCase));
-        foreach (var subsidiaryandLink in nullCompaniesHouseNumberRecords)
-        {
-            var franchisee = await GetLinkModelForNonCompaniesHouseData(subsidiaryandLink, parentOrg, userRequestModel.UserId);
-            await organisationService.CreateAndAddSubsidiaryAsync(franchisee);
-        }
-
         // companeis with none null company house number
         var noneNullCompaniesHouseNumberRecords = subsidiaries.Where(ch => !string.IsNullOrEmpty(ch.companies_house_number) && string.IsNullOrEmpty(ch.franchisee_licensee_tenant));
+
         var subsidiariesAndOrg = noneNullCompaniesHouseNumberRecords
             .ToAsyncEnumerable()
             .SelectAwait(async subsidiary => (Subsidiary: subsidiary, SubsidiaryOrg: await organisationService.GetCompanyByCompaniesHouseNumber(subsidiary.companies_house_number)));
@@ -45,6 +38,8 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         {
             await AddSubsidiary(parentOrg, subsidiaryAddModel!.SubsidiaryOrg, userRequestModel.UserId, subsidiaryAddModel.Subsidiary);
         }
+
+        await ProcessFranchisee(subsidiaries, parentOrg, userRequestModel);
 
         var subsidiariesAndOrgWith_InValidName = subsidiariesAndOrg
             .Where(sub => sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg?.companiesHouseNumber
@@ -186,7 +181,8 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
                 Nation = Nation.NotSet,
                 SubsidiaryOrganisationId = subsidiary.subsidiary_id,
                 RawContent = subsidiary.RawRow,
-                FileLineNumber = subsidiary.FileLineNumber
+                FileLineNumber = subsidiary.FileLineNumber,
+                Franchisee_Licensee_Tenant = subsidiary.franchisee_licensee_tenant
             },
             ParentOrganisationId = parentOrg.ExternalId.Value
         };
@@ -221,5 +217,52 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         await organisationService.AddSubsidiaryRelationshipAsync(subsidiaryModel);
 
         _logger.LogInformation("Subsidiary Company {SubsidiaryReferenceNumber} {SubsidiaryName} linked to {ParentReferenceNumber} in the database.", subsidiary.referenceNumber, subsidiary.name, parent.referenceNumber);
+    }
+
+    private async Task AddSubsidiaryFranchise(OrganisationResponseModel parent, OrganisationResponseModel subsidiary, Guid userId, CompaniesHouseCompany subsidiaryFileData)
+    {
+        var subsidiaryModel = new SubsidiaryAddModel
+        {
+            UserId = userId,
+            ParentOrganisationId = parent.referenceNumber,
+            ChildOrganisationId = subsidiary.referenceNumber,
+            ParentOrganisationExternalId = parent.ExternalId,
+            ChildOrganisationExternalId = subsidiary.ExternalId
+        };
+        await organisationService.AddSubsidiaryRelationshipAsync(subsidiaryModel);
+
+        _logger.LogInformation("Subsidiary Company {SubsidiaryReferenceNumber} {SubsidiaryName} linked to {ParentReferenceNumber} in the database.", subsidiary.referenceNumber, subsidiary.name, parent.referenceNumber);
+    }
+
+    private async Task ProcessFranchisee(IEnumerable<CompaniesHouseCompany> subsidiaries, OrganisationResponseModel parentOrg, UserRequestModel userRequestModel)
+    {
+        // companies with franchisee flag.
+        var companiesWithFranchiseeFlagRecords = subsidiaries.Where(ch => !string.IsNullOrEmpty(ch.franchisee_licensee_tenant) && string.Equals(ch.franchisee_licensee_tenant, "Y", StringComparison.OrdinalIgnoreCase))
+            .ToAsyncEnumerable()
+            .SelectAwait(async subsidiary => (Subsidiary: subsidiary, SubsidiaryOrg: await organisationService.GetCompanyByLocalDBCompanyName(subsidiary.organisation_name)));
+
+        // check if the incoming file company name is matching with the one in db. name to match.
+        var subsidiariesAndOrgExistsintheDB = companiesWithFranchiseeFlagRecords
+            .Where(sub => sub.SubsidiaryOrg != null && string.Equals(sub.Subsidiary.organisation_name, sub.SubsidiaryOrg.name, StringComparison.OrdinalIgnoreCase));
+
+        var knownFranchiseeToAddRelationship = subsidiariesAndOrgExistsintheDB.Where(co => co.SubsidiaryOrg != null)
+          .SelectAwait(async co =>
+              (Subsidiary: co.Subsidiary,
+               SubsidiaryOrg: co.SubsidiaryOrg,
+               RelationshipExists: await organisationService.GetSubsidiaryRelationshipAsync(parentOrg.id, co.SubsidiaryOrg.id)))
+          .Where(co => !co.RelationshipExists);
+
+        await foreach (var subsidiaryAddModel in knownFranchiseeToAddRelationship)
+        {
+            await AddSubsidiary(parentOrg, subsidiaryAddModel!.SubsidiaryOrg, userRequestModel.UserId, subsidiaryAddModel.Subsidiary);
+        }
+
+        var subsidiariesAndOrgNoneExistsintheDB = companiesWithFranchiseeFlagRecords.Where(co => co.SubsidiaryOrg == null);
+
+        await foreach (var subsidiaryAddModel in subsidiariesAndOrgNoneExistsintheDB)
+        {
+            var franchisee = await GetLinkModelForNonCompaniesHouseData(subsidiaryAddModel.Subsidiary, parentOrg, userRequestModel.UserId);
+            await organisationService.CreateAndAddSubsidiaryAsync(franchisee);
+        }
     }
 }

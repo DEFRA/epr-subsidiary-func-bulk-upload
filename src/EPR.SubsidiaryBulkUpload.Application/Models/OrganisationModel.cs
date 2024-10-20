@@ -36,4 +36,6 @@ public class OrganisationModel
     public string? RawContent { get; set; }
 
     public int FileLineNumber { get; set; }
+
+    public string Franchisee_Licensee_Tenant { get; set; }
 }

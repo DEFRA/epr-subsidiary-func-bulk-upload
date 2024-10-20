@@ -16,6 +16,7 @@ public class SubsidiaryService : ISubsidiaryService
     private const string OrganisationAddSubsidiaryUri = "api/bulkuploadorganisations/add-subsidiary-relationship";
     private const string OrganisationRelationshipsByIdUri = "api/bulkuploadorganisations/organisation-by-relationship";
     private const string SystemUserAndOrganisationUri = "api/users/system-user-and-organisation";
+    private const string OrganisationByCompanyHouseNameUri = "api/bulkuploadorganisations/organisation-by-name";
 
     private readonly ILogger<SubsidiaryService> _logger;
     private readonly HttpClient _httpClient;
@@ -93,6 +94,32 @@ public class SubsidiaryService : ISubsidiaryService
             if (problemDetails != null)
             {
                 _logger.LogError("Error occurred in GetCompanyByCompaniesHouseNumber call: {Detail} : {StatusCode}", problemDetails.Detail, response.StatusCode);
+            }
+
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+
+        var orgResponse = await response.Content.ReadFromJsonAsync<OrganisationResponseModel[]>();
+        return orgResponse.FirstOrDefault();
+    }
+
+    public async Task<OrganisationResponseModel?> GetCompanyByLocalDBCompanyName(string companiesHouseName)
+    {
+        var response = await _httpClient.GetAsync($"{OrganisationByCompanyHouseNameUri}?companiesHouseName={companiesHouseName}");
+        if (response.StatusCode == HttpStatusCode.NoContent)
+        {
+            return null;
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+
+            if (problemDetails != null)
+            {
+                _logger.LogError("Error occurred in GetCompanyByLocalDBCompanyName call: {Detail} : {StatusCode}", problemDetails.Detail, response.StatusCode);
             }
 
             return null;
