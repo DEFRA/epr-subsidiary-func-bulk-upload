@@ -17,5 +17,5 @@ public interface ISubsidiaryService
 
     Task<UserOrganisation> GetSystemUserAndOrganisation();
 
-    Task<OrganisationResponseModel?> GetCompanyByLocalDBCompanyName(string companyName);
+    Task<OrganisationResponseModel?> GetCompanyByCompanyName(string companyName);
 }

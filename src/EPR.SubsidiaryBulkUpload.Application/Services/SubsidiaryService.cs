@@ -105,7 +105,7 @@ public class SubsidiaryService : ISubsidiaryService
         return orgResponse.FirstOrDefault();
     }
 
-    public async Task<OrganisationResponseModel?> GetCompanyByLocalDBCompanyName(string companiesHouseName)
+    public async Task<OrganisationResponseModel?> GetCompanyByCompanyName(string companiesHouseName)
     {
         var response = await _httpClient.GetAsync($"{OrganisationByCompanyHouseNameUri}?companiesHouseName={companiesHouseName}");
         if (response.StatusCode == HttpStatusCode.NoContent)
@@ -119,7 +119,7 @@ public class SubsidiaryService : ISubsidiaryService
 
             if (problemDetails != null)
             {
-                _logger.LogError("Error occurred in GetCompanyByLocalDBCompanyName call: {Detail} : {StatusCode}", problemDetails.Detail, response.StatusCode);
+                _logger.LogError("Error occurred in GetCompanyByCompanyName call: {Detail} : {StatusCode}", problemDetails.Detail, response.StatusCode);
             }
 
             return null;

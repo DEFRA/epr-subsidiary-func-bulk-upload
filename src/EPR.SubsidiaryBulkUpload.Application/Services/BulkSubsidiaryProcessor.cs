@@ -239,7 +239,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         // companies with franchisee flag.
         var companiesWithFranchiseeFlagRecords = subsidiaries.Where(ch => !string.IsNullOrEmpty(ch.franchisee_licensee_tenant) && string.Equals(ch.franchisee_licensee_tenant, "Y", StringComparison.OrdinalIgnoreCase))
             .ToAsyncEnumerable()
-            .SelectAwait(async subsidiary => (Subsidiary: subsidiary, SubsidiaryOrg: await organisationService.GetCompanyByLocalDBCompanyName(subsidiary.organisation_name)));
+            .SelectAwait(async subsidiary => (Subsidiary: subsidiary, SubsidiaryOrg: await organisationService.GetCompanyByCompanyName(subsidiary.organisation_name)));
 
         // check if the incoming file company name is matching with the one in db. name to match.
         var subsidiariesAndOrgExistsintheDB = companiesWithFranchiseeFlagRecords
