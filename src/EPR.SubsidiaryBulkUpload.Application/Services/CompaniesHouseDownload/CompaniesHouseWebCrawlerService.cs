@@ -20,6 +20,12 @@ public class CompaniesHouseWebCrawlerService(ILogger<CompaniesHouseWebCrawlerSer
             var htmlDocument = await _htmlWeb.LoadFromWebAsync(downloadPagePath);
             var listItems = htmlDocument.DocumentNode.SelectNodes("//ul/li");
 
+            if (listItems == null)
+            {
+                _logger.LogError("No files to download from CompaniesHouse{DownloadPagePath}", downloadPagePath);
+                return expectedFileCount;
+            }
+
             for (int i = 0; i < listItems.Count; i++)
             {
                 HtmlNode? item = listItems[i];
@@ -40,7 +46,7 @@ public class CompaniesHouseWebCrawlerService(ILogger<CompaniesHouseWebCrawlerSer
 
         if (expectedFileCount == 0)
         {
-            _logger.LogWarning("No files to download from CompaniesHouse{DownloadPagePath}", downloadPagePath);
+            _logger.LogError("No files to download from CompaniesHouse{DownloadPagePath}", downloadPagePath);
         }
 
         return expectedFileCount;
