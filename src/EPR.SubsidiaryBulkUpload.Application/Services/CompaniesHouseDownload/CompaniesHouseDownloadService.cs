@@ -8,14 +8,14 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
 public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadService,
     IDownloadStatusStorage downloadStatusStorage,
     ICompaniesHouseFilePostService companiesHouseFilePostService,
-    IWebCrawlerService webCrawlerService,
+    ICompaniesHouseWebCrawlerService companiesHouseWebCrawlerService,
     IOptions<ApiOptions> apiOptions,
     TimeProvider timeProvider) : ICompaniesHouseDownloadService
 {
     private readonly IFileDownloadService _fileDownloadService = fileDownloadService;
     private readonly IDownloadStatusStorage _downloadStatusStorage = downloadStatusStorage;
     private readonly ICompaniesHouseFilePostService _companiesHouseFilePostService = companiesHouseFilePostService;
-    private readonly IWebCrawlerService _webCrawlerService = webCrawlerService;
+    private readonly ICompaniesHouseWebCrawlerService _companiesHouseWebCrawlerService = companiesHouseWebCrawlerService;
     private readonly TimeProvider _timeProvider = timeProvider;
     private readonly ApiOptions _apiOptions = apiOptions.Value;
 
@@ -32,7 +32,7 @@ public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadServ
 
     public async Task DownloadFiles(string partitionKey)
     {
-        var expectedFileCount = await _webCrawlerService.GetCompaniesHouseFileDownloadCount(_apiOptions.CompaniesHouseFileDownloadPath);
+        var expectedFileCount = await _companiesHouseWebCrawlerService.GetCompaniesHouseFileDownloadCount(_apiOptions.CompaniesHouseFileDownloadPath);
 
         if (expectedFileCount == 0)
         {

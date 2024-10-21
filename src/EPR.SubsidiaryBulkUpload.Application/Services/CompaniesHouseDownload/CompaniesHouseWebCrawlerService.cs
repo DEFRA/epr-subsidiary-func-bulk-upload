@@ -4,11 +4,11 @@ using Microsoft.Extensions.Logging;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
 
-public class WebCrawlerService(ILogger<FileDownloadService> logger, HtmlWeb htmlWeb)
-    : IWebCrawlerService
+public class CompaniesHouseWebCrawlerService(ILogger<CompaniesHouseWebCrawlerService> logger, HtmlWeb htmlWeb)
+    : ICompaniesHouseWebCrawlerService
 {
     private const int DefaultFileCount = 7;
-    private readonly ILogger<FileDownloadService> _logger = logger;
+    private readonly ILogger<CompaniesHouseWebCrawlerService> _logger = logger;
     private readonly HtmlWeb _htmlWeb = htmlWeb;
 
     public async Task<int> GetCompaniesHouseFileDownloadCount(string downloadPagePath)
@@ -35,6 +35,7 @@ public class WebCrawlerService(ILogger<FileDownloadService> logger, HtmlWeb html
         {
             _logger.LogError(ex, "Failed to access downlod page at {DownloadPagePath}", downloadPagePath);
             expectedFileCount = 0;
+            throw;
         }
 
         if (expectedFileCount == 0)

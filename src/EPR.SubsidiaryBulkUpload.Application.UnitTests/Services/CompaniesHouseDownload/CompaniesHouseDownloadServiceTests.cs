@@ -61,14 +61,14 @@ public class CompaniesHouseDownloadServiceTests
         var companiesHouseFilePostService = new Mock<ICompaniesHouseFilePostService>();
         companiesHouseFilePostService.Setup(chfps => chfps.PostFileAsync(It.IsAny<Stream>(), It.IsAny<string>())).ReturnsAsync(HttpStatusCode.OK);
 
-        var webCrawlerService = new Mock<IWebCrawlerService>();
-        webCrawlerService.Setup(hw => hw.GetCompaniesHouseFileDownloadCount(It.IsAny<string>())).ReturnsAsync(numberOfDownloads);
+        var companiesHouseWebCrawlerService = new Mock<ICompaniesHouseWebCrawlerService>();
+        companiesHouseWebCrawlerService.Setup(hw => hw.GetCompaniesHouseFileDownloadCount(It.IsAny<string>())).ReturnsAsync(numberOfDownloads);
 
         var downloadService = new CompaniesHouseDownloadService(
             fileDownloadService.Object,
             downloadStatusStorage.Object,
             companiesHouseFilePostService.Object,
-            webCrawlerService.Object,
+            companiesHouseWebCrawlerService.Object,
             options,
             timeProvider);
 
@@ -117,14 +117,14 @@ public class CompaniesHouseDownloadServiceTests
             .ReturnsAsync((stream, FileDownloadResponseCode.Succeeded));
 
         var companiesHouseFilePostService = new Mock<ICompaniesHouseFilePostService>();
-        var webCrawlerService = new Mock<IWebCrawlerService>();
-        webCrawlerService.Setup(hw => hw.GetCompaniesHouseFileDownloadCount(It.IsAny<string>())).ReturnsAsync(numberOfDownloads);
+        var companiesHouseWebCrawlerService = new Mock<ICompaniesHouseWebCrawlerService>();
+        companiesHouseWebCrawlerService.Setup(hw => hw.GetCompaniesHouseFileDownloadCount(It.IsAny<string>())).ReturnsAsync(numberOfDownloads);
 
         var downloadService = new CompaniesHouseDownloadService(
             fileDownloadService.Object,
             downloadStatusStorage.Object,
             companiesHouseFilePostService.Object,
-            webCrawlerService.Object,
+            companiesHouseWebCrawlerService.Object,
             options,
             timeProvider);
 
@@ -173,14 +173,14 @@ public class CompaniesHouseDownloadServiceTests
         downloadStatusStorage.Setup(dss => dss.GetCompaniesHouseFileDownloadListAsync(partitionKey)).ReturnsAsync(downloadLog);
 
         var companiesHouseFilePostService = new Mock<ICompaniesHouseFilePostService>();
-        var webCrawlerService = new Mock<IWebCrawlerService>();
-        webCrawlerService.Setup(hw => hw.GetCompaniesHouseFileDownloadCount(It.IsAny<string>())).ReturnsAsync(numberOfDownloads);
+        var companiesHouseWebCrawlerService = new Mock<ICompaniesHouseWebCrawlerService>();
+        companiesHouseWebCrawlerService.Setup(hw => hw.GetCompaniesHouseFileDownloadCount(It.IsAny<string>())).ReturnsAsync(numberOfDownloads);
 
         var downloadService = new CompaniesHouseDownloadService(
             fileDownloadService.Object,
             downloadStatusStorage.Object,
             companiesHouseFilePostService.Object,
-            webCrawlerService.Object,
+            companiesHouseWebCrawlerService.Object,
             options,
             timeProvider);
 
@@ -224,14 +224,14 @@ public class CompaniesHouseDownloadServiceTests
         downloadStatusStorage.Setup(dss => dss.GetCompaniesHouseFileDownloadListAsync(partitionKey)).ReturnsAsync(downloadLog);
 
         var companiesHouseFilePostService = new Mock<ICompaniesHouseFilePostService>();
-        var webCrawlerService = new Mock<IWebCrawlerService>();
-        webCrawlerService.Setup(hw => hw.GetCompaniesHouseFileDownloadCount(It.IsAny<string>())).ReturnsAsync(numberOfDownloads);
+        var companiesHouseWebCrawlerService = new Mock<ICompaniesHouseWebCrawlerService>();
+        companiesHouseWebCrawlerService.Setup(hw => hw.GetCompaniesHouseFileDownloadCount(It.IsAny<string>())).ReturnsAsync(numberOfDownloads);
 
         var downloadService = new CompaniesHouseDownloadService(
             fileDownloadService.Object,
             downloadStatusStorage.Object,
             companiesHouseFilePostService.Object,
-            webCrawlerService.Object,
+            companiesHouseWebCrawlerService.Object,
             options,
             timeProvider);
 
@@ -274,14 +274,14 @@ public class CompaniesHouseDownloadServiceTests
         downloadStatusStorage.Setup(dss => dss.GetCompaniesHouseFileDownloadListAsync(partitionKey)).ReturnsAsync(downloadLog);
 
         var companiesHouseFilePostService = new Mock<ICompaniesHouseFilePostService>();
-        var webCrawlerService = new Mock<IWebCrawlerService>();
-        webCrawlerService.Setup(hw => hw.GetCompaniesHouseFileDownloadCount(It.IsAny<string>())).ReturnsAsync(numberOfDownloads);
+        var companiesHouseWebCrawlerService = new Mock<ICompaniesHouseWebCrawlerService>();
+        companiesHouseWebCrawlerService.Setup(hw => hw.GetCompaniesHouseFileDownloadCount(It.IsAny<string>())).ReturnsAsync(numberOfDownloads);
 
         var downloadService = new CompaniesHouseDownloadService(
             fileDownloadService.Object,
             downloadStatusStorage.Object,
             companiesHouseFilePostService.Object,
-            webCrawlerService.Object,
+            companiesHouseWebCrawlerService.Object,
             options,
             timeProvider);
 
@@ -319,14 +319,14 @@ public class CompaniesHouseDownloadServiceTests
 
         var companiesHouseFilePostService = new Mock<ICompaniesHouseFilePostService>();
 
-        var webCrawlerService = new Mock<IWebCrawlerService>();
-        webCrawlerService.Setup(hw => hw.GetCompaniesHouseFileDownloadCount(It.IsAny<string>())).ReturnsAsync(numberOfDownloads);
+        var companiesHouseWebCrawlerService = new Mock<ICompaniesHouseWebCrawlerService>();
+        companiesHouseWebCrawlerService.Setup(hw => hw.GetCompaniesHouseFileDownloadCount(It.IsAny<string>())).ReturnsAsync(numberOfDownloads);
 
         var downloadService = new CompaniesHouseDownloadService(
             fileDownloadService.Object,
             downloadStatusStorage.Object,
             companiesHouseFilePostService.Object,
-            webCrawlerService.Object,
+            companiesHouseWebCrawlerService.Object,
             options,
             timeProvider);
 
