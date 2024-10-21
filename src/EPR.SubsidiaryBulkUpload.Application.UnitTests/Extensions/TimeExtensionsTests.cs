@@ -11,7 +11,7 @@ public class TimeExtensionsTests
     [DataRow(1, TimeUnit.Milliseconds, 1)]
     [DataRow(1, TimeUnit.Seconds, 1000)]
     [DataRow(1, TimeUnit.Minutes, 60000)]
-    public void GetTimeSpan_ForInt_ShouldReturnExpectedResult(int input, TimeUnit units, double expectedResultInMilliseconds)
+    public void ToTimeSpan_ForInt_ShouldReturnExpectedResult(int input, TimeUnit units, double expectedResultInMilliseconds)
     {
         // Arrange
         // Act
@@ -26,7 +26,7 @@ public class TimeExtensionsTests
     [DataRow(1.2, TimeUnit.Milliseconds, 1.2)]
     [DataRow(1.5, TimeUnit.Seconds, 1500.0)]
     [DataRow(1.5, TimeUnit.Minutes, 90000.0)]
-    public void GetTimeSpan_ForDouble_ShouldReturnExpectedResult(double input, TimeUnit units, double expectedResultInMilliseconds)
+    public void ToTimeSpan_ForDouble_ShouldReturnExpectedResult(double input, TimeUnit units, double expectedResultInMilliseconds)
     {
         // Arrange
         // Act
@@ -37,7 +37,7 @@ public class TimeExtensionsTests
     }
 
     [TestMethod]
-    public void GetTimeSpan_ForUnknownValue_ShouldThrowException()
+    public void ToTimeSpan_ForUnknownValue_ShouldThrowException()
     {
         // Arrange
         var units = (TimeUnit)999;

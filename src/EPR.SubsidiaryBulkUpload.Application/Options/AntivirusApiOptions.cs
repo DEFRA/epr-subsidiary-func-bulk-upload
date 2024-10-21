@@ -1,10 +1,9 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using EPR.SubsidiaryBulkUpload.Application.Models;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Options;
 
 [ExcludeFromCodeCoverage]
-public class AntivirusApiOptions
+public class AntivirusApiOptions : ApiResilienceOptions
 {
     public const string SectionName = "AntivirusApi";
 
@@ -21,12 +20,6 @@ public class AntivirusApiOptions
     public string Scope { get; set; }
 
     public int Timeout { get; set; }
-
-    public TimeUnit TimeUnits { get; set; } = TimeUnit.Seconds;
-
-    public int RetryPolicyInitialWaitTime { get; set; }
-
-    public int RetryPolicyMaxRetries { get; set; }
 
     public string CollectionSuffix { get; set; }
 

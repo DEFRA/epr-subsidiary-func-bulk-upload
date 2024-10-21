@@ -1,10 +1,9 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using EPR.SubsidiaryBulkUpload.Application.Models;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Options;
 
 [ExcludeFromCodeCoverage]
-public class ApiOptions
+public class ApiOptions : ApiResilienceOptions
 {
     public const string SectionName = "ApiConfig";
 
@@ -22,15 +21,5 @@ public class ApiOptions
 
     public int Timeout { get; set; }
 
-    public TimeUnit TimeUnits { get; set; } = TimeUnit.Seconds;
-
     public string SubsidiaryServiceBaseUrl { get; set; } = null!;
-
-    public int RetryPolicyInitialWaitTime { get; set; }
-
-    public int RetryPolicyMaxRetries { get; set; }
-
-    public int RetryPolicyTooManyAttemptsWaitTime { get; set; }
-
-    public int RetryPolicyTooManyAttemptsMaxRetries { get; set; }
 }

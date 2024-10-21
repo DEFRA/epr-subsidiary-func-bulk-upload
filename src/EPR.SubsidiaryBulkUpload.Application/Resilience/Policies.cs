@@ -17,7 +17,7 @@ public static class Policies
     public static AsyncRetryPolicy<HttpResponseMessage> DefaultRetryPolicy<T>(IServiceProvider sp)
     {
         var options = sp.GetRequiredService<IOptions<ApiOptions>>().Value;
-        return RetryPolicy<T>(options.RetryPolicyInitialWaitTime, options.TimeUnits, options.RetryPolicyMaxRetries, sp);
+        return RetryPolicy<T>(options, sp);
     }
 
     public static AsyncTimeoutPolicy<HttpResponseMessage> DefaultTimeoutPolicy(IServiceProvider sp)
@@ -29,7 +29,7 @@ public static class Policies
     public static AsyncRetryPolicy<HttpResponseMessage> AntivirusRetryPolicy<T>(IServiceProvider sp)
     {
         var options = sp.GetRequiredService<IOptions<AntivirusApiOptions>>().Value;
-        return RetryPolicy<T>(options.RetryPolicyInitialWaitTime, options.TimeUnits, options.RetryPolicyMaxRetries, sp);
+        return RetryPolicy<T>(options, sp);
     }
 
     public static AsyncTimeoutPolicy<HttpResponseMessage> AntivirusTimeoutPolicy(IServiceProvider sp)
@@ -41,19 +41,19 @@ public static class Policies
     public static AsyncRetryPolicy<HttpResponseMessage> CompaniesHouseDownloadRetryPolicy<T>(IServiceProvider sp)
     {
         var options = sp.GetRequiredService<IOptions<CompaniesHouseDownloadOptions>>().Value;
-        return RetryPolicy<T>(options.RetryPolicyInitialWaitTime, options.TimeUnits, options.RetryPolicyMaxRetries, sp);
+        return RetryPolicy<T>(options, sp);
     }
 
-    private static AsyncRetryPolicy<HttpResponseMessage> RetryPolicy<T>(int initialWaitTime, TimeUnit timeUnits, int maxRetries, IServiceProvider sp) =>
+    private static AsyncRetryPolicy<HttpResponseMessage> RetryPolicy<T>(ApiResilienceOptions options, IServiceProvider sp) =>
         HttpPolicyExtensions
             .HandleTransientHttpError()
             .OrResult(msg => msg.StatusCode == HttpStatusCode.TooManyRequests)
             .WaitAndRetryAsync(
-                maxRetries,
+                options.RetryPolicyMaxRetries,
                 retryAttempt =>
                 {
-                    var waitTime = Math.Pow(initialWaitTime, retryAttempt);
-                    return waitTime.ToTimespan(timeUnits);
+                    var waitTime = Math.Pow(options.RetryPolicyInitialWaitTime, retryAttempt);
+                    return waitTime.ToTimespan(options.TimeUnits);
                 },
                 onRetry: (outcome, timespan, retryAttempt, context) =>
                 {

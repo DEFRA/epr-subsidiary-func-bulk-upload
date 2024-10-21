@@ -28,7 +28,7 @@ public static class Pipelines
     {
         return (builder, context) =>
         {
-            var apiOptions = context.GetOptions<ApiOptions>();
+            var options = context.GetOptions<ApiOptions>();
 
             builder
             .AddRetry(new RetryStrategyOptions<HttpResponseMessage>
@@ -53,9 +53,9 @@ public static class Pipelines
 
                     return new ValueTask<bool>(shouldHandle);
                 },
-                Delay = apiOptions.RetryPolicyInitialWaitTime.ToTimespan(apiOptions.TimeUnits),
+                Delay = options.RetryPolicyInitialWaitTime.ToTimespan(options.TimeUnits),
                 BackoffType = DelayBackoffType.Exponential,
-                MaxRetryAttempts = apiOptions.RetryPolicyMaxRetries,
+                MaxRetryAttempts = options.RetryPolicyMaxRetries,
                 UseJitter = true,
                 OnRetry = args =>
                 {
@@ -74,8 +74,8 @@ public static class Pipelines
             {
                 ShouldHandle = new PredicateBuilder<HttpResponseMessage>()
                     .HandleResult(response => response.StatusCode == HttpStatusCode.TooManyRequests),
-                Delay = apiOptions.RetryPolicyTooManyAttemptsWaitTime.ToTimespan(apiOptions.TimeUnits),
-                MaxRetryAttempts = apiOptions.RetryPolicyTooManyAttemptsMaxRetries,
+                Delay = options.RetryPolicyTooManyAttemptsWaitTime.ToTimespan(options.TimeUnits),
+                MaxRetryAttempts = options.RetryPolicyTooManyAttemptsMaxRetries,
                 UseJitter = true,
                 BackoffType = DelayBackoffType.Exponential,
                 OnRetry = args =>
@@ -93,7 +93,7 @@ public static class Pipelines
             })
             .AddTimeout(new TimeoutStrategyOptions
             {
-                Timeout = apiOptions.Timeout.ToTimespan(apiOptions.TimeUnits)
+                Timeout = options.Timeout.ToTimespan(options.TimeUnits)
             });
         };
     }
