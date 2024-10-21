@@ -4,7 +4,7 @@ using Azure.Data.Tables;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
 using EPR.SubsidiaryBulkUpload.Application.UnitTests.Mocks;
-using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Time.Testing;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services.CompaniesHouseDownload;
@@ -13,6 +13,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services.CompaniesHouse
 public class DownloadStatusStorageTests
 {
     private Fixture fixture;
+    private Mock<ILogger<DownloadStatusStorage>> loggerMock;
     private Mock<TableServiceClient> tableServiceClient;
     private Mock<TableClient> tableClient;
     private FakeTimeProvider timeProvider;
@@ -21,6 +22,7 @@ public class DownloadStatusStorageTests
     public void TestInitialize()
     {
         fixture = new();
+        loggerMock = new Mock<ILogger<DownloadStatusStorage>>();
         tableServiceClient = new Mock<TableServiceClient>();
         tableClient = new Mock<TableClient>();
         tableServiceClient
@@ -54,7 +56,7 @@ public class DownloadStatusStorageTests
                 It.IsAny<CancellationToken>()))
             .Returns(new MockAsyncPageable<CompaniesHouseFileSetDownloadStatus>(downloadLog));
 
-        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, NullLogger<DownloadStatusStorage>.Instance);
+        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, loggerMock.Object);
 
         // Act
         var actual = await downloadStatusStorage.GetCompaniesHouseFileDownloadStatusAsync(partitionKey);
@@ -84,7 +86,7 @@ public class DownloadStatusStorageTests
                 It.IsAny<CancellationToken>()))
             .Returns(new MockAsyncPageable<CompaniesHouseFileSetDownloadStatus>(new List<CompaniesHouseFileSetDownloadStatus>()));
 
-        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, NullLogger<DownloadStatusStorage>.Instance);
+        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, loggerMock.Object);
 
         // Act
         var actual = await downloadStatusStorage.GetCompaniesHouseFileDownloadStatusAsync(partitionKey);
@@ -104,7 +106,7 @@ public class DownloadStatusStorageTests
         tableClient.Setup(tc => tc.CreateIfNotExistsAsync(It.IsAny<CancellationToken>()))
             .ThrowsAsync(new RequestFailedException("error"));
 
-        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, NullLogger<DownloadStatusStorage>.Instance);
+        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, loggerMock.Object);
 
         // Act
         var actual = await downloadStatusStorage.GetCompaniesHouseFileDownloadStatusAsync(partitionKey);
@@ -119,7 +121,7 @@ public class DownloadStatusStorageTests
         // Arrange
         var status = fixture.Create<CompaniesHouseFileSetDownloadStatus>();
 
-        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, NullLogger<DownloadStatusStorage>.Instance);
+        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, loggerMock.Object);
 
         // Act
         var response = await downloadStatusStorage.SetCompaniesHouseFileDownloadStatusAsync(status);
@@ -127,6 +129,26 @@ public class DownloadStatusStorageTests
         // Assert
         response.Should().Be(true);
         tableClient.Verify(tc => tc.UpsertEntityAsync<CompaniesHouseFileSetDownloadStatus>(status, TableUpdateMode.Merge, It.IsAny<CancellationToken>()));
+    }
+
+    [TestMethod]
+    public async Task SetCompaniesHouseFileDownloadStatusAsync_LogsError_When_RequestFailedException()
+    {
+        // Arrange
+        var status = fixture.Create<CompaniesHouseFileSetDownloadStatus>();
+
+        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, loggerMock.Object);
+
+        tableClient.Setup(tc => tc.UpsertEntityAsync(It.IsAny<CompaniesHouseFileSetDownloadStatus>(), It.IsAny<TableUpdateMode>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new RequestFailedException("error"));
+
+        // Act
+        var response = await downloadStatusStorage.SetCompaniesHouseFileDownloadStatusAsync(status);
+
+        // Assert
+        response.Should().Be(false);
+        tableClient.Verify(tc => tc.UpsertEntityAsync<CompaniesHouseFileSetDownloadStatus>(status, TableUpdateMode.Merge, It.IsAny<CancellationToken>()));
+        loggerMock.VerifyLog(x => x.LogError(It.IsAny<Exception>(), "Cannot get or create table {TableName}", DownloadStatusStorage.CompaniesHouseDownloadTableName), Times.Once);
     }
 
     [TestMethod]
@@ -143,7 +165,7 @@ public class DownloadStatusStorageTests
                 It.IsAny<CancellationToken>()))
             .Returns(new MockAsyncPageable<CompaniesHouseFileSetDownloadStatus>(new List<CompaniesHouseFileSetDownloadStatus>()));
 
-        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, NullLogger<DownloadStatusStorage>.Instance);
+        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, loggerMock.Object);
 
         // Act
         await downloadStatusStorage.CreateCompaniesHouseFileDownloadLogAsync(partitionKey);
@@ -170,7 +192,7 @@ public class DownloadStatusStorageTests
         tableClient.Setup(tc => tc.SubmitTransactionAsync(It.IsAny<IEnumerable<TableTransactionAction>>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new RequestFailedException("error"));
 
-        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, NullLogger<DownloadStatusStorage>.Instance);
+        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, loggerMock.Object);
 
         // Act & Assert
         await Assert.ThrowsExceptionAsync<RequestFailedException>(async () =>
@@ -201,7 +223,7 @@ public class DownloadStatusStorageTests
                 It.IsAny<CancellationToken>()))
             .Returns(new MockAsyncPageable<CompaniesHouseFileSetDownloadStatus>(downloadLog));
 
-        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, NullLogger<DownloadStatusStorage>.Instance);
+        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, loggerMock.Object);
 
         // Act
         var result = await downloadStatusStorage.GetCompaniesHouseFileDownloadListAsync(partitionKey);
@@ -224,7 +246,7 @@ public class DownloadStatusStorageTests
                 It.IsAny<CancellationToken>()))
             .Returns(new MockAsyncPageable<CompaniesHouseFileSetDownloadStatus>(new List<CompaniesHouseFileSetDownloadStatus>()));
 
-        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, NullLogger<DownloadStatusStorage>.Instance);
+        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, loggerMock.Object);
 
         // Act
         var result = await downloadStatusStorage.GetCompaniesHouseFileDownloadListAsync(partitionKey);
@@ -246,7 +268,7 @@ public class DownloadStatusStorageTests
                 It.IsAny<CancellationToken>()))
             .Throws(new RequestFailedException("error"));
 
-        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, NullLogger<DownloadStatusStorage>.Instance);
+        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, loggerMock.Object);
 
         // Act
         var result = await downloadStatusStorage.GetCompaniesHouseFileDownloadListAsync(partitionKey);
@@ -272,7 +294,7 @@ public class DownloadStatusStorageTests
             DownloadFileName = "test_file_1.zip"
         };
 
-        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, NullLogger<DownloadStatusStorage>.Instance);
+        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, loggerMock.Object);
 
         // Act
         var result = await downloadStatusStorage.SetCompaniesHouseFileDownloadStatusAsync(companiesHouseFileSetDownloadStatus);
