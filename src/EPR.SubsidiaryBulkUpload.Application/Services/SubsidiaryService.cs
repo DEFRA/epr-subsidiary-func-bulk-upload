@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
+using System.Web;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Models;
@@ -107,7 +108,7 @@ public class SubsidiaryService : ISubsidiaryService
 
     public async Task<OrganisationResponseModel?> GetCompanyByCompanyName(string companiesHouseName)
     {
-        var response = await _httpClient.GetAsync($"{OrganisationByCompanyHouseNameUri}?companiesHouseName={companiesHouseName}");
+        var response = await _httpClient.GetAsync($"{OrganisationByCompanyHouseNameUri}?companiesHouseName={HttpUtility.UrlEncode(companiesHouseName)}");
         if (response.StatusCode == HttpStatusCode.NoContent)
         {
             return null;

@@ -16,10 +16,9 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
     public async Task<int> Process(IEnumerable<CompaniesHouseCompany> subsidiaries, CompaniesHouseCompany parent, OrganisationResponseModel parentOrg, UserRequestModel userRequestModel)
     {
-        // companeis with none null company house number
-        var noneNullCompaniesHouseNumberRecords = subsidiaries.Where(ch => !string.IsNullOrEmpty(ch.companies_house_number) && string.IsNullOrEmpty(ch.franchisee_licensee_tenant));
+        var nonNullCompaniesHouseNumberRecords = subsidiaries.Where(ch => !string.IsNullOrEmpty(ch.companies_house_number) && string.IsNullOrEmpty(ch.franchisee_licensee_tenant));
 
-        var subsidiariesAndOrg = noneNullCompaniesHouseNumberRecords
+        var subsidiariesAndOrg = nonNullCompaniesHouseNumberRecords
             .ToAsyncEnumerable()
             .SelectAwait(async subsidiary => (Subsidiary: subsidiary, SubsidiaryOrg: await organisationService.GetCompanyByCompaniesHouseNumber(subsidiary.companies_house_number)));
 
