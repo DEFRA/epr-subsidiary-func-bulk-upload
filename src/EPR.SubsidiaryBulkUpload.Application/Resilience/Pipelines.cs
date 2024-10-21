@@ -37,11 +37,12 @@ public static class Pipelines
                 {
                     bool shouldHandle;
                     var exception = args.Outcome.Exception;
-                    if (exception is OperationCanceledException && exception.Source == "System.Private.CoreLib" && exception.InnerException is TimeoutException)
+                    if (exception is TimeoutRejectedException ||
+                       (exception is OperationCanceledException && exception.Source == "System.Private.CoreLib" && exception.InnerException is TimeoutException))
                     {
                         shouldHandle = true;
                     }
-                    else if(args.Outcome.Result.StatusCode == HttpStatusCode.TooManyRequests)
+                    else if (args.Outcome.Result.StatusCode == HttpStatusCode.TooManyRequests)
                     {
                         shouldHandle = false;
                     }

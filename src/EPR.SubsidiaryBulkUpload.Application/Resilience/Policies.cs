@@ -16,106 +16,32 @@ public static class Policies
 {
     public static AsyncRetryPolicy<HttpResponseMessage> DefaultRetryPolicy<T>(IServiceProvider sp)
     {
-        var apiOptions = sp.GetRequiredService<IOptions<ApiOptions>>().Value;
-
-        return HttpPolicyExtensions
-            .HandleTransientHttpError()
-            .OrResult(msg => msg.StatusCode == HttpStatusCode.TooManyRequests)
-            .WaitAndRetryAsync(
-                apiOptions.RetryPolicyMaxRetries,
-                retryAttempt =>
-                {
-                    var waitTime = Math.Pow(apiOptions.RetryPolicyInitialWaitTime, retryAttempt);
-                    return waitTime.ToTimespan(apiOptions.TimeUnits);
-                },
-                onRetry: (outcome, timespan, retryAttempt, context) =>
-                {
-                    sp?.GetService<ILogger<T>>()?
-                        .LogWarning(
-                            "{Type} retry policy will attempt retry {Retry} in {Delay}ms after a transient error or timeout. {ExceptionMessage}",
-                            typeof(T).Name,
-                            retryAttempt,
-                            timespan.TotalMilliseconds,
-                            outcome?.Exception?.Message);
-                });
+        var options = sp.GetRequiredService<IOptions<ApiOptions>>().Value;
+        return RetryPolicy<T>(options.RetryPolicyInitialWaitTime, options.TimeUnits, options.RetryPolicyMaxRetries, sp);
     }
 
     public static AsyncTimeoutPolicy<HttpResponseMessage> DefaultTimeoutPolicy(IServiceProvider sp)
     {
         var options = sp.GetRequiredService<IOptions<ApiOptions>>().Value;
-
         return TimeoutPolicy(options.Timeout, options.TimeUnits);
-        /*
-        return Policy
-            .TimeoutAsync<HttpResponseMessage>(
-                timeout: options.Timeout.ToTimespan(options.TimeUnits),
-                timeoutStrategy: TimeoutStrategy.Optimistic);
-        */
     }
 
     public static AsyncRetryPolicy<HttpResponseMessage> AntivirusRetryPolicy<T>(IServiceProvider sp)
     {
         var options = sp.GetRequiredService<IOptions<AntivirusApiOptions>>().Value;
-
-        return HttpPolicyExtensions
-            .HandleTransientHttpError()
-            .OrResult(msg => msg.StatusCode == HttpStatusCode.TooManyRequests)
-        .WaitAndRetryAsync(
-                options.RetryPolicyMaxRetries,
-                retryAttempt =>
-                {
-                    var waitTime = Math.Pow(options.RetryPolicyInitialWaitTime, retryAttempt);
-                    return waitTime.ToTimespan(options.TimeUnits);
-                },
-                onRetry: (outcome, timespan, retryAttempt, context) =>
-                {
-                    sp?.GetService<ILogger<T>>()?
-                        .LogWarning(
-                            "{Type} retry policy will attempt retry {Retry} in {Delay}ms after a transient error or timeout. {ExceptionMessage}",
-                            typeof(T).Name,
-                            retryAttempt,
-                            timespan.TotalMilliseconds,
-                            outcome?.Exception?.Message);
-                });
+        return RetryPolicy<T>(options.RetryPolicyInitialWaitTime, options.TimeUnits, options.RetryPolicyMaxRetries, sp);
     }
 
     public static AsyncTimeoutPolicy<HttpResponseMessage> AntivirusTimeoutPolicy(IServiceProvider sp)
     {
         var options = sp.GetRequiredService<IOptions<AntivirusApiOptions>>().Value;
-
         return TimeoutPolicy(options.Timeout, options.TimeUnits);
-        /*
-        return Policy
-            .TimeoutAsync<HttpResponseMessage>(
-                timeout: antivirusApiOptions.Timeout.ToTimespan(antivirusApiOptions.TimeUnits),
-                timeoutStrategy: TimeoutStrategy.Optimistic);
-        */
     }
 
     public static AsyncRetryPolicy<HttpResponseMessage> CompaniesHouseDownloadRetryPolicy<T>(IServiceProvider sp)
     {
         var options = sp.GetRequiredService<IOptions<CompaniesHouseDownloadOptions>>().Value;
-
-        return HttpPolicyExtensions
-            .HandleTransientHttpError()
-            .OrResult(msg => msg.StatusCode == HttpStatusCode.TooManyRequests)
-            .WaitAndRetryAsync(
-                options.RetryPolicyMaxRetries,
-                retryAttempt =>
-                {
-                    var waitTime = Math.Pow(options.RetryPolicyInitialWaitTime, retryAttempt);
-                    return waitTime.ToTimespan(options.TimeUnits);
-                },
-                onRetry: (outcome, timespan, retryAttempt, context) =>
-                {
-                    sp?.GetService<ILogger<T>>()?
-                        .LogWarning(
-                            "{Type} retry policy will attempt retry {Retry} in {Delay}ms after a transient error or timeout. {ExceptionMessage}",
-                            typeof(T).Name,
-                            retryAttempt,
-                            timespan.TotalMilliseconds,
-                            outcome?.Exception?.Message);
-                });
+        return RetryPolicy<T>(options.RetryPolicyInitialWaitTime, options.TimeUnits, options.RetryPolicyMaxRetries, sp);
     }
 
     private static AsyncRetryPolicy<HttpResponseMessage> RetryPolicy<T>(int initialWaitTime, TimeUnit timeUnits, int maxRetries, IServiceProvider sp) =>
