@@ -17,7 +17,7 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
     public async Task<bool> GetCompaniesHouseFileDownloadStatusAsync(string partitionKey)
     {
         var tableClient = _tableServiceClient.GetTableClient(CompaniesHouseDownloadTableName);
-        var now = timeProvider.GetUtcNow();
+        var now = _timeProvider.GetUtcNow();
 
         try
         {
@@ -32,12 +32,13 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
             return downloadProgressList.Exists(x => x.DownloadStatus != FileDownloadResponseCode.Succeeded);
         }
         catch (RequestFailedException ex)
-            {
+        {
             _logger.LogError(ex, "Cannot get or create table {TableName}", CompaniesHouseDownloadTableName);
         }
 
         return false;
     }
+
     public async Task<List<CompaniesHouseFileSetDownloadStatus>> GetCompaniesHouseFileDownloadListAsync(string partitionKey)
     {
         var tableClient = _tableServiceClient.GetTableClient(CompaniesHouseDownloadTableName);
@@ -47,7 +48,6 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
             var downloadProgressList = await tableClient.QueryAsync<CompaniesHouseFileSetDownloadStatus>(x => x.PartitionKey == partitionKey).ToListAsync();
 
             return downloadProgressList.Where(x => x.DownloadStatus != FileDownloadResponseCode.Succeeded).ToList();
-        }
         }
         catch (RequestFailedException ex)
         {
@@ -74,19 +74,20 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
 
         return success;
     }
+
     public async Task CreateCompaniesHouseFileDownloadLogAsync(string partitionKey, int expectedFileCount)
     {
         var tableClient = _tableServiceClient.GetTableClient(CompaniesHouseDownloadTableName);
         await tableClient.CreateIfNotExistsAsync();
         var downloadsLog = await tableClient.QueryAsync<CompaniesHouseFileSetDownloadStatus>(x => x.PartitionKey == partitionKey).ToListAsync();
-    private static string RowKeyForMonth(DateTimeOffset when) => $"{MonthPartialRowKey}-{when.Month}-{when.Year}";
-        if (downloadsLog.Count == 0)
-        {
-            try
-            {
-                var now = _timeProvider.GetUtcNow();
-                var entities = new List<CompaniesHouseFileSetDownloadStatus>();
 
+        try
+        {
+            var now = _timeProvider.GetUtcNow();
+            var entities = new List<CompaniesHouseFileSetDownloadStatus>();
+
+            if (downloadsLog.Count == 0)
+            {
                 for (int i = 1; i <= expectedFileCount; i++)
                 {
                     var fileName = $"{PartialFilename}-{now.Year}-{now.Month:00}-01-part{i}_{expectedFileCount}.zip";
@@ -99,22 +100,40 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
                         DownloadStatus = null
                     });
                 }
-
-                var batchTransactions = new List<TableTransactionAction>();
-                batchTransactions.AddRange(entities.Select(e => new TableTransactionAction(TableTransactionActionType.Add, e)));
-                await tableClient.SubmitTransactionAsync(batchTransactions);
             }
-            catch (RequestFailedException ex)
+            else if (downloadsLog.Count != expectedFileCount)
             {
-                _logger.LogError(ex, "Cannot get or create table {TableName}", CompaniesHouseDownloadTableName);
+                for (int i = 1; i <= expectedFileCount; i++)
+                {
+                    var fileName = $"{PartialFilename}-{now.Year}-{now.Month:00}-01-part{i}_{expectedFileCount}.zip";
+                    var rowKey = RowKeyForThisMonth(now, i);
 
-                throw;
+                    if (!downloadsLog.Exists(x => x.RowKey == rowKey))
+                    {
+                        entities.Add(new CompaniesHouseFileSetDownloadStatus
+                        {
+                            PartitionKey = partitionKey,
+                            RowKey = RowKeyForThisMonth(now, i),
+                            DownloadFileName = fileName,
+                            DownloadStatus = null
+                        });
+                    }
+                }
             }
-            logger.LogError(ex, "Cannot get or table entity from {Table} row {Row}", CompaniesHouseDownloadTableName, rowKey);
+
+            var batchTransactions = new List<TableTransactionAction>();
+            batchTransactions.AddRange(entities.Select(e => new TableTransactionAction(TableTransactionActionType.Add, e)));
+            await tableClient.SubmitTransactionAsync(batchTransactions);
+        }
+        catch (RequestFailedException ex)
+        {
+            _logger.LogError(ex, "Cannot get or create table {TableName}", CompaniesHouseDownloadTableName);
+
+            throw;
         }
     }
 
     private static string RowKeyForThisMonth(DateTimeOffset now, int filePart) => RowKeyForMonth(now, filePart);
 
-    private static string RowKeyForMonth(DateTimeOffset when, int filePart) => $"Part-{filePart}-{when.Month}-{when.Year}";
+    private static string RowKeyForMonth(DateTimeOffset when, int filePart) => $"Part-{filePart}-{when.Month:00}-{when.Year}";
 }

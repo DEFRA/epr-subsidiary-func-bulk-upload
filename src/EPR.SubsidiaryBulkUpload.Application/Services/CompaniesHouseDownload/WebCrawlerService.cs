@@ -37,6 +37,11 @@ public class WebCrawlerService(ILogger<FileDownloadService> logger, HtmlWeb html
             expectedFileCount = 0;
         }
 
+        if (expectedFileCount == 0)
+        {
+            _logger.LogWarning("No files to download from CompaniesHouse{DownloadPagePath}", downloadPagePath);
+        }
+
         return expectedFileCount;
     }
 }

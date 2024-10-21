@@ -150,7 +150,40 @@ public class DownloadStatusStorageTests
 
         // Assert
         tableClient.Verify(tc => tc.CreateIfNotExistsAsync(It.IsAny<CancellationToken>()));
-        tableClient.Verify(tc => tc.SubmitTransactionAsync(It.IsAny<IEnumerable<TableTransactionAction>>(), It.IsAny<CancellationToken>()));
+        tableClient.Verify(tc => tc.SubmitTransactionAsync(It.Is<IEnumerable<TableTransactionAction>>(x => x.Count() == 7), It.IsAny<CancellationToken>()));
+    }
+
+    [TestMethod]
+    public async Task CreateCompaniesHouseFileDownloadLogAsync_ShouldRecreateMissingLogEntries()
+    {
+        // Arrange
+        var now = new DateTimeOffset(2024, 3, 5, 7, 9, 11, TimeSpan.Zero);
+        timeProvider.SetUtcNow(now);
+        var partitionKey = "202403";
+
+        var downloadLog = new List<CompaniesHouseFileSetDownloadStatus>
+        {
+            new() { RowKey = "Part-1-03-2024", DownloadFileName = "test_file_1.zip" },
+            new() { RowKey = "Part-3-03-2024", DownloadFileName = "test_file_3.zip" },
+            new() { RowKey = "Part-5-03-2024", DownloadFileName = "test_file_5.zip" }
+        };
+
+        tableClient.SetupSequence(tc =>
+            tc.QueryAsync<CompaniesHouseFileSetDownloadStatus>(
+                It.IsAny<Expression<Func<CompaniesHouseFileSetDownloadStatus, bool>>>(),
+                It.IsAny<int?>(),
+                It.IsAny<IEnumerable<string>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(new MockAsyncPageable<CompaniesHouseFileSetDownloadStatus>(downloadLog));
+
+        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, NullLogger<DownloadStatusStorage>.Instance);
+
+        // Act
+        await downloadStatusStorage.CreateCompaniesHouseFileDownloadLogAsync(partitionKey, 5);
+
+        // Assert
+        tableClient.Verify(tc => tc.CreateIfNotExistsAsync(It.IsAny<CancellationToken>()));
+        tableClient.Verify(tc => tc.SubmitTransactionAsync(It.Is<IEnumerable<TableTransactionAction>>(x => x.Count() == 2), It.IsAny<CancellationToken>()));
     }
 
     [TestMethod]
