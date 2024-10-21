@@ -7,13 +7,12 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
 public class CompaniesHouseWebCrawlerService(ILogger<CompaniesHouseWebCrawlerService> logger, HtmlWeb htmlWeb)
     : ICompaniesHouseWebCrawlerService
 {
-    private const int DefaultFileCount = 7;
     private readonly ILogger<CompaniesHouseWebCrawlerService> _logger = logger;
     private readonly HtmlWeb _htmlWeb = htmlWeb;
 
     public async Task<int> GetCompaniesHouseFileDownloadCount(string downloadPagePath)
     {
-        var expectedFileCount = DefaultFileCount;
+        var expectedFileCount = 0;
 
         try
         {
@@ -42,11 +41,6 @@ public class CompaniesHouseWebCrawlerService(ILogger<CompaniesHouseWebCrawlerSer
             _logger.LogError(ex, "Failed to access downlod page at {DownloadPagePath}", downloadPagePath);
             expectedFileCount = 0;
             throw;
-        }
-
-        if (expectedFileCount == 0)
-        {
-            _logger.LogError("No files to download from CompaniesHouse{DownloadPagePath}", downloadPagePath);
         }
 
         return expectedFileCount;

@@ -17,7 +17,6 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
     public async Task<bool> GetCompaniesHouseFileDownloadStatusAsync(string partitionKey)
     {
         var tableClient = _tableServiceClient.GetTableClient(CompaniesHouseDownloadTableName);
-        var now = _timeProvider.GetUtcNow();
 
         try
         {

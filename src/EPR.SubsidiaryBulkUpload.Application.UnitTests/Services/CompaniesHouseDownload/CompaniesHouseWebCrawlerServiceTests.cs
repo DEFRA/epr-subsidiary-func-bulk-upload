@@ -33,6 +33,23 @@ public class CompaniesHouseWebCrawlerServiceTests
     }
 
     [TestMethod]
+    public async Task GetCompaniesHouseFileDownloadCount_NoFilesAvailableForDownload()
+    {
+        // Arrange
+        var htmlWeb = new HtmlWeb();
+        var logger = new Mock<ILogger>();
+        var downloadPath = "https://download.companieshouse.gov.uk/";
+
+        var companiesHouseWebCrawlerService = new CompaniesHouseWebCrawlerService(_loggerMock.Object, htmlWeb);
+
+        // Act
+        var result = await companiesHouseWebCrawlerService.GetCompaniesHouseFileDownloadCount(downloadPath);
+
+        // Assert
+        result.Should().Be(0);
+    }
+
+    [TestMethod]
     public async Task GetCompaniesHouseFileDownloadCount_ThrowsException()
     {
         // Arrange
