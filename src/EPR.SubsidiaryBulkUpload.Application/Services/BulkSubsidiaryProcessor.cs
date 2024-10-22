@@ -164,32 +164,6 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         return modelLoaded ? newSubsidiaryModel : null;
     }
 
-    private async Task<LinkOrganisationModel?> GetLinkModelForNonCompaniesHouseData(CompaniesHouseCompany subsidiary, OrganisationResponseModel parentOrg, Guid userId)
-    {
-        var newSubsidiaryModel = new LinkOrganisationModel()
-        {
-            UserId = userId,
-            Subsidiary = new OrganisationModel()
-            {
-                ReferenceNumber = subsidiary.organisation_id,
-                Name = subsidiary.organisation_name,
-                CompaniesHouseNumber = subsidiary.companies_house_number,
-                OrganisationType = OrganisationType.NonCompaniesHouseCompany,
-                ProducerType = ProducerType.Other,
-                IsComplianceScheme = false,
-                Nation = Nation.NotSet,
-                SubsidiaryOrganisationId = subsidiary.subsidiary_id,
-                RawContent = subsidiary.RawRow,
-                FileLineNumber = subsidiary.FileLineNumber,
-                Franchisee_Licensee_Tenant = subsidiary.franchisee_licensee_tenant,
-                Address = new AddressModel()
-            },
-            ParentOrganisationId = parentOrg.ExternalId.Value
-        };
-
-        return newSubsidiaryModel;
-    }
-
     private async Task AddSubsidiary(OrganisationResponseModel parent, OrganisationResponseModel subsidiary, Guid userId, CompaniesHouseCompany subsidiaryFileData)
     {
         var subsidiaryModel = new SubsidiaryAddModel
