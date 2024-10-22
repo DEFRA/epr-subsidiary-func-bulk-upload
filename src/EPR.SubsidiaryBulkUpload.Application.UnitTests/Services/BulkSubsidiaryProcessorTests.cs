@@ -240,6 +240,7 @@ public class BulkSubsidiaryProcessorTests
         notificationServiceMock.Verify(nft => nft.SetErrorStatus(errorKey, It.Is<List<UploadFileErrorModel>>(err => err[0].ErrorNumber > 0)), Times.Once);
     }
 
+    [TestMethod]
     public async Task ShouldProcessFranchiseeWhenDataExistForFranchisee()
     {
         // Arrange
@@ -257,6 +258,8 @@ public class BulkSubsidiaryProcessorTests
             .ToArray();
 
         var subsidiaryOrganisations = _fixture.CreateMany<OrganisationResponseModel>(1).ToArray();
+
+        subsidiaries[0].franchisee_licensee_tenant = "Y";
 
         subsidiaryOrganisations[0].companiesHouseNumber = subsidiaries[0].companies_house_number;
         subsidiaryOrganisations[0].name = subsidiaries[0].organisation_name;
@@ -276,6 +279,9 @@ public class BulkSubsidiaryProcessorTests
         companiesHouseDataProvider.Setup(ss => ss.SetCompaniesHouseData(It.IsAny<OrganisationModel>()))
             .ReturnsAsync(true)
             .Callback<OrganisationModel>(model => model.Error = null);
+
+        subsidiaryService.Setup(ss => ss.GetCompanyByCompanyName(subsidiaries[0].organisation_name))
+        .ReturnsAsync((OrganisationResponseModel?)null);
 
         var notificationServiceMock = new Mock<INotificationService>();
 
