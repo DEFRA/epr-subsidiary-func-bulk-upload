@@ -26,9 +26,9 @@ public class CompaniesHouseWebCrawlerService(ILogger<CompaniesHouseWebCrawlerSer
                 return expectedFileCount;
             }
 
-            for (int i = 0; i < listItems.Count; i++)
+            for (var i = 0; i < listItems.Count; i++)
             {
-                HtmlNode? item = listItems[i];
+                var item = listItems[i];
                 if (item.InnerText.Contains("part"))
                 {
                     var filePart = item.InnerText.ToFilePartNumberAndCount();

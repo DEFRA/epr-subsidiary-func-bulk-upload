@@ -121,14 +121,17 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
                 }
             }
 
-            var batchTransactions = new List<TableTransactionAction>();
-            batchTransactions.AddRange(entities.Select(e => new TableTransactionAction(TableTransactionActionType.Add, e)));
-            await tableClient.SubmitTransactionAsync(batchTransactions);
+            if (entities.Count > 0)
+            {
+                var batchTransactions = new List<TableTransactionAction>();
+                batchTransactions.AddRange(entities.Select(e => new TableTransactionAction(TableTransactionActionType.Add, e)));
+                await tableClient.SubmitTransactionAsync(batchTransactions);
+            }
         }
         catch (RequestFailedException ex)
         {
             _logger.LogError(ex, "Cannot get or create table {TableName}", CompaniesHouseDownloadTableName);
-            throw new FileDownloadException("Cannot get or create table");
+            throw new FileDownloadException($"Cannot get or create table {CompaniesHouseDownloadTableName}");
         }
     }
 
