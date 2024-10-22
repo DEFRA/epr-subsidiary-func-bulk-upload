@@ -48,10 +48,4 @@ public class FileDownloadService(HttpClient httpClient, ILogger<FileDownloadServ
 
         return (stream, responseCode);
     }
-
-    public async Task<int> GetCompaniesHouseFileDownloadCount(string path)
-    {
-        httpClient.GetStreamAsync(path);
-        return 7;
-    }
 }
