@@ -178,7 +178,6 @@ public class BulkSubsidiaryProcessorTests
         // Assert
         inserts.Should().HaveCount(0);
 
-        // "At least once" because the implementation of Process (controversially) calls SetCompaniesHouseData twice due to how the code is structured
         // companiesHouseDataProvider.Verify(chdp => chdp.SetCompaniesHouseData(It.Is<OrganisationModel>(org => !string.IsNullOrEmpty(org.CompaniesHouseNumber))), Times.AtLeastOnce);
     }
 
