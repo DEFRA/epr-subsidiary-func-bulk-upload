@@ -1,6 +1,7 @@
 ﻿using System.Linq.Expressions;
 using Azure;
 using Azure.Data.Tables;
+using EPR.SubsidiaryBulkUpload.Application.Exceptions;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
 using EPR.SubsidiaryBulkUpload.Application.UnitTests.Mocks;
@@ -206,7 +207,7 @@ public class DownloadStatusStorageTests
         var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, NullLogger<DownloadStatusStorage>.Instance);
 
         // Act & Assert
-        await Assert.ThrowsExceptionAsync<RequestFailedException>(async () =>
+        await Assert.ThrowsExceptionAsync<FileDownloadException>(async () =>
             await downloadStatusStorage.CreateCompaniesHouseFileDownloadLogAsync(partitionKey, 7));
 
         tableClient.Verify(tc => tc.CreateIfNotExistsAsync(It.IsAny<CancellationToken>()));

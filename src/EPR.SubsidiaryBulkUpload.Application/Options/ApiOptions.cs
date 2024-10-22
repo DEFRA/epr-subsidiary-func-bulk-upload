@@ -16,7 +16,7 @@ public class ApiOptions
 
     public string CompaniesHouseDataDownloadUrl { get; set; } = null!;
 
-    public string CompaniesHouseFileDownloadPath { get; set; } = null!;
+    public string CompaniesHouseFileDownloadPage { get; set; } = null!;
 
     public string AccountServiceClientId { get; set; } = null!;
 

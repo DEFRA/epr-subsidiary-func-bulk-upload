@@ -27,12 +27,15 @@ public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadServ
         if (await _downloadStatusStorage.GetCompaniesHouseFileDownloadStatusAsync(partitionKey))
         {
             await DownloadFiles(partitionKey);
-    }
+        }
     }
 
     public async Task DownloadFiles(string partitionKey)
     {
-        var expectedFileCount = await _companiesHouseWebCrawlerService.GetCompaniesHouseFileDownloadCount(_apiOptions.CompaniesHouseFileDownloadPath);
+        var downloadUrl = _apiOptions.CompaniesHouseDataDownloadUrl.TrimEnd('/');
+        var downloadPage = _apiOptions.CompaniesHouseFileDownloadPage.TrimStart('/');
+        var downloadPath = string.Format($"{downloadUrl}/{downloadPage}");
+        var expectedFileCount = await _companiesHouseWebCrawlerService.GetCompaniesHouseFileDownloadCount(downloadPath);
 
         if (expectedFileCount == 0)
         {

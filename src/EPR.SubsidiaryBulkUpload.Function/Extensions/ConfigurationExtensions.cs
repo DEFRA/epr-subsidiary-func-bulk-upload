@@ -12,7 +12,6 @@ using EPR.SubsidiaryBulkUpload.Application.Resilience;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
-using HtmlAgilityPack;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -115,7 +114,6 @@ public static class ConfigurationExtensions
         services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisOptions.ConnectionString));
         services.AddSingleton<ITableStorageProcessor, TableStorageProcessor>();
         services.AddSingleton<TimeProvider>(TimeProvider.System);
-        services.AddSingleton<HtmlWeb>();
 
         services.AddScoped<AntivirusApiAuthorizationHandler>();
         services.AddScoped<ISystemDetailsProvider, SystemDetailsProvider>();
@@ -136,6 +134,7 @@ public static class ConfigurationExtensions
         services.AddTransient<IAntivirusClient, AntivirusClient>();
         services.AddTransient<ISubmissionStatusClient, SubmissionStatusClient>();
         services.AddTransient<ICompaniesHouseWebCrawlerService, CompaniesHouseWebCrawlerService>();
+        services.AddTransient<IHtmlWebProvider, HtmlWebProvider>();
 
         var isDevMode = configuration.GetValue<bool?>("ApiConfig:DeveloperMode");
         if (isDevMode is true)

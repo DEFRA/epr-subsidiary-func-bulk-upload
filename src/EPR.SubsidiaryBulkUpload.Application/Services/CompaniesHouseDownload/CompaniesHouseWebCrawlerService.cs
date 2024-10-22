@@ -1,14 +1,15 @@
-﻿using EPR.SubsidiaryBulkUpload.Application.Extensions;
+﻿using EPR.SubsidiaryBulkUpload.Application.Exceptions;
+using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
 
-public class CompaniesHouseWebCrawlerService(ILogger<CompaniesHouseWebCrawlerService> logger, HtmlWeb htmlWeb)
+public class CompaniesHouseWebCrawlerService(ILogger<CompaniesHouseWebCrawlerService> logger, IHtmlWebProvider htmlWebProvider)
     : ICompaniesHouseWebCrawlerService
 {
     private readonly ILogger<CompaniesHouseWebCrawlerService> _logger = logger;
-    private readonly HtmlWeb _htmlWeb = htmlWeb;
+    private readonly IHtmlWebProvider _htmlWeb = htmlWebProvider;
 
     public async Task<int> GetCompaniesHouseFileDownloadCount(string downloadPagePath)
     {
@@ -38,9 +39,9 @@ public class CompaniesHouseWebCrawlerService(ILogger<CompaniesHouseWebCrawlerSer
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to access downlod page at {DownloadPagePath}", downloadPagePath);
+            _logger.LogError(ex, "Failed to access download page at {DownloadPagePath}", downloadPagePath);
             expectedFileCount = 0;
-            throw;
+            throw new FileDownloadException("Failed to access download page");
         }
 
         return expectedFileCount;

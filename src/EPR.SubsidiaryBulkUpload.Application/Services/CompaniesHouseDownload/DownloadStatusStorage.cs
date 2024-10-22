@@ -1,5 +1,6 @@
 ﻿using Azure;
 using Azure.Data.Tables;
+using EPR.SubsidiaryBulkUpload.Application.Exceptions;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using Microsoft.Extensions.Logging;
 
@@ -127,8 +128,7 @@ public class DownloadStatusStorage(TableServiceClient tableServiceClient, TimePr
         catch (RequestFailedException ex)
         {
             _logger.LogError(ex, "Cannot get or create table {TableName}", CompaniesHouseDownloadTableName);
-
-            throw;
+            throw new FileDownloadException("Cannot get or create table");
         }
     }
 
