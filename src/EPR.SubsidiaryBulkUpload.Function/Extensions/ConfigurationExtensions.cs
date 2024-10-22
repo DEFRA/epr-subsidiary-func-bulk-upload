@@ -64,7 +64,6 @@ public static class ConfigurationExtensions
 
         services.AddHttpClient<IAntivirusClient, AntivirusClient>(client =>
         {
-            client.BaseAddress = new Uri($"{antivirusOptions.BaseUrl}/v1/");
             client.BaseAddress = new Uri($"{antivirusOptions.BaseUrl?.TrimEnd('/')}/v1/");
             client.DefaultRequestHeaders.Add("OCP-APIM-Subscription-Key", antivirusOptions.SubscriptionKey);
         })
