@@ -26,17 +26,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             .Where(sub => sub.SubsidiaryOrg != null && sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg.companiesHouseNumber
             && string.Equals(sub.Subsidiary.organisation_name, sub.SubsidiaryOrg.name, StringComparison.OrdinalIgnoreCase));
 
-        var knownSubsidiariesToAdd = subsidiariesAndOrgWithValidName.Where(co => co.SubsidiaryOrg != null)
-            .SelectAwait(async co =>
-                (Subsidiary: co.Subsidiary,
-                 SubsidiaryOrg: co.SubsidiaryOrg,
-                 RelationshipExists: await organisationService.GetSubsidiaryRelationshipAsync(parentOrg.id, co.SubsidiaryOrg.id)))
-            .Where(co => !co.RelationshipExists);
-
-        await foreach (var subsidiaryAddModel in knownSubsidiariesToAdd)
-        {
-            await AddSubsidiary(parentOrg, subsidiaryAddModel!.SubsidiaryOrg, userRequestModel.UserId, subsidiaryAddModel.Subsidiary);
-        }
+        await ProcessValidNamedOrgs(subsidiariesAndOrgWithValidName, parentOrg, userRequestModel);
 
         await ProcessFranchisee(subsidiaries, parentOrg, userRequestModel);
 
@@ -233,6 +223,21 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         await foreach (var subsidiaryandLink in newSubsidiariesToAdd_DatafromLocalStorageOrCompaniesHouseWithNameMatch)
         {
             subsidiaryandLink.LinkModel.StatusCode = await organisationService.CreateAndAddSubsidiaryAsync(subsidiaryandLink.LinkModel);
+        }
+    }
+
+    private async Task ProcessValidNamedOrgs(IAsyncEnumerable<(CompaniesHouseCompany Subsidiary, OrganisationResponseModel SubsidiaryOrg)> subsidiariesAndOrgWithValidName, OrganisationResponseModel parentOrg, UserRequestModel userRequestModel)
+    {
+        var knownSubsidiariesToAdd = subsidiariesAndOrgWithValidName.Where(co => co.SubsidiaryOrg != null)
+        .SelectAwait(async co =>
+            (Subsidiary: co.Subsidiary,
+             SubsidiaryOrg: co.SubsidiaryOrg,
+             RelationshipExists: await organisationService.GetSubsidiaryRelationshipAsync(parentOrg.id, co.SubsidiaryOrg.id)))
+        .Where(co => !co.RelationshipExists);
+
+        await foreach (var subsidiaryAddModel in knownSubsidiariesToAdd)
+        {
+            await AddSubsidiary(parentOrg, subsidiaryAddModel!.SubsidiaryOrg, userRequestModel.UserId, subsidiaryAddModel.Subsidiary);
         }
     }
 }
