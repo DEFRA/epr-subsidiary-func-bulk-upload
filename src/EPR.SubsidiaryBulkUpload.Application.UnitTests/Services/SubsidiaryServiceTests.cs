@@ -426,31 +426,33 @@ public class SubsidiaryServiceTests
         response.Should().Be(apiResponse);
     }
 
-    /*  [TestMethod]
-      public async Task CreateAndAddSubsidiary_ThrowsProblemResponseException_When_NoSuccessResponse()
-      {
-          // Arrange
-          var linkOrganisationModel = _fixture.Create<LinkOrganisationModel>();
-          HttpStatusCode apiResponse = HttpStatusCode.Forbidden;
+    [TestMethod]
+    public async Task CreateAndAddFranchiseeAsync_Returns_Expected_Result()
+    {
+        // Arrange
+        var linkOrganisationModel = _fixture.Create<LinkOrganisationModel>();
+        linkOrganisationModel.Subsidiary.Franchisee_Licensee_Tenant = "Y";
 
-          var expectedUri = $"{BaseAddress}/{OrganisationCreateAddSubsidiaryUri}";
+        HttpStatusCode apiResponse = HttpStatusCode.OK;
 
-          _httpMessageHandlerMock.Protected()
-              .Setup<Task<HttpResponseMessage>>(
-                  "SendAsync",
-                  ItExpr.Is<HttpRequestMessage>(x => x.RequestUri != null && x.RequestUri.ToString() == expectedUri),
-                  ItExpr.IsAny<CancellationToken>())
-              .ReturnsAsync(new HttpResponseMessage
-              {
-                  StatusCode = HttpStatusCode.Forbidden
-              }).Verifiable();
+        var expectedUri = $"{BaseAddress}/{OrganisationCreateAddSubsidiaryUri}";
 
-          // Act
-          var act = await _sut.CreateAndAddSubsidiaryAsync(linkOrganisationModel);
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(x => x.RequestUri != null && x.RequestUri.ToString() == expectedUri),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK
+            }).Verifiable();
 
-          // Assert
-          act.Should().Be(apiResponse);
-      }*/
+        // Act
+        var response = await _sut.CreateAndAddSubsidiaryAsync(linkOrganisationModel);
+
+        // Assert
+        response.Should().Be(apiResponse);
+    }
 
     [TestMethod]
     public async Task AddSubsidiaryRelationshipAsync_Returns_Expected_Result()
