@@ -192,35 +192,6 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
     private async Task AddSubsidiary(OrganisationResponseModel parent, OrganisationResponseModel subsidiary, Guid userId, CompaniesHouseCompany subsidiaryFileData)
     {
-        if (subsidiary == null && subsidiaryFileData != null)
-        {
-            var franchisee = new SubsidiaryAddModel
-            {
-                UserId = userId,
-                ParentOrganisationId = parent.referenceNumber,
-                ChildOrganisationId = subsidiary.referenceNumber,
-                ParentOrganisationExternalId = parent.ExternalId,
-                ChildOrganisationExternalId = subsidiary.ExternalId
-            };
-            await organisationService.AddSubsidiaryRelationshipAsync(franchisee);
-            return;
-        }
-
-        var subsidiaryModel = new SubsidiaryAddModel
-        {
-            UserId = userId,
-            ParentOrganisationId = parent.referenceNumber,
-            ChildOrganisationId = subsidiary.referenceNumber,
-            ParentOrganisationExternalId = parent.ExternalId,
-            ChildOrganisationExternalId = subsidiary.ExternalId
-        };
-        await organisationService.AddSubsidiaryRelationshipAsync(subsidiaryModel);
-
-        _logger.LogInformation("Subsidiary Company {SubsidiaryReferenceNumber} {SubsidiaryName} linked to {ParentReferenceNumber} in the database.", subsidiary.referenceNumber, subsidiary.name, parent.referenceNumber);
-    }
-
-    private async Task AddSubsidiaryFranchise(OrganisationResponseModel parent, OrganisationResponseModel subsidiary, Guid userId, CompaniesHouseCompany subsidiaryFileData)
-    {
         var subsidiaryModel = new SubsidiaryAddModel
         {
             UserId = userId,
