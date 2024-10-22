@@ -181,7 +181,8 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
                 SubsidiaryOrganisationId = subsidiary.subsidiary_id,
                 RawContent = subsidiary.RawRow,
                 FileLineNumber = subsidiary.FileLineNumber,
-                Franchisee_Licensee_Tenant = subsidiary.franchisee_licensee_tenant
+                Franchisee_Licensee_Tenant = subsidiary.franchisee_licensee_tenant,
+                Address = new AddressModel()
             },
             ParentOrganisationId = parentOrg.ExternalId.Value
         };
@@ -236,7 +237,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
     private async Task ProcessFranchisee(IEnumerable<CompaniesHouseCompany> subsidiaries, OrganisationResponseModel parentOrg, UserRequestModel userRequestModel)
     {
         // companies with franchisee flag.
-        var companiesWithFranchiseeFlagRecords = subsidiaries.Where(ch => !string.IsNullOrEmpty(ch.franchisee_licensee_tenant) && string.Equals(ch.franchisee_licensee_tenant, "Y", StringComparison.OrdinalIgnoreCase))
+        var companiesWithFranchiseeFlagRecords = subsidiaries.Where(ch => ch.franchisee_licensee_tenant == "Y")
             .ToAsyncEnumerable()
             .SelectAwait(async subsidiary => (Subsidiary: subsidiary, SubsidiaryOrg: await organisationService.GetCompanyByCompanyName(subsidiary.organisation_name)));
 
