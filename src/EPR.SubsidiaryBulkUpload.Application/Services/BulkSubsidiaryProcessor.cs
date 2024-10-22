@@ -232,7 +232,27 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         await foreach (var subsidiaryAddModel in subsidiariesAndOrgNoneExistsintheDB)
         {
-            var franchisee = await GetLinkModelForNonCompaniesHouseData(subsidiaryAddModel.Subsidiary, parentOrg, userRequestModel.UserId);
+            var franchisee = new LinkOrganisationModel()
+            {
+                UserId = userRequestModel.UserId,
+                Subsidiary = new OrganisationModel()
+                {
+                    ReferenceNumber = subsidiaryAddModel.Subsidiary.organisation_id,
+                    Name = subsidiaryAddModel.Subsidiary.organisation_name,
+                    CompaniesHouseNumber = subsidiaryAddModel.Subsidiary.companies_house_number,
+                    OrganisationType = OrganisationType.NonCompaniesHouseCompany,
+                    ProducerType = ProducerType.Other,
+                    IsComplianceScheme = false,
+                    Nation = Nation.NotSet,
+                    SubsidiaryOrganisationId = subsidiaryAddModel.Subsidiary.subsidiary_id,
+                    RawContent = subsidiaryAddModel.Subsidiary.RawRow,
+                    FileLineNumber = subsidiaryAddModel.Subsidiary.FileLineNumber,
+                    Franchisee_Licensee_Tenant = subsidiaryAddModel.Subsidiary.franchisee_licensee_tenant,
+                    Address = new AddressModel()
+                },
+                ParentOrganisationId = parentOrg.ExternalId.Value
+            };
+
             await organisationService.CreateAndAddSubsidiaryAsync(franchisee);
         }
     }

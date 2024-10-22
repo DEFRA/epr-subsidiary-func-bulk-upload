@@ -106,9 +106,9 @@ public class SubsidiaryService : ISubsidiaryService
         return orgResponse.FirstOrDefault();
     }
 
-    public async Task<OrganisationResponseModel?> GetCompanyByCompanyName(string companiesHouseName)
+    public async Task<OrganisationResponseModel?> GetCompanyByCompanyName(string companiesName)
     {
-        var response = await _httpClient.GetAsync($"{OrganisationByCompanyNameUri}?companiesHouseName={HttpUtility.UrlEncode(companiesHouseName)}");
+        var response = await _httpClient.GetAsync($"{OrganisationByCompanyNameUri}?companiesHouseName={HttpUtility.UrlEncode(companiesName)}");
         if (response.StatusCode == HttpStatusCode.NoContent)
         {
             return null;
