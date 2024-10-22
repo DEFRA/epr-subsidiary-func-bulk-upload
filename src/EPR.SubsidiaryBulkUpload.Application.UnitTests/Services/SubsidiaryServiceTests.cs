@@ -103,6 +103,33 @@ public class SubsidiaryServiceTests
     }
 
     [TestMethod]
+    public async Task GetCompanyByCompaniesHouseName_ReturnsNull_When_NoContent()
+    {
+        // Arrange
+        var organisationResponseModel = _fixture.Create<OrganisationResponseModel>();
+
+        var organisationResponseModels = new OrganisationResponseModel[] { organisationResponseModel };
+
+        var expectedUri = $"{BaseAddress}/{OrganisationByCompanyHouseNameUri}?companiesHouseName={organisationResponseModel.name}";
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(x => x.RequestUri != null && x.RequestUri.ToString() == expectedUri),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.NoContent
+            }).Verifiable();
+
+        // Act
+        var result = await _sut.GetCompanyByCompanyName(organisationResponseModel.name);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [TestMethod]
     public async Task GetCompanyByCompaniesHouseNumber_ReturnsNull_When_NoContent()
     {
         // Arrange
