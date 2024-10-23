@@ -33,7 +33,7 @@ public class CompaniesHouseDownloadServiceTests
 
         var partitionKey = now.ToString("yyyyMM");
 
-        fixture.Customize<CompaniesHouseDownloadOptions>(ctx => ctx.With(a => a.CompaniesHouseDataDownloadUrl, DownloadPath));
+        fixture.Customize<CompaniesHouseDownloadOptions>(ctx => ctx.With(a => a.DataDownloadUrl, DownloadPath));
         var options = fixture.CreateOptions<CompaniesHouseDownloadOptions>();
 
         using var stream = new MemoryStream();
@@ -60,7 +60,7 @@ public class CompaniesHouseDownloadServiceTests
             .ReturnsAsync((stream, FileDownloadResponseCode.Succeeded));
 
         var companiesHouseFilePostService = new Mock<ICompaniesHouseFilePostService>();
-        companiesHouseFilePostService.Setup(chfps => chfps.PostFileAsync(It.IsAny<Stream>(), It.IsAny<string>())).ReturnsAsync(HttpStatusCode.OK);
+        companiesHouseFilePostService.Setup(fps => fps.PostFileAsync(It.IsAny<Stream>(), It.IsAny<string>())).ReturnsAsync(HttpStatusCode.OK);
 
         var companiesHouseWebCrawlerService = new Mock<ICompaniesHouseWebCrawlerService>();
         companiesHouseWebCrawlerService.Setup(hw => hw.GetCompaniesHouseFileDownloadCount(It.IsAny<string>())).ReturnsAsync(numberOfDownloads);
@@ -93,7 +93,7 @@ public class CompaniesHouseDownloadServiceTests
         timeProvider.SetUtcNow(now);
         var partitionKey = now.ToString("yyyyMM");
 
-        fixture.Customize<CompaniesHouseDownloadOptions>(ctx => ctx.With(a => a.CompaniesHouseDataDownloadUrl, DownloadPath));
+        fixture.Customize<CompaniesHouseDownloadOptions>(ctx => ctx.With(a => a.DataDownloadUrl, DownloadPath));
         var options = fixture.CreateOptions<CompaniesHouseDownloadOptions>();
 
         using var stream = new MemoryStream();
@@ -149,7 +149,7 @@ public class CompaniesHouseDownloadServiceTests
         timeProvider.SetUtcNow(now);
         var partitionKey = now.ToString("yyyyMM");
 
-        fixture.Customize<CompaniesHouseDownloadOptions>(ctx => ctx.With(a => a.CompaniesHouseDataDownloadUrl, DownloadPath));
+        fixture.Customize<CompaniesHouseDownloadOptions>(ctx => ctx.With(a => a.DataDownloadUrl, DownloadPath));
         var options = fixture.CreateOptions<CompaniesHouseDownloadOptions>();
 
         using var stream = new MemoryStream();
@@ -202,7 +202,7 @@ public class CompaniesHouseDownloadServiceTests
         timeProvider.SetUtcNow(now);
         var partitionKey = now.ToString("yyyyMM");
 
-        fixture.Customize<CompaniesHouseDownloadOptions>(ctx => ctx.With(a => a.CompaniesHouseDataDownloadUrl, DownloadPath));
+        fixture.Customize<CompaniesHouseDownloadOptions>(ctx => ctx.With(a => a.DataDownloadUrl, DownloadPath));
         var options = fixture.CreateOptions<CompaniesHouseDownloadOptions>();
 
         using var stream = new MemoryStream();
@@ -241,7 +241,7 @@ public class CompaniesHouseDownloadServiceTests
 
         // Assert
         fileDownloadService.Verify(fds => fds.GetStreamAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Exactly(3));
-        companiesHouseFilePostService.Verify(chfps => chfps.PostFileAsync(It.IsAny<Stream>(), It.IsAny<string>()), Times.Never);
+        companiesHouseFilePostService.Verify(fps => fps.PostFileAsync(It.IsAny<Stream>(), It.IsAny<string>()), Times.Never);
     }
 
     [TestMethod]
@@ -254,7 +254,7 @@ public class CompaniesHouseDownloadServiceTests
         timeProvider.SetUtcNow(now);
         var partitionKey = now.ToString("yyyyMM");
 
-        fixture.Customize<CompaniesHouseDownloadOptions>(ctx => ctx.With(a => a.CompaniesHouseDataDownloadUrl, DownloadPath));
+        fixture.Customize<CompaniesHouseDownloadOptions>(ctx => ctx.With(a => a.DataDownloadUrl, DownloadPath));
         var options = fixture.CreateOptions<CompaniesHouseDownloadOptions>();
 
         using var stream = new MemoryStream();
@@ -291,7 +291,7 @@ public class CompaniesHouseDownloadServiceTests
 
         // Assert
         fileDownloadService.Verify(fds => fds.GetStreamAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
-        companiesHouseFilePostService.Verify(chfps => chfps.PostFileAsync(It.IsAny<Stream>(), It.IsAny<string>()), Times.Never);
+        companiesHouseFilePostService.Verify(fps => fps.PostFileAsync(It.IsAny<Stream>(), It.IsAny<string>()), Times.Never);
     }
 
     [TestMethod]
@@ -335,6 +335,6 @@ public class CompaniesHouseDownloadServiceTests
         await downloadService.DownloadFiles(partitionKey);
 
         // Assert
-        downloadStatusStorage.Verify(dlss => dlss.GetCompaniesHouseFileDownloadListAsync(It.IsAny<string>()), Times.Once);
+        downloadStatusStorage.Verify(ds => ds.GetCompaniesHouseFileDownloadListAsync(It.IsAny<string>()), Times.Once);
     }
 }

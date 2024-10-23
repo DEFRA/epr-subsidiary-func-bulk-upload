@@ -128,7 +128,7 @@ public class PoliciesTests
 
         services.Configure<CompaniesHouseDownloadOptions>(x =>
         {
-            x.CompaniesHouseDataDownloadUrl = BaseAddress;
+            x.DataDownloadUrl = BaseAddress;
             x.RetryPolicyInitialWaitTime = 1;
             x.RetryPolicyMaxRetries = MaxRetries;
             x.TimeUnits = TimeUnit.Milliseconds;

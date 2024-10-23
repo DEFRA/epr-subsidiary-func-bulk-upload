@@ -32,8 +32,8 @@ public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadServ
 
     public async Task DownloadFiles(string partitionKey)
     {
-        var downloadUrl = _downloadOptions.CompaniesHouseDataDownloadUrl.TrimEnd('/');
-        var downloadPage = _downloadOptions.CompaniesHouseFileDownloadPage.TrimStart('/');
+        var downloadUrl = _downloadOptions.DataDownloadUrl.TrimEnd('/');
+        var downloadPage = _downloadOptions.DownloadPage.TrimStart('/');
         var downloadPath = string.Format($"{downloadUrl}/{downloadPage}");
         var expectedFileCount = await _companiesHouseWebCrawlerService.GetCompaniesHouseFileDownloadCount(downloadPath);
 
@@ -56,7 +56,7 @@ public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadServ
     private async Task<bool> DownloadFile(CompaniesHouseFileSetDownloadStatus fileStatus)
     {
         var succeeded = false;
-        var filePath = $"{_downloadOptions.CompaniesHouseDataDownloadUrl}{fileStatus.DownloadFileName}";
+        var filePath = $"{_downloadOptions.DataDownloadUrl}{fileStatus.DownloadFileName}";
         var download = await _fileDownloadService.GetStreamAsync(filePath);
 
         if (download.ResponseCode == FileDownloadResponseCode.Succeeded)

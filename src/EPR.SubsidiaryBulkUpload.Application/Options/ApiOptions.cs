@@ -15,8 +15,6 @@ public class ApiOptions : ApiResilienceOptions
 
     public string CompaniesHouseDirectApiKey { get; set; }
 
-    public string CompaniesHouseFileDownloadPage { get; set; } = null!;
-
     public string AccountServiceClientId { get; set; } = null!;
 
     public string Certificate { get; set; } = null!;
