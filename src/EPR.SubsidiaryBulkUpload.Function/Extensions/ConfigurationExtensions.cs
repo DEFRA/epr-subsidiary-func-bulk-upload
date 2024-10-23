@@ -130,6 +130,8 @@ public static class ConfigurationExtensions
         services.AddTransient<ICompaniesHouseDataProvider, CompaniesHouseDataProvider>();
         services.AddTransient<ICompaniesHouseDownloadService, CompaniesHouseDownloadService>();
         services.AddTransient<ICompaniesHouseFilePostService, CompaniesHouseFilePostService>();
+        services.AddTransient<ICompaniesHouseWebCrawlerService, CompaniesHouseWebCrawlerService>();
+        services.AddTransient<IHtmlWebProvider, HtmlWebProvider>();
 
         if (apiOptions.UseDirectCompaniesHouseLookup)
         {

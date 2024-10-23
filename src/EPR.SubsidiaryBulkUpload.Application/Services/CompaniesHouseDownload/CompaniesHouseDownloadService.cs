@@ -8,12 +8,14 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
 public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadService,
     IDownloadStatusStorage downloadStatusStorage,
     ICompaniesHouseFilePostService companiesHouseFilePostService,
+    ICompaniesHouseWebCrawlerService companiesHouseWebCrawlerService,
     IOptions<CompaniesHouseDownloadOptions> downloadOptions,
     TimeProvider timeProvider) : ICompaniesHouseDownloadService
 {
     private readonly IFileDownloadService _fileDownloadService = fileDownloadService;
     private readonly IDownloadStatusStorage _downloadStatusStorage = downloadStatusStorage;
     private readonly ICompaniesHouseFilePostService _companiesHouseFilePostService = companiesHouseFilePostService;
+    private readonly ICompaniesHouseWebCrawlerService _companiesHouseWebCrawlerService = companiesHouseWebCrawlerService;
     private readonly TimeProvider _timeProvider = timeProvider;
     private readonly CompaniesHouseDownloadOptions _downloadOptions = downloadOptions.Value;
 
@@ -25,12 +27,22 @@ public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadServ
         if (await _downloadStatusStorage.GetCompaniesHouseFileDownloadStatusAsync(partitionKey))
         {
             await DownloadFiles(partitionKey);
-    }
+        }
     }
 
-    private async Task DownloadFiles(string partitionKey)
+    public async Task DownloadFiles(string partitionKey)
     {
-        await _downloadStatusStorage.CreateCompaniesHouseFileDownloadLogAsync(partitionKey);
+        var downloadUrl = _apiOptions.CompaniesHouseDataDownloadUrl.TrimEnd('/');
+        var downloadPage = _apiOptions.CompaniesHouseFileDownloadPage.TrimStart('/');
+        var downloadPath = string.Format($"{downloadUrl}/{downloadPage}");
+        var expectedFileCount = await _companiesHouseWebCrawlerService.GetCompaniesHouseFileDownloadCount(downloadPath);
+
+        if (expectedFileCount == 0)
+        {
+            return;
+        }
+
+        await _downloadStatusStorage.CreateCompaniesHouseFileDownloadLogAsync(partitionKey, expectedFileCount);
 
         var filesDownloadList = await _downloadStatusStorage.GetCompaniesHouseFileDownloadListAsync(partitionKey);
         filesDownloadList = filesDownloadList.Where(x => x.DownloadStatus != FileDownloadResponseCode.Succeeded).ToList();
