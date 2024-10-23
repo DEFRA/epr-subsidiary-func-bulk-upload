@@ -131,7 +131,6 @@ public static class ConfigurationExtensions
         services.AddTransient<ICompaniesHouseDownloadService, CompaniesHouseDownloadService>();
         services.AddTransient<ICompaniesHouseFilePostService, CompaniesHouseFilePostService>();
         services.AddTransient<ICompaniesHouseWebCrawlerService, CompaniesHouseWebCrawlerService>();
-        services.AddTransient<IHtmlWebProvider, HtmlWebProvider>();
 
         if (apiOptions.UseDirectCompaniesHouseLookup)
         {
@@ -145,6 +144,7 @@ public static class ConfigurationExtensions
         services.AddTransient<ICsvProcessor, CsvProcessor>();
         services.AddTransient<IDownloadStatusStorage, DownloadStatusStorage>();
         services.AddTransient<IFileDownloadService, FileDownloadService>();
+        services.AddTransient<IHtmlWebProvider, HtmlWebProvider>();
         services.AddTransient<INotificationService, NotificationService>();
         services.AddTransient<IParserClass, ParserClass>();
         services.AddTransient<IRecordExtraction, RecordExtraction>();

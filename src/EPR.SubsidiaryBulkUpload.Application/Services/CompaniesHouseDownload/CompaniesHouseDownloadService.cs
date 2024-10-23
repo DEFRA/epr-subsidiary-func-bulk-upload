@@ -32,8 +32,8 @@ public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadServ
 
     public async Task DownloadFiles(string partitionKey)
     {
-        var downloadUrl = _apiOptions.CompaniesHouseDataDownloadUrl.TrimEnd('/');
-        var downloadPage = _apiOptions.CompaniesHouseFileDownloadPage.TrimStart('/');
+        var downloadUrl = _downloadOptions.CompaniesHouseDataDownloadUrl.TrimEnd('/');
+        var downloadPage = _downloadOptions.CompaniesHouseFileDownloadPage.TrimStart('/');
         var downloadPath = string.Format($"{downloadUrl}/{downloadPage}");
         var expectedFileCount = await _companiesHouseWebCrawlerService.GetCompaniesHouseFileDownloadCount(downloadPath);
 

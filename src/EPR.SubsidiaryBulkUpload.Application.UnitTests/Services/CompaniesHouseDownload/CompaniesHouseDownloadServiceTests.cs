@@ -306,7 +306,7 @@ public class CompaniesHouseDownloadServiceTests
         var partialFileName = $"{PartialFilename}-2024-03-01-part";
 
         var numberOfDownloads = 3;
-        var options = fixture.CreateOptions<ApiOptions>();
+        var options = fixture.CreateOptions<CompaniesHouseDownloadOptions>();
         var fileDownloadService = new Mock<IFileDownloadService>();
 
         var downloadStatusStorage = new Mock<IDownloadStatusStorage>();

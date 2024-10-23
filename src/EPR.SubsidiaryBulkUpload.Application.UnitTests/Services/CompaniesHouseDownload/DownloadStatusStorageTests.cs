@@ -199,7 +199,7 @@ public class DownloadStatusStorageTests
                 It.IsAny<CancellationToken>()))
             .Returns(new MockAsyncPageable<CompaniesHouseFileSetDownloadStatus>(downloadLog));
 
-        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, NullLogger<DownloadStatusStorage>.Instance);
+        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, loggerMock.Object);
 
         // Act
         await downloadStatusStorage.CreateCompaniesHouseFileDownloadLogAsync(partitionKey, 5);
@@ -232,7 +232,7 @@ public class DownloadStatusStorageTests
                 It.IsAny<CancellationToken>()))
             .Returns(new MockAsyncPageable<CompaniesHouseFileSetDownloadStatus>(downloadLog));
 
-        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, NullLogger<DownloadStatusStorage>.Instance);
+        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, loggerMock.Object);
 
         // Act
         await downloadStatusStorage.CreateCompaniesHouseFileDownloadLogAsync(partitionKey, 3);
