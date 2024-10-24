@@ -1,9 +1,7 @@
 ﻿using System.Net;
-using EPR.SubsidiaryBulkUpload.Application.Exceptions;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Options;
 using EPR.SubsidiaryBulkUpload.Application.Resilience;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Moq.Protected;
 using Polly.Timeout;
@@ -218,10 +216,8 @@ public class PipelineTests
         var sut = scope.ServiceProvider.GetRequiredService<IHttpClientFactory>().CreateClient(HttpClientName);
         var request = new HttpRequestMessage(HttpMethod.Get, "/any");
 
-        // Act
+        // Act & Assert
         await Assert.ThrowsExceptionAsync<NotSupportedException>(async () => await sut.SendAsync(request));
-
-        // Assert
         attempts.Should().Be(0);
     }
 
