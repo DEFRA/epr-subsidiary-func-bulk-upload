@@ -162,4 +162,49 @@ public class PoliciesTests
         result.StatusCode.Should().Be(statusCode);
         attempts.Should().Be(MaxRetries + 1);
     }
+
+    [TestMethod]
+    public async Task CompaniesHouseDownloadRetryPoliciesShould_Not_Retry_NotFound_Response()
+    {
+        // Arrange
+        var attempts = 0;
+        var services = new ServiceCollection();
+        var statusCode = HttpStatusCode.NotFound;
+
+        services.Configure<CompaniesHouseDownloadOptions>(x =>
+        {
+            x.DataDownloadUrl = BaseAddress;
+            x.RetryPolicyInitialWaitTime = 1;
+            x.RetryPolicyMaxRetries = MaxRetries;
+            x.TimeUnits = TimeUnit.Milliseconds;
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(statusCode))
+            .Callback<HttpRequestMessage, CancellationToken>((m, c) => attempts++);
+
+        services.AddHttpClient(HttpClientName, client =>
+        {
+            client.BaseAddress = new Uri(BaseAddress);
+        })
+            .AddPolicyHandler((services, _) => PollyResilience.Policies.CompaniesHouseDownloadRetryPolicy<CompaniesHouseLookupDirectService>(services))
+            .AddHttpMessageHandler(() => _httpMessageHandlerMock.Object);
+
+        var serviceProvider = services.BuildServiceProvider();
+        using var scope = serviceProvider.CreateScope();
+
+        var sut = scope.ServiceProvider.GetRequiredService<IHttpClientFactory>().CreateClient(HttpClientName);
+        var request = new HttpRequestMessage(HttpMethod.Get, "/any");
+
+        // Act
+        var result = await sut.SendAsync(request);
+
+        // Assert
+        result.StatusCode.Should().Be(statusCode);
+        attempts.Should().Be(1);
+    }
 }

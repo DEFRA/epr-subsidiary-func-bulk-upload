@@ -42,7 +42,7 @@ public static class Pipelines
                     {
                         shouldHandle = true;
                     }
-                    else if (args.Outcome.Result.StatusCode == HttpStatusCode.TooManyRequests)
+                    else if (args.Outcome.Result?.StatusCode == HttpStatusCode.TooManyRequests)
                     {
                         shouldHandle = false;
                     }
@@ -61,11 +61,12 @@ public static class Pipelines
                 {
                     context.ServiceProvider.GetService<ILogger<T>>()?
                         .LogWarning(
-                            "{Type} retry policy will attempt retry {Retry} in {Delay}ms after a transient error or timeout. {ExceptionMessage}",
+                            "{Type} retry policy will attempt retry {Retry} in {Delay}ms after a transient error or timeout. Status code {StatusCode}. {ExceptionMessage}",
                             typeof(T).Name,
                             args.AttemptNumber,
                             args.RetryDelay.TotalMilliseconds,
-                            args.Outcome.Exception?.Message);
+                            args.Outcome.Result?.StatusCode,
+                            args.Outcome.Exception.GetAllMessages());
 
                     return default;
                 }
@@ -82,11 +83,12 @@ public static class Pipelines
                 {
                     context.ServiceProvider.GetService<ILogger<T>>()?
                         .LogWarning(
-                            "{Type} retry policy will attempt retry {Retry} in {Delay}ms after a 429 error. {ExceptionMessage}",
+                            "{Type} retry policy will attempt retry {Retry} in {Delay}ms after a transient error or timeout. Status code {StatusCode}. {ExceptionMessage}",
                             typeof(T).Name,
                             args.AttemptNumber,
                             args.RetryDelay.TotalMilliseconds,
-                            args.Outcome.Exception?.Message);
+                            args.Outcome.Result?.StatusCode,
+                            args.Outcome.Exception.GetAllMessages());
 
                     return default;
                 }

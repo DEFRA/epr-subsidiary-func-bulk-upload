@@ -59,11 +59,12 @@ public static class Policies
                 {
                     sp?.GetService<ILogger<T>>()?
                         .LogWarning(
-                            "{Type} retry policy will attempt retry {Retry} in {Delay}ms after a transient error or timeout. {ExceptionMessage}",
+                            "{Type} retry policy will attempt retry {Retry} in {Delay}ms after a transient error or timeout. Status code {StatusCode}. {ExceptionMessage}",
                             typeof(T).Name,
                             retryAttempt,
                             timespan.TotalMilliseconds,
-                            outcome?.Exception?.Message);
+                            outcome?.Result?.StatusCode,
+                            outcome?.Exception.GetAllMessages());
                 });
 
     private static AsyncTimeoutPolicy<HttpResponseMessage> TimeoutPolicy(int timeout, TimeUnit timeUnits) =>

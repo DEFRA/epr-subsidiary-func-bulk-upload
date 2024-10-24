@@ -2,6 +2,7 @@
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Options;
 using EPR.SubsidiaryBulkUpload.Application.Resilience;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Moq.Protected;
 using Polly.Timeout;
@@ -173,5 +174,55 @@ public class PipelineTests
 
         // Assert
         attempts.Should().Be(MaxRetries + 1);
+    }
+
+    [TestMethod]
+    [DataRow(HttpStatusCode.BadRequest)]
+    [DataRow(HttpStatusCode.NotFound)]
+    public async Task CompaniesHouseResilienceHandlerTest_Should_Not_Retry_NonTransient_Errors(HttpStatusCode statusCode)
+    {
+        // Arrange
+        var attempts = 0;
+
+        var services = new ServiceCollection();
+
+        services.Configure<ApiOptions>(x =>
+        {
+            x.CompaniesHouseLookupBaseUrl = BaseAddress;
+            x.RetryPolicyInitialWaitTime = 1;
+            x.RetryPolicyMaxRetries = MaxRetries;
+            x.RetryPolicyTooManyAttemptsWaitTime = 1;
+            x.RetryPolicyTooManyAttemptsMaxRetries = MaxRetriesFor429;
+            x.Timeout = 10; // Minimum value 10ms required for this
+            x.TimeUnits = TimeUnit.Milliseconds;
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(statusCode))
+            .Callback<HttpRequestMessage, CancellationToken>((m, c) => attempts++);
+
+        services.AddHttpClient(HttpClientName, client =>
+        {
+            client.BaseAddress = new Uri(BaseAddress);
+        })
+            .AddCompaniesHouseResilienceHandlerToHttpClientBuilder()
+            .AddHttpMessageHandler(() => _httpMessageHandlerMock.Object);
+
+        var serviceProvider = services.BuildServiceProvider();
+        using var scope = serviceProvider.CreateScope();
+
+        var sut = scope.ServiceProvider.GetRequiredService<IHttpClientFactory>().CreateClient(HttpClientName);
+        var request = new HttpRequestMessage(HttpMethod.Get, "/any");
+
+        // Act
+        var result = await sut.SendAsync(request);
+
+        // Assert
+        result.StatusCode.Should().Be(statusCode);
+        attempts.Should().Be(1);
     }
 }
