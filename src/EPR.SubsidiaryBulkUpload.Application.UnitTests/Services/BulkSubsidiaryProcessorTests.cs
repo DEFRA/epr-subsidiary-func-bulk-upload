@@ -297,10 +297,10 @@ public class BulkSubsidiaryProcessorTests
         };
 
         // Act
-        await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
+        var result = await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
 
         // Assert
-        inserts.Should().HaveCount(0);
+        result.Should().BeGreaterThanOrEqualTo(1);
     }
 
     [TestMethod]
