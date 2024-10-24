@@ -59,14 +59,14 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             .Concat(subsidiariesAndOrgWithValidName.Select(swoan => swoan.Subsidiary))
             .ToListAsync();
 
-        allAddedNewSubsPlusExisting.Concat(franchiseeProcessed);
+        var totalAdditions = allAddedNewSubsPlusExisting.Concat(franchiseeProcessed);
 
         var subsidiariesNotAdded = subsidiaries.AsEnumerable().Except(franchiseeProcessed).Except(allAddedNewSubsPlusExisting).Except(subWithInvalidName).Except(newSubsidiariesToAdd_DatafromLocalStorageOrCH_NameNoMatchList).Except(await newSubsidiariesToAdd_DatafromLocalStorageOrCH.Where(subAndLink => subAndLink.LinkModel != null && subAndLink.LinkModel.Subsidiary.Error != null).Select(s => s.Subsidiary).ToListAsync());
 
         /*Scenario 1: The subsidiary is not found in RPD and not in Local storage and not found on companies house*/
         await ReportCompanies(subsidiariesNotAdded, userRequestModel, BulkUpdateErrors.CompanyNameNofoundAnywhereMessage, BulkUpdateErrors.CompanyNameNofoundAnywhere);
 
-        return allAddedNewSubsPlusExisting.Count;
+        return totalAdditions.ToList().Count;
     }
 
     private async Task ReportCompanies(IEnumerable<LinkOrganisationModel> linkSubsidiaries, UserRequestModel userRequestModel)
