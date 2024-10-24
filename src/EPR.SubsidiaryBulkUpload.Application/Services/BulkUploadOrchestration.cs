@@ -36,7 +36,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
             {
                 FileLineNumber = 2,
                 FileContent = string.Empty,
-                Message = "File has no records.",
+                Message = BulkUpdateErrors.FileHasNoRecord,
                 ErrorNumber = BulkUpdateErrors.FileEmptyError,
                 IsError = true
             };
