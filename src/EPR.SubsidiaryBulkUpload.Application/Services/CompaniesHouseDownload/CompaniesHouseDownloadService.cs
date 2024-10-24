@@ -9,7 +9,7 @@ public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadServ
     IDownloadStatusStorage downloadStatusStorage,
     ICompaniesHouseFilePostService companiesHouseFilePostService,
     ICompaniesHouseWebCrawlerService companiesHouseWebCrawlerService,
-    IOptions<ApiOptions> apiOptions,
+    IOptions<CompaniesHouseDownloadOptions> downloadOptions,
     TimeProvider timeProvider) : ICompaniesHouseDownloadService
 {
     private readonly IFileDownloadService _fileDownloadService = fileDownloadService;
@@ -17,7 +17,7 @@ public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadServ
     private readonly ICompaniesHouseFilePostService _companiesHouseFilePostService = companiesHouseFilePostService;
     private readonly ICompaniesHouseWebCrawlerService _companiesHouseWebCrawlerService = companiesHouseWebCrawlerService;
     private readonly TimeProvider _timeProvider = timeProvider;
-    private readonly ApiOptions _apiOptions = apiOptions.Value;
+    private readonly CompaniesHouseDownloadOptions _downloadOptions = downloadOptions.Value;
 
     public async Task StartDownload()
     {
@@ -32,8 +32,8 @@ public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadServ
 
     public async Task DownloadFiles(string partitionKey)
     {
-        var downloadUrl = _apiOptions.CompaniesHouseDataDownloadUrl.TrimEnd('/');
-        var downloadPage = _apiOptions.CompaniesHouseFileDownloadPage.TrimStart('/');
+        var downloadUrl = _downloadOptions.DataDownloadUrl.TrimEnd('/');
+        var downloadPage = _downloadOptions.DownloadPage.TrimStart('/');
         var downloadPath = string.Format($"{downloadUrl}/{downloadPage}");
         var expectedFileCount = await _companiesHouseWebCrawlerService.GetCompaniesHouseFileDownloadCount(downloadPath);
 
@@ -56,7 +56,7 @@ public class CompaniesHouseDownloadService(IFileDownloadService fileDownloadServ
     private async Task<bool> DownloadFile(CompaniesHouseFileSetDownloadStatus fileStatus)
     {
         var succeeded = false;
-        var filePath = $"{_apiOptions.CompaniesHouseDataDownloadUrl}{fileStatus.DownloadFileName}";
+        var filePath = $"{_downloadOptions.DataDownloadUrl}{fileStatus.DownloadFileName}";
         var download = await _fileDownloadService.GetStreamAsync(filePath);
 
         if (download.ResponseCode == FileDownloadResponseCode.Succeeded)

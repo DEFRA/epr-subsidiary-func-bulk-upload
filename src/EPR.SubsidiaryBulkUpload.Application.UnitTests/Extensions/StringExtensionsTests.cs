@@ -25,7 +25,8 @@ public class StringExtensionsTests
     [DataRow("BasicCompanyData-2024-12-01-part18.zip", 0, 0)]
     [DataRow("BasicCompanyData-2024-12-01-part1_8.zip", 1, 8)]
     [DataRow("BasicCompanyData-2024-12-01-part5_10.zip", 5, 10)]
-    public void ToFilePartNumberAndCounty_ShouldFormatCorrectly(string input, int expectedFilePart, int expectedFileCount)
+    [DataRow("BasicCompanyData-2024-12-01-part150_211.zip", 150, 211)]
+    public void ToFilePartNumberAndCount_ShouldFormatCorrectly(string input, int expectedFilePart, int expectedFileCount)
     {
         var result = input.ToFilePartNumberAndCount();
 

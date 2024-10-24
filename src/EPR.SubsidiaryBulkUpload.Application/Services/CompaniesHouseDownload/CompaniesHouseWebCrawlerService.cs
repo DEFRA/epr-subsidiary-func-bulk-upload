@@ -1,6 +1,5 @@
 ﻿using EPR.SubsidiaryBulkUpload.Application.Exceptions;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
-using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
@@ -22,7 +21,7 @@ public class CompaniesHouseWebCrawlerService(ILogger<CompaniesHouseWebCrawlerSer
 
             if (listItems == null)
             {
-                _logger.LogError("No files to download from CompaniesHouse{DownloadPagePath}", downloadPagePath);
+                _logger.LogError("No files to download from CompaniesHouse {DownloadPagePath}", downloadPagePath);
                 return expectedFileCount;
             }
 

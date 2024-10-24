@@ -3,7 +3,7 @@
 namespace EPR.SubsidiaryBulkUpload.Application.Options;
 
 [ExcludeFromCodeCoverage]
-public class AntivirusApiOptions
+public class AntivirusApiOptions : ApiResilienceOptions
 {
     public const string SectionName = "AntivirusApi";
 
@@ -20,8 +20,6 @@ public class AntivirusApiOptions
     public string Scope { get; set; }
 
     public int Timeout { get; set; }
-
-    public bool EnableDirectAccess { get; set; } = false;
 
     public string CollectionSuffix { get; set; }
 
