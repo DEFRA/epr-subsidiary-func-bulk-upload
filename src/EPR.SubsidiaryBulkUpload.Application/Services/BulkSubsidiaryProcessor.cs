@@ -64,7 +64,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         /*Scenario 1: The subsidiary is not found in RPD and not in Local storage and not found on companies house*/
         await ReportCompanies(subsidiariesNotAdded, userRequestModel, BulkUpdateErrors.CompanyNameNofoundAnywhereMessage, BulkUpdateErrors.CompanyNameNofoundAnywhere);
 
-        return allAddedNewSubsPlusExisting.Count + franchiseeProcessed.Count;
+        return allAddedNewSubsPlusExisting.Count + franchiseeProcessed.ToList().Count;
     }
 
     private async Task ReportCompanies(IEnumerable<LinkOrganisationModel> linkSubsidiaries, UserRequestModel userRequestModel)
@@ -157,7 +157,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         _logger.LogInformation("Subsidiary Company {SubsidiaryReferenceNumber} {SubsidiaryName} linked to {ParentReferenceNumber} in the database.", subsidiary.referenceNumber, subsidiary.name, parent.referenceNumber);
     }
 
-    private async Task<List<CompaniesHouseCompany>> ProcessFranchisee(IEnumerable<CompaniesHouseCompany> subsidiaries, OrganisationResponseModel parentOrg, UserRequestModel userRequestModel)
+    private async Task<IEnumerable<CompaniesHouseCompany>> ProcessFranchisee(IEnumerable<CompaniesHouseCompany> subsidiaries, OrganisationResponseModel parentOrg, UserRequestModel userRequestModel)
     {
         // companies with franchisee flag.
         var companiesWithFranchiseeFlagRecords = subsidiaries.Where(ch => ch.franchisee_licensee_tenant == "Y")
@@ -180,9 +180,9 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             await AddSubsidiary(parentOrg, subsidiaryAddModel!.SubsidiaryOrg, userRequestModel.UserId);
         }
 
-        var subsidiariesAndOrgNoneExistsintheDB = companiesWithFranchiseeFlagRecords.Where(co => co.SubsidiaryOrg == null);
+        var subsidiariesAndOrgNonExistsintheDB = await companiesWithFranchiseeFlagRecords.Where(co => co.SubsidiaryOrg == null).ToListAsync();
 
-        await foreach (var subsidiaryAddModel in subsidiariesAndOrgNoneExistsintheDB)
+        foreach (var subsidiaryAddModel in subsidiariesAndOrgNonExistsintheDB)
         {
             var franchisee = new LinkOrganisationModel()
             {
@@ -208,7 +208,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             await organisationService.CreateAndAddSubsidiaryAsync(franchisee);
         }
 
-        return await subsidiariesAndOrgNoneExistsintheDB.Select(s => s.Subsidiary).ToListAsync();
+        return subsidiariesAndOrgNonExistsintheDB.Select(s => s.Subsidiary).ToList();
     }
 
     private async Task ProcessCompanyHouseAPI(IAsyncEnumerable<(CompaniesHouseCompany Subsidiary, LinkOrganisationModel LinkModel)> newSubsidiariesToAdd_DatafromLocalStorageOrCH, UserRequestModel userRequestModel)
