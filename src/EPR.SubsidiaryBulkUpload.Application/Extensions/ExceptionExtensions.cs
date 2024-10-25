@@ -15,7 +15,7 @@ public static class ExceptionExtensions
             {
                 if (sb.Length > 0)
                 {
-                    sb.Append(" ");
+                    sb.Append(' ');
                 }
 
                 sb.Append(currentException.Message);
