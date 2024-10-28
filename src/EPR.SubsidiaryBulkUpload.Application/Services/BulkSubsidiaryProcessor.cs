@@ -16,6 +16,17 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
     public async Task<int> Process(IEnumerable<CompaniesHouseCompany> subsidiaries, CompaniesHouseCompany parent, OrganisationResponseModel parentOrg, UserRequestModel userRequestModel)
     {
+        IEnumerable<CompaniesHouseCompany> franchiseeProcessed = Enumerable.Empty<CompaniesHouseCompany>();
+        var companiesWithFranchiseeFlagRecords = subsidiaries.Where(ch => ch.franchisee_licensee_tenant == "Y" && (ch.Errors == null || ch.Errors.Count == 0)).ToList().Count();
+        if (companiesWithFranchiseeFlagRecords > 0)
+        {
+            franchiseeProcessed = await ProcessFranchisee(subsidiaries, parentOrg, userRequestModel);
+            if (companiesWithFranchiseeFlagRecords == subsidiaries.Count())
+            {
+                return franchiseeProcessed.Count();
+            }
+        }
+
         var nonNullCompaniesHouseNumberRecords = subsidiaries.Where(ch => !string.IsNullOrEmpty(ch.companies_house_number) && string.IsNullOrEmpty(ch.franchisee_licensee_tenant));
 
         var subsidiariesAndOrg = nonNullCompaniesHouseNumberRecords
@@ -27,8 +38,6 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             && string.Equals(sub.Subsidiary.organisation_name, sub.SubsidiaryOrg.name, StringComparison.OrdinalIgnoreCase));
 
         await ProcessValidNamedOrgs(subsidiariesAndOrgWithValidName, parentOrg, userRequestModel);
-
-        var franchiseeProcessed = await ProcessFranchisee(subsidiaries, parentOrg, userRequestModel);
 
         var subsidiariesAndOrgWith_InValidName = subsidiariesAndOrg
             .Where(sub => sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg?.companiesHouseNumber
@@ -59,7 +68,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             .Concat(subsidiariesAndOrgWithValidName.Select(swoan => swoan.Subsidiary))
             .ToListAsync();
 
-        var subsidiariesNotAdded = subsidiaries.AsEnumerable().Except(franchiseeProcessed).Except(allAddedNewSubsPlusExisting).Except(subWithInvalidName).Except(newSubsidiariesToAdd_DatafromLocalStorageOrCH_NameNoMatchList).Except(await newSubsidiariesToAdd_DatafromLocalStorageOrCH.Where(subAndLink => subAndLink.LinkModel != null && subAndLink.LinkModel.Subsidiary.Error != null).Select(s => s.Subsidiary).ToListAsync());
+        var subsidiariesNotAdded = subsidiaries.AsEnumerable().Except(subsidiaries.Where(ch => ch.franchisee_licensee_tenant == "Y" && (ch.Errors == null || ch.Errors.Count == 0))).Except(allAddedNewSubsPlusExisting).Except(subWithInvalidName).Except(newSubsidiariesToAdd_DatafromLocalStorageOrCH_NameNoMatchList).Except(await newSubsidiariesToAdd_DatafromLocalStorageOrCH.Where(subAndLink => subAndLink.LinkModel != null && subAndLink.LinkModel.Subsidiary.Error != null).Select(s => s.Subsidiary).ToListAsync());
 
         /*Scenario 1: The subsidiary is not found in RPD and not in Local storage and not found on companies house*/
         await ReportCompanies(subsidiariesNotAdded, userRequestModel, BulkUpdateErrors.CompanyNameNofoundAnywhereMessage, BulkUpdateErrors.CompanyNameNofoundAnywhere);
@@ -152,7 +161,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             ParentOrganisationExternalId = parent.ExternalId,
             ChildOrganisationExternalId = subsidiary.ExternalId
         };
-        await organisationService.AddSubsidiaryRelationshipAsync(subsidiaryModel);
+        var result = await organisationService.AddSubsidiaryRelationshipAsync(subsidiaryModel);
 
         _logger.LogInformation("Subsidiary Company {SubsidiaryReferenceNumber} {SubsidiaryName} linked to {ParentReferenceNumber} in the database.", subsidiary.referenceNumber, subsidiary.name, parent.referenceNumber);
     }
@@ -205,10 +214,10 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
                 ParentOrganisationId = parentOrg.ExternalId.Value
             };
 
-            await organisationService.CreateAndAddSubsidiaryAsync(franchisee);
+            subsidiaryAddModel.Subsidiary.StatusCode = await organisationService.CreateAndAddSubsidiaryAsync(franchisee);
         }
 
-        return subsidiariesAndOrgNonExistsintheDB.Select(s => s.Subsidiary).ToList();
+        return subsidiariesAndOrgNonExistsintheDB.Where(s => s.Subsidiary.StatusCode == System.Net.HttpStatusCode.OK).Select(s => s.Subsidiary).ToList();
     }
 
     private async Task ProcessCompanyHouseAPI(IAsyncEnumerable<(CompaniesHouseCompany Subsidiary, LinkOrganisationModel LinkModel)> newSubsidiariesToAdd_DatafromLocalStorageOrCH, UserRequestModel userRequestModel)

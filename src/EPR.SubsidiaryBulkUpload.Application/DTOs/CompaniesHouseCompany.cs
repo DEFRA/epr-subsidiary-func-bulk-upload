@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Net;
 using CsvHelper.Configuration.Attributes;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 
@@ -40,6 +41,8 @@ public class CompaniesHouseCompany
 
     [Ignore]
     public List<UploadFileErrorModel> Errors { get; set; }
+
+    public HttpStatusCode? StatusCode { get; set; }
 
     public static ValidationResult ValidateName(string organisation_name, ValidationContext context)
     {
