@@ -28,6 +28,7 @@ To run locally, create a file `local.settings.json`. This file is in `.gitignore
     "TableStorage__ConnectionString": "UseDevelopmentStorage=true",
     "TableStorage__CompaniesHouseOfflineDataTableName": "CompaniesHouseData",
     "Redis__ConnectionString": "localhost",
+    "Redis__TimeToLiveInMinutes": "720",    
     "CompaniesHouseDownload__Schedule": "0 */5 * * * *"
     "ApiConfig__SubsidiaryServiceBaseUrl": "http://localhost:5000/",
     "ApiConfig__CompaniesHouseLookupBaseUrl": "https://integration-snd.azure.defra.cloud/ws/rest/DEFRA/v2.1/",

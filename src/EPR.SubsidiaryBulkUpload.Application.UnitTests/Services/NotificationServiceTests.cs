@@ -1,17 +1,25 @@
 ﻿using System.Text.Json;
 using EPR.SubsidiaryBulkUpload.Application.Models;
+using EPR.SubsidiaryBulkUpload.Application.Options;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
+using OptionsExtensions = Microsoft.Extensions.Options;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 
 [TestClass]
 public class NotificationServiceTests
 {
+    private const string TestKey = "testKey";
+    private const string EmptyKey = "emptyKey";
+    private const string MissingKey = "missingKey";
+    private const string TestStatus = "testStatus";
+
     private Mock<ILogger<NotificationService>> _loggerMock;
     private Mock<IConnectionMultiplexer> _redisConnectionMultiplexerMock;
     private Mock<IDatabase> _redisDatabaseMock;
+    private RedisOptions _redisOptions;
     private NotificationService _notificationService;
 
     [TestInitialize]
@@ -21,72 +29,93 @@ public class NotificationServiceTests
         _redisConnectionMultiplexerMock = new Mock<IConnectionMultiplexer>();
         _redisDatabaseMock = new Mock<IDatabase>();
 
+        _redisOptions = new RedisOptions
+        {
+            ConnectionString = "localhost",
+            TimeToLiveInMinutes = 5
+        };
+
         _redisConnectionMultiplexerMock
             .Setup(x => x.GetDatabase(It.IsAny<int>(), It.IsAny<object>()))
             .Returns(_redisDatabaseMock.Object);
 
         _notificationService = new NotificationService(
             _loggerMock.Object,
-            _redisConnectionMultiplexerMock.Object);
+            _redisConnectionMultiplexerMock.Object,
+            OptionsExtensions.Options.Create<RedisOptions>(_redisOptions));
     }
 
     [TestMethod]
     public async Task GetStatus_ShouldReturnValueFromRedis()
     {
         // Arrange
-        var key = "testKey";
-        var status = "testStatus";
-
-        _redisDatabaseMock.Setup(x => x.StringGetAsync(It.Is<RedisKey>(k => k == key), It.IsAny<CommandFlags>())).ReturnsAsync(status);
+        _redisDatabaseMock.Setup(x => x.StringGetAsync(It.Is<RedisKey>(k => k == TestKey), It.IsAny<CommandFlags>())).ReturnsAsync(TestStatus);
 
         // Act
-        var result = await _notificationService.GetStatus(key);
+        var result = await _notificationService.GetStatus(TestKey);
 
         // Assert
-        result.Should().Be(status);
-        _redisDatabaseMock.Verify(db => db.StringGetAsync(key, CommandFlags.None), Times.Once);
+        result.Should().Be(TestStatus);
+        _redisDatabaseMock.Verify(db => db.StringGetAsync(TestKey, CommandFlags.None), Times.Once);
     }
 
     [TestMethod]
     public async Task GetStatus_ShouldReturnNullFromRedis_WhenKeyIsMissing()
     {
         // Arrange
-        var key = "testKey";
-        var missingKey = "missingKey";
-        var status = "testStatus";
-
-        _redisDatabaseMock.Setup(x => x.StringGetAsync(It.Is<RedisKey>(k => k == key), It.IsAny<CommandFlags>())).ReturnsAsync(status);
+        _redisDatabaseMock.Setup(x => x.StringGetAsync(It.Is<RedisKey>(k => k == TestKey), It.IsAny<CommandFlags>())).ReturnsAsync(TestStatus);
 
         // Act
-        var result = await _notificationService.GetStatus(missingKey);
+        var result = await _notificationService.GetStatus(MissingKey);
 
         // Assert
         result.Should().BeNull();
-        _redisDatabaseMock.Verify(db => db.StringGetAsync(missingKey, CommandFlags.None), Times.Once);
+        _redisDatabaseMock.Verify(db => db.StringGetAsync(MissingKey, CommandFlags.None), Times.Once);
     }
 
     [TestMethod]
     public async Task SetStatus_ShouldSetStringInRedisAndLogInformation()
     {
         // Arrange
-        var key = "testKey";
-        var status = "testStatus";
-
         _redisDatabaseMock.Setup(x => x.StringSetAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<When>())).ReturnsAsync(true);
 
         // Act
-        await _notificationService.SetStatus(key, status);
+        await _notificationService.SetStatus(TestKey, TestStatus);
 
         // Assert
-        _redisDatabaseMock.Verify(db => db.StringSetAsync(key, status, null, false, When.Always, CommandFlags.None), Times.Once);
-        _loggerMock.VerifyLog(x => x.LogInformation("Redis updated key: {Key} status: {Status}", key, status), Times.Once);
+        _redisDatabaseMock.Verify(db => db.StringSetAsync(TestKey, TestStatus, It.Is<TimeSpan>(t => (int)t.TotalMinutes == _redisOptions.TimeToLiveInMinutes), false, When.Always, CommandFlags.None), Times.Once);
+        _loggerMock.VerifyLog(x => x.LogInformation("Redis updated key: {Key} status: {Status}", TestKey, TestStatus), Times.Once);
+    }
+
+    [TestMethod]
+    public async Task InitializeUploadStatusAsync_Calls_Redis_When_Ttl_Is_Null()
+    {
+        // Arrange
+        _redisOptions = new RedisOptions
+        {
+            ConnectionString = "localhost",
+            TimeToLiveInMinutes = null
+        };
+
+        _redisDatabaseMock.Setup(x => x.StringSetAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<When>())).ReturnsAsync(true);
+
+        _notificationService = new NotificationService(
+            _loggerMock.Object,
+            _redisConnectionMultiplexerMock.Object,
+            OptionsExtensions.Options.Create<RedisOptions>(_redisOptions));
+
+        // Act
+        await _notificationService.SetStatus(TestKey, TestStatus);
+
+        // Assert
+        _redisDatabaseMock.Verify(db => db.StringSetAsync(TestKey, TestStatus, null, false, When.Always, CommandFlags.None), Times.Once);
+        _loggerMock.VerifyLog(x => x.LogInformation("Redis updated key: {Key} status: {Status}", TestKey, TestStatus), Times.Once);
     }
 
     [TestMethod]
     public async Task SetErrorStatus_ShouldSerializeErrorsAndSetStringInRedisAndLogInformation()
     {
         // Arrange
-        var key = "testKey";
         var errorsModel = new List<UploadFileErrorModel> { new() { FileLineNumber = 1, Message = "testMessage", IsError = true } };
         var serializedErrors = JsonSerializer.Serialize(new { Errors = errorsModel });
 
@@ -94,19 +123,17 @@ public class NotificationServiceTests
             .ReturnsAsync(true);
 
         // Act
-        await _notificationService.SetErrorStatus(key, errorsModel);
+        await _notificationService.SetErrorStatus(TestKey, errorsModel);
 
         // Assert
-        _redisDatabaseMock.Verify(db => db.StringSetAsync(key, serializedErrors, null, false, When.Always, CommandFlags.None), Times.Once);
-        _loggerMock.VerifyLog(x => x.LogInformation("Redis updated key: {Key} errors: {Value}", key, serializedErrors), Times.Once);
+        _redisDatabaseMock.Verify(db => db.StringSetAsync(TestKey, serializedErrors, It.Is<TimeSpan>(t => (int)t.TotalMinutes == _redisOptions.TimeToLiveInMinutes), false, When.Always, CommandFlags.None), Times.Once);
+        _loggerMock.VerifyLog(x => x.LogInformation("Redis updated key: {Key} errors: {Value}", TestKey, serializedErrors), Times.Once);
     }
 
     [TestMethod]
     public async Task SetErrorStatus_ShouldSerializeCombinedErrorsAndSetStringInRedisAndLogInformation()
     {
         // Arrange
-        var key = "testKey";
-
         var previousErrors = new UploadFileErrorResponse
         {
             Errors = new List<UploadFileErrorModel>
@@ -128,24 +155,50 @@ public class NotificationServiceTests
         var serializedErrors = JsonSerializer.Serialize(new { Errors = previousErrors.Errors });
 
         // Act
-        await _notificationService.SetErrorStatus(key, errorsModel);
+        await _notificationService.SetErrorStatus(TestKey, errorsModel);
 
         // Assert
-        _redisDatabaseMock.Verify(db => db.StringSetAsync(key, serializedErrors, null, false, When.Always, CommandFlags.None), Times.Once);
-        _loggerMock.VerifyLog(x => x.LogInformation("Redis updated key: {Key} errors: {Value}", key, serializedErrors), Times.Once);
+        _redisDatabaseMock.Verify(db => db.StringSetAsync(TestKey, serializedErrors, It.Is<TimeSpan>(t => (int)t.TotalMinutes == _redisOptions.TimeToLiveInMinutes), false, When.Always, CommandFlags.None), Times.Once);
+        _loggerMock.VerifyLog(x => x.LogInformation("Redis updated key: {Key} errors: {Value}", TestKey, serializedErrors), Times.Once);
+    }
+
+    [TestMethod]
+    public async Task SetErrorStatus_ShouldSerializeErrorsAndSetStringInRedisAndLogInformation_When_Ttl_Is_Null()
+    {
+        // Arrange
+        _redisOptions = new RedisOptions
+        {
+            ConnectionString = "localhost",
+            TimeToLiveInMinutes = null
+        };
+
+        var errorsModel = new List<UploadFileErrorModel> { new() { FileLineNumber = 1, Message = "testMessage", IsError = true } };
+        var serializedErrors = JsonSerializer.Serialize(new { Errors = errorsModel });
+
+        _redisDatabaseMock.Setup(x => x.StringSetAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<When>())).ReturnsAsync(true);
+
+        _notificationService = new NotificationService(
+            _loggerMock.Object,
+            _redisConnectionMultiplexerMock.Object,
+            OptionsExtensions.Options.Create<RedisOptions>(_redisOptions));
+
+        // Act
+        await _notificationService.SetErrorStatus(TestKey, errorsModel);
+
+        // Assert
+        _redisDatabaseMock.Verify(db => db.StringSetAsync(TestKey, serializedErrors, null, false, When.Always, CommandFlags.None), Times.Once);
+        _loggerMock.VerifyLog(x => x.LogInformation("Redis updated key: {Key} errors: {Value}", TestKey, serializedErrors), Times.Once);
     }
 
     [TestMethod]
     public async Task GetNotificationErrorsAsync_EmptyKey_ReturnsEmptyResponse()
     {
         // Arrange
-        var key = "emptyKey";
-
         _redisDatabaseMock.Setup(db => db.StringGetAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
             .ReturnsAsync(RedisValue.Null);
 
         // Act
-        var result = await _notificationService.GetNotificationErrorsAsync(key);
+        var result = await _notificationService.GetNotificationErrorsAsync(EmptyKey);
 
         // Assert
         result.Should().NotBeNull();
@@ -157,7 +210,6 @@ public class NotificationServiceTests
     public async Task GetNotificationErrorsAsync_ValidKey_ReturnsErrorsResponse()
     {
         // Arrange
-        var key = "validKey";
         var errors = new UploadFileErrorResponse
         {
             Errors = new List<UploadFileErrorModel>
@@ -172,7 +224,7 @@ public class NotificationServiceTests
             .ReturnsAsync((RedisValue)json);
 
         // Act
-        var result = await _notificationService.GetNotificationErrorsAsync(key);
+        var result = await _notificationService.GetNotificationErrorsAsync(TestKey);
 
         // Assert
         result.Should().NotBeNull();
@@ -188,40 +240,38 @@ public class NotificationServiceTests
         result.Errors[1].IsError.Should().BeFalse();
         result.Errors[1].ErrorNumber.Should().Be(9);
 
-        _loggerMock.VerifyLog(x => x.LogInformation("Redis errors response key: {Key} errors: {Value}", key, json), Times.Once);
+        _loggerMock.VerifyLog(x => x.LogInformation("Redis errors response key: {Key} errors: {Value}", TestKey, json), Times.Once);
     }
 
     [TestMethod]
     public async Task ClearRedisKeyAsync_KeyExists_ShouldLogKeyDeleted()
     {
         // Arrange
-        var key = "testKey";
         _redisDatabaseMock
-            .Setup(db => db.KeyDeleteAsync(key, It.IsAny<CommandFlags>()))
+            .Setup(db => db.KeyDeleteAsync(TestKey, It.IsAny<CommandFlags>()))
             .ReturnsAsync(true);
 
         // Act
-        await _notificationService.ClearRedisKeyAsync(key);
+        await _notificationService.ClearRedisKeyAsync(TestKey);
 
         // Assert
-        _redisDatabaseMock.Verify(db => db.KeyDeleteAsync(key, It.IsAny<CommandFlags>()), Times.Once);
-        _loggerMock.VerifyLog(x => x.LogInformation("Redis key {Key} deleted successfully.", key), Times.Once);
+        _redisDatabaseMock.Verify(db => db.KeyDeleteAsync(TestKey, It.IsAny<CommandFlags>()), Times.Once);
+        _loggerMock.VerifyLog(x => x.LogInformation("Redis key {Key} deleted successfully.", TestKey), Times.Once);
     }
 
     [TestMethod]
     public async Task ClearRedisKeyAsync_KeyDoesNotExist_ShouldLogKeyNotFound()
     {
         // Arrange
-        var key = "testKey";
         _redisDatabaseMock
-            .Setup(db => db.KeyDeleteAsync(key, It.IsAny<CommandFlags>()))
+            .Setup(db => db.KeyDeleteAsync(TestKey, It.IsAny<CommandFlags>()))
             .ReturnsAsync(false);
 
         // Act
-        await _notificationService.ClearRedisKeyAsync(key);
+        await _notificationService.ClearRedisKeyAsync(TestKey);
 
         // Assert
-        _redisDatabaseMock.Verify(db => db.KeyDeleteAsync(key, It.IsAny<CommandFlags>()), Times.Once);
-        _loggerMock.VerifyLog(x => x.LogWarning("Redis key testKey not found."), Times.Once);
+        _redisDatabaseMock.Verify(db => db.KeyDeleteAsync(TestKey, It.IsAny<CommandFlags>()), Times.Once);
+        _loggerMock.VerifyLog(x => x.LogWarning("Redis key {Key} not found.", TestKey), Times.Once);
     }
 }
