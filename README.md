@@ -41,6 +41,7 @@ The structure of the application settings can be found in the repository. Exampl
 | CompaniesHouseDownload__RetryPolicyMaxRetries         | The number of times to retry failing calls to the Companies House downloads         |
 | CompaniesHouseDownload__RetryPolicyInitialWaitTime    | The time to wait when calls to the Companies House downloads fail for the first time       |
 | Redis__ConnectionString                               | Connection string for Redis                                                |
+| Redis__TimeToLiveInMinutes                            | Time to live (expiry) for Redis keysConnection string for Redis            |
 | SubmissionApi__BaseUrl                                | The base URL for the Submission Status API WebApp                          |
 | TableStorage__ConnectionString                        | The connection string of the table storage account, where companies house data will be stored     |
 | TableStorage__CompaniesHouseOfflineDataTableName      | The name of the table in the storage account, where companies house data will be stored           |
