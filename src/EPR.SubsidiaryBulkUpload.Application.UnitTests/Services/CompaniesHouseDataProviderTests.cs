@@ -25,7 +25,6 @@ public class CompaniesHouseDataProviderTests
         var companyHouseEntity = fixture.Create<CompanyHouseTableEntity>();
 
         companyHouseEntity.CompanyName = organisationModel.Name;
-
         var companyHouseEntity1 = fixture.Create<CompanyHouseTableEntity>();
         var config = fixture.Create<TableStorageOptions>();
         var options = new Mock<IOptions<TableStorageOptions>>();
@@ -48,7 +47,36 @@ public class CompaniesHouseDataProviderTests
         organisationModel.Address.Postcode.Should().Be(companyHouseEntity.RegAddressPostCode);
         organisationModel.Address.Town.Should().Be(companyHouseEntity.RegAddressPostTown);
         organisationModel.Address.Country.Should().Be(companyHouseEntity.RegAddressCountry);
-        organisationModel.OrganisationType.Should().Be(OrganisationType.NotSet);
+        organisationModel.OrganisationType.Should().Be(OrganisationType.CompaniesHouseCompany);
+    }
+
+    [TestMethod]
+    public void ShouldSetCompaniesHouseDataFromLocalStorageWithCompanyNameIsAMatch()
+    {
+        // Arrange
+        var organisationModel = fixture.Create<OrganisationModel>();
+        var companyHouseEntity = fixture.Create<CompanyHouseTableEntity>();
+
+        companyHouseEntity.CompanyName = organisationModel.Name;
+        var companyHouseEntity1 = fixture.Create<CompanyHouseTableEntity>();
+        var config = fixture.Create<TableStorageOptions>();
+        var options = new Mock<IOptions<TableStorageOptions>>();
+        options.Setup(o => o.Value).Returns(config);
+
+        var companiesHouseLookup = new Mock<ICompaniesHouseLookupService>();
+        var tableStorage = new Mock<ITableStorageProcessor>();
+
+        tableStorage.Setup(ts => ts.GetByCompanyNumber(organisationModel.CompaniesHouseNumber, config.CompaniesHouseOfflineDataTableName))
+            .ReturnsAsync(companyHouseEntity);
+
+        var dataProvider = new CompaniesHouseDataProvider(companiesHouseLookup.Object, tableStorage.Object, options.Object);
+
+        // Act
+        dataProvider.SetCompaniesHouseData(organisationModel);
+
+        // Assert
+        organisationModel.Name.Should().NotBeNull();
+        organisationModel.Name.Should().Be(companyHouseEntity.CompanyName);
     }
 
     [TestMethod]

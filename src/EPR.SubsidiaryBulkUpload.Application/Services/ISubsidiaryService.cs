@@ -16,4 +16,6 @@ public interface ISubsidiaryService
     Task<bool> GetSubsidiaryRelationshipAsync(int parentOrganisationId, int subsidiaryOrganisationId);
 
     Task<UserOrganisation> GetSystemUserAndOrganisation();
+
+    Task<OrganisationResponseModel?> GetCompanyByCompanyName(string companyName);
 }
