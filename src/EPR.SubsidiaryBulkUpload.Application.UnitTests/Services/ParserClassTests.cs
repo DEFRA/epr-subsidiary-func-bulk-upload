@@ -74,7 +74,7 @@ public class ParserClassTests
 
         errorRow.Errors.Should().NotBeEmpty();
         errorRow.Errors[0].FileContent.Should().Be("organisation,subsidiary,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant");
-        errorRow.Errors[0].Message.Should().Contain("The headers are missing : organisation_id,subsidiary_id");
+        errorRow.Errors[0].Message.Should().Contain("The headers are missing.");
     }
 
     [TestMethod]
@@ -100,7 +100,7 @@ public class ParserClassTests
 
         errorRow.Errors[0].Should().NotBeNull();
         errorRow.Errors[0].FileContent.Should().Be("organisation_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant");
-        errorRow.Errors[0].Message.Should().Contain("The headers are missing : subsidiary_id");
+        errorRow.Errors[0].Message.Should().Contain("The headers are missing.");
     }
 
     [TestMethod]
@@ -127,7 +127,7 @@ public class ParserClassTests
 
         errorRow.Errors[0].Should().NotBeNull();
         errorRow.Errors[0].FileContent.Should().Be("organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,invalid_item");
-        errorRow.Errors[0].Message.Should().Contain("The file has additional column headers:invalid_item");
+        errorRow.Errors[0].Message.Should().Contain("The file has additional column headers: The file has too many column headers. Remove these and try again.");
 
         var parsedResult = returnValue.CompaniesHouseCompany;
     }
@@ -213,7 +213,7 @@ public class ParserClassTests
         parsedResult[1].franchisee_licensee_tenant.Should().Be("License123");
 
         parsedResult[1].Errors.Should().NotBeEmpty();
-        parsedResult[1].Errors[0].Message.Should().Contain("organisation name is required.");
+        parsedResult[1].Errors[0].Message.Should().Contain("The 'organisation name' column is missing.");
     }
 
     [TestMethod]

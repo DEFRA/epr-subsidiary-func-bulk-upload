@@ -14,7 +14,7 @@ public static class BulkUpdateErrors
     public const string OrganisationIdRequiredMessage = "The 'organisation id' column is missing.";
 
     public const int OrganisationNameRequired = 103;
-    public const string OrganisationNameRequiredMessage = "The 'organisation name' column is missing. ";
+    public const string OrganisationNameRequiredMessage = "The 'organisation name' column is missing.";
 
     public const int CompaniesHouseNumberRequired = 104;
     public const string CompaniesHouseNumberRequiredMessage = "The 'companies house number' column is missing.";
@@ -37,9 +37,6 @@ public static class BulkUpdateErrors
     public const int CompanyNameNofoundAnywhere = 111;
     public const string CompanyNameNofoundAnywhereMessage = "The company name does not match the one on Companies House. Check your company name and try again.";
 
-    // 112 Company Name not found in RPD(backend storage)     The company name is not found in Report Packaging Data. Check your company name and try again.
-    // 113 Company Name not found in Offline Table Storage The company name is not found in our records. Check the company name and try again.
-    // 114 Company Name not found in Companies House database The Company name is not found in the Companies House database. Check the name and try again.
     public const int FileisInvalidNoHeaderNoData = 115;
     public const string FileisInvalidNoHeaderNoDataMessage = "The file is empty. It does not contain headers or data rows.";
 
