@@ -126,4 +126,22 @@ The companies house download function can be triggered from Postman by setting u
 and a header `x-functions-key` (value can be empty for local use, but the functions master key is needed if doing this for a function in Azure). The request also needs a 
 json body which can be set to `{}`.
 
+## Notification status
+
+To check notifications you can call the following GET uri, where 
+ - `devrwdwebfax408` should be replaced with the correct environment name
+ - `{userId}` is the guid for the user in the accounts database 
+ - `{organisationId}` is the external id (guid) for the organisation in the accounts database
+ - `<function code>` is the function or master code found in the Azure portal
+
+```
+https://devrwdwebfax408.azurewebsites.net/api/notifications/status/{userId}/{organisationId}?code=<function code>
+```
+
+On local developer environment use
+```
+http://localhost:7245/api/notifications/status/{userId}/{organisationId}
+```
+
+To reset notifications, use the same url as DELETE. 
 

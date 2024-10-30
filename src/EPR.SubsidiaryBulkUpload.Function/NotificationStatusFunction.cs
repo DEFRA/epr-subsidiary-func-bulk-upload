@@ -21,19 +21,10 @@ public class NotificationStatusFunction(INotificationService notificationService
     {
         try
         {
-            var userRequestModel = new UserRequestModel
-            {
-                UserId = userId,
-                OrganisationId = organisationId
-            };
-
-            var progressKey = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress);
-            var rowsAddedKey = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadRowsAdded);
-            var errorsKey = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrors);
-
-            var status = await _notificationService.GetStatus(progressKey);
-            var rowsAdded = await _notificationService.GetStatus(rowsAddedKey);
-            var errorStatus = await _notificationService.GetStatus(errorsKey);
+            var keys = GenerateKeys(userId, organisationId);
+            var status = await _notificationService.GetStatus(keys.Progress);
+            var rowsAdded = await _notificationService.GetStatus(keys.RowsAdded);
+            var errorStatus = await _notificationService.GetStatus(keys.Errors);
 
             var errors = !string.IsNullOrEmpty(errorStatus)
                 ? JsonSerializer.Deserialize<UploadFileErrorCollectionModel>(errorStatus)
@@ -52,5 +43,42 @@ public class NotificationStatusFunction(INotificationService notificationService
         {
             return new StatusCodeResult(500);
         }
+    }
+
+    [Function("NotificationStatusResetFunction")]
+    public async Task<IActionResult> Delete(
+        [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "notifications/status/{userId}/{organisationId}")]
+        HttpRequest req,
+        Guid userId,
+        Guid organisationId)
+    {
+        try
+        {
+            var keys = GenerateKeys(userId, organisationId);
+            await _notificationService.ClearRedisKeyAsync(keys.Progress);
+            await _notificationService.ClearRedisKeyAsync(keys.RowsAdded);
+            await _notificationService.ClearRedisKeyAsync(keys.Errors);
+
+            return new AcceptedResult();
+        }
+        catch (Exception ex)
+        {
+            return new StatusCodeResult(500);
+        }
+    }
+
+    private (string? Progress, string? RowsAdded, string? Errors) GenerateKeys(
+        Guid userId,
+        Guid organisationId)
+    {
+        var userRequestModel = new UserRequestModel
+        {
+            UserId = userId,
+            OrganisationId = organisationId
+        };
+
+        return (userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress),
+                userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadRowsAdded),
+                userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrors));
     }
 }
