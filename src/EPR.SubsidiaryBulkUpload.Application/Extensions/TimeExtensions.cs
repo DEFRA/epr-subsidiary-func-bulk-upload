@@ -1,18 +1,17 @@
 ﻿using EPR.SubsidiaryBulkUpload.Application.Models;
-using EPR.SubsidiaryBulkUpload.Application.Options;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Extensions;
 
-public static class OptionsExtensions
+public static class TimeExtensions
 {
-    public static TimeSpan ConvertToTimespan(this ApiOptions apiOptions, int time)
+    public static TimeSpan ToTimespan(this int time, TimeUnit timeUnits)
     {
-        return apiOptions.ConvertToTimespan((double)time);
+        return ((double)time).ToTimespan(timeUnits);
     }
 
-    public static TimeSpan ConvertToTimespan(this ApiOptions apiOptions, double time)
+    public static TimeSpan ToTimespan(this double time, TimeUnit timeUnits)
     {
-        return apiOptions.TimeUnits switch
+        return timeUnits switch
         {
             TimeUnit.Seconds => TimeSpan.FromSeconds(time),
             TimeUnit.Milliseconds => TimeSpan.FromMilliseconds(time),
