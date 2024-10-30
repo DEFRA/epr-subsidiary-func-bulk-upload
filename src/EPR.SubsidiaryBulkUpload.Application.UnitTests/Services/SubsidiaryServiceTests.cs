@@ -19,6 +19,7 @@ public class SubsidiaryServiceTests
     private const string OrganisationAddSubsidiaryUri = "api/bulkuploadorganisations/add-subsidiary-relationship";
     private const string OrganisationRelationshipsByIdUri = "api/bulkuploadorganisations/organisation-by-relationship";
     private const string SystemUserAndOrganisationUri = "api/users/system-user-and-organisation";
+    private const string OrganisationByCompanyHouseNameUri = "api/bulkuploadorganisations/organisation-by-name";
 
     private Fixture _fixture;
 
@@ -70,6 +71,90 @@ public class SubsidiaryServiceTests
         // Assert
         result.Should().NotBeNull();
         result.Should().BeEquivalentTo(organisationResponseModel);
+    }
+
+    [TestMethod]
+    public async Task GetCompanyByCompaniesHouseName_ReturnsAccount()
+    {
+        // Arrange
+        var organisationResponseModel = _fixture.Create<OrganisationResponseModel>();
+
+        var organisationResponseModels = new OrganisationResponseModel[] { organisationResponseModel };
+
+        var expectedUri = $"{BaseAddress}/{OrganisationByCompanyHouseNameUri}?companiesHouseName={organisationResponseModel.name}";
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(x => x.RequestUri != null && x.RequestUri.ToString() == expectedUri),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = organisationResponseModels.ToJsonContent()
+            }).Verifiable();
+
+        // Act
+        var result = await _sut.GetCompanyByCompanyName(organisationResponseModel.name);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().BeEquivalentTo(organisationResponseModel);
+    }
+
+    [TestMethod]
+    public async Task GetCompanyByCompaniesHouseName_ReturnsNull_When_NoContent()
+    {
+        // Arrange
+        var organisationResponseModel = _fixture.Create<OrganisationResponseModel>();
+
+        var organisationResponseModels = new OrganisationResponseModel[] { organisationResponseModel };
+
+        var expectedUri = $"{BaseAddress}/{OrganisationByCompanyHouseNameUri}?companiesHouseName={organisationResponseModel.name}";
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(x => x.RequestUri != null && x.RequestUri.ToString() == expectedUri),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.NoContent
+            }).Verifiable();
+
+        // Act
+        var result = await _sut.GetCompanyByCompanyName(organisationResponseModel.name);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task GetCompanyByCompaniesHouseName_When_ForbiddenResponse()
+    {
+        // Arrange
+        var apiResponse = _fixture.Create<ProblemDetails>();
+        var organisationResponseModel = _fixture.Create<OrganisationResponseModel>();
+        var organisationResponseModels = new OrganisationResponseModel[] { organisationResponseModel };
+
+        var expectedUri = $"{BaseAddress}/{OrganisationByCompanyHouseNameUri}?companiesHouseName={organisationResponseModel.name}";
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(x => x.RequestUri != null && x.RequestUri.ToString() == expectedUri),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.Forbidden,
+                Content = apiResponse.ToJsonContent()
+            }).Verifiable();
+
+        // Act
+        var result = await _sut.GetCompanyByCompanyName(organisationResponseModel.name);
+
+        // Assert
+        result.Should().BeNull();
     }
 
     [TestMethod]
@@ -341,31 +426,33 @@ public class SubsidiaryServiceTests
         response.Should().Be(apiResponse);
     }
 
-    /*  [TestMethod]
-      public async Task CreateAndAddSubsidiary_ThrowsProblemResponseException_When_NoSuccessResponse()
-      {
-          // Arrange
-          var linkOrganisationModel = _fixture.Create<LinkOrganisationModel>();
-          HttpStatusCode apiResponse = HttpStatusCode.Forbidden;
+    [TestMethod]
+    public async Task CreateAndAddFranchiseeAsync_Returns_Expected_Result()
+    {
+        // Arrange
+        var linkOrganisationModel = _fixture.Create<LinkOrganisationModel>();
+        linkOrganisationModel.Subsidiary.Franchisee_Licensee_Tenant = "Y";
 
-          var expectedUri = $"{BaseAddress}/{OrganisationCreateAddSubsidiaryUri}";
+        HttpStatusCode apiResponse = HttpStatusCode.OK;
 
-          _httpMessageHandlerMock.Protected()
-              .Setup<Task<HttpResponseMessage>>(
-                  "SendAsync",
-                  ItExpr.Is<HttpRequestMessage>(x => x.RequestUri != null && x.RequestUri.ToString() == expectedUri),
-                  ItExpr.IsAny<CancellationToken>())
-              .ReturnsAsync(new HttpResponseMessage
-              {
-                  StatusCode = HttpStatusCode.Forbidden
-              }).Verifiable();
+        var expectedUri = $"{BaseAddress}/{OrganisationCreateAddSubsidiaryUri}";
 
-          // Act
-          var act = await _sut.CreateAndAddSubsidiaryAsync(linkOrganisationModel);
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(x => x.RequestUri != null && x.RequestUri.ToString() == expectedUri),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK
+            }).Verifiable();
 
-          // Assert
-          act.Should().Be(apiResponse);
-      }*/
+        // Act
+        var response = await _sut.CreateAndAddSubsidiaryAsync(linkOrganisationModel);
+
+        // Assert
+        response.Should().Be(apiResponse);
+    }
 
     [TestMethod]
     public async Task AddSubsidiaryRelationshipAsync_Returns_Expected_Result()

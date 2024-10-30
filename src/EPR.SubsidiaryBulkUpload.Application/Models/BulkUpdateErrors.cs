@@ -5,6 +5,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Models;
 public static class BulkUpdateErrors
 {
     public const int FileEmptyError = 100;
+    public const string FileHasNoRecord = "File has no records.";
     public const int InvalidHeader = 101;
 
     public const int OrganisationIdRequired = 102;
@@ -17,7 +18,7 @@ public static class BulkUpdateErrors
     public const string CompaniesHouseNumberRequiredMessage = "companies house number is required.";
 
     public const int ParentOrChildRequired = 105;
-    public const string ParentOrChildRequiredMessage = "parent_or_child is required.";
+    public const string ParentOrChildRequiredMessage = "parent or child is required.";
 
     public const int FranchiseeLicenseeTenantInvalid = 106;
     public const string FranchiseeLicenseeTenantInvalidMessage = "Franchisee licensee tenant column can only be 'Y' or blank.";
@@ -26,18 +27,18 @@ public static class BulkUpdateErrors
     public const string CompaniesAlreadyBelongsToADifferentParentMessage = "Invalid Request. Subsidiary already has a different parent.";
 
     public const int CompanyNameIsDifferentInRPD = 109;
-    public const string CompanyNameIsDifferentInRPDMessage = "Company Name is different in RPD.";
+    public const string CompanyNameIsDifferentInRPDMessage = "Company Name is different in backend storage.";
 
     public const int CompanyNameIsDifferentInOfflineDataAndDifferentInCHAPI = 110;
-    public const string CompanyNameIsDifferentInOfflineDataAndDifferentInCHAPIMessage = "Company Name is different in Offline Data and CH Data.";
+    public const string CompanyNameIsDifferentInOfflineDataAndDifferentInCHAPIMessage = "Company Name is different in Offline Table Storage.";
 
     public const int CompanyNameNofoundAnywhere = 111;
-    public const string CompanyNameNofoundAnywhereMessage = "Company Name not found in RPD, Offline Data and Companies house API data.";
+    public const string CompanyNameNofoundAnywhereMessage = "Company Name is different in Companies House database.";
 
     public const int FileisInvalidNoHeaderNoData = 112;
     public const int FileisInvalidWithExtraHeaders = 113;
 
-    public const int InvalidDatafoundinRow = 114;
+    public const int InvalidDatafoundinRow = 117;
     public const string InvalidDatafoundinRowMessage = "Extra column value in the file.";
 
     public const int ResourceNotFoundError = 118;
