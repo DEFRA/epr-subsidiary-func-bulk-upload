@@ -67,7 +67,7 @@ public class NotificationStatusFunction(INotificationService notificationService
         }
     }
 
-    private (string? Progress, string? RowsAdded, string? Errors) GenerateKeys(
+    private static (string? Progress, string? RowsAdded, string? Errors) GenerateKeys(
         Guid userId,
         Guid organisationId)
     {
