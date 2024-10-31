@@ -60,4 +60,13 @@ public static class BulkUpdateErrors
 
     public const int SpacesInCompaniesHouseNumberError = 122;
     public const string SpacesInCompaniesHouseNumberErrorMessage = "Spaces in Companies House Number not allowed. Invalid Number.";
+
+    public const int ParentOrganisationIsNotFound = 123;
+    public const string ParentOrganisationIsNotFoundErrorMessage = "Parent organisation is not found.";
+
+    public const int ParentOrganisationFoundCompaniesHouseNumberNotMatching = 124;
+    public const string ParentOrganisationFoundCompaniesHouseNumberNotMatchingMessage = "Parent companies house number is not correct for this organisation.";
+
+    public const int ParentOrganisationNotValidChildCannotbeProcessed = 125;
+    public const string ParentOrganisationNotValidChildCannotbeProcessedErrorMessage = "The parent Organisation is not valid.Child cannot be processed.";
 }

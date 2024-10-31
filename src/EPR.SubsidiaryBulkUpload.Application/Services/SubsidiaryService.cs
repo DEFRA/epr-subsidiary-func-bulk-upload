@@ -18,7 +18,7 @@ public class SubsidiaryService : ISubsidiaryService
     private const string OrganisationRelationshipsByIdUri = "api/bulkuploadorganisations/organisation-by-relationship";
     private const string SystemUserAndOrganisationUri = "api/users/system-user-and-organisation";
     private const string OrganisationByCompanyNameUri = "api/bulkuploadorganisations/organisation-by-name";
-
+    private const string OrganisationByRefernceNumberUri = "api/bulkuploadorganisations/organisation-by-reference-number";
     private readonly ILogger<SubsidiaryService> _logger;
     private readonly HttpClient _httpClient;
 
@@ -130,6 +130,31 @@ public class SubsidiaryService : ISubsidiaryService
 
         var orgResponse = await response.Content.ReadFromJsonAsync<OrganisationResponseModel[]>();
         return orgResponse.FirstOrDefault();
+    }
+
+    public async Task<OrganisationModel?> GetCompanyByRefernceNumber(CompaniesHouseCompany company)
+    {
+        var response = await _httpClient.GetAsync($"{OrganisationByRefernceNumberUri}?referenceNumber={company.organisation_id}");
+        if (response.StatusCode == HttpStatusCode.NoContent)
+        {
+            return null;
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+
+            if (problemDetails != null)
+            {
+                _logger.LogError("Failed to fetch subsidiary using referenceNumber: {Detail} Subsidiary: {StatusCode}", problemDetails.Detail, response.StatusCode);
+            }
+
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content.ReadFromJsonWithEnumsAsync<OrganisationModel>();
     }
 
     public async Task<HttpStatusCode> CreateAndAddSubsidiaryAsync(LinkOrganisationModel linkOrganisationModel)
