@@ -132,7 +132,7 @@ public class SubsidiaryService : ISubsidiaryService
         return orgResponse.FirstOrDefault();
     }
 
-    public async Task<OrganisationModel?> GetCompanyByRefernceNumber(CompaniesHouseCompany company)
+    public async Task<OrganisationResponseModel?> GetCompanyByRefernceNumber(CompaniesHouseCompany company)
     {
         var response = await _httpClient.GetAsync($"{OrganisationByRefernceNumberUri}?referenceNumber={company.organisation_id}");
         if (response.StatusCode == HttpStatusCode.NoContent)
@@ -154,14 +154,14 @@ public class SubsidiaryService : ISubsidiaryService
 
         response.EnsureSuccessStatusCode();
 
-        return await response.Content.ReadFromJsonWithEnumsAsync<OrganisationModel>();
+        return await response.Content.ReadFromJsonWithEnumsAsync<OrganisationResponseModel>();
     }
 
     public async Task<HttpStatusCode> CreateAndAddSubsidiaryAsync(LinkOrganisationModel linkOrganisationModel)
     {
         string json = JsonConvert.SerializeObject(linkOrganisationModel);
 
-        StringContent httpContent = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+        var httpContent = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
         var response = await _httpClient.PostAsync(OrganisationCreateAddSubsidiaryUri, httpContent);
 
@@ -181,7 +181,8 @@ public class SubsidiaryService : ISubsidiaryService
     public async Task<string?> AddSubsidiaryRelationshipAsync(SubsidiaryAddModel subsidiaryAddModel)
     {
         string json = JsonConvert.SerializeObject(subsidiaryAddModel);
-        StringContent httpContent = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+        var httpContent = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
         var response = await _httpClient.PostAsync(OrganisationAddSubsidiaryUri, httpContent);
 

@@ -19,7 +19,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
         this.organisationService = organisationService;
         this.childProcessor = childProcessor;
         _notificationService = notificationService;
-        this._logger = logger;
+        _logger = logger;
     }
 
     public async Task NotifyStart(UserRequestModel userRequestModel)
@@ -70,30 +70,29 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
             .ToAsyncEnumerable();
 
         // this will fetch data from the org database for all the parents and filter to keep the valid ones (org exists in RPD)
-        var subsidiaryGroupsAndParentOrg = subsidiaryGroups.SelectAwait(
-            async sg => (SubsidiaryGroup: sg, Org: await organisationService.GetCompanyByOrgId(sg.Parent)));
+        var subsidiaryGroupsAndParentOrg = await subsidiaryGroups.SelectAwait(
+            async sg => (SubsidiaryGroup: sg, parentOrg: await organisationService.GetCompanyByRefernceNumber(sg.Parent))).ToListAsync();
 
         // parents not found report
-        var subsidiaryGroupsAndParentOrgWithParentNotfound = subsidiaryGroupsAndParentOrg.Where(sg => sg.Org == null).Select(s => s.SubsidiaryGroup).ToListAsync();
-        await ReportCompanies(await subsidiaryGroupsAndParentOrgWithParentNotfound, userRequestModel, BulkUpdateErrors.ParentOrganisationIsNotFoundErrorMessage, BulkUpdateErrors.ParentOrganisationIsNotFound);
-
-        var subsidiaryGroupsAndParentOrg_CheckValidCompaniesHouseNumber = subsidiaryGroups.SelectAwait(
-        async sg => (SubsidiaryGroup: sg, OrgCHN: await organisationService.GetCompanyByCompaniesHouseNumber(sg.Parent.companies_house_number)));
+        var subsidiaryGroupsAndParentOrgWithParentNotfound = subsidiaryGroupsAndParentOrg.Where(sg => sg.parentOrg == null).Select(s => s.SubsidiaryGroup);
+        var refNumberNotFound = subsidiaryGroupsAndParentOrgWithParentNotfound.ToList();
+        await ReportCompanies(subsidiaryGroupsAndParentOrgWithParentNotfound.ToList(), userRequestModel, BulkUpdateErrors.ParentOrganisationIsNotFoundErrorMessage, BulkUpdateErrors.ParentOrganisationIsNotFound);
 
         // parents companies hosue company number not found report
-        var subsidiaryGroupsAndParentOrgWith_InvalidCompaniesHouseNumber = subsidiaryGroupsAndParentOrg_CheckValidCompaniesHouseNumber.Where(sg => sg.OrgCHN == null).Select(s => s.SubsidiaryGroup).ToListAsync();
-        await ReportCompanies(await subsidiaryGroupsAndParentOrgWith_InvalidCompaniesHouseNumber, userRequestModel, BulkUpdateErrors.ParentOrganisationFoundCompaniesHouseNumberNotMatchingMessage, BulkUpdateErrors.ParentOrganisationFoundCompaniesHouseNumberNotMatching);
+        var subsidiaryGroupsAndParentOrgWith_InvalidCompaniesHouseNumber = subsidiaryGroupsAndParentOrg.Where(sg => sg.parentOrg != null && sg.SubsidiaryGroup.Parent.companies_house_number != sg.parentOrg.companiesHouseNumber).Select(s => s.SubsidiaryGroup);
+        await ReportCompanies(subsidiaryGroupsAndParentOrgWith_InvalidCompaniesHouseNumber.ToList(), userRequestModel, BulkUpdateErrors.ParentOrganisationFoundCompaniesHouseNumberNotMatchingMessage, BulkUpdateErrors.ParentOrganisationFoundCompaniesHouseNumberNotMatching);
 
-        var subsidiaryGroupsAndParentOrgWithValidCompaniesHouseNumber = subsidiaryGroupsAndParentOrg_CheckValidCompaniesHouseNumber.Where(sg => sg.OrgCHN != null).ToListAsync();
+        var subsidiaryGroupsAndParentOrgWithValidCompaniesHouseNumber = subsidiaryGroupsAndParentOrg.Where(sg => sg.parentOrg != null && sg.SubsidiaryGroup.Parent.companies_house_number == sg.parentOrg.companiesHouseNumber);
+        var count1 = subsidiaryGroupsAndParentOrgWithValidCompaniesHouseNumber.Select(o => o.parentOrg).Count();
 
         var addedSubsidiariesCount = 0;
 
-        foreach (var subsidiaryGroupAndParentOrg in await subsidiaryGroupsAndParentOrgWithValidCompaniesHouseNumber)
+        foreach (var subsidiaryGroupAndParentOrg in subsidiaryGroupsAndParentOrgWithValidCompaniesHouseNumber)
         {
             addedSubsidiariesCount += await childProcessor.Process(
                 subsidiaryGroupAndParentOrg.SubsidiaryGroup.Subsidiaries,
                 subsidiaryGroupAndParentOrg.SubsidiaryGroup.Parent,
-                subsidiaryGroupAndParentOrg.OrgCHN,
+                subsidiaryGroupAndParentOrg.parentOrg,
                 userRequestModel);
         }
 
@@ -104,7 +103,6 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
     private async Task ReportCompanies(List<ParentAndSubsidiaries> subsidiaryGroupsAndParentOrgWithParentNotfound, UserRequestModel userRequestModel, string errorMessage, int errorNumber)
     {
         var notificationErrorList = new List<UploadFileErrorModel>();
-        var notificationErrorListForSubsidiaries = new List<UploadFileErrorModel>();
         foreach (var company in subsidiaryGroupsAndParentOrgWithParentNotfound)
         {
             company.Parent.Errors = new List<UploadFileErrorModel>();
@@ -139,7 +137,6 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
 
     private async Task ReportCompanies(List<CompaniesHouseCompany> subsidiaries, UserRequestModel userRequestModel, string errorMessage, int errorNumber)
     {
-        var notificationErrorList = new List<UploadFileErrorModel>();
         var notificationErrorListForSubsidiaries = new List<UploadFileErrorModel>();
         foreach (var subsidiary in subsidiaries)
         {

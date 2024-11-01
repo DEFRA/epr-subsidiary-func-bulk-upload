@@ -37,6 +37,11 @@ public class BulkUploadOrchestrationTests
         var parentAndSubsidiaries = _fixture.CreateMany<ParentAndSubsidiaries>();
         var orgModel = _fixture.Create<OrganisationResponseModel>();
 
+        foreach (var org in parentAndSubsidiaries)
+        {
+            orgModel.companiesHouseNumber = org.Parent.companies_house_number;
+        }
+
         _recordExtraction.Setup(re => re.ExtractParentsAndSubsidiaries(companyData)).Returns(parentAndSubsidiaries);
         _subsidiaryService.Setup(se => se.GetCompanyByCompaniesHouseNumber(It.IsAny<string>())).ReturnsAsync(orgModel);
 

@@ -18,4 +18,6 @@ public interface ISubsidiaryService
     Task<UserOrganisation> GetSystemUserAndOrganisation();
 
     Task<OrganisationResponseModel?> GetCompanyByCompanyName(string companyName);
+
+    Task<OrganisationResponseModel?> GetCompanyByRefernceNumber(CompaniesHouseCompany company);
 }
