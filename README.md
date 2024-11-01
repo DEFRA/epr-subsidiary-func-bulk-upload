@@ -41,6 +41,7 @@ The structure of the application settings can be found in the repository. Exampl
 | CompaniesHouseDownload__RetryPolicyMaxRetries         | The number of times to retry failing calls to the Companies House downloads         |
 | CompaniesHouseDownload__RetryPolicyInitialWaitTime    | The time to wait when calls to the Companies House downloads fail for the first time       |
 | Redis__ConnectionString                               | Connection string for Redis                                                |
+| Redis__TimeToLiveInMinutes                            | Time to live (expiry) for Redis keysConnection string for Redis            |
 | SubmissionApi__BaseUrl                                | The base URL for the Submission Status API WebApp                          |
 | TableStorage__ConnectionString                        | The connection string of the table storage account, where companies house data will be stored     |
 | TableStorage__CompaniesHouseOfflineDataTableName      | The name of the table in the storage account, where companies house data will be stored           |
@@ -69,6 +70,7 @@ To run locally, create a file `local.settings.json`. This file is in `.gitignore
     "BlobStorage__SubsidiaryContainerName": "subsidiary-upload-container",
     "BlobStorage__CompaniesHouseContainerName": "subsidiary-companies-house-upload-container",
     "ApiConfig__AccountServiceClientId": "",
+
     "ApiConfig__CompaniesHouseDirectBaseUri": "https://api.company-information.service.gov.uk/",
     "ApiConfig__CompaniesHouseDirectApiKey": "",
     "ApiConfig__Timeout": 30
@@ -94,6 +96,7 @@ To run locally, create a file `local.settings.json`. This file is in `.gitignore
     "CompaniesHouseDownload__RetryPolicyInitialWaitTime": "10",
     "CompaniesHouseDownload__RetryPolicyMaxRetries": "3",
     "Redis__ConnectionString": "localhost:6379,abortConnect=false,connectTimeout=1500", 
+    "Redis__TimeToLiveInMinutes": "720",   
     "SubmissionApi__BaseUrl": "https://localhost:7206",
     "TableStorage__ConnectionString": "UseDevelopmentStorage=true",
     "TableStorage__CompaniesHouseOfflineDataTableName": "CompaniesHouseData"
@@ -123,4 +126,22 @@ The companies house download function can be triggered from Postman by setting u
 and a header `x-functions-key` (value can be empty for local use, but the functions master key is needed if doing this for a function in Azure). The request also needs a 
 json body which can be set to `{}`.
 
+## Notification status
+
+To check notifications you can call the following GET uri, where 
+ - `devrwdwebfax408` should be replaced with the correct environment name
+ - `{userId}` is the guid for the user in the accounts database 
+ - `{organisationId}` is the external id (guid) for the organisation in the accounts database
+ - `<function code>` is the function or master code found in the Azure portal
+
+```
+https://devrwdwebfax408.azurewebsites.net/api/notifications/status/{userId}/{organisationId}?code=<function code>
+```
+
+On local developer environment use
+```
+http://localhost:7245/api/notifications/status/{userId}/{organisationId}
+```
+
+To reset notifications, use the same url as DELETE. 
 
