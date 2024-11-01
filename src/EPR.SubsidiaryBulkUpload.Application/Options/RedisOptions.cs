@@ -8,4 +8,6 @@ public class RedisOptions
     public const string SectionName = "Redis";
 
     public string ConnectionString { get; set; } = null!;
+
+    public int? TimeToLiveInMinutes { get; set; } = null;
 }
