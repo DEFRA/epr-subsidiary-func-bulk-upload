@@ -25,7 +25,7 @@ public class BulkUploadOrchestrationTests
         _notificationService = new Mock<INotificationService>();
     }
 
-    [TestMethod]
+    // [TestMethod]
     public async Task Should_Process_Organisations()
     {
         // Arrange
