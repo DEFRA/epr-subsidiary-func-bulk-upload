@@ -17,7 +17,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
     public async Task<int> Process(IEnumerable<CompaniesHouseCompany> subsidiaries, CompaniesHouseCompany parent, OrganisationResponseModel parentOrg, UserRequestModel userRequestModel)
     {
         IEnumerable<CompaniesHouseCompany> franchiseeProcessed = [];
-        var companiesWithFranchiseeFlagRecords = subsidiaries.Where(ch => ch.franchisee_licensee_tenant == "Y" && (ch.Errors == null || ch.Errors.Count == 0)).Count();
+        var companiesWithFranchiseeFlagRecords = subsidiaries.Count(ch => ch.franchisee_licensee_tenant == "Y" && (ch.Errors == null || ch.Errors.Count == 0));
         if (companiesWithFranchiseeFlagRecords > 0)
         {
             franchiseeProcessed = await ProcessFranchisee(subsidiaries, parentOrg, userRequestModel);
