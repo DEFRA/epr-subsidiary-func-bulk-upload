@@ -13,6 +13,8 @@ public class NotificationService(
     IConnectionMultiplexer redisConnectionMultiplexer,
     IOptions<RedisOptions> redisOptions) : INotificationService
 {
+    private static readonly object _padlock = new object();
+
     private readonly ILogger<NotificationService> _logger = logger;
     private readonly IDatabase _redisDatabase = redisConnectionMultiplexer.GetDatabase();
     private readonly RedisOptions _redisOptions = redisOptions.Value;
@@ -32,15 +34,28 @@ public class NotificationService(
 
     public async Task SetErrorStatus(string key, List<UploadFileErrorModel> errorsModel)
     {
-        var previousErrors = await GetNotificationErrorsAsync(key);
-        previousErrors.Errors.AddRange(errorsModel);
-
-        var value = SerializeErrorsToJson(previousErrors.Errors);
         var expiry = GetExpiry();
+        List<UploadFileErrorModel> errors;
 
-        await _redisDatabase.StringSetAsync(key, value, expiry);
+        lock (_padlock)
+        {
+            var previousErrors = _redisDatabase.StringGet(key);
+            if (previousErrors.IsNullOrEmpty)
+            {
+                errors = errorsModel;
+            }
+            else
+            {
+                var response = JsonSerializer.Deserialize<UploadFileErrorResponse>(previousErrors, _caseInsensitiveJsonSerializerOptions);
+                errors = response.Errors;
+                errors.AddRange(errorsModel);
+            }
 
-        _logger.LogInformation("Redis updated key: {Key} errors: {Value}", key, value);
+            var value = SerializeErrorsToJson(errors);
+            _redisDatabase.StringSet(key, value, expiry);
+
+            _logger.LogInformation("Redis updated key: {Key} errors: {Value}", key, value);
+        }
     }
 
     public async Task<string?> GetStatus(string key)

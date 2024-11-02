@@ -117,6 +117,7 @@ public static class ConfigurationExtensions
         var redisOptions = sp.GetRequiredService<IOptions<RedisOptions>>().Value;
 
         services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisOptions.ConnectionString));
+        services.AddSingleton<INotificationService, NotificationService>();
         services.AddSingleton<ITableStorageProcessor, TableStorageProcessor>();
         services.AddSingleton<TimeProvider>(TimeProvider.System);
 
@@ -145,7 +146,6 @@ public static class ConfigurationExtensions
         services.AddTransient<IDownloadStatusStorage, DownloadStatusStorage>();
         services.AddTransient<IFileDownloadService, FileDownloadService>();
         services.AddTransient<IHtmlWebProvider, HtmlWebProvider>();
-        services.AddTransient<INotificationService, NotificationService>();
         services.AddTransient<IParserClass, ParserClass>();
         services.AddTransient<IRecordExtraction, RecordExtraction>();
         services.AddTransient<ISubsidiaryService, SubsidiaryService>();
