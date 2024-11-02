@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Collections.Generic;
+using System.Text.Json;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
@@ -30,12 +31,19 @@ public class NotificationStatusFunction(INotificationService notificationService
                 ? JsonSerializer.Deserialize<UploadFileErrorCollectionModel>(errorStatus)
                 : null;
 
+            if (errors is not null)
+            {
+                errors.Errors.Sort((e1, e2) => e1.FileLineNumber.CompareTo(e2.FileLineNumber));
+            }
+
+            var rowsAddedCount = int.TryParse(rowsAdded, out int parsedRowsAdded) ? parsedRowsAdded : (int?)null;
+
             return status is null
                 ? new NotFoundResult()
                 : new JsonResult(new
                 {
                     Status = status,
-                    RowsAdded = (int?)(int.TryParse(rowsAdded, out int parsedRowsAdded) ? parsedRowsAdded : null),
+                    RowsAdded = rowsAddedCount,
                     Errors = errors
                 });
         }
