@@ -44,7 +44,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             }
             catch (Exception ex)
             {
-                var errors = BulkUpdateErrors.FileisInvalidNoHeaderNoDataMessage;
+                var errors = BulkUpdateErrors.FileIsInvalidNoHeaderNoDataMessage;
                 var fileErrors = new CompaniesHouseCompany
                 {
                     companies_house_number = string.Empty,
@@ -58,12 +58,12 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                 {
                     FileContent = string.Empty,
                     Message = errors,
-                    ErrorNumber = BulkUpdateErrors.FileisInvalidNoHeaderNoData,
+                    ErrorNumber = BulkUpdateErrors.FileIsInvalidNoHeaderNoData,
                     IsError = true,
                     FileLineNumber = 0
                 });
 
-                _logger.LogError(ex, BulkUpdateErrors.FileisInvalidNoHeaderNoDataMessage);
+                _logger.LogError(ex, BulkUpdateErrors.FileIsInvalidNoHeaderNoDataMessage);
 
                 rows.Add(fileErrors);
                 return rows;
@@ -101,7 +101,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             if (csv.ExtraHeaderErrors is { Count: > 0 })
             {
                 StringBuilder errMess = new StringBuilder();
-                errMess.Append(BulkUpdateErrors.FileisInvalidWithExtraHeadersMessage);
+                errMess.Append(BulkUpdateErrors.FileIsInvalidWithExtraHeadersMessage);
                 errMess.Append(string.Join(",", csv.ExtraHeaderErrors));
                 var companyHeaderErrors = new CompaniesHouseCompany
                 {
@@ -116,7 +116,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                 {
                     FileContent = string.Join(",", csv.HeaderRecord),
                     Message = errMess.ToString(),
-                    ErrorNumber = BulkUpdateErrors.FileisInvalidWithExtraHeaders,
+                    ErrorNumber = BulkUpdateErrors.FileIsInvalidWithExtraHeaders,
                     IsError = true,
                     FileLineNumber = 1
                 });

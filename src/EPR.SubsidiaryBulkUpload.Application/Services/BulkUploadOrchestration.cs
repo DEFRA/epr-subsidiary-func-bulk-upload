@@ -71,19 +71,18 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
 
         // this will fetch data from the org database for all the parents and filter to keep the valid ones (org exists in RPD)
         var subsidiaryGroupsAndParentOrg = await subsidiaryGroups.SelectAwait(
-            async sg => (SubsidiaryGroup: sg, parentOrg: await organisationService.GetCompanyByRefernceNumber(sg.Parent.organisation_id))).ToListAsync();
+            async sg => (SubsidiaryGroup: sg, parentOrg: await organisationService.GetCompanyByReferenceNumber(sg.Parent.organisation_id))).ToListAsync();
 
         // parents not found report
-        var subsidiaryGroupsAndParentOrgWithParentNotfound = subsidiaryGroupsAndParentOrg.Where(sg => sg.parentOrg == null).Select(s => s.SubsidiaryGroup);
-        var refNumberNotFound = subsidiaryGroupsAndParentOrgWithParentNotfound.ToList();
-        await ReportCompanies(subsidiaryGroupsAndParentOrgWithParentNotfound.ToList(), userRequestModel, BulkUpdateErrors.ParentOrganisationIsNotFoundErrorMessage, BulkUpdateErrors.ParentOrganisationIsNotFound);
+        var subsidiaryGroupsAndParentOrgWithParentNotFound = subsidiaryGroupsAndParentOrg.Where(sg => sg.parentOrg == null).Select(s => s.SubsidiaryGroup);
+        var refNumberNotFound = subsidiaryGroupsAndParentOrgWithParentNotFound.ToList();
+        await ReportCompanies(subsidiaryGroupsAndParentOrgWithParentNotFound.ToList(), userRequestModel, BulkUpdateErrors.ParentOrganisationIsNotFoundErrorMessage, BulkUpdateErrors.ParentOrganisationIsNotFound);
 
-        // parents companies hosue company number not found report
+        // parents companies house company number not found report
         var subsidiaryGroupsAndParentOrgWith_InvalidCompaniesHouseNumber = subsidiaryGroupsAndParentOrg.Where(sg => sg.parentOrg != null && sg.SubsidiaryGroup.Parent.companies_house_number != sg.parentOrg.companiesHouseNumber).Select(s => s.SubsidiaryGroup);
         await ReportCompanies(subsidiaryGroupsAndParentOrgWith_InvalidCompaniesHouseNumber.ToList(), userRequestModel, BulkUpdateErrors.ParentOrganisationFoundCompaniesHouseNumberNotMatchingMessage, BulkUpdateErrors.ParentOrganisationFoundCompaniesHouseNumberNotMatching);
 
         var subsidiaryGroupsAndParentOrgWithValidCompaniesHouseNumber = subsidiaryGroupsAndParentOrg.Where(sg => sg.parentOrg != null && sg.SubsidiaryGroup.Parent.companies_house_number == sg.parentOrg.companiesHouseNumber);
-        var count1 = subsidiaryGroupsAndParentOrgWithValidCompaniesHouseNumber.Select(o => o.parentOrg).Count();
 
         var addedSubsidiariesCount = 0;
 
@@ -100,10 +99,10 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
         await _notificationService.SetStatus(userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadRowsAdded), addedSubsidiariesCount.ToString());
     }
 
-    private async Task ReportCompanies(List<ParentAndSubsidiaries> subsidiaryGroupsAndParentOrgWithParentNotfound, UserRequestModel userRequestModel, string errorMessage, int errorNumber)
+    private async Task ReportCompanies(List<ParentAndSubsidiaries> subsidiaryGroupsAndParentOrgWithParentNotFound, UserRequestModel userRequestModel, string errorMessage, int errorNumber)
     {
         var notificationErrorList = new List<UploadFileErrorModel>();
-        foreach (var company in subsidiaryGroupsAndParentOrgWithParentNotfound)
+        foreach (var company in subsidiaryGroupsAndParentOrgWithParentNotFound)
         {
             company.Parent.Errors = new List<UploadFileErrorModel>();
             var newError = new UploadFileErrorModel()
@@ -119,7 +118,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
 
             if (company.Subsidiaries.Count > 0)
             {
-                ReportCompanies(company.Subsidiaries, userRequestModel, BulkUpdateErrors.ParentOrganisationNotValidChildCannotbeProcessedErrorMessage, BulkUpdateErrors.ParentOrganisationNotValidChildCannotbeProcessed);
+                ReportCompanies(company.Subsidiaries, userRequestModel, BulkUpdateErrors.ParentOrganisationNotValidChildCannotBeProcessedErrorMessage, BulkUpdateErrors.ParentOrganisationNotValidChildCannotBeProcessed);
             }
         }
 
@@ -132,7 +131,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
         var keyErrors = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrors);
         await _notificationService.SetStatus(key, "Error Reporting Parent Record.");
         await _notificationService.SetErrorStatus(keyErrors, notificationErrorList);
-        _logger.LogInformation(errorMessage);
+        _logger.LogInformation("{ErrorMessage}", errorMessage);
     }
 
     private async Task ReportCompanies(List<CompaniesHouseCompany> subsidiaries, UserRequestModel userRequestModel, string errorMessage, int errorNumber)
@@ -160,6 +159,6 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
         var keyErrors = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrors);
         await _notificationService.SetStatus(key, "Error Reporting Child Record.");
         await _notificationService.SetErrorStatus(keyErrors, notificationErrorListForSubsidiaries);
-        _logger.LogInformation(errorMessage);
+        _logger.LogInformation("{ErrorMessage}", errorMessage);
     }
 }

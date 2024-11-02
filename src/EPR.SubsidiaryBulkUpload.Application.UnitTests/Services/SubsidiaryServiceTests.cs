@@ -20,7 +20,7 @@ public class SubsidiaryServiceTests
     private const string OrganisationRelationshipsByIdUri = "api/bulkuploadorganisations/organisation-by-relationship";
     private const string SystemUserAndOrganisationUri = "api/users/system-user-and-organisation";
     private const string OrganisationByCompanyHouseNameUri = "api/bulkuploadorganisations/organisation-by-name";
-    private const string OrganisationByRefernceNumberUri = "api/bulkuploadorganisations/organisation-by-reference-number";
+    private const string OrganisationByReferenceNumberUri = "api/bulkuploadorganisations/organisation-by-reference-number";
 
     private Fixture _fixture;
 
@@ -111,7 +111,7 @@ public class SubsidiaryServiceTests
 
         var organisationResponseModels = new OrganisationResponseModel[] { organisationResponseModel };
 
-        var expectedUri = $"{BaseAddress}/{OrganisationByRefernceNumberUri}?referenceNumber={organisationResponseModel.name}";
+        var expectedUri = $"{BaseAddress}/{OrganisationByReferenceNumberUri}?referenceNumber={organisationResponseModel.referenceNumber}";
 
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -125,7 +125,7 @@ public class SubsidiaryServiceTests
             }).Verifiable();
 
         // Act
-        var result = await _sut.GetCompanyByRefernceNumber(organisationResponseModel.referenceNumber);
+        var result = await _sut.GetCompanyByReferenceNumber(organisationResponseModel.referenceNumber);
 
         // Assert
         result.Should().NotBeNull();

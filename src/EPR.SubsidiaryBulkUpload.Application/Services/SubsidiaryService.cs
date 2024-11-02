@@ -18,7 +18,7 @@ public class SubsidiaryService : ISubsidiaryService
     private const string OrganisationRelationshipsByIdUri = "api/bulkuploadorganisations/organisation-by-relationship";
     private const string SystemUserAndOrganisationUri = "api/users/system-user-and-organisation";
     private const string OrganisationByCompanyNameUri = "api/bulkuploadorganisations/organisation-by-name";
-    private const string OrganisationByRefernceNumberUri = "api/bulkuploadorganisations/organisation-by-reference-number";
+    private const string OrganisationByReferenceNumberUri = "api/bulkuploadorganisations/organisation-by-reference-number";
     private readonly ILogger<SubsidiaryService> _logger;
     private readonly HttpClient _httpClient;
 
@@ -132,9 +132,9 @@ public class SubsidiaryService : ISubsidiaryService
         return orgResponse.FirstOrDefault();
     }
 
-    public async Task<OrganisationResponseModel?> GetCompanyByRefernceNumber(string referenceNumber)
+    public async Task<OrganisationResponseModel?> GetCompanyByReferenceNumber(string referenceNumber)
     {
-        var response = await _httpClient.GetAsync($"{OrganisationByRefernceNumberUri}?referenceNumber={referenceNumber}");
+        var response = await _httpClient.GetAsync($"{OrganisationByReferenceNumberUri}?referenceNumber={referenceNumber}");
         if (response.StatusCode == HttpStatusCode.NoContent)
         {
             return null;

@@ -34,17 +34,17 @@ public static class BulkUpdateErrors
     public const int CompanyNameIsDifferentInOfflineDataAndDifferentInCHAPI = 110;
     public const string CompanyNameIsDifferentInOfflineDataAndDifferentInCHAPIMessage = "The company name does not match the one on record. Check your company name and try again.";
 
-    public const int CompanyNameNofoundAnywhere = 111;
-    public const string CompanyNameNofoundAnywhereMessage = "The company name does not match the one on Companies House. Check your company name and try again.";
+    public const int CompanyNameNotFoundAnywhere = 111;
+    public const string CompanyNameNotFoundAnywhereMessage = "The company name does not match the one on Companies House. Check your company name and try again.";
 
-    public const int FileisInvalidNoHeaderNoData = 115;
-    public const string FileisInvalidNoHeaderNoDataMessage = "The file is empty. It does not contain headers or data rows.";
+    public const int FileIsInvalidNoHeaderNoData = 115;
+    public const string FileIsInvalidNoHeaderNoDataMessage = "The file is empty. It does not contain headers or data rows.";
 
-    public const int FileisInvalidWithExtraHeaders = 116;
-    public const string FileisInvalidWithExtraHeadersMessage = "The file has additional column headers: The file has too many column headers. Remove these and try again.";
+    public const int FileIsInvalidWithExtraHeaders = 116;
+    public const string FileIsInvalidWithExtraHeadersMessage = "The file has additional column headers: The file has too many column headers. Remove these and try again.";
 
-    public const int InvalidDatafoundinRow = 117;
-    public const string InvalidDatafoundinRowMessage = "There is too much column information in the file. Remove this and try again.";
+    public const int InvalidDataFoundInRow = 117;
+    public const string InvalidDataFoundInRowMessage = "There is too much column information in the file. Remove this and try again.";
 
     public const int ResourceNotFoundError = 118;
     public const string ResourceNotFoundErrorMessage = "Information cannot be retrieved. Try again later.";
@@ -67,6 +67,6 @@ public static class BulkUpdateErrors
     public const int ParentOrganisationFoundCompaniesHouseNumberNotMatching = 124;
     public const string ParentOrganisationFoundCompaniesHouseNumberNotMatchingMessage = "Parent companies house number is not correct for this organisation.";
 
-    public const int ParentOrganisationNotValidChildCannotbeProcessed = 125;
-    public const string ParentOrganisationNotValidChildCannotbeProcessedErrorMessage = "The parent Organisation is not valid.Child cannot be processed.";
+    public const int ParentOrganisationNotValidChildCannotBeProcessed = 125;
+    public const string ParentOrganisationNotValidChildCannotBeProcessedErrorMessage = "The parent Organisation is not valid. Child cannot be processed.";
 }

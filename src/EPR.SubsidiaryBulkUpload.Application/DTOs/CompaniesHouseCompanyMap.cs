@@ -92,7 +92,7 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
         {
             errors.Add(
                    CreateError(
-                       lineNumber, rawData, BulkUpdateErrors.InvalidDatafoundinRowMessage, BulkUpdateErrors.InvalidDatafoundinRow));
+                       lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
         }
 
         return errors;

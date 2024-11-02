@@ -13,7 +13,7 @@ public class NotificationService(
     IConnectionMultiplexer redisConnectionMultiplexer,
     IOptions<RedisOptions> redisOptions) : INotificationService
 {
-    private static readonly object _padlock = new object();
+    private static readonly object _padlock = new();
 
     private readonly ILogger<NotificationService> _logger = logger;
     private readonly IDatabase _redisDatabase = redisConnectionMultiplexer.GetDatabase();
