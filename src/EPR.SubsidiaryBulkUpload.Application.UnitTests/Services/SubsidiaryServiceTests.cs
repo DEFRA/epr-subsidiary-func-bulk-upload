@@ -20,6 +20,7 @@ public class SubsidiaryServiceTests
     private const string OrganisationRelationshipsByIdUri = "api/bulkuploadorganisations/organisation-by-relationship";
     private const string SystemUserAndOrganisationUri = "api/users/system-user-and-organisation";
     private const string OrganisationByCompanyHouseNameUri = "api/bulkuploadorganisations/organisation-by-name";
+    private const string OrganisationByRefernceNumberUri = "api/bulkuploadorganisations/organisation-by-reference-number";
 
     private Fixture _fixture;
 
@@ -96,6 +97,35 @@ public class SubsidiaryServiceTests
 
         // Act
         var result = await _sut.GetCompanyByCompanyName(organisationResponseModel.name);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().BeEquivalentTo(organisationResponseModel);
+    }
+
+    [TestMethod]
+    public async Task GetCompanyByReferenceNumber_ReturnsAccount()
+    {
+        // Arrange
+        var organisationResponseModel = _fixture.Create<OrganisationResponseModel>();
+
+        var organisationResponseModels = new OrganisationResponseModel[] { organisationResponseModel };
+
+        var expectedUri = $"{BaseAddress}/{OrganisationByRefernceNumberUri}?referenceNumber={organisationResponseModel.name}";
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(x => x.RequestUri != null && x.RequestUri.ToString() == expectedUri),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = organisationResponseModels.ToJsonContent()
+            }).Verifiable();
+
+        // Act
+        var result = await _sut.GetCompanyByRefernceNumber(organisationResponseModel.referenceNumber);
 
         // Assert
         result.Should().NotBeNull();

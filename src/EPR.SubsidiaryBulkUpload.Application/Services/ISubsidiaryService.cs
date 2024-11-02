@@ -19,5 +19,5 @@ public interface ISubsidiaryService
 
     Task<OrganisationResponseModel?> GetCompanyByCompanyName(string companyName);
 
-    Task<OrganisationResponseModel?> GetCompanyByRefernceNumber(CompaniesHouseCompany company);
+    Task<OrganisationResponseModel?> GetCompanyByRefernceNumber(string referenceNumber);
 }

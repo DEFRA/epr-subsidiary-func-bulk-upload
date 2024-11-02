@@ -71,7 +71,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
 
         // this will fetch data from the org database for all the parents and filter to keep the valid ones (org exists in RPD)
         var subsidiaryGroupsAndParentOrg = await subsidiaryGroups.SelectAwait(
-            async sg => (SubsidiaryGroup: sg, parentOrg: await organisationService.GetCompanyByRefernceNumber(sg.Parent))).ToListAsync();
+            async sg => (SubsidiaryGroup: sg, parentOrg: await organisationService.GetCompanyByRefernceNumber(sg.Parent.organisation_id))).ToListAsync();
 
         // parents not found report
         var subsidiaryGroupsAndParentOrgWithParentNotfound = subsidiaryGroupsAndParentOrg.Where(sg => sg.parentOrg == null).Select(s => s.SubsidiaryGroup);
@@ -128,8 +128,8 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
             return;
         }
 
-        var key = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress);
-        var keyErrors = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrors);
+        var key = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgressParent + Guid.NewGuid());
+        var keyErrors = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrorsParent + Guid.NewGuid());
         _notificationService.SetStatus(key, "Error Reporting Parent Record.");
         _notificationService.SetErrorStatus(keyErrors, notificationErrorList);
         _logger.LogInformation(errorMessage);
@@ -156,8 +156,8 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
             return;
         }
 
-        var key = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress);
-        var keyErrors = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrors);
+        var key = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress + Guid.NewGuid());
+        var keyErrors = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrors + Guid.NewGuid());
         _notificationService.SetStatus(key, "Error Reporting Child Record.");
         _notificationService.SetErrorStatus(keyErrors, notificationErrorListForSubsidiaries);
         _logger.LogInformation(errorMessage);

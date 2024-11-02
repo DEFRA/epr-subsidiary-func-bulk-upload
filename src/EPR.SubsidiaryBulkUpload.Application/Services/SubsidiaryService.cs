@@ -132,9 +132,9 @@ public class SubsidiaryService : ISubsidiaryService
         return orgResponse.FirstOrDefault();
     }
 
-    public async Task<OrganisationResponseModel?> GetCompanyByRefernceNumber(CompaniesHouseCompany company)
+    public async Task<OrganisationResponseModel?> GetCompanyByRefernceNumber(string referenceNumber)
     {
-        var response = await _httpClient.GetAsync($"{OrganisationByRefernceNumberUri}?referenceNumber={company.organisation_id}");
+        var response = await _httpClient.GetAsync($"{OrganisationByRefernceNumberUri}?referenceNumber={referenceNumber}");
         if (response.StatusCode == HttpStatusCode.NoContent)
         {
             return null;
@@ -153,8 +153,8 @@ public class SubsidiaryService : ISubsidiaryService
         }
 
         response.EnsureSuccessStatusCode();
-
-        return await response.Content.ReadFromJsonWithEnumsAsync<OrganisationResponseModel>();
+        var orgResponse = await response.Content.ReadFromJsonAsync<OrganisationResponseModel[]>();
+        return orgResponse.FirstOrDefault();
     }
 
     public async Task<HttpStatusCode> CreateAndAddSubsidiaryAsync(LinkOrganisationModel linkOrganisationModel)
