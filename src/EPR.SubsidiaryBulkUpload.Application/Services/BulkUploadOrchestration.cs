@@ -128,8 +128,8 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
             return;
         }
 
-        var key = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgressParent + Guid.NewGuid());
-        var keyErrors = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrorsParent + Guid.NewGuid());
+        var key = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress);
+        var keyErrors = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrors);
         _notificationService.SetStatus(key, "Error Reporting Parent Record.");
         _notificationService.SetErrorStatus(keyErrors, notificationErrorList);
         _logger.LogInformation(errorMessage);
@@ -156,8 +156,8 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
             return;
         }
 
-        var key = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress + Guid.NewGuid());
-        var keyErrors = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrors + Guid.NewGuid());
+        var key = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress);
+        var keyErrors = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrors);
         _notificationService.SetStatus(key, "Error Reporting Child Record.");
         _notificationService.SetErrorStatus(keyErrors, notificationErrorListForSubsidiaries);
         _logger.LogInformation(errorMessage);
