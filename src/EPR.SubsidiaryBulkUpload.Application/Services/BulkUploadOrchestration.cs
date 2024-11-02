@@ -26,8 +26,8 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
     {
         var key = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress);
         var keyErrors = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrors);
-        _notificationService.SetStatus(key, "Uploading");
-        _notificationService.ClearRedisKeyAsync(keyErrors);
+        await _notificationService.SetStatus(key, "Uploading");
+        await _notificationService.ClearRedisKeyAsync(keyErrors);
     }
 
     public async Task NotifyErrors(IEnumerable<CompaniesHouseCompany> data, UserRequestModel userRequestModel)
@@ -45,20 +45,20 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
             };
 
             fileValidation.Add(newError);
-            _notificationService.SetStatus(userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress), "Error");
-            _notificationService.SetErrorStatus(userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrors), fileValidation);
+            await _notificationService.SetStatus(userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress), "Error");
+            await _notificationService.SetErrorStatus(userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrors), fileValidation);
             return;
         }
 
         var errors = data.Where(d => d.Errors != null).SelectMany(chc => chc.Errors).ToList();
 
-        if (errors.Any())
+        if (errors.Count != 0)
         {
             var key = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress);
             var keyErrors = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrors);
 
-            _notificationService.SetStatus(key, "Error");
-            _notificationService.SetErrorStatus(keyErrors, errors);
+            await _notificationService.SetStatus(key, "Error");
+            await _notificationService.SetErrorStatus(keyErrors, errors);
         }
     }
 
@@ -96,8 +96,8 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
                 userRequestModel);
         }
 
-        _notificationService.SetStatus(userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress), "Finished");
-        _notificationService.SetStatus(userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadRowsAdded), addedSubsidiariesCount.ToString());
+        await _notificationService.SetStatus(userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress), "Finished");
+        await _notificationService.SetStatus(userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadRowsAdded), addedSubsidiariesCount.ToString());
     }
 
     private async Task ReportCompanies(List<ParentAndSubsidiaries> subsidiaryGroupsAndParentOrgWithParentNotfound, UserRequestModel userRequestModel, string errorMessage, int errorNumber)
@@ -130,8 +130,8 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
 
         var key = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress);
         var keyErrors = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrors);
-        _notificationService.SetStatus(key, "Error Reporting Parent Record.");
-        _notificationService.SetErrorStatus(keyErrors, notificationErrorList);
+        await _notificationService.SetStatus(key, "Error Reporting Parent Record.");
+        await _notificationService.SetErrorStatus(keyErrors, notificationErrorList);
         _logger.LogInformation(errorMessage);
     }
 
@@ -158,8 +158,8 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
 
         var key = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress);
         var keyErrors = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrors);
-        _notificationService.SetStatus(key, "Error Reporting Child Record.");
-        _notificationService.SetErrorStatus(keyErrors, notificationErrorListForSubsidiaries);
+        await _notificationService.SetStatus(key, "Error Reporting Child Record.");
+        await _notificationService.SetErrorStatus(keyErrors, notificationErrorListForSubsidiaries);
         _logger.LogInformation(errorMessage);
     }
 }

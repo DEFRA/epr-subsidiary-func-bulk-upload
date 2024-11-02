@@ -91,8 +91,8 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         var key = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress);
         var keyErrors = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrors);
-        _notificationService.SetStatus(key, "Error Reporting.");
-        _notificationService.SetErrorStatus(keyErrors, notificationErrorList);
+        await _notificationService.SetStatus(key, "Error Reporting.");
+        await _notificationService.SetErrorStatus(keyErrors, notificationErrorList);
         _logger.LogInformation(BulkUpdateErrors.ResourceNotReachableOrAllOtherPossibleErrorMessage);
     }
 
@@ -120,8 +120,8 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         var key = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress);
         var keyErrors = userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadErrors);
-        _notificationService.SetStatus(key, "Started reporting invalid subsidiaries.");
-        _notificationService.SetErrorStatus(keyErrors, notificationErrorList);
+        await _notificationService.SetStatus(key, "Started reporting invalid subsidiaries.");
+        await _notificationService.SetErrorStatus(keyErrors, notificationErrorList);
         _logger.LogInformation(errorMessage);
     }
 
