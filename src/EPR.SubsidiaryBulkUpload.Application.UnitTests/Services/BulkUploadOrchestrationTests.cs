@@ -34,10 +34,8 @@ public class BulkUploadOrchestrationTests
             .With(c => c.Errors, () => new List<UploadFileErrorModel>())
             .CreateMany<CompaniesHouseCompany>();
 
-        // var parentAndSubsidiaries = _fixture.CreateMany<ParentAndSubsidiaries>();
         var parentAndSubsidiaries = _fixture.CreateMany<ParentAndSubsidiaries>(2).ToArray();
 
-        // var orgModel = _fixture.Create<OrganisationResponseModel>();
         var subsidiaries = _fixture.CreateMany<OrganisationResponseModel>(2).ToArray();
 
         subsidiaries[0].companiesHouseNumber = parentAndSubsidiaries[0].Parent.companies_house_number;
