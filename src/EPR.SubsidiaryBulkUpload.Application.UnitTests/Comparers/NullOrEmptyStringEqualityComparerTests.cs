@@ -21,5 +21,31 @@ namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Comparers
 
             result.Should().Be(expectedResult);
         }
+
+        [TestMethod]
+        public void GetHashCode_ShouldReturnZero_ForNullString()
+        {
+            var result = NullOrEmptyStringEqualityComparer.CaseInsensitiveComparer.GetHashCode((string)null);
+
+            result.Should().Be(0);
+        }
+
+        [TestMethod]
+        public void GetHashCode_ShouldReturnZero_For_EmptyString()
+        {
+            var input = string.Empty;
+            var result = NullOrEmptyStringEqualityComparer.CaseInsensitiveComparer.GetHashCode(string.Empty);
+
+            result.Should().Be(0);
+        }
+
+        [TestMethod]
+        public void GetHashCode_ShouldReturnZero_For_NonEmptyString()
+        {
+            var input = string.Empty;
+            var result = NullOrEmptyStringEqualityComparer.CaseInsensitiveComparer.GetHashCode("Test");
+
+            result.Should().NotBe(0);
+        }
     }
 }
