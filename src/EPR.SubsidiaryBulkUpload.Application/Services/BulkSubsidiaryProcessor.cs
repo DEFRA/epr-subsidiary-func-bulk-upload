@@ -165,7 +165,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         _logger.LogInformation("Subsidiary Company {SubsidiaryReferenceNumber} {SubsidiaryName} linked to {ParentReferenceNumber} in the database.", subsidiary.referenceNumber, subsidiary.name, parent.referenceNumber);
 
-        return result.ToString();
+        return result;
     }
 
     private async Task<IEnumerable<CompaniesHouseCompany>> ProcessFranchisee(IEnumerable<CompaniesHouseCompany> subsidiaries, OrganisationResponseModel parentOrg, UserRequestModel userRequestModel)
@@ -245,24 +245,21 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         var count = 0;
         var result = string.Empty;
 
-        var knownSubsidiariesToAdd = subsidiariesAndOrgWithValidName.Where(co => co.SubsidiaryOrg != null)
+        var knownSubsidiariesToAddCheck = subsidiariesAndOrgWithValidName.Where(co => co.SubsidiaryOrg != null)
         .SelectAwait(async co =>
             (Subsidiary: co.Subsidiary,
              SubsidiaryOrg: co.SubsidiaryOrg,
-             RelationshipExists: await organisationService.GetSubsidiaryRelationshipAsync(parentOrg.id, co.SubsidiaryOrg.id)))
-        .Where(co => !co.RelationshipExists);
+             RelationshipExists: await organisationService.GetSubsidiaryRelationshipAsync(parentOrg.id, co.SubsidiaryOrg.id)));
 
-        var knownSubsidiariesRelationshipAlreadyExist = subsidiariesAndOrgWithValidName.Where(co => co.SubsidiaryOrg != null)
-        .SelectAwait(async co =>
-            (Subsidiary: co.Subsidiary,
-             SubsidiaryOrg: co.SubsidiaryOrg,
-             RelationshipExists: await organisationService.GetSubsidiaryRelationshipAsync(parentOrg.id, co.SubsidiaryOrg.id)))
-        .Where(co => co.RelationshipExists);
+        var knownSubsidiariesToAdd = knownSubsidiariesToAddCheck.Where(co => !co.RelationshipExists);
+
+        var knownSubsidiariesRelationshipAlreadyExist = knownSubsidiariesToAddCheck.Where(co => co.RelationshipExists);
 
         var ksrae = await knownSubsidiariesRelationshipAlreadyExist.Select(org => org.Subsidiary).ToListAsync();
         counts.SubsidiaryWithExistingRelationships = ksrae;
         var ksrdne = await knownSubsidiariesToAdd.Select(org => org.Subsidiary).ToListAsync();
         counts.SubsidiriesWithNoExistingRelationships = ksrdne;
+
         await foreach (var subsidiaryAddModel in knownSubsidiariesToAdd)
         {
             result = await AddSubsidiary(parentOrg, subsidiaryAddModel!.SubsidiaryOrg, userRequestModel.UserId);
