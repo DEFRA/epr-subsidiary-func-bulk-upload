@@ -1,5 +1,7 @@
 ﻿using System.Net;
+using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
+using EPR.SubsidiaryBulkUpload.Function.UnitTests.TestHelpers;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -38,26 +40,54 @@ public class NotificationStatusFunctionTests
     public async Task NotificationStatusFunction_Calls_NotificationStatusService()
     {
         // Arrange
-        var rowsAdded = "1";
-        var errorStatus = default(string);
-
-        var statusJson =
+        var rowsAdded = "3";
+        var errorsJson =
             """
             {
-                "status": "Working",
-                "rowsAdded": 1,
-                "errors": []
+              "errors": [
+                {
+                  "fileLineNumber": 2,
+                  "fileContent": "123456,Test1,XXX LIMITED,11111111,Child,",
+                  "message": "The parent Organisation is not valid. Child cannot be processed.",
+                  "errorNumber": 125,
+                  "isError": true
+                },
+                {
+                  "fileLineNumber": 1,
+                  "fileContent": "123456,,FAKE PARENT,34564000,Parent,",
+                  "message": "Parent organisation is not found.",
+                  "errorNumber": 123,
+                  "isError": true
+                }
+              ]
             }
             """;
+        var expectedErrors = new UploadFileErrorCollectionModel
+        {
+            Errors = new List<UploadFileErrorModel>
+            {
+                new()
+                {
+                    FileLineNumber = 1,
+                    ErrorNumber = 123,
+                    FileContent = "123456,,FAKE PARENT,34564000,Parent,",
+                    IsError = true,
+                    Message = "Parent organisation is not found."
+                },
+                new()
+                {
+                    FileLineNumber = 2,
+                    ErrorNumber = 125,
+                    FileContent = "123456,Test1,XXX LIMITED,11111111,Child,",
+                    IsError = true,
+                    Message = "The parent Organisation is not valid. Child cannot be processed."
+                }
+            }
+        };
 
-        _notificationServiceMock.Setup(x => x.GetStatus(_progressKey))
-            .ReturnsAsync(TestStatus);
-
-        _notificationServiceMock.Setup(x => x.GetStatus(_rowsAddedKey))
-            .ReturnsAsync(rowsAdded);
-
-        _notificationServiceMock.Setup(x => x.GetStatus(_errorKey))
-            .ReturnsAsync(errorStatus);
+        _notificationServiceMock.Setup(x => x.GetStatus(_progressKey)).ReturnsAsync(TestStatus);
+        _notificationServiceMock.Setup(x => x.GetStatus(_rowsAddedKey)).ReturnsAsync(rowsAdded);
+        _notificationServiceMock.Setup(x => x.GetStatus(_errorKey)).ReturnsAsync(errorsJson);
 
         // Act
         var result = await _systemUnderTest.Run(Mock.Of<HttpRequest>(), _userId, _organisationId);
@@ -65,6 +95,56 @@ public class NotificationStatusFunctionTests
         // Assert
         result.Should().NotBeNull();
         result.Should().BeOfType<JsonResult>();
+
+        var jsonResult = result as JsonResult;
+        var statusResult = jsonResult.GetDynamicPropertyValue<string?>("Status");
+        var rowsAddedResult = jsonResult.GetDynamicPropertyValue<int?>("RowsAdded");
+        var errorsResult = jsonResult.GetDynamicPropertyValue<UploadFileErrorCollectionModel?>("Errors");
+
+        statusResult.Should().Be(TestStatus);
+        rowsAddedResult.Should().Be(3);
+        errorsResult.Should().NotBeNull();
+        errorsResult.Should().BeEquivalentTo(expectedErrors);
+
+        _notificationServiceMock.Verify(x => x.GetStatus(_progressKey), Times.Once);
+        _notificationServiceMock.Verify(x => x.GetStatus(_rowsAddedKey), Times.Once);
+        _notificationServiceMock.Verify(x => x.GetStatus(_errorKey), Times.Once);
+    }
+
+    [TestMethod]
+    public async Task NotificationStatusFunction_Calls_NotificationStatusService_WhenErrorsIsNull()
+    {
+        // Arrange
+        var rowsAdded = "2";
+
+        var statusJson =
+            """
+            {
+                status = Working,
+                rowsAdded = 2,
+                errors =  null
+            }
+            """;
+
+        _notificationServiceMock.Setup(x => x.GetStatus(_progressKey)).ReturnsAsync(TestStatus);
+        _notificationServiceMock.Setup(x => x.GetStatus(_rowsAddedKey)).ReturnsAsync(rowsAdded);
+        _notificationServiceMock.Setup(x => x.GetStatus(_errorKey)).ReturnsAsync(default(string?));
+
+        // Act
+        var result = await _systemUnderTest.Run(Mock.Of<HttpRequest>(), _userId, _organisationId);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().BeOfType<JsonResult>();
+
+        var jsonResult = result as JsonResult;
+        var statusResult = jsonResult.GetDynamicPropertyValue<string?>("Status");
+        var rowsAddedResult = jsonResult.GetDynamicPropertyValue<int?>("RowsAdded");
+        var errorsResult = jsonResult.GetDynamicPropertyValue<UploadFileErrorCollectionModel?>("Errors");
+
+        statusResult.Should().Be(TestStatus);
+        rowsAddedResult.Should().Be(2);
+        errorsResult.Should().BeNull();
 
         _notificationServiceMock.Verify(x => x.GetStatus(_progressKey), Times.Once);
         _notificationServiceMock.Verify(x => x.GetStatus(_rowsAddedKey), Times.Once);
@@ -76,8 +156,7 @@ public class NotificationStatusFunctionTests
     {
         // Arrange
         var key = $"{_userId}{_organisationId}Subsidiary bulk upload progress";
-        _notificationServiceMock.Setup(x => x.GetStatus(It.IsAny<string>()))
-            .ReturnsAsync(default(string));
+        _notificationServiceMock.Setup(x => x.GetStatus(It.IsAny<string>())).ReturnsAsync(default(string));
 
         // Act
         var result = await _systemUnderTest.Run(Mock.Of<HttpRequest>(), _userId, _organisationId);
@@ -94,8 +173,7 @@ public class NotificationStatusFunctionTests
     {
         // Arrange
         var exception = new Exception("Test Exception");
-        _notificationServiceMock.Setup(x => x.GetStatus(It.IsAny<string>()))
-            .ThrowsAsync(exception);
+        _notificationServiceMock.Setup(x => x.GetStatus(It.IsAny<string>())).ThrowsAsync(exception);
 
         // Act
         var result = await _systemUnderTest.Run(Mock.Of<HttpRequest>(), _userId, _organisationId);
@@ -128,8 +206,7 @@ public class NotificationStatusFunctionTests
     {
         // Arrange
         var exception = new Exception("Test Exception");
-        _notificationServiceMock.Setup(x => x.ClearRedisKeyAsync(It.IsAny<string>()))
-            .ThrowsAsync(exception);
+        _notificationServiceMock.Setup(x => x.ClearRedisKeyAsync(It.IsAny<string>())).ThrowsAsync(exception);
 
         // Act
         var result = await _systemUnderTest.Delete(Mock.Of<HttpRequest>(), _userId, _organisationId);
