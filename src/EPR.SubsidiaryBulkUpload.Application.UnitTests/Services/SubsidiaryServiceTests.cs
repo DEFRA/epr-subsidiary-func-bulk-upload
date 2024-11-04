@@ -126,7 +126,7 @@ public class SubsidiaryServiceTests
     }
 
     [TestMethod]
-    public async Task GetCompanyByCompaniesHouseNumber_ReturnsAccount()
+    public async Task GetCompanyByCompaniesHouseNumber_Returns_Account()
     {
         // Arrange
         var organisationResponseModel = _fixture.Create<OrganisationResponseModel>();
@@ -534,7 +534,7 @@ public class SubsidiaryServiceTests
     }
 
     [TestMethod]
-    public async Task CreateAndAddSubsidiaryAsync_Returns_Null_When_NoSuccessResponse()
+    public async Task CreateAndAddSubsidiaryAsync_ReturnsNull_When_NoSuccessResponse()
     {
         // Arrange
         var linkOrganisationModel = _fixture.Create<LinkOrganisationModel>();
@@ -588,7 +588,7 @@ public class SubsidiaryServiceTests
     }
 
     [TestMethod]
-    public async Task AddSubsidiaryRelationshipAsync_Returns_Null_When_NoSuccessResponse()
+    public async Task AddSubsidiaryRelationshipAsync_ReturnsNull_When_NoSuccessResponse()
     {
         // Arrange
         var subsidiaryAddModel = _fixture.Create<SubsidiaryAddModel>();
