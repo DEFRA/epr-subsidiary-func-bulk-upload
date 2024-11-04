@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Text.Json;
+﻿using System.Text.Json;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
@@ -12,6 +11,11 @@ namespace EPR.SubsidiaryBulkUpload.Function;
 public class NotificationStatusFunction(INotificationService notificationService)
 {
     private readonly INotificationService _notificationService = notificationService;
+
+    private readonly JsonSerializerOptions _caseInsensitiveJsonSerializerOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
 
     [Function("NotificationStatusFunction")]
     public async Task<IActionResult> Run(
@@ -28,7 +32,7 @@ public class NotificationStatusFunction(INotificationService notificationService
             var errorStatus = await _notificationService.GetStatus(keys.Errors);
 
             var errors = !string.IsNullOrEmpty(errorStatus)
-                ? JsonSerializer.Deserialize<UploadFileErrorCollectionModel>(errorStatus)
+                ? JsonSerializer.Deserialize<UploadFileErrorCollectionModel>(errorStatus, _caseInsensitiveJsonSerializerOptions)
                 : null;
 
             if (errors is not null)
