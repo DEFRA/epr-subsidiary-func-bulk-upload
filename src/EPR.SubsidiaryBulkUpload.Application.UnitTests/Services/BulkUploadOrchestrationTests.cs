@@ -25,7 +25,7 @@ public class BulkUploadOrchestrationTests
         _notificationService = new Mock<INotificationService>();
     }
 
-    // [TestMethod]
+    [TestMethod]
     public async Task Should_Process_Organisations()
     {
         // Arrange
@@ -34,16 +34,23 @@ public class BulkUploadOrchestrationTests
             .With(c => c.Errors, () => new List<UploadFileErrorModel>())
             .CreateMany<CompaniesHouseCompany>();
 
-        var parentAndSubsidiaries = _fixture.CreateMany<ParentAndSubsidiaries>();
-        var orgModel = _fixture.Create<OrganisationResponseModel>();
+        // var parentAndSubsidiaries = _fixture.CreateMany<ParentAndSubsidiaries>();
+        var parentAndSubsidiaries = _fixture.CreateMany<ParentAndSubsidiaries>(2).ToArray();
 
-        foreach (var org in parentAndSubsidiaries)
-        {
-            orgModel.companiesHouseNumber = org.Parent.companies_house_number;
-        }
+        // var orgModel = _fixture.Create<OrganisationResponseModel>();
+        var subsidiaries = _fixture.CreateMany<OrganisationResponseModel>(2).ToArray();
+
+        subsidiaries[0].companiesHouseNumber = parentAndSubsidiaries[0].Parent.companies_house_number;
+        subsidiaries[1].companiesHouseNumber = parentAndSubsidiaries[1].Parent.companies_house_number;
+        subsidiaries[0].name = parentAndSubsidiaries[0].Parent.organisation_name;
+        subsidiaries[1].name = parentAndSubsidiaries[1].Parent.organisation_name;
 
         _recordExtraction.Setup(re => re.ExtractParentsAndSubsidiaries(companyData)).Returns(parentAndSubsidiaries);
-        _subsidiaryService.Setup(se => se.GetCompanyByCompaniesHouseNumber(It.IsAny<string>())).ReturnsAsync(orgModel);
+        _bulkSubsidiaryProcessor.Setup(se => se.Process(It.IsAny<IEnumerable<CompaniesHouseCompany>>(), It.IsAny<CompaniesHouseCompany>(), It.IsAny<OrganisationResponseModel>(), It.IsAny<UserRequestModel>())).ReturnsAsync(1);
+        _subsidiaryService.Setup(se => se.GetCompanyByReferenceNumber(It.IsAny<string>())).ReturnsAsync(subsidiaries[0]);
+        _subsidiaryService.Setup(se => se.GetCompanyByReferenceNumber(It.IsAny<string>())).ReturnsAsync(subsidiaries[1]);
+        _subsidiaryService.Setup(se => se.GetCompanyByCompaniesHouseNumber(It.IsAny<string>())).ReturnsAsync(subsidiaries[0]);
+        _subsidiaryService.Setup(se => se.GetCompanyByCompaniesHouseNumber(It.IsAny<string>())).ReturnsAsync(subsidiaries[1]);
 
         var orchestrator = new BulkUploadOrchestration(_recordExtraction.Object, _subsidiaryService.Object, _bulkSubsidiaryProcessor.Object, _notificationService.Object, NullLogger<BulkUploadOrchestration>.Instance);
 
@@ -59,10 +66,7 @@ public class BulkUploadOrchestrationTests
         await orchestrator.Orchestrate(companyData, userRequestModel);
 
         // Assert
-        foreach (var set in parentAndSubsidiaries)
-        {
-            _bulkSubsidiaryProcessor.Verify(cp => cp.Process(set.Subsidiaries, set.Parent, orgModel, userRequestModel));
-        }
+        _bulkSubsidiaryProcessor.Verify(cp => cp.Process(It.IsAny<IEnumerable<CompaniesHouseCompany>>(), It.IsAny<CompaniesHouseCompany>(), It.IsAny<OrganisationResponseModel>(), It.IsAny<UserRequestModel>()));
     }
 
     [TestMethod]
