@@ -1,4 +1,5 @@
-﻿using EPR.SubsidiaryBulkUpload.Application.DTOs;
+﻿using EPR.SubsidiaryBulkUpload.Application.Comparers;
+using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
@@ -177,7 +178,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         // check if the incoming file company name is matching with the one in db. name to match.
         var subsidiariesAndOrgExistsInTheDB = companiesWithFranchiseeFlagRecords
-            .Where(sub => sub.SubsidiaryOrg != null && string.Equals(sub.Subsidiary.organisation_name, sub.SubsidiaryOrg.name, StringComparison.OrdinalIgnoreCase) && string.Equals(sub.Subsidiary.companies_house_number, sub.SubsidiaryOrg.companiesHouseNumber, StringComparison.OrdinalIgnoreCase));
+            .Where(sub => sub.SubsidiaryOrg != null && NullOrEmptyStringEqualityComparer.CaseInsensitiveComparer.Equals(sub.Subsidiary.organisation_name, sub.SubsidiaryOrg.name) && NullOrEmptyStringEqualityComparer.CaseInsensitiveComparer.Equals(sub.Subsidiary.companies_house_number, sub.SubsidiaryOrg.companiesHouseNumber));
 
         var knownFranchiseeToAddRelationship = subsidiariesAndOrgExistsInTheDB.Where(co => co.SubsidiaryOrg != null)
           .SelectAwait(async co =>
