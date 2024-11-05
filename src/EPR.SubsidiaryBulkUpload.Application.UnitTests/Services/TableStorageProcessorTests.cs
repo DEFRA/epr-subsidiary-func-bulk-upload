@@ -770,7 +770,7 @@ public class TableStorageProcessorTests
         var companyData = _fixture.Create<CompanyHouseTableEntity>();
         var partitionData = _fixture.Create<CompanyHouseTableEntity>();
 
-        var companyResponse = Enumerable.Empty<CompanyHouseTableEntity>().ToList();
+        List<CompanyHouseTableEntity> companyResponse = [];
         var partitionResponse = new Mock<Response<CompanyHouseTableEntity>>();
 
         partitionResponse.Setup(x => x.Value).Returns(partitionData);
@@ -834,7 +834,7 @@ public class TableStorageProcessorTests
         var companyData = _fixture.Create<CompanyHouseTableEntity>();
         var partitionData = _fixture.Create<CompanyHouseTableEntity>();
 
-        var companyResponse = Enumerable.Empty<CompanyHouseTableEntity>().ToList();
+        List<CompanyHouseTableEntity> companyResponse = [];
         var partitionResponse = new Mock<Response<CompanyHouseTableEntity>>();
 
         partitionResponse.Setup(x => x.Value).Returns(partitionData);

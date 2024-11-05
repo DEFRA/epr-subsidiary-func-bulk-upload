@@ -126,7 +126,7 @@ public class NotificationServiceTests
         await _notificationService.SetErrorStatus(TestKey, errorsModel);
 
         // Assert
-        _redisDatabaseMock.Verify(db => db.StringSetAsync(TestKey, serializedErrors, It.Is<TimeSpan>(t => (int)t.TotalMinutes == _redisOptions.TimeToLiveInMinutes), false, When.Always, CommandFlags.None), Times.Once);
+        _redisDatabaseMock.Verify(db => db.StringSet(TestKey, serializedErrors, It.Is<TimeSpan>(t => (int)t.TotalMinutes == _redisOptions.TimeToLiveInMinutes), false, When.Always, CommandFlags.None), Times.Once);
         _loggerMock.VerifyLog(x => x.LogInformation("Redis updated key: {Key} errors: {Value}", TestKey, serializedErrors), Times.Once);
     }
 
@@ -144,12 +144,12 @@ public class NotificationServiceTests
         };
         var errorsModel = new List<UploadFileErrorModel> { new() { FileLineNumber = 1, Message = "testMessage", IsError = true } };
 
-        _redisDatabaseMock.Setup(db => db.StringSetAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<When>()))
-            .ReturnsAsync(true);
+        _redisDatabaseMock.Setup(db => db.StringSet(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<When>()))
+            .Returns(true);
 
         var json = JsonSerializer.Serialize(previousErrors);
-        _redisDatabaseMock.Setup(db => db.StringGetAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
-            .ReturnsAsync((RedisValue)json);
+        _redisDatabaseMock.Setup(db => db.StringGet(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
+            .Returns((RedisValue)json);
 
         previousErrors.Errors.AddRange(errorsModel);
         var serializedErrors = JsonSerializer.Serialize(new { Errors = previousErrors.Errors });
@@ -158,7 +158,7 @@ public class NotificationServiceTests
         await _notificationService.SetErrorStatus(TestKey, errorsModel);
 
         // Assert
-        _redisDatabaseMock.Verify(db => db.StringSetAsync(TestKey, serializedErrors, It.Is<TimeSpan>(t => (int)t.TotalMinutes == _redisOptions.TimeToLiveInMinutes), false, When.Always, CommandFlags.None), Times.Once);
+        _redisDatabaseMock.Verify(db => db.StringSet(TestKey, serializedErrors, It.Is<TimeSpan>(t => (int)t.TotalMinutes == _redisOptions.TimeToLiveInMinutes), false, When.Always, CommandFlags.None), Times.Once);
         _loggerMock.VerifyLog(x => x.LogInformation("Redis updated key: {Key} errors: {Value}", TestKey, serializedErrors), Times.Once);
     }
 
@@ -186,7 +186,7 @@ public class NotificationServiceTests
         await _notificationService.SetErrorStatus(TestKey, errorsModel);
 
         // Assert
-        _redisDatabaseMock.Verify(db => db.StringSetAsync(TestKey, serializedErrors, null, false, When.Always, CommandFlags.None), Times.Once);
+        _redisDatabaseMock.Verify(db => db.StringSet(TestKey, serializedErrors, null, false, When.Always, CommandFlags.None), Times.Once);
         _loggerMock.VerifyLog(x => x.LogInformation("Redis updated key: {Key} errors: {Value}", TestKey, serializedErrors), Times.Once);
     }
 

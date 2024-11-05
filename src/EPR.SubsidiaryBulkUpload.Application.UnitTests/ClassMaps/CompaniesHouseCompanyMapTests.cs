@@ -101,7 +101,7 @@ public class CompaniesHouseCompanyMapTests
     }
 
     [TestMethod]
-    public void ClassMap_Returns_Valid_Header_Data()
+    public void ClassMap_Returns_Valid_header_Data()
     {
         // Arrange
         var dataModel = new List<CompaniesHouseCompany>
@@ -136,12 +136,12 @@ public class CompaniesHouseCompanyMapTests
     }
 
     [TestMethod]
-    [DataRow("", "", "OrgA", "123456", "Child", "", "organisation id is required.")]
-    [DataRow("23123", "", "", "123456", "Child", "", "organisation name is required.")]
-    [DataRow("23123", "", "OrgA", "", "Child", "", "companies house number is required.")]
-    [DataRow("23123", "", "OrgA", " ", "Child", "", "companies house number is required.")]
-    [DataRow("23123", "", "OrgA", "123456", "", "", "parent or child is required.")]
-    [DataRow("23123", "", "OrgA", "123456789", "Child", "", "Companies House Number Field length is invalid. 8 Characters allowed.")]
+    [DataRow("", "", "OrgA", "123456", "Child", "", "The 'organisation id' column is missing.")]
+    [DataRow("23123", "", "", "123456", "Child", "", "The 'organisation name' column is missing.")]
+    [DataRow("23123", "", "OrgA", "", "Child", "", "The 'companies house number' column is missing.")]
+    [DataRow("23123", "", "OrgA", " ", "Child", "", "The 'companies house number' column is missing.")]
+    [DataRow("23123", "", "OrgA", "123456", "", "", "The 'parent or child' column is missing.")]
+    [DataRow("23123", "", "OrgA", "123456789", "Child", "", "Your Companies House number must be 8 characters or fewer.")]
     [DataRow("23123", "", "OrgA", " 123 456", "Child", "", "Spaces in Companies House Number not allowed. Invalid Number.")]
     [DataRow("23123", "", "OrgA", "A123 456 ", "Child", "", "Spaces in Companies House Number not allowed. Invalid Number.")]
     [DataRow("23123", "", "OrgA", "B123 456", "Child", "", "Spaces in Companies House Number not allowed. Invalid Number.")]
@@ -181,12 +181,12 @@ public class CompaniesHouseCompanyMapTests
     }
 
     [TestMethod]
-    [DataRow("23123", "", "OrgA", "", "Child", "", "companies house number is required.")]
-    [DataRow("23123", "", "OrgA", "123456", "Child", "NO", "Franchisee licensee tenant column can only be 'Y' or blank.")]
-    [DataRow("23123", "", "OrgA", "123456", "", "", "parent or child is required.")]
-    [DataRow("23123", "", "OrgA", "123456789", "Child", "", "Companies House Number Field length is invalid. 8 Characters allowed.")]
+    [DataRow("23123", "", "OrgA", "", "Child", "", "The 'companies house number' column is missing.")]
+    [DataRow("23123", "", "OrgA", "123456", "Child", "NO", "You can only enter 'Y' to the 'franchisee licensee tenant' column, or leave it blank.")]
+    [DataRow("23123", "", "OrgA", "123456", "", "", "The 'parent or child' column is missing.")]
+    [DataRow("23123", "", "OrgA", "123456789", "Child", "", "Your Companies House number must be 8 characters or fewer.")]
     [DataRow("23123", "", "OrgA", " 123 456", "Child", "", "Spaces in Companies House Number not allowed. Invalid Number.")]
-    public void ClassMap_ValidationChecks_Return_Error(
+    public void ClassMap_validationchecks_Returns_Error(
        string organisationId,
        string subsidiaryId,
        string organisationName,

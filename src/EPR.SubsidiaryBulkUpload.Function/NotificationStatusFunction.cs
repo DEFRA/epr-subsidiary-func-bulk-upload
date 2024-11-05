@@ -12,6 +12,11 @@ public class NotificationStatusFunction(INotificationService notificationService
 {
     private readonly INotificationService _notificationService = notificationService;
 
+    private readonly JsonSerializerOptions _caseInsensitiveJsonSerializerOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
     [Function("NotificationStatusFunction")]
     public async Task<IActionResult> Run(
         [HttpTrigger(AuthorizationLevel.Function, "get", Route = "notifications/status/{userId}/{organisationId}")]
@@ -27,15 +32,22 @@ public class NotificationStatusFunction(INotificationService notificationService
             var errorStatus = await _notificationService.GetStatus(keys.Errors);
 
             var errors = !string.IsNullOrEmpty(errorStatus)
-                ? JsonSerializer.Deserialize<UploadFileErrorCollectionModel>(errorStatus)
+                ? JsonSerializer.Deserialize<UploadFileErrorCollectionModel>(errorStatus, _caseInsensitiveJsonSerializerOptions)
                 : null;
+
+            if (errors is not null)
+            {
+                errors.Errors.Sort((e1, e2) => e1.FileLineNumber.CompareTo(e2.FileLineNumber));
+            }
+
+            var rowsAddedCount = int.TryParse(rowsAdded, out int parsedRowsAdded) ? parsedRowsAdded : (int?)null;
 
             return status is null
                 ? new NotFoundResult()
                 : new JsonResult(new
                 {
                     Status = status,
-                    RowsAdded = (int?)(int.TryParse(rowsAdded, out int parsedRowsAdded) ? parsedRowsAdded : null),
+                    RowsAdded = rowsAddedCount,
                     Errors = errors
                 });
         }

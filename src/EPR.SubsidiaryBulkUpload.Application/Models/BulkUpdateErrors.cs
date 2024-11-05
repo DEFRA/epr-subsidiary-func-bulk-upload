@@ -5,54 +5,68 @@ namespace EPR.SubsidiaryBulkUpload.Application.Models;
 public static class BulkUpdateErrors
 {
     public const int FileEmptyError = 100;
-    public const string FileHasNoRecord = "File has no records.";
+    public const string FileHasNoRecord = "The file you've uploaded does not have any information in it.";
+
     public const int InvalidHeader = 101;
+    public const string InvalidHeaderOrMissingHeadersMessage = "The headers are missing.";
 
     public const int OrganisationIdRequired = 102;
-    public const string OrganisationIdRequiredMessage = "organisation id is required.";
+    public const string OrganisationIdRequiredMessage = "The 'organisation id' column is missing.";
 
     public const int OrganisationNameRequired = 103;
-    public const string OrganisationNameRequiredMessage = "organisation name is required.";
+    public const string OrganisationNameRequiredMessage = "The 'organisation name' column is missing.";
 
     public const int CompaniesHouseNumberRequired = 104;
-    public const string CompaniesHouseNumberRequiredMessage = "companies house number is required.";
+    public const string CompaniesHouseNumberRequiredMessage = "The 'companies house number' column is missing.";
 
     public const int ParentOrChildRequired = 105;
-    public const string ParentOrChildRequiredMessage = "parent or child is required.";
+    public const string ParentOrChildRequiredMessage = "The 'parent or child' column is missing.";
 
     public const int FranchiseeLicenseeTenantInvalid = 106;
-    public const string FranchiseeLicenseeTenantInvalidMessage = "Franchisee licensee tenant column can only be 'Y' or blank.";
+    public const string FranchiseeLicenseeTenantInvalidMessage = "You can only enter 'Y' to the 'franchisee licensee tenant' column, or leave it blank.";
 
     public const int CompaniesAlreadyBelongsToADifferentParent = 107;
-    public const string CompaniesAlreadyBelongsToADifferentParentMessage = "Invalid Request. Subsidiary already has a different parent.";
+    public const string CompaniesAlreadyBelongsToADifferentParentMessage = "This subsidiary has a different parent.";
 
     public const int CompanyNameIsDifferentInRPD = 109;
-    public const string CompanyNameIsDifferentInRPDMessage = "Company Name is different in backend storage.";
+    public const string CompanyNameIsDifferentInRPDMessage = "The company name does not match the one on record. Check company name and try again.";
 
     public const int CompanyNameIsDifferentInOfflineDataAndDifferentInCHAPI = 110;
-    public const string CompanyNameIsDifferentInOfflineDataAndDifferentInCHAPIMessage = "Company Name is different in Offline Table Storage.";
+    public const string CompanyNameIsDifferentInOfflineDataAndDifferentInCHAPIMessage = "The company name does not match the one on record. Check your company name and try again.";
 
-    public const int CompanyNameNofoundAnywhere = 111;
-    public const string CompanyNameNofoundAnywhereMessage = "Company Name is different in Companies House database.";
+    public const int CompanyNameNotFoundAnywhere = 111;
+    public const string CompanyNameNotFoundAnywhereMessage = "The company name does not match the one on Companies House. Check your company name and try again.";
 
-    public const int FileisInvalidNoHeaderNoData = 112;
-    public const int FileisInvalidWithExtraHeaders = 113;
+    public const int FileIsInvalidNoHeaderNoData = 115;
+    public const string FileIsInvalidNoHeaderNoDataMessage = "The file is empty. It does not contain headers or data rows.";
 
-    public const int InvalidDatafoundinRow = 117;
-    public const string InvalidDatafoundinRowMessage = "Extra column value in the file.";
+    public const int FileIsInvalidWithExtraHeaders = 116;
+    public const string FileIsInvalidWithExtraHeadersMessage = "The file has additional column headers: The file has too many column headers. Remove these and try again.";
+
+    public const int InvalidDataFoundInRow = 117;
+    public const string InvalidDataFoundInRowMessage = "There is too much column information in the file. Remove this and try again.";
 
     public const int ResourceNotFoundError = 118;
     public const string ResourceNotFoundErrorMessage = "Information cannot be retrieved. Try again later.";
 
     public const int ResourceNotReachableError = 119;
-    public const string ResourceNotReachableErrorMessage = "There is a problem with our service. Try again later.";
+    public const string ResourceNotReachableErrorMessage = "There is a problem with the service. Try again later.";
 
     public const int InvalidCompaniesHouseNumberLengthError = 120;
-    public const string InvalidCompaniesHouseNumberLengthErrorMessage = "Companies House Number Field length is invalid. 8 Characters allowed.";
+    public const string InvalidCompaniesHouseNumberLengthErrorMessage = "Your Companies House number must be 8 characters or fewer.";
 
     public const int ResourceNotReachableOrAllOtherPossibleError = 121;
     public const string ResourceNotReachableOrAllOtherPossibleErrorMessage = "Unexpected error when retrieving data from Companies House. Try again later.";
 
     public const int SpacesInCompaniesHouseNumberError = 122;
     public const string SpacesInCompaniesHouseNumberErrorMessage = "Spaces in Companies House Number not allowed. Invalid Number.";
+
+    public const int ParentOrganisationIsNotFound = 123;
+    public const string ParentOrganisationIsNotFoundErrorMessage = "Parent organisation is not found.";
+
+    public const int ParentOrganisationFoundCompaniesHouseNumberNotMatching = 124;
+    public const string ParentOrganisationFoundCompaniesHouseNumberNotMatchingMessage = "Parent companies house number is not correct for this organisation.";
+
+    public const int ParentOrganisationNotValidChildCannotBeProcessed = 125;
+    public const string ParentOrganisationNotValidChildCannotBeProcessedErrorMessage = "The parent Organisation is not valid. Child cannot be processed.";
 }
