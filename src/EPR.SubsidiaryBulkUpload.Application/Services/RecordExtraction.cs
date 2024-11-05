@@ -14,7 +14,7 @@ public class RecordExtraction : IRecordExtraction
 
             var subsidiaries = group.Where(g => g.parent_child != "Parent");
 
-            if (parent != null && subsidiaries.Any())
+            if (parent != null && subsidiaries != null)
             {
                 yield return new ParentAndSubsidiaries { Parent = parent, Subsidiaries = subsidiaries.ToList() };
             }
