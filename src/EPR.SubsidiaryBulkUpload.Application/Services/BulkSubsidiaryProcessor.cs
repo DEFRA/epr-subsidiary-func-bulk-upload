@@ -240,26 +240,18 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         var tobeaddedList = newSubsidiariesToAdd_DataFromLocalStorageOrCompaniesHouseWithNameMatch.Select(org => org.Subsidiary).ToList();
         var tobeaddedCount = tobeaddedList.Count();
-
-        try
+        foreach (var subsidiaryAndLink in newSubsidiariesToAdd_DataFromLocalStorageOrCompaniesHouseWithNameMatch)
         {
-            foreach (var subsidiaryAndLink in newSubsidiariesToAdd_DataFromLocalStorageOrCompaniesHouseWithNameMatch)
+            subsidiaryAndLink.LinkModel.StatusCode = await organisationService.CreateAndAddSubsidiaryAsync(subsidiaryAndLink.LinkModel);
+
+            if (result != null && subsidiaryAndLink.LinkModel.StatusCode == System.Net.HttpStatusCode.OK)
             {
-                subsidiaryAndLink.LinkModel.StatusCode = await organisationService.CreateAndAddSubsidiaryAsync(subsidiaryAndLink.LinkModel);
-
-                if (result != null && subsidiaryAndLink.LinkModel.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    counts.NewAddedSubsidiaries.Add(subsidiaryAndLink.Subsidiary);
-                }
-                else
-                {
-                    counts.NotAddedSubsidiaries.Add(subsidiaryAndLink.Subsidiary);
-                }
+                counts.NewAddedSubsidiaries.Add(subsidiaryAndLink.Subsidiary);
             }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine(ex.Message);
+            else
+            {
+                counts.NotAddedSubsidiaries.Add(subsidiaryAndLink.Subsidiary);
+            }
         }
 
         return counts;
