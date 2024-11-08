@@ -304,6 +304,77 @@ public class BulkSubsidiaryProcessorTests
     }
 
     [TestMethod]
+    public async Task ShouldProcessMultipleFranchiseeWhenDataDoseNotExistForFranchisee()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var organisationId = Guid.NewGuid();
+        var subsidiaryService = new Mock<ISubsidiaryService>();
+
+        var parent = _fixture.Create<CompaniesHouseCompany>();
+        var parentOrganisation = _fixture.Create<OrganisationResponseModel>();
+
+        var subsidiaries = _fixture
+            .Build<CompaniesHouseCompany>()
+            .With(c => c.Errors, () => new())
+            .CreateMany(2)
+            .ToArray();
+
+        var subsidiaryOrganisations = _fixture.CreateMany<OrganisationResponseModel>(2).ToArray();
+        subsidiaries[0].franchisee_licensee_tenant = "Y";
+        subsidiaries[1].franchisee_licensee_tenant = "Y";
+        subsidiaryOrganisations[0].companiesHouseNumber = subsidiaries[0].companies_house_number;
+        subsidiaryOrganisations[0].name = subsidiaries[0].organisation_name;
+        subsidiaryOrganisations[1].companiesHouseNumber = subsidiaries[1].companies_house_number;
+        subsidiaryOrganisations[1].name = subsidiaries[1].organisation_name;
+
+        // Return a null OrganisationResponseModel to simulate the company not existing in RPD
+        subsidiaryService.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(subsidiaries[0].companies_house_number))
+            .ReturnsAsync((OrganisationResponseModel?)null);
+
+        subsidiaryService.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(subsidiaries[1].companies_house_number))
+            .ReturnsAsync((OrganisationResponseModel?)null);
+
+        subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(It.IsAny<int>(), It.IsAny<int>()))
+            .ReturnsAsync(false);
+
+        var inserts = new List<LinkOrganisationModel>();
+        subsidiaryService.Setup(ss => ss.CreateAndAddSubsidiaryAsync(It.IsAny<LinkOrganisationModel>()))
+            .ReturnsAsync(HttpStatusCode.OK)
+            .Callback<LinkOrganisationModel>(model => inserts.Add(model));
+
+        var companiesHouseDataProvider = new Mock<ICompaniesHouseDataProvider>();
+        companiesHouseDataProvider.Setup(ss => ss.SetCompaniesHouseData(It.IsAny<OrganisationModel>()))
+            .ReturnsAsync(true)
+            .Callback<OrganisationModel>(model => model.Error = null);
+
+        subsidiaryService.Setup(ss => ss.GetCompanyByCompanyName(subsidiaries[0].organisation_name))
+        .ReturnsAsync((OrganisationResponseModel?)null);
+
+        subsidiaryService.Setup(ss => ss.GetCompanyByCompanyName(subsidiaries[1].organisation_name))
+        .ReturnsAsync((OrganisationResponseModel?)null);
+
+        var notificationServiceMock = new Mock<INotificationService>();
+        var status = "Working";
+        var errorStatus = default(string);
+        var key = $"{userId}{organisationId}Subsidiary bulk upload progress";
+        var errorKey = $"{userId}{organisationId}Subsidiary bulk upload errors";
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+
+        var userRequestModel = new UserRequestModel
+        {
+            UserId = userId,
+            OrganisationId = organisationId
+        };
+
+        // Act
+        var result = await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
+
+        // Assert
+        result.Should().BeGreaterThanOrEqualTo(2);
+    }
+
+    [TestMethod]
     public async Task ShouldProcessFranchiseeWhenDataExistForFranchisee()
     {
         // Arrange

@@ -185,7 +185,9 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         // check if the incoming file company name is matching with the one in db. name to match.
         var subsidiariesAndOrgExistsInTheDB = companiesWithFranchiseeFlagRecords
-            .Where(sub => sub.SubsidiaryOrg != null && NullOrEmptyStringEqualityComparer.CaseInsensitiveComparer.Equals(sub.Subsidiary.organisation_name, sub.SubsidiaryOrg.name) && NullOrEmptyStringEqualityComparer.CaseInsensitiveComparer.Equals(sub.Subsidiary.companies_house_number, sub.SubsidiaryOrg.companiesHouseNumber));
+            .Where(sub => sub.SubsidiaryOrg != null
+            && NullOrEmptyStringEqualityComparer.CaseInsensitiveComparer.Equals(sub.Subsidiary.organisation_name, sub.SubsidiaryOrg.name)
+            && NullOrEmptyStringEqualityComparer.CaseInsensitiveComparer.Equals(sub.Subsidiary.companies_house_number, sub.SubsidiaryOrg.companiesHouseNumber));
 
         var knownFranchiseeToAddRelationship = subsidiariesAndOrgExistsInTheDB.Where(co => co.SubsidiaryOrg != null)
           .SelectAwait(async co =>
@@ -238,7 +240,8 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         counts.NotAddedSubsidiaries = new List<CompaniesHouseCompany>();
 
         var result = string.Empty;
-        var companiesHouseAPIErrorList = await newSubsidiariesToAdd_DataFromLocalStorageOrCH.Where(subAndLink => subAndLink.LinkModel != null && subAndLink.LinkModel.Subsidiary.Error != null).Select(s => s.LinkModel).ToListAsync();
+        var companiesHouseAPIErrorList = await newSubsidiariesToAdd_DataFromLocalStorageOrCH.Where(subAndLink => subAndLink.LinkModel != null
+        && subAndLink.LinkModel.Subsidiary.Error != null).Select(s => s.LinkModel).ToListAsync();
         await ReportCompanies(companiesHouseAPIErrorList, userRequestModel);
 
         var newSubsidiariesToAdd_DataFromLocalStorageOrCompaniesHouseWithNameMatch = await newSubsidiariesToAdd_DataFromLocalStorageOrCH
