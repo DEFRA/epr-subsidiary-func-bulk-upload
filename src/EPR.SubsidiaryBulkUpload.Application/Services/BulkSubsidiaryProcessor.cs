@@ -282,10 +282,8 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         var knownSubsidiariesRelationshipAlreadyExist = knownSubsidiariesToAddCheck.Where(co => co.RelationshipExists);
 
-        var ksrae = knownSubsidiariesRelationshipAlreadyExist.Select(org => org.Subsidiary).ToList();
-        counts.SubsidiaryWithExistingRelationships = ksrae;
-        var ksrdne = knownSubsidiariesToAdd.Select(org => org.Subsidiary).ToList();
-        counts.SubsidiriesWithNoExistingRelationships = ksrdne;
+        counts.SubsidiaryWithExistingRelationships = knownSubsidiariesRelationshipAlreadyExist.Select(org => org.Subsidiary).ToList();
+        counts.SubsidiriesWithNoExistingRelationships = knownSubsidiariesToAdd.Select(org => org.Subsidiary).ToList();
 
         foreach (var subsidiaryAddModel in knownSubsidiariesToAdd)
         {
