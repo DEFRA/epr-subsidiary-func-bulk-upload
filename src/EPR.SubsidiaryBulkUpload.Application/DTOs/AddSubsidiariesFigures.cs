@@ -19,4 +19,6 @@ public class AddSubsidiariesFigures
     public List<CompaniesHouseCompany> NewAddedSubsidiaries { get; set; }
 
     public List<CompaniesHouseCompany> NotAddedSubsidiaries { get; set; }
+
+    public List<CompaniesHouseCompany> CompaniesHouseAPIErrorListReported { get; set; }
 }
