@@ -72,11 +72,11 @@ public class BulkSubsidiaryProcessorTests
         await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
 
         // Assert
-        updates.Should().HaveCount(0);
+        updates.Should().HaveCount(2);
     }
 
     [TestMethod]
-    public async Task ShouldAddOrganisationsWhereRelationshipsDoNotExist()
+    public async Task ShouldAddOrganisationRelationshipWhereRelationshipsDoNotExist()
     {
         // Arrange
         var userId = Guid.NewGuid();
@@ -111,9 +111,9 @@ public class BulkSubsidiaryProcessorTests
         companiesHouseDataProvider.Setup(chdp => chdp.SetCompaniesHouseData(It.IsAny<OrganisationModel>())).ReturnsAsync(true);
 
         var notificationServiceMock = new Mock<INotificationService>();
-        var key = "testKey";
+/*        var key = "testKey";
         var errorsModel = new List<UploadFileErrorModel> { new UploadFileErrorModel() { FileLineNumber = 1, Message = "testMessage", IsError = true } };
-        notificationServiceMock.Setup(ss => ss.SetErrorStatus(key, errorsModel));
+        notificationServiceMock.Setup(ss => ss.SetErrorStatus(key, errorsModel));*/
 
         var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
 
@@ -128,7 +128,7 @@ public class BulkSubsidiaryProcessorTests
         await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
 
         // Assert
-        inserts.Should().HaveCount(0);
+        inserts.Should().HaveCount(2);
     }
 
     [TestMethod]
@@ -196,6 +196,7 @@ public class BulkSubsidiaryProcessorTests
         var subsidiaries = _fixture
             .Build<CompaniesHouseCompany>()
             .With(c => c.Errors, () => new())
+            .With(c => c.franchisee_licensee_tenant, () => null)
             .CreateMany(1)
             .ToArray();
 
@@ -607,6 +608,7 @@ public class BulkSubsidiaryProcessorTests
             {
                 model.Error = null;
                 model.CompaniesHouseCompanyName = subsidiaries[0].organisation_name;
+                model.CompaniesHouseNumber = subsidiaries[0].companies_house_number;
             });
 
         var inserts = new List<LinkOrganisationModel>();
@@ -625,9 +627,9 @@ public class BulkSubsidiaryProcessorTests
         };
 
         // Act
-        await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
+        var inserted = await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
 
         // Assert
-        inserts.Should().HaveCount(1);
+        inserted.Should().Be(1);
     }
 }

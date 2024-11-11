@@ -29,9 +29,9 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         }
 
         // remove all franchisee from the main collection : subsidiaries
-        var nonFranchiseeSubsidiaries = subsidiaries.Where(ch => ch.franchisee_licensee_tenant == "Y" && (ch.Errors == null || ch.Errors.Count == 0));
+        var nonFranchiseeSubsidiaries = subsidiaries.Except(subsidiaries.Where(ch => ch.franchisee_licensee_tenant == "Y" && (ch.Errors == null || ch.Errors.Count == 0)));
 
-        var nonNullCompaniesHouseNumberRecords = nonFranchiseeSubsidiaries.Where(ch => !string.IsNullOrEmpty(ch.companies_house_number) && string.IsNullOrEmpty(ch.franchisee_licensee_tenant));
+        var nonNullCompaniesHouseNumberRecords = nonFranchiseeSubsidiaries.Where(ch => !string.IsNullOrEmpty(ch.companies_house_number));
 
         var subsidiariesAndOrg = nonNullCompaniesHouseNumberRecords
             .ToAsyncEnumerable()
@@ -43,8 +43,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         var subsidiariesAndOrgWithValidNameProcessStatistics = await ProcessValidNamedOrgs(subsidiariesAndOrgWithValidName, parentOrg, userRequestModel);
 
-        var subsidiariesAndOrgWith_InValidName = subsidiariesAndOrg
-            .Where(sub => sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg?.companiesHouseNumber
+        var subsidiariesAndOrgWith_InValidName = subsidiariesAndOrg.Where(sub => sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg?.companiesHouseNumber
             && !string.Equals(sub.Subsidiary.organisation_name, sub.SubsidiaryOrg?.name, StringComparison.OrdinalIgnoreCase));
         var subWithInvalidName = await subsidiariesAndOrgWith_InValidName.Select(s => s.Subsidiary).ToListAsync();
 
@@ -52,7 +51,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         await ReportCompanies(subWithInvalidName, userRequestModel, BulkUpdateErrors.CompanyNameIsDifferentInRPDMessage, BulkUpdateErrors.CompanyNameIsDifferentInRPD);
 
         // minus the invalid name companies from the non null companies
-        var remaingtoProcess = nonNullCompaniesHouseNumberRecords.Except(subWithInvalidName).Except(subsidiariesAndOrgWithValidNameProcessStatistics.NewAddedSubsidiaries);
+        var remainingToProcess = nonNullCompaniesHouseNumberRecords.Except(subWithInvalidName).Except(subsidiariesAndOrgWithValidNameProcessStatistics.NewAddedSubsidiaries);
 
         /*Scenario 3: The subsidiary found in Offline data. name matches then Add OR name not match then get it from CH API and name matches with CH API data.*/
         var newSubsidiariesToAdd_DataFromLocalStorageOrCH = subsidiariesAndOrg.Where(co => co.SubsidiaryOrg == null)
@@ -60,9 +59,15 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             (Subsidiary: subsidiary.Subsidiary, LinkModel: await GetLinkModelForCompaniesHouseData(subsidiary.Subsidiary, parentOrg, userRequestModel.UserId)))
             .Where(subAndLink => subAndLink.LinkModel != null);
 
+        var companiesHouseAPIErrorList = await newSubsidiariesToAdd_DataFromLocalStorageOrCH
+            .Where(subAndLink => subAndLink.LinkModel != null
+            && subAndLink.LinkModel.Subsidiary.Error != null).Select(s => s.Subsidiary).ToListAsync();
+
+        var remainingToProcessPart2 = remainingToProcess.Except(companiesHouseAPIErrorList);
+
         var companyHouseAPIProcessStatistics = await ProcessCompanyHouseAPI(newSubsidiariesToAdd_DataFromLocalStorageOrCH, userRequestModel);
 
-        var remaingtoProcessPart2 = remaingtoProcess.Except(companyHouseAPIProcessStatistics.NewAddedSubsidiaries);
+        var remainingToProcessPart3 = remainingToProcessPart2.Except(companyHouseAPIProcessStatistics.NewAddedSubsidiaries);
 
         /*Scenario 4: The subsidiary found in Offline data. name not match. get it from CH API and name not matches with CH API data. Report Error.*/
         var newSubsidiariesToAdd_DataFromLocalStorageOrCompaniesHouse_NameNoMatch = newSubsidiariesToAdd_DataFromLocalStorageOrCH
@@ -72,22 +77,14 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         var newSubsidiariesToAdd_DataFromLocalStorageOrCH_NameNoMatchList = await newSubsidiariesToAdd_DataFromLocalStorageOrCompaniesHouse_NameNoMatch.Select(s => s.Subsidiary).ToListAsync();
         await ReportCompanies(newSubsidiariesToAdd_DataFromLocalStorageOrCH_NameNoMatchList, userRequestModel, BulkUpdateErrors.CompanyNameIsDifferentInOfflineDataAndDifferentInCHAPIMessage, BulkUpdateErrors.CompanyNameIsDifferentInOfflineDataAndDifferentInCHAPI);
 
-        var remaingtoProcessPart3 = remaingtoProcessPart2.Except(newSubsidiariesToAdd_DataFromLocalStorageOrCH_NameNoMatchList);
+        var remainingToProcessPart4 = remainingToProcessPart3.Except(newSubsidiariesToAdd_DataFromLocalStorageOrCH_NameNoMatchList);
 
         var allAddedNewSubsPlusExisting = await newSubsidiariesToAdd_DataFromLocalStorageOrCH.Where(sta => sta.LinkModel.StatusCode == System.Net.HttpStatusCode.OK).Select(sta => sta.Subsidiary)
             .ToListAsync();
 
-        var remainingtoProcessPart4 = remaingtoProcessPart3.Except(allAddedNewSubsPlusExisting);
+        var remainingtoProcessPart4 = remainingToProcessPart4.Except(allAddedNewSubsPlusExisting);
 
         var franchisees = subsidiaries.Where(ch => ch.franchisee_licensee_tenant == "Y" && (ch.Errors == null || ch.Errors.Count == 0));
-        var subsidiariesNotAdded = subsidiaries.AsEnumerable()
-            .Except(companyHouseAPIProcessStatistics.NotAddedSubsidiaries)
-            .Except(companyHouseAPIProcessStatistics.NewAddedSubsidiaries)
-            .Except(subsidiariesAndOrgWithValidNameProcessStatistics.SubsidiaryWithExistingRelationships)
-            .Except(franchisees).Except(allAddedNewSubsPlusExisting).Except(subWithInvalidName)
-            .Except(newSubsidiariesToAdd_DataFromLocalStorageOrCH_NameNoMatchList)
-            .Except(await newSubsidiariesToAdd_DataFromLocalStorageOrCH.Where(subAndLink => subAndLink.LinkModel != null && subAndLink.LinkModel.Subsidiary.Error != null).Select(s => s.Subsidiary)
-            .ToListAsync());
 
         var counterCheckTotal = remainingtoProcessPart4;
 
@@ -250,8 +247,10 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         /*Scenario : Companies house API Errors*/
         var counts = new AddSubsidiariesFigures();
         var result = string.Empty;
-        var companiesHouseAPIErrorList = await newSubsidiariesToAdd_DataFromLocalStorageOrCH.Where(subAndLink => subAndLink.LinkModel != null
-        && subAndLink.LinkModel.Subsidiary.Error != null).Select(s => s.LinkModel).ToListAsync();
+
+        var companiesHouseAPIErrorList = await newSubsidiariesToAdd_DataFromLocalStorageOrCH
+            .Where(subAndLink => subAndLink.LinkModel != null
+            && subAndLink.LinkModel.Subsidiary.Error != null).Select(s => s.LinkModel).ToListAsync();
         await ReportCompanies(companiesHouseAPIErrorList, userRequestModel);
 
         var newSubsidiariesToAdd_DataFromLocalStorageOrCompaniesHouseWithNameMatch = await newSubsidiariesToAdd_DataFromLocalStorageOrCH
