@@ -69,4 +69,7 @@ public static class BulkUpdateErrors
 
     public const int ParentOrganisationNotValidChildCannotBeProcessed = 125;
     public const string ParentOrganisationNotValidChildCannotBeProcessedErrorMessage = "The parent Organisation is not valid. Child cannot be processed.";
+
+    public const int InvalidDataorWhiteSpaceFoundInRow = 126;
+    public const string InvalidDataorWhiteSpaceFoundInRowMessage = "Data Row has white space. Remove this and try again.";
 }

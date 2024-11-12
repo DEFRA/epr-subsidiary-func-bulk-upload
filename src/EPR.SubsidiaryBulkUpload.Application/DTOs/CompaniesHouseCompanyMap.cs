@@ -95,6 +95,13 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
                        lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
         }
 
+        if (string.IsNullOrWhiteSpace(rawData))
+        {
+            errors.Add(
+                   CreateError(
+                       lineNumber, rawData, BulkUpdateErrors.InvalidDataorWhiteSpaceFoundInRowMessage, BulkUpdateErrors.InvalidDataorWhiteSpaceFoundInRow));
+        }
+
         return errors;
     }
 

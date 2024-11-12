@@ -131,4 +131,45 @@ public class CsvProcessorTests
                                chc.CompanyNumber == source[1].CompanyNumber &&
                                chc.CompanyStatus == source[1].CompanyStatus);
     }
+
+    [TestMethod]
+    public async Task ShouldLogIfParsingThrowsForEmptyRow()
+    {
+        // Arrange
+        var source = fixture.CreateMany<CompaniesHouseCompany>(2).ToArray();
+        var spacer = new string(Enumerable.Repeat(' ', 100).ToArray());
+        var header = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
+        var rawSource = spacer;
+        string[] all =
+        [
+            header,
+            rawSource
+        ];
+
+        using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
+
+        var configuration = CsvConfigurations.BulkUploadCsvConfiguration;
+
+        var exception = new Exception("Test Exception");
+
+        var parserClass = new Mock<IParserClass>();
+        parserClass
+            .Setup(p => p.ParseWithHelper(It.IsAny<Stream>(), configuration)).Throws(exception);
+
+        var processor = new CsvProcessor(parserClass.Object, _mockLogger.Object);
+
+        // Act & Assert
+        await Assert.ThrowsExceptionAsync<Exception>(() =>
+            processor.ProcessStreamWithMapping<CompaniesHouseCompany, CompaniesHouseCompanyMap>(stream, configuration));
+
+        // Assert
+        _mockLogger.Verify(
+            logger => logger.Log(
+            LogLevel.Error,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => true),
+            exception,
+            It.Is<Func<It.IsAnyType, Exception, string>>((v, t) => true)),
+            Times.Once);
+    }
 }
