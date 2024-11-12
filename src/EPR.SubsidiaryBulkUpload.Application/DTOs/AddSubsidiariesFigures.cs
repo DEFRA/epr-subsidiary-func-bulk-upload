@@ -6,8 +6,12 @@ public class AddSubsidiariesFigures
 {
     public AddSubsidiariesFigures()
     {
+        SubsidiaryWithExistingRelationships = new List<CompaniesHouseCompany>();
+        SubsidiariesWithNoExistingRelationships = new List<CompaniesHouseCompany>();
         NewAddedSubsidiaries = new List<CompaniesHouseCompany>();
         NotAddedSubsidiaries = new List<CompaniesHouseCompany>();
+        CompaniesHouseAPIErrorListReported = new List<CompaniesHouseCompany>();
+        DuplicateSubsidiaries = new List<CompaniesHouseCompany>();
     }
 
     public List<CompaniesHouseCompany> SubsidiaryWithExistingRelationships { get; set; }
@@ -21,4 +25,6 @@ public class AddSubsidiariesFigures
     public List<CompaniesHouseCompany> NotAddedSubsidiaries { get; set; }
 
     public List<CompaniesHouseCompany> CompaniesHouseAPIErrorListReported { get; set; }
+
+    public List<CompaniesHouseCompany> DuplicateSubsidiaries { get; set; }
 }

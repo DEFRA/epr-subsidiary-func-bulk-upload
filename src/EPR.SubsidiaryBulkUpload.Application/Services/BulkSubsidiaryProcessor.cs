@@ -4,6 +4,7 @@ using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Extensions.Logging;
+using Pipelines.Sockets.Unofficial.Arenas;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services;
 
@@ -60,7 +61,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         var companyHouseAPIProcessStatistics = await ProcessCompanyHouseAPI(newSubsidiariesToAdd_DataFromLocalStorageOrCH, userRequestModel);
         var remainingToProcessPart2 = remainingToProcess.Except(companyHouseAPIProcessStatistics.CompaniesHouseAPIErrorListReported);
-        var remainingToProcessPart3 = remainingToProcessPart2.Except(companyHouseAPIProcessStatistics.NewAddedSubsidiaries);
+        var remainingToProcessPart3 = remainingToProcessPart2.Except(companyHouseAPIProcessStatistics.NewAddedSubsidiaries).Except(companyHouseAPIProcessStatistics.DuplicateSubsidiaries);
 
         /*Scenario 4: The subsidiary found in Offline data. name not match. get it from CH API and name not matches with CH API data. Report Error.*/
         var newSubsidiariesToAdd_DataFromLocalStorageOrCompaniesHouse_NameNoMatch = newSubsidiariesToAdd_DataFromLocalStorageOrCH
@@ -75,10 +76,8 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         var allAddedNewSubsPlusExisting = await newSubsidiariesToAdd_DataFromLocalStorageOrCH.Where(sta => sta.LinkModel.StatusCode == System.Net.HttpStatusCode.OK).Select(sta => sta.Subsidiary)
             .ToListAsync();
 
-        var counterCheckTotal = remainingToProcessPart4.Except(allAddedNewSubsPlusExisting);
-
         /*Scenario 1: The subsidiary is not found in RPD and not in Local storage and not found on companies house*/
-        await ReportCompanies(counterCheckTotal, userRequestModel, BulkUpdateErrors.CompanyNameNotFoundAnywhereMessage, BulkUpdateErrors.CompanyNameNotFoundAnywhere);
+        await ReportCompanies(remainingToProcessPart4.Except(allAddedNewSubsPlusExisting), userRequestModel, BulkUpdateErrors.CompanyNameNotFoundAnywhereMessage, BulkUpdateErrors.CompanyNameNotFoundAnywhere);
 
         return allAddedNewSubsPlusExisting.Count + franchiseeProcessed.Count() + subsidiariesAndOrgWithValidNameProcessStatistics.NewAddedSubsidiariesRelationships + companyHouseAPIProcessStatistics.NewAddedSubsidiaries.Count;
     }
@@ -252,7 +251,8 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         var newSubsidiariesToAdd_DataFromLocalStorageOrCompaniesHouseWithNameMatch = await newSubsidiariesToAdd_DataFromLocalStorageOrCH
             .Where(subAndLink => subAndLink.LinkModel != null && subAndLink.LinkModel.Subsidiary.Error == null &&
             (string.Equals(subAndLink.Subsidiary.organisation_name, subAndLink.LinkModel.Subsidiary.LocalStorageName, StringComparison.OrdinalIgnoreCase)
-            || string.Equals(subAndLink.Subsidiary.organisation_name, subAndLink.LinkModel.Subsidiary.CompaniesHouseCompanyName, StringComparison.OrdinalIgnoreCase))).ToListAsync();
+            || string.Equals(subAndLink.Subsidiary.organisation_name, subAndLink.LinkModel.Subsidiary.CompaniesHouseCompanyName, StringComparison.OrdinalIgnoreCase)))
+            .ToListAsync();
 
         foreach (var subsidiaryAndLink in newSubsidiariesToAdd_DataFromLocalStorageOrCompaniesHouseWithNameMatch)
         {
