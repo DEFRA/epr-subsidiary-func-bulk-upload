@@ -234,7 +234,6 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
     {
         /*Scenario : Companies house API Errors*/
         var counts = new AddSubsidiariesFigures();
-        var result = string.Empty;
 
         var companiesHouseAPIErrorList = await newSubsidiariesToAdd_DataFromLocalStorageOrCH
             .Where(subAndLink => subAndLink.LinkModel != null
@@ -258,7 +257,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         {
             subsidiaryAndLink.LinkModel.StatusCode = await organisationService.CreateAndAddSubsidiaryAsync(subsidiaryAndLink.LinkModel);
 
-            if (result != null && subsidiaryAndLink.LinkModel.StatusCode == System.Net.HttpStatusCode.OK)
+            if (subsidiaryAndLink.LinkModel.StatusCode == System.Net.HttpStatusCode.OK)
             {
                 counts.NewAddedSubsidiaries.Add(subsidiaryAndLink.Subsidiary);
             }
