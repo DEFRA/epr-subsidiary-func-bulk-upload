@@ -61,7 +61,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         var companyHouseAPIProcessStatistics = await ProcessCompanyHouseAPI(newSubsidiariesToAdd_DataFromLocalStorageOrCH, userRequestModel);
         var remainingToProcessPart2 = remainingToProcess.Except(companyHouseAPIProcessStatistics.CompaniesHouseAPIErrorListReported);
-        var remainingToProcessPart3 = remainingToProcessPart2.Except(companyHouseAPIProcessStatistics.NewAddedSubsidiaries).Except(companyHouseAPIProcessStatistics.DuplicateSubsidiaries);
+        var remainingToProcessPart3 = remainingToProcessPart2.Except(companyHouseAPIProcessStatistics.NewAddedSubsidiaries).Except(companyHouseAPIProcessStatistics.DuplicateSubsidiaries).Except(companyHouseAPIProcessStatistics.NotAddedSubsidiaries);
 
         /*Scenario 4: The subsidiary found in Offline data. name not match. get it from CH API and name not matches with CH API data. Report Error.*/
         var newSubsidiariesToAdd_DataFromLocalStorageOrCompaniesHouse_NameNoMatch = newSubsidiariesToAdd_DataFromLocalStorageOrCH
