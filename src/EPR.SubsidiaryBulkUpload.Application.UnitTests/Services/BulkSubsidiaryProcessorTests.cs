@@ -58,7 +58,7 @@ public class BulkSubsidiaryProcessorTests
             .Callback<LinkOrganisationModel>(model => inserts.Add(model));
 
         var key = "testKey";
-        var errorsModel = new List<UploadFileErrorModel> { new UploadFileErrorModel() { FileLineNumber = 1, Message = "testMessage", IsError = true } };
+        var errorsModel = new List<UploadFileErrorModel> { new() { FileLineNumber = 1, Message = "testMessage", IsError = true } };
         notificationServiceMock.Setup(ss => ss.SetErrorStatus(key, errorsModel));
 
         var updates = new List<SubsidiaryAddModel>();
@@ -108,7 +108,7 @@ public class BulkSubsidiaryProcessorTests
             .Callback<SubsidiaryAddModel>(model => inserts.Add(model));
 
         var companiesHouseDataProvider = new Mock<ICompaniesHouseDataProvider>();
-        companiesHouseDataProvider.Setup(chdp => chdp.SetCompaniesHouseData(It.IsAny<OrganisationModel>())).ReturnsAsync(true);
+        companiesHouseDataProvider.Setup(cp => cp.SetCompaniesHouseData(It.IsAny<OrganisationModel>())).ReturnsAsync(true);
 
         var notificationServiceMock = new Mock<INotificationService>();
 
@@ -157,11 +157,11 @@ public class BulkSubsidiaryProcessorTests
             .Callback<SubsidiaryAddModel>(model => inserts.Add(model));
 
         var companiesHouseDataProvider = new Mock<ICompaniesHouseDataProvider>();
-        companiesHouseDataProvider.Setup(chdp => chdp.SetCompaniesHouseData(It.IsAny<OrganisationModel>())).ReturnsAsync(true);
+        companiesHouseDataProvider.Setup(cp => cp.SetCompaniesHouseData(It.IsAny<OrganisationModel>())).ReturnsAsync(true);
 
         var notificationServiceMock = new Mock<INotificationService>();
         var key = "testKey";
-        var errorsModel = new List<UploadFileErrorModel> { new UploadFileErrorModel() { FileLineNumber = 1, Message = "testMessage", IsError = true } };
+        var errorsModel = new List<UploadFileErrorModel> { new() { FileLineNumber = 1, Message = "testMessage", IsError = true } };
         notificationServiceMock.Setup(ss => ss.SetErrorStatus(key, errorsModel));
 
         var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
@@ -551,7 +551,7 @@ public class BulkSubsidiaryProcessorTests
     }
 
     [TestMethod]
-    public async Task ShouldAddSubsidiaryWhenSubsidiaresAPIDataFoundWithNoErrors()
+    public async Task ShouldAddSubsidiaryWhenSubsidiariesAPIDataFoundWithNoErrors()
     {
         // Arrange
         var userId = Guid.NewGuid();

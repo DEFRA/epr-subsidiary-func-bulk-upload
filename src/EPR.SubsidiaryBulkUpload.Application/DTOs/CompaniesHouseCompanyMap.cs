@@ -28,6 +28,11 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
         var lineNumber = row.Context.Reader.Parser.Row;
         var rawData = row.Context.Reader.Parser.RawRecord;
 
+        if (string.IsNullOrWhiteSpace(rawData))
+        {
+            return errors;
+        }
+
         if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.organisation_id))))
         {
             errors.Add(
@@ -93,13 +98,6 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
             errors.Add(
                    CreateError(
                        lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
-        }
-
-        if (string.IsNullOrWhiteSpace(rawData))
-        {
-            errors.Add(
-                   CreateError(
-                       lineNumber, rawData, BulkUpdateErrors.InvalidDataorWhiteSpaceFoundInRowMessage, BulkUpdateErrors.InvalidDataorWhiteSpaceFoundInRow));
         }
 
         return errors;

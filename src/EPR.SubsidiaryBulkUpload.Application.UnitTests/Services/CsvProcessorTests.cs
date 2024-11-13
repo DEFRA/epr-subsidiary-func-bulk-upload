@@ -133,43 +133,43 @@ public class CsvProcessorTests
     }
 
     [TestMethod]
-    public async Task ShouldLogIfParsingThrowsForEmptyRow()
+    public async Task ShouldProcessCsvStream_IgnoringEmptyRows()
     {
         // Arrange
-        var source = fixture.CreateMany<CompaniesHouseCompany>(2).ToArray();
-        var spacer = new string(Enumerable.Repeat(' ', 100).ToArray());
-        var header = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
-        var rawSource = spacer;
-        string[] all =
-        [
+        var source = fixture.CreateMany<CompanyHouseTableEntity>(2).ToArray();
+        var header = "CompanyName,CompanyNumber,CompanyStatus\n";
+
+        var rawSource = source.Select(s => $"{s.CompanyName},{s.CompanyNumber},{s.CompanyStatus}\n").ToArray();
+
+        string[] all = [
             header,
-            rawSource
-        ];
+            rawSource[0],
+            rawSource[1],
+            "\r\n",
+            "     \r\n",
+            "\r\n"
+            ];
 
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
 
-        var configuration = CsvConfigurations.BulkUploadCsvConfiguration;
+        var processor = new CsvProcessor(null, NullLogger<CsvProcessor>.Instance);
 
-        var exception = new Exception("Test Exception");
-
-        var parserClass = new Mock<IParserClass>();
-        parserClass
-            .Setup(p => p.ParseWithHelper(It.IsAny<Stream>(), configuration)).Throws(exception);
-
-        var processor = new CsvProcessor(parserClass.Object, _mockLogger.Object);
-
-        // Act & Assert
-        await Assert.ThrowsExceptionAsync<Exception>(() =>
-            processor.ProcessStreamWithMapping<CompaniesHouseCompany, CompaniesHouseCompanyMap>(stream, configuration));
+        // Act
+        var actual = (await processor.ProcessStream<CompanyHouseTableEntity>(stream, CsvConfigurations.BulkUploadCsvConfiguration)).ToArray();
 
         // Assert
-        _mockLogger.Verify(
-            logger => logger.Log(
-            LogLevel.Error,
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => true),
-            exception,
-            It.Is<Func<It.IsAnyType, Exception, string>>((v, t) => true)),
-            Times.Once);
+        actual.Should().HaveCount(3);
+
+        actual.Should().Contain(chc => chc.CompanyName == source[0].CompanyName &&
+                               chc.CompanyNumber == source[0].CompanyNumber &&
+                               chc.CompanyStatus == source[0].CompanyStatus);
+
+        actual.Should().Contain(chc => chc.CompanyName == source[1].CompanyName &&
+                               chc.CompanyNumber == source[1].CompanyNumber &&
+                               chc.CompanyStatus == source[1].CompanyStatus);
+
+        actual.Should().Contain(chc => chc.CompanyName == string.Empty &&
+                               chc.CompanyNumber == string.Empty &&
+                               chc.CompanyStatus == string.Empty);
     }
 }
