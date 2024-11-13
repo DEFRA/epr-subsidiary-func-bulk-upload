@@ -11,7 +11,7 @@ public static class CsvConfigurations
         {
             PrepareHeaderForMatch = args => args.Header.ToLower(),
             HasHeaderRecord = true,
-            IgnoreBlankLines = false,
+            IgnoreBlankLines = true,
             MissingFieldFound = null,
             Delimiter = ",",
             TrimOptions = TrimOptions.Trim,
@@ -23,5 +23,6 @@ public static class CsvConfigurations
                     csvReader.InvalidHeaderErrors = args.InvalidHeaders?.Select(x => x.Names[0]).ToList();
                 }
             },
+            /* ShouldSkipRecord = record => record.Row..All(field => string.IsNullOrWhiteSpace(field)) */
         };
 }
