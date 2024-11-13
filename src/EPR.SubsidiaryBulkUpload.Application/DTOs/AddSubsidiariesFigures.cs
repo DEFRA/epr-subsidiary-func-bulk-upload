@@ -12,6 +12,7 @@ public class AddSubsidiariesFigures
         NotAddedSubsidiaries = new List<CompaniesHouseCompany>();
         CompaniesHouseAPIErrorListReported = new List<CompaniesHouseCompany>();
         DuplicateSubsidiaries = new List<CompaniesHouseCompany>();
+        AlreadyExistCompanies = new List<CompaniesHouseCompany>();
     }
 
     public List<CompaniesHouseCompany> SubsidiaryWithExistingRelationships { get; set; }
@@ -27,4 +28,6 @@ public class AddSubsidiariesFigures
     public List<CompaniesHouseCompany> CompaniesHouseAPIErrorListReported { get; set; }
 
     public List<CompaniesHouseCompany> DuplicateSubsidiaries { get; set; }
+
+    public List<CompaniesHouseCompany> AlreadyExistCompanies { get; set; }
 }
