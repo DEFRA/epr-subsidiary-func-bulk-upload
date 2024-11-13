@@ -1,34 +1,14 @@
-﻿using System.Globalization;
-using System.Text;
-using CsvHelper.Configuration;
+﻿using System.Text;
+using EPR.SubsidiaryBulkUpload.Application.CsvReaderConfiguration;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.ClassMaps;
 
 [TestClass]
-[System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1010:Opening square brackets should be spaced correctly", Justification = "Style cop rules don't yet support collection expressions")]
 public class CompaniesHouseCompanyMapTests
 {
     private const string _csvHeader = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
-
-    private CsvConfiguration _csvConfiguration = new(CultureInfo.InvariantCulture)
-    {
-        PrepareHeaderForMatch = args => args.Header.ToLower(),
-        HasHeaderRecord = true,
-        IgnoreBlankLines = false,
-        MissingFieldFound = null,
-        Delimiter = ",",
-        TrimOptions = TrimOptions.Trim,
-        BadDataFound = null,
-        HeaderValidated = args =>
-        {
-            if (args.Context?.Reader is CustomCsvReader csvReader)
-            {
-                csvReader.InvalidHeaderErrors = args.InvalidHeaders?.Select(x => x.Names[0]).ToList();
-            }
-        },
-    };
 
     [TestMethod]
     public void ClassMap_Returns_Valid_Data()
@@ -44,7 +24,7 @@ public class CompaniesHouseCompanyMapTests
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
 
         using var reader = new StreamReader(stream);
-        using var csvReader = new CustomCsvReader(reader, _csvConfiguration);
+        using var csvReader = new CustomCsvReader(reader, CsvConfigurations.BulkUploadCsvConfiguration);
 
         csvReader.Context.RegisterClassMap<CompaniesHouseCompanyMap>();
 
@@ -79,7 +59,7 @@ public class CompaniesHouseCompanyMapTests
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
 
         using var reader = new StreamReader(stream);
-        using var csvReader = new CustomCsvReader(reader, _csvConfiguration);
+        using var csvReader = new CustomCsvReader(reader, CsvConfigurations.BulkUploadCsvConfiguration);
 
         csvReader.Context.RegisterClassMap<CompaniesHouseCompanyMap>();
 
@@ -101,7 +81,7 @@ public class CompaniesHouseCompanyMapTests
     }
 
     [TestMethod]
-    public void ClassMap_Returns_Valid_header_Data()
+    public void ClassMap_Returns_Valid_Header_Data()
     {
         // Arrange
         var dataModel = new List<CompaniesHouseCompany>
@@ -114,7 +94,7 @@ public class CompaniesHouseCompanyMapTests
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
 
         using var reader = new StreamReader(stream);
-        using var csvReader = new CustomCsvReader(reader, _csvConfiguration);
+        using var csvReader = new CustomCsvReader(reader, CsvConfigurations.BulkUploadCsvConfiguration);
 
         csvReader.Context.RegisterClassMap<CompaniesHouseCompanyMap>();
 
@@ -165,7 +145,7 @@ public class CompaniesHouseCompanyMapTests
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
 
         using var reader = new StreamReader(stream);
-        using var csvReader = new CustomCsvReader(reader, _csvConfiguration);
+        using var csvReader = new CustomCsvReader(reader, CsvConfigurations.BulkUploadCsvConfiguration);
 
         csvReader.Context.RegisterClassMap<CompaniesHouseCompanyMap>();
 
@@ -186,7 +166,7 @@ public class CompaniesHouseCompanyMapTests
     [DataRow("23123", "", "OrgA", "123456", "", "", "The 'parent or child' column is missing.")]
     [DataRow("23123", "", "OrgA", "123456789", "Child", "", "Your Companies House number must be 8 characters or fewer.")]
     [DataRow("23123", "", "OrgA", " 123 456", "Child", "", "Spaces in Companies House Number not allowed. Invalid Number.")]
-    public void ClassMap_validationchecks_Returns_Error(
+    public void ClassMap_ValidationChecks_Returns_Error(
        string organisationId,
        string subsidiaryId,
        string organisationName,
@@ -206,7 +186,7 @@ public class CompaniesHouseCompanyMapTests
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
 
         using var reader = new StreamReader(stream);
-        using var csvReader = new CustomCsvReader(reader, _csvConfiguration);
+        using var csvReader = new CustomCsvReader(reader, CsvConfigurations.BulkUploadCsvConfiguration);
 
         csvReader.Context.RegisterClassMap<CompaniesHouseCompanyMap>();
 
@@ -219,5 +199,55 @@ public class CompaniesHouseCompanyMapTests
         rows.Should().NotBeNullOrEmpty();
         rows[0].Errors.Should().HaveCount(1);
         rows[0].Errors[0].Message.Should().Contain(expectedErrorMessage);
+    }
+
+    [TestMethod]
+    public void ClassMap_Returns_Valid_Header_Data_And_Ignores_Empty_Rows()
+    {
+        // Arrange
+        var dataModel = new List<CompaniesHouseCompany>
+            {
+                new() { organisation_id = "23123",  subsidiary_id = "Sub1", organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Parent", franchisee_licensee_tenant = string.Empty, Errors = new() }
+            };
+        var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
+        string[] all = [
+            _csvHeader,
+            rawSource.First(),
+            "     \r\n",
+            "\r\n",
+            "\r\n"
+            ];
+
+        using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
+
+        using var reader = new StreamReader(stream);
+        using var csvReader = new CustomCsvReader(reader, CsvConfigurations.BulkUploadCsvConfiguration);
+
+        csvReader.Context.RegisterClassMap<CompaniesHouseCompanyMap>();
+
+        // Act
+        csvReader.Read();
+        csvReader.ReadHeader();
+        var rows = csvReader.GetRecords<CompaniesHouseCompany>().ToList();
+
+        // Assert
+        rows.Should().NotBeNullOrEmpty();
+        rows.Count.Should().Be(2);
+
+        rows[0].organisation_id.Should().Be(dataModel[0].organisation_id);
+        rows[0].subsidiary_id.Should().Be(dataModel[0].subsidiary_id);
+        rows[0].organisation_name.Should().Be(dataModel[0].organisation_name);
+        rows[0].companies_house_number.Should().Be(dataModel[0].companies_house_number);
+        rows[0].parent_child.Should().Be(dataModel[0].parent_child);
+        rows[0].franchisee_licensee_tenant.Should().Be(dataModel[0].franchisee_licensee_tenant);
+        rows[0].Errors.Should().BeEmpty();
+
+        rows[1].organisation_id.Should().Be(string.Empty);
+        rows[1].subsidiary_id.Should().Be(string.Empty);
+        rows[1].organisation_name.Should().Be(string.Empty);
+        rows[1].companies_house_number.Should().Be(string.Empty);
+        rows[1].parent_child.Should().Be(string.Empty);
+        rows[1].franchisee_licensee_tenant.Should().Be(string.Empty);
+        rows[1].Errors.Should().BeEmpty();
     }
 }
