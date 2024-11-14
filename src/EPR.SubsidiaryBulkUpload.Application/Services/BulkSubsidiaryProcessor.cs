@@ -76,7 +76,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         var allAddedNewSubsPlusExisting = await newSubsidiariesToAdd_DataFromLocalStorageOrCH.Where(sta => sta.LinkModel.StatusCode == System.Net.HttpStatusCode.OK).Select(sta => sta.Subsidiary)
             .ToListAsync();
 
-        /*Scenario 1: The subsidiary is not found in RPD and not in Local storage and not found on companies house*/
+        /*Scenario 1: The subsidiary is not found in RPD and not in Local storage and not found on companies house.*/
         await ReportCompanies(remainingToProcessPart4.Except(allAddedNewSubsPlusExisting), userRequestModel, BulkUpdateErrors.CompanyNameNotFoundAnywhereMessage, BulkUpdateErrors.CompanyNameNotFoundAnywhere);
 
         return allAddedNewSubsPlusExisting.Count + franchiseeProcessed.Count() + subsidiariesAndOrgWithValidNameProcessStatistics.NewAddedSubsidiariesRelationships + companyHouseAPIProcessStatistics.NewAddedSubsidiaries.Count;
