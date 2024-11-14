@@ -22,7 +22,6 @@ public static class CsvConfigurations
                 {
                     csvReader.InvalidHeaderErrors = args.InvalidHeaders?.Select(x => x.Names[0]).ToList();
                 }
-            },
-            /* ShouldSkipRecord = record => record.Row..All(field => string.IsNullOrWhiteSpace(field)) */
+            }
         };
 }
