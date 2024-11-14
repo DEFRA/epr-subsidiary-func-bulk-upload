@@ -131,4 +131,45 @@ public class CsvProcessorTests
                                chc.CompanyNumber == source[1].CompanyNumber &&
                                chc.CompanyStatus == source[1].CompanyStatus);
     }
+
+    [TestMethod]
+    public async Task ShouldProcessCsvStream_IgnoringEmptyRows()
+    {
+        // Arrange
+        var source = fixture.CreateMany<CompanyHouseTableEntity>(2).ToArray();
+        var header = "CompanyName,CompanyNumber,CompanyStatus\n";
+
+        var rawSource = source.Select(s => $"{s.CompanyName},{s.CompanyNumber},{s.CompanyStatus}\n").ToArray();
+
+        string[] all = [
+            header,
+            rawSource[0],
+            rawSource[1],
+            "\r\n",
+            "     \r\n",
+            "\r\n"
+            ];
+
+        using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
+
+        var processor = new CsvProcessor(null, NullLogger<CsvProcessor>.Instance);
+
+        // Act
+        var actual = (await processor.ProcessStream<CompanyHouseTableEntity>(stream, CsvConfigurations.BulkUploadCsvConfiguration)).ToArray();
+
+        // Assert
+        actual.Should().HaveCount(3);
+
+        actual.Should().Contain(chc => chc.CompanyName == source[0].CompanyName &&
+                               chc.CompanyNumber == source[0].CompanyNumber &&
+                               chc.CompanyStatus == source[0].CompanyStatus);
+
+        actual.Should().Contain(chc => chc.CompanyName == source[1].CompanyName &&
+                               chc.CompanyNumber == source[1].CompanyNumber &&
+                               chc.CompanyStatus == source[1].CompanyStatus);
+
+        actual.Should().Contain(chc => chc.CompanyName == string.Empty &&
+                               chc.CompanyNumber == string.Empty &&
+                               chc.CompanyStatus == string.Empty);
+    }
 }
