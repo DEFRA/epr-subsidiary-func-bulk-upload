@@ -14,26 +14,26 @@ public class SubmissionStatusClientTests
     private Guid _systemOrganisationId = Guid.NewGuid();
     private Guid _systemUserId = Guid.NewGuid();
 
-    private Fixture fixture;
-    private Mock<HttpMessageHandler> httpMessageHandler;
-    private HttpClient httpClient;
-    private Mock<ISystemDetailsProvider> systemDetailsProvider;
+    private Fixture _fixture;
+    private Mock<HttpMessageHandler> _httpMessageHandler;
+    private HttpClient _httpClient;
+    private Mock<ISystemDetailsProvider> _systemDetailsProvider;
 
     [TestInitialize]
     public void TestInitialize()
     {
-        fixture = new Fixture();
+        _fixture = new Fixture();
 
-        httpMessageHandler = new Mock<HttpMessageHandler>();
+        _httpMessageHandler = new Mock<HttpMessageHandler>();
 
-        httpClient = new HttpClient(httpMessageHandler.Object)
+        _httpClient = new HttpClient(_httpMessageHandler.Object)
         {
             BaseAddress = new Uri("https://example.com")
         };
 
-        systemDetailsProvider = new Mock<ISystemDetailsProvider>();
-        systemDetailsProvider.SetupGet(p => p.SystemOrganisationId).Returns(_systemOrganisationId);
-        systemDetailsProvider.SetupGet(p => p.SystemUserId).Returns(_systemUserId);
+        _systemDetailsProvider = new Mock<ISystemDetailsProvider>();
+        _systemDetailsProvider.SetupGet(p => p.SystemOrganisationId).Returns(_systemOrganisationId);
+        _systemDetailsProvider.SetupGet(p => p.SystemUserId).Returns(_systemUserId);
     }
 
     [TestMethod]
@@ -41,38 +41,38 @@ public class SubmissionStatusClientTests
     {
         // Arrange
         var expectedRequestUri = new Uri($"https://example.com/submissions");
-        var submission = fixture.Create<CreateSubmission>();
+        var submission = _fixture.Create<CreateSubmission>();
         var expectedHeaders = new Dictionary<string, string>
         {
             { "OrganisationId", _systemOrganisationId.ToString() },
             { "UserId", _systemUserId.ToString() }
         };
 
-        httpMessageHandler.Protected().Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+        _httpMessageHandler.Protected().Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(new HttpResponseMessage
             {
                 StatusCode = HttpStatusCode.OK,
             });
 
-        var submissionClient = new SubmissionStatusClient(httpClient, systemDetailsProvider.Object, NullLogger<SubmissionStatusClient>.Instance);
+        var submissionClient = new SubmissionStatusClient(_httpClient, _systemDetailsProvider.Object, NullLogger<SubmissionStatusClient>.Instance);
 
         // Act
         var responseCode = await submissionClient.CreateSubmissionAsync(submission);
 
         // Assert
         responseCode.Should().BeSuccessful();
-        httpMessageHandler.VerifyRequest(HttpMethod.Post, expectedRequestUri, expectedHeaders, Times.Once());
+        _httpMessageHandler.VerifyRequest(HttpMethod.Post, expectedRequestUri, expectedHeaders, Times.Once());
     }
 
     [TestMethod]
     public async Task ShouldReplyTimeoutWhenCreateSubmissionTimesOut()
     {
         // Arrange
-        var submission = fixture.Create<CreateSubmission>();
+        var submission = _fixture.Create<CreateSubmission>();
 
-        httpMessageHandler.RespondWithException(fixture.Create<TaskCanceledException>());
+        _httpMessageHandler.RespondWithException(_fixture.Create<TaskCanceledException>());
 
-        var submissionClient = new SubmissionStatusClient(httpClient, systemDetailsProvider.Object, NullLogger<SubmissionStatusClient>.Instance);
+        var submissionClient = new SubmissionStatusClient(_httpClient, _systemDetailsProvider.Object, NullLogger<SubmissionStatusClient>.Instance);
 
         // Act
         var responseCode = await submissionClient.CreateSubmissionAsync(submission);
@@ -89,13 +89,13 @@ public class SubmissionStatusClientTests
     public async Task ShouldReplyHttpRequestExceptionStatus(HttpStatusCode httpStatusCode)
     {
         // Arrange
-        var submission = fixture.Create<CreateSubmission>();
+        var submission = _fixture.Create<CreateSubmission>();
 
         var exception = new HttpRequestException("message", null, httpStatusCode);
 
-        httpMessageHandler.RespondWithException(exception);
+        _httpMessageHandler.RespondWithException(exception);
 
-        var submissionClient = new SubmissionStatusClient(httpClient, systemDetailsProvider.Object, NullLogger<SubmissionStatusClient>.Instance);
+        var submissionClient = new SubmissionStatusClient(_httpClient, _systemDetailsProvider.Object, NullLogger<SubmissionStatusClient>.Instance);
 
         // Act
         var responseCode = await submissionClient.CreateSubmissionAsync(submission);
@@ -108,11 +108,11 @@ public class SubmissionStatusClientTests
     public async Task ShouldReplyInternalServerErrorOnUnhandledException()
     {
         // Arrange
-        var submission = fixture.Create<CreateSubmission>();
+        var submission = _fixture.Create<CreateSubmission>();
 
-        httpMessageHandler.RespondWithException(new Exception());
+        _httpMessageHandler.RespondWithException(new Exception());
 
-        var submissionClient = new SubmissionStatusClient(httpClient, systemDetailsProvider.Object, NullLogger<SubmissionStatusClient>.Instance);
+        var submissionClient = new SubmissionStatusClient(_httpClient, _systemDetailsProvider.Object, NullLogger<SubmissionStatusClient>.Instance);
 
         // Act
         var responseCode = await submissionClient.CreateSubmissionAsync(submission);
@@ -125,11 +125,11 @@ public class SubmissionStatusClientTests
     public async Task ShouldReplyInternalServerErrorIfSystemOrganisationIdNotFound()
     {
         // Arrange
-        var submission = fixture.Create<CreateSubmission>();
+        var submission = _fixture.Create<CreateSubmission>();
 
-        systemDetailsProvider.SetupGet(p => p.SystemOrganisationId).Returns((Guid?)null);
+        _systemDetailsProvider.SetupGet(p => p.SystemOrganisationId).Returns((Guid?)null);
 
-        var submissionClient = new SubmissionStatusClient(httpClient, systemDetailsProvider.Object, NullLogger<SubmissionStatusClient>.Instance);
+        var submissionClient = new SubmissionStatusClient(_httpClient, _systemDetailsProvider.Object, NullLogger<SubmissionStatusClient>.Instance);
 
         // Act
         var responseCode = await submissionClient.CreateSubmissionAsync(submission);
@@ -142,11 +142,11 @@ public class SubmissionStatusClientTests
     public async Task ShouldReplyInternalServerErrorIfSystemUserIdNotFound()
     {
         // Arrange
-        var submission = fixture.Create<CreateSubmission>();
+        var submission = _fixture.Create<CreateSubmission>();
 
-        systemDetailsProvider.SetupGet(p => p.SystemUserId).Returns((Guid?)null);
+        _systemDetailsProvider.SetupGet(p => p.SystemUserId).Returns((Guid?)null);
 
-        var submissionClient = new SubmissionStatusClient(httpClient, systemDetailsProvider.Object, NullLogger<SubmissionStatusClient>.Instance);
+        var submissionClient = new SubmissionStatusClient(_httpClient, _systemDetailsProvider.Object, NullLogger<SubmissionStatusClient>.Instance);
 
         // Act
         var responseCode = await submissionClient.CreateSubmissionAsync(submission);

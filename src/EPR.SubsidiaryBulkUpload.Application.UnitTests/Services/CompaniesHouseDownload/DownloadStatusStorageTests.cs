@@ -13,23 +13,23 @@ namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services.CompaniesHouse
 [TestClass]
 public class DownloadStatusStorageTests
 {
-    private Fixture fixture;
-    private Mock<ILogger<DownloadStatusStorage>> loggerMock;
-    private Mock<TableServiceClient> tableServiceClient;
-    private Mock<TableClient> tableClient;
-    private FakeTimeProvider timeProvider;
+    private Fixture _fixture;
+    private Mock<ILogger<DownloadStatusStorage>> _loggerMock;
+    private Mock<TableServiceClient> _tableServiceClient;
+    private Mock<TableClient> _tableClient;
+    private FakeTimeProvider _timeProvider;
 
     [TestInitialize]
     public void TestInitialize()
     {
-        fixture = new();
-        loggerMock = new Mock<ILogger<DownloadStatusStorage>>();
-        tableServiceClient = new Mock<TableServiceClient>();
-        tableClient = new Mock<TableClient>();
-        tableServiceClient
+        _fixture = new();
+        _loggerMock = new Mock<ILogger<DownloadStatusStorage>>();
+        _tableServiceClient = new Mock<TableServiceClient>();
+        _tableClient = new Mock<TableClient>();
+        _tableServiceClient
             .Setup(tsc => tsc.GetTableClient(DownloadStatusStorage.CompaniesHouseDownloadTableName))
-            .Returns(tableClient.Object);
-        timeProvider = new();
+            .Returns(_tableClient.Object);
+        _timeProvider = new();
     }
 
     [TestMethod]
@@ -39,7 +39,7 @@ public class DownloadStatusStorageTests
         var month = 3;
         var year = 2024;
         var now = new DateTimeOffset(year, month, 5, 7, 9, 11, TimeSpan.Zero);
-        timeProvider.SetUtcNow(now);
+        _timeProvider.SetUtcNow(now);
         var partitionKey = now.ToString("yyyyMM");
 
         var downloadLog = new List<CompaniesHouseFileSetDownloadStatus>
@@ -49,7 +49,7 @@ public class DownloadStatusStorageTests
             new() { DownloadFileName = "test_file_3.zip" }
         };
 
-        tableClient.SetupSequence(tc =>
+        _tableClient.SetupSequence(tc =>
             tc.QueryAsync<CompaniesHouseFileSetDownloadStatus>(
                 It.IsAny<Expression<Func<CompaniesHouseFileSetDownloadStatus, bool>>>(),
                 It.IsAny<int?>(),
@@ -57,14 +57,14 @@ public class DownloadStatusStorageTests
                 It.IsAny<CancellationToken>()))
             .Returns(new MockAsyncPageable<CompaniesHouseFileSetDownloadStatus>(downloadLog));
 
-        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, loggerMock.Object);
+        var downloadStatusStorage = new DownloadStatusStorage(_tableServiceClient.Object, _timeProvider, _loggerMock.Object);
 
         // Act
         var actual = await downloadStatusStorage.GetCompaniesHouseFileDownloadStatusAsync(partitionKey);
 
         // Assert
         actual.Should().BeTrue();
-        tableClient.Verify(tc => tc.QueryAsync<CompaniesHouseFileSetDownloadStatus>(
+        _tableClient.Verify(tc => tc.QueryAsync<CompaniesHouseFileSetDownloadStatus>(
                 It.IsAny<Expression<Func<CompaniesHouseFileSetDownloadStatus, bool>>>(),
                 It.IsAny<int?>(),
                 It.IsAny<IEnumerable<string>>(),
@@ -76,10 +76,10 @@ public class DownloadStatusStorageTests
     {
         // Arrange
         var now = new DateTimeOffset(2024, 3, 5, 7, 9, 11, TimeSpan.Zero);
-        timeProvider.SetUtcNow(now);
+        _timeProvider.SetUtcNow(now);
         var partitionKey = now.ToString("yyyyMM");
 
-        tableClient.SetupSequence(tc =>
+        _tableClient.SetupSequence(tc =>
             tc.QueryAsync<CompaniesHouseFileSetDownloadStatus>(
                 It.IsAny<Expression<Func<CompaniesHouseFileSetDownloadStatus, bool>>>(),
                 It.IsAny<int?>(),
@@ -87,13 +87,13 @@ public class DownloadStatusStorageTests
                 It.IsAny<CancellationToken>()))
             .Returns(new MockAsyncPageable<CompaniesHouseFileSetDownloadStatus>(new List<CompaniesHouseFileSetDownloadStatus>()));
 
-        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, loggerMock.Object);
+        var downloadStatusStorage = new DownloadStatusStorage(_tableServiceClient.Object, _timeProvider, _loggerMock.Object);
 
         // Act
         var actual = await downloadStatusStorage.GetCompaniesHouseFileDownloadStatusAsync(partitionKey);
 
         // Assert
-        tableClient.Verify(tc => tc.CreateIfNotExistsAsync(It.IsAny<CancellationToken>()));
+        _tableClient.Verify(tc => tc.CreateIfNotExistsAsync(It.IsAny<CancellationToken>()));
     }
 
     [TestMethod]
@@ -101,13 +101,13 @@ public class DownloadStatusStorageTests
     {
         // Arrange
         var now = new DateTimeOffset(2024, 3, 5, 7, 9, 11, TimeSpan.Zero);
-        timeProvider.SetUtcNow(now);
+        _timeProvider.SetUtcNow(now);
         var partitionKey = now.ToString("yyyyMM");
 
-        tableClient.Setup(tc => tc.CreateIfNotExistsAsync(It.IsAny<CancellationToken>()))
+        _tableClient.Setup(tc => tc.CreateIfNotExistsAsync(It.IsAny<CancellationToken>()))
             .ThrowsAsync(new RequestFailedException("error"));
 
-        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, loggerMock.Object);
+        var downloadStatusStorage = new DownloadStatusStorage(_tableServiceClient.Object, _timeProvider, _loggerMock.Object);
 
         // Act
         var actual = await downloadStatusStorage.GetCompaniesHouseFileDownloadStatusAsync(partitionKey);
@@ -120,27 +120,27 @@ public class DownloadStatusStorageTests
     public async Task SetCompaniesHouseFileDownloadStatusAsync_ShouldUploadStatusAndReplySuccess()
     {
         // Arrange
-        var status = fixture.Create<CompaniesHouseFileSetDownloadStatus>();
+        var status = _fixture.Create<CompaniesHouseFileSetDownloadStatus>();
 
-        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, loggerMock.Object);
+        var downloadStatusStorage = new DownloadStatusStorage(_tableServiceClient.Object, _timeProvider, _loggerMock.Object);
 
         // Act
         var response = await downloadStatusStorage.SetCompaniesHouseFileDownloadStatusAsync(status);
 
         // Assert
         response.Should().Be(true);
-        tableClient.Verify(tc => tc.UpsertEntityAsync<CompaniesHouseFileSetDownloadStatus>(status, TableUpdateMode.Merge, It.IsAny<CancellationToken>()));
+        _tableClient.Verify(tc => tc.UpsertEntityAsync<CompaniesHouseFileSetDownloadStatus>(status, TableUpdateMode.Merge, It.IsAny<CancellationToken>()));
     }
 
     [TestMethod]
     public async Task SetCompaniesHouseFileDownloadStatusAsync_LogsError_When_RequestFailedException()
     {
         // Arrange
-        var status = fixture.Create<CompaniesHouseFileSetDownloadStatus>();
+        var status = _fixture.Create<CompaniesHouseFileSetDownloadStatus>();
 
-        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, loggerMock.Object);
+        var downloadStatusStorage = new DownloadStatusStorage(_tableServiceClient.Object, _timeProvider, _loggerMock.Object);
 
-        tableClient.Setup(tc => tc.UpsertEntityAsync(It.IsAny<CompaniesHouseFileSetDownloadStatus>(), It.IsAny<TableUpdateMode>(), It.IsAny<CancellationToken>()))
+        _tableClient.Setup(tc => tc.UpsertEntityAsync(It.IsAny<CompaniesHouseFileSetDownloadStatus>(), It.IsAny<TableUpdateMode>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new RequestFailedException("error"));
 
         // Act
@@ -148,8 +148,8 @@ public class DownloadStatusStorageTests
 
         // Assert
         response.Should().Be(false);
-        tableClient.Verify(tc => tc.UpsertEntityAsync<CompaniesHouseFileSetDownloadStatus>(status, TableUpdateMode.Merge, It.IsAny<CancellationToken>()));
-        loggerMock.VerifyLog(x => x.LogError(It.IsAny<Exception>(), "Cannot get or create table {TableName}", DownloadStatusStorage.CompaniesHouseDownloadTableName), Times.Once);
+        _tableClient.Verify(tc => tc.UpsertEntityAsync<CompaniesHouseFileSetDownloadStatus>(status, TableUpdateMode.Merge, It.IsAny<CancellationToken>()));
+        _loggerMock.VerifyLog(x => x.LogError(It.IsAny<Exception>(), "Cannot get or create table {TableName}", DownloadStatusStorage.CompaniesHouseDownloadTableName), Times.Once);
     }
 
     [TestMethod]
@@ -158,7 +158,7 @@ public class DownloadStatusStorageTests
         // Arrange
         var partitionKey = "202403";
 
-        tableClient.SetupSequence(tc =>
+        _tableClient.SetupSequence(tc =>
             tc.QueryAsync<CompaniesHouseFileSetDownloadStatus>(
                 It.IsAny<Expression<Func<CompaniesHouseFileSetDownloadStatus, bool>>>(),
                 It.IsAny<int?>(),
@@ -166,14 +166,14 @@ public class DownloadStatusStorageTests
                 It.IsAny<CancellationToken>()))
             .Returns(new MockAsyncPageable<CompaniesHouseFileSetDownloadStatus>(new List<CompaniesHouseFileSetDownloadStatus>()));
 
-        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, loggerMock.Object);
+        var downloadStatusStorage = new DownloadStatusStorage(_tableServiceClient.Object, _timeProvider, _loggerMock.Object);
 
         // Act
         await downloadStatusStorage.CreateCompaniesHouseFileDownloadLogAsync(partitionKey, 7);
 
         // Assert
-        tableClient.Verify(tc => tc.CreateIfNotExistsAsync(It.IsAny<CancellationToken>()));
-        tableClient.Verify(tc => tc.SubmitTransactionAsync(It.Is<IEnumerable<TableTransactionAction>>(x => x.Count() == 7), It.IsAny<CancellationToken>()));
+        _tableClient.Verify(tc => tc.CreateIfNotExistsAsync(It.IsAny<CancellationToken>()));
+        _tableClient.Verify(tc => tc.SubmitTransactionAsync(It.Is<IEnumerable<TableTransactionAction>>(x => x.Count() == 7), It.IsAny<CancellationToken>()));
     }
 
     [TestMethod]
@@ -181,7 +181,7 @@ public class DownloadStatusStorageTests
     {
         // Arrange
         var now = new DateTimeOffset(2024, 3, 5, 7, 9, 11, TimeSpan.Zero);
-        timeProvider.SetUtcNow(now);
+        _timeProvider.SetUtcNow(now);
         var partitionKey = "202403";
 
         var downloadLog = new List<CompaniesHouseFileSetDownloadStatus>
@@ -191,7 +191,7 @@ public class DownloadStatusStorageTests
             new() { RowKey = "Part-5-03-2024", DownloadFileName = "test_file_5.zip" }
         };
 
-        tableClient.SetupSequence(tc =>
+        _tableClient.SetupSequence(tc =>
             tc.QueryAsync<CompaniesHouseFileSetDownloadStatus>(
                 It.IsAny<Expression<Func<CompaniesHouseFileSetDownloadStatus, bool>>>(),
                 It.IsAny<int?>(),
@@ -199,14 +199,14 @@ public class DownloadStatusStorageTests
                 It.IsAny<CancellationToken>()))
             .Returns(new MockAsyncPageable<CompaniesHouseFileSetDownloadStatus>(downloadLog));
 
-        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, loggerMock.Object);
+        var downloadStatusStorage = new DownloadStatusStorage(_tableServiceClient.Object, _timeProvider, _loggerMock.Object);
 
         // Act
         await downloadStatusStorage.CreateCompaniesHouseFileDownloadLogAsync(partitionKey, 5);
 
         // Assert
-        tableClient.Verify(tc => tc.CreateIfNotExistsAsync(It.IsAny<CancellationToken>()));
-        tableClient.Verify(tc => tc.SubmitTransactionAsync(It.Is<IEnumerable<TableTransactionAction>>(x => x.Count() == 2), It.IsAny<CancellationToken>()));
+        _tableClient.Verify(tc => tc.CreateIfNotExistsAsync(It.IsAny<CancellationToken>()));
+        _tableClient.Verify(tc => tc.SubmitTransactionAsync(It.Is<IEnumerable<TableTransactionAction>>(x => x.Count() == 2), It.IsAny<CancellationToken>()));
     }
 
     [TestMethod]
@@ -214,7 +214,7 @@ public class DownloadStatusStorageTests
     {
         // Arrange
         var now = new DateTimeOffset(2024, 3, 5, 7, 9, 11, TimeSpan.Zero);
-        timeProvider.SetUtcNow(now);
+        _timeProvider.SetUtcNow(now);
         var partitionKey = "202403";
 
         var downloadLog = new List<CompaniesHouseFileSetDownloadStatus>
@@ -224,7 +224,7 @@ public class DownloadStatusStorageTests
             new() { RowKey = "Part-5-03-2024", DownloadFileName = "test_file_5.zip" }
         };
 
-        tableClient.SetupSequence(tc =>
+        _tableClient.SetupSequence(tc =>
             tc.QueryAsync<CompaniesHouseFileSetDownloadStatus>(
                 It.IsAny<Expression<Func<CompaniesHouseFileSetDownloadStatus, bool>>>(),
                 It.IsAny<int?>(),
@@ -232,14 +232,14 @@ public class DownloadStatusStorageTests
                 It.IsAny<CancellationToken>()))
             .Returns(new MockAsyncPageable<CompaniesHouseFileSetDownloadStatus>(downloadLog));
 
-        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, loggerMock.Object);
+        var downloadStatusStorage = new DownloadStatusStorage(_tableServiceClient.Object, _timeProvider, _loggerMock.Object);
 
         // Act
         await downloadStatusStorage.CreateCompaniesHouseFileDownloadLogAsync(partitionKey, 3);
 
         // Assert
-        tableClient.Verify(tc => tc.CreateIfNotExistsAsync(It.IsAny<CancellationToken>()));
-        tableClient.Verify(tc => tc.SubmitTransactionAsync(It.IsAny<IEnumerable<TableTransactionAction>>(), It.IsAny<CancellationToken>()), Times.Never);
+        _tableClient.Verify(tc => tc.CreateIfNotExistsAsync(It.IsAny<CancellationToken>()));
+        _tableClient.Verify(tc => tc.SubmitTransactionAsync(It.IsAny<IEnumerable<TableTransactionAction>>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [TestMethod]
@@ -248,7 +248,7 @@ public class DownloadStatusStorageTests
         // Arrange
         var partitionKey = "202403";
 
-        tableClient.SetupSequence(tc =>
+        _tableClient.SetupSequence(tc =>
             tc.QueryAsync<CompaniesHouseFileSetDownloadStatus>(
                 It.IsAny<Expression<Func<CompaniesHouseFileSetDownloadStatus, bool>>>(),
                 It.IsAny<int?>(),
@@ -256,17 +256,17 @@ public class DownloadStatusStorageTests
                 It.IsAny<CancellationToken>()))
             .Returns(new MockAsyncPageable<CompaniesHouseFileSetDownloadStatus>(new List<CompaniesHouseFileSetDownloadStatus>()));
 
-        tableClient.Setup(tc => tc.SubmitTransactionAsync(It.IsAny<IEnumerable<TableTransactionAction>>(), It.IsAny<CancellationToken>()))
+        _tableClient.Setup(tc => tc.SubmitTransactionAsync(It.IsAny<IEnumerable<TableTransactionAction>>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new RequestFailedException("error"));
 
-        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, loggerMock.Object);
+        var downloadStatusStorage = new DownloadStatusStorage(_tableServiceClient.Object, _timeProvider, _loggerMock.Object);
 
         // Act & Assert
         await Assert.ThrowsExceptionAsync<FileDownloadException>(async () =>
             await downloadStatusStorage.CreateCompaniesHouseFileDownloadLogAsync(partitionKey, 7));
 
-        tableClient.Verify(tc => tc.CreateIfNotExistsAsync(It.IsAny<CancellationToken>()));
-        tableClient.Verify(tc => tc.SubmitTransactionAsync(It.IsAny<IEnumerable<TableTransactionAction>>(), It.IsAny<CancellationToken>()));
+        _tableClient.Verify(tc => tc.CreateIfNotExistsAsync(It.IsAny<CancellationToken>()));
+        _tableClient.Verify(tc => tc.SubmitTransactionAsync(It.IsAny<IEnumerable<TableTransactionAction>>(), It.IsAny<CancellationToken>()));
     }
 
     [TestMethod]
@@ -282,7 +282,7 @@ public class DownloadStatusStorageTests
             new() { DownloadFileName = "test_file_3.zip" }
         };
 
-        tableClient.SetupSequence(tc =>
+        _tableClient.SetupSequence(tc =>
             tc.QueryAsync<CompaniesHouseFileSetDownloadStatus>(
                 It.IsAny<Expression<Func<CompaniesHouseFileSetDownloadStatus, bool>>>(),
                 It.IsAny<int?>(),
@@ -290,7 +290,7 @@ public class DownloadStatusStorageTests
                 It.IsAny<CancellationToken>()))
             .Returns(new MockAsyncPageable<CompaniesHouseFileSetDownloadStatus>(downloadLog));
 
-        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, loggerMock.Object);
+        var downloadStatusStorage = new DownloadStatusStorage(_tableServiceClient.Object, _timeProvider, _loggerMock.Object);
 
         // Act
         var result = await downloadStatusStorage.GetCompaniesHouseFileDownloadListAsync(partitionKey);
@@ -305,7 +305,7 @@ public class DownloadStatusStorageTests
         // Arrange
         var partitionKey = "199912";
 
-        tableClient.SetupSequence(tc =>
+        _tableClient.SetupSequence(tc =>
             tc.QueryAsync<CompaniesHouseFileSetDownloadStatus>(
                 It.IsAny<Expression<Func<CompaniesHouseFileSetDownloadStatus, bool>>>(),
                 It.IsAny<int?>(),
@@ -313,7 +313,7 @@ public class DownloadStatusStorageTests
                 It.IsAny<CancellationToken>()))
             .Returns(new MockAsyncPageable<CompaniesHouseFileSetDownloadStatus>(new List<CompaniesHouseFileSetDownloadStatus>()));
 
-        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, loggerMock.Object);
+        var downloadStatusStorage = new DownloadStatusStorage(_tableServiceClient.Object, _timeProvider, _loggerMock.Object);
 
         // Act
         var result = await downloadStatusStorage.GetCompaniesHouseFileDownloadListAsync(partitionKey);
@@ -328,14 +328,14 @@ public class DownloadStatusStorageTests
         // Arrange
         var partitionKey = "199912";
 
-        tableClient.Setup(tc => tc.QueryAsync(
+        _tableClient.Setup(tc => tc.QueryAsync(
                 It.IsAny<Expression<Func<CompaniesHouseFileSetDownloadStatus, bool>>>(),
                 It.IsAny<int?>(),
                 It.IsAny<IEnumerable<string>>(),
                 It.IsAny<CancellationToken>()))
             .Throws(new RequestFailedException("error"));
 
-        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, loggerMock.Object);
+        var downloadStatusStorage = new DownloadStatusStorage(_tableServiceClient.Object, _timeProvider, _loggerMock.Object);
 
         // Act
         var result = await downloadStatusStorage.GetCompaniesHouseFileDownloadListAsync(partitionKey);
@@ -349,25 +349,25 @@ public class DownloadStatusStorageTests
     {
         // Arrange
         var now = new DateTimeOffset(2024, 3, 5, 7, 9, 11, TimeSpan.Zero);
-        timeProvider.SetUtcNow(now);
+        _timeProvider.SetUtcNow(now);
         var partitionKey = now.ToString("yyyyMM");
 
         var companiesHouseFileSetDownloadStatus = new CompaniesHouseFileSetDownloadStatus
         {
             RowKey = "Part-1-03-2023",
             PartitionKey = partitionKey,
-            Timestamp = timeProvider.GetUtcNow(),
+            Timestamp = _timeProvider.GetUtcNow(),
             DownloadStatus = FileDownloadResponseCode.Succeeded,
             DownloadFileName = "test_file_1.zip"
         };
 
-        var downloadStatusStorage = new DownloadStatusStorage(tableServiceClient.Object, timeProvider, loggerMock.Object);
+        var downloadStatusStorage = new DownloadStatusStorage(_tableServiceClient.Object, _timeProvider, _loggerMock.Object);
 
         // Act
         var result = await downloadStatusStorage.SetCompaniesHouseFileDownloadStatusAsync(companiesHouseFileSetDownloadStatus);
 
         // Assert
         result.Should().BeTrue();
-        tableClient.Verify(tc => tc.UpsertEntityAsync(companiesHouseFileSetDownloadStatus, TableUpdateMode.Merge, It.IsAny<CancellationToken>()), Times.Once);
+        _tableClient.Verify(tc => tc.UpsertEntityAsync(companiesHouseFileSetDownloadStatus, TableUpdateMode.Merge, It.IsAny<CancellationToken>()), Times.Once);
     }
 }

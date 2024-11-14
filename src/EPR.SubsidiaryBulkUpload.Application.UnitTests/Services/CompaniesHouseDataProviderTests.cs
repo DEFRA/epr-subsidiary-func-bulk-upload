@@ -9,24 +9,24 @@ namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 [TestClass]
 public class CompaniesHouseDataProviderTests
 {
-    private Fixture fixture;
+    private Fixture _fixture;
 
     [TestInitialize]
     public void TestInitialize()
     {
-        fixture = new();
+        _fixture = new();
     }
 
     [TestMethod]
     public void ShouldSetCompaniesHouseDataFromLocalStorageWithNameMatching()
     {
         // Arrange
-        var organisationModel = fixture.Create<OrganisationModel>();
-        var companyHouseEntity = fixture.Create<CompanyHouseTableEntity>();
+        var organisationModel = _fixture.Create<OrganisationModel>();
+        var companyHouseEntity = _fixture.Create<CompanyHouseTableEntity>();
 
         companyHouseEntity.CompanyName = organisationModel.Name;
-        var companyHouseEntity1 = fixture.Create<CompanyHouseTableEntity>();
-        var config = fixture.Create<TableStorageOptions>();
+        var companyHouseEntity1 = _fixture.Create<CompanyHouseTableEntity>();
+        var config = _fixture.Create<TableStorageOptions>();
         var options = new Mock<IOptions<TableStorageOptions>>();
         options.Setup(o => o.Value).Returns(config);
 
@@ -54,12 +54,12 @@ public class CompaniesHouseDataProviderTests
     public void ShouldSetCompaniesHouseDataFromLocalStorageWithCompanyNameIsAMatch()
     {
         // Arrange
-        var organisationModel = fixture.Create<OrganisationModel>();
-        var companyHouseEntity = fixture.Create<CompanyHouseTableEntity>();
+        var organisationModel = _fixture.Create<OrganisationModel>();
+        var companyHouseEntity = _fixture.Create<CompanyHouseTableEntity>();
 
         companyHouseEntity.CompanyName = organisationModel.Name;
-        var companyHouseEntity1 = fixture.Create<CompanyHouseTableEntity>();
-        var config = fixture.Create<TableStorageOptions>();
+        var companyHouseEntity1 = _fixture.Create<CompanyHouseTableEntity>();
+        var config = _fixture.Create<TableStorageOptions>();
         var options = new Mock<IOptions<TableStorageOptions>>();
         options.Setup(o => o.Value).Returns(config);
 
@@ -83,10 +83,10 @@ public class CompaniesHouseDataProviderTests
     public void ShouldSetCompaniesHouseDataFromCompaniesHouseApi()
     {
         // Arrange
-        var organisationModel = fixture.Create<OrganisationModel>();
-        var companiesHouseResponse = fixture.Create<Company>();
+        var organisationModel = _fixture.Create<OrganisationModel>();
+        var companiesHouseResponse = _fixture.Create<Company>();
         companiesHouseResponse.Error = null;
-        var config = fixture.Create<TableStorageOptions>();
+        var config = _fixture.Create<TableStorageOptions>();
         var options = new Mock<IOptions<TableStorageOptions>>();
         options.Setup(o => o.Value).Returns(config);
 
@@ -119,9 +119,9 @@ public class CompaniesHouseDataProviderTests
     public void ShouldSetCompaniesHouseDataFromCompaniesHouseApiWithErrors()
     {
         // Arrange
-        var organisationModel = fixture.Create<OrganisationModel>();
-        var companiesHouseResponse = fixture.Create<Company>();
-        var config = fixture.Create<TableStorageOptions>();
+        var organisationModel = _fixture.Create<OrganisationModel>();
+        var companiesHouseResponse = _fixture.Create<Company>();
+        var config = _fixture.Create<TableStorageOptions>();
         var options = new Mock<IOptions<TableStorageOptions>>();
         options.Setup(o => o.Value).Returns(config);
 

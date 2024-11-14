@@ -11,13 +11,13 @@ namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 [TestClass]
 public class CsvProcessorTests
 {
-    private Fixture fixture;
+    private Fixture _fixture;
     private Mock<ILogger<CsvProcessor>> _mockLogger;
 
     [TestInitialize]
     public void TestInitialize()
     {
-        fixture = new();
+        _fixture = new();
         _mockLogger = new Mock<ILogger<CsvProcessor>>();
     }
 
@@ -25,7 +25,7 @@ public class CsvProcessorTests
     public async Task ShouldProcessCompaniesHouseScvUploadData()
     {
         // Arrange
-        var source = fixture.CreateMany<CompaniesHouseCompany>(2).ToArray();
+        var source = _fixture.CreateMany<CompaniesHouseCompany>(2).ToArray();
 
         var header = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
         var rawSource = source.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
@@ -68,7 +68,7 @@ public class CsvProcessorTests
     public async Task ShouldLogIfParsingThrows()
     {
         // Arrange
-        var source = fixture.CreateMany<CompaniesHouseCompany>(2).ToArray();
+        var source = _fixture.CreateMany<CompaniesHouseCompany>(2).ToArray();
 
         var header = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
         var rawSource = source.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
@@ -106,7 +106,7 @@ public class CsvProcessorTests
     public async Task ShouldProcessCsvStream()
     {
         // Arrange
-        var source = fixture.CreateMany<CompanyHouseTableEntity>(2).ToArray();
+        var source = _fixture.CreateMany<CompanyHouseTableEntity>(2).ToArray();
         var header = "CompanyName,CompanyNumber,CompanyStatus\n";
 
         var rawSource = source.Select(s => $"{s.CompanyName},{s.CompanyNumber},{s.CompanyStatus}\n");
@@ -136,7 +136,7 @@ public class CsvProcessorTests
     public async Task ShouldProcessCsvStream_IgnoringEmptyRows()
     {
         // Arrange
-        var source = fixture.CreateMany<CompanyHouseTableEntity>(2).ToArray();
+        var source = _fixture.CreateMany<CompanyHouseTableEntity>(2).ToArray();
         var header = "CompanyName,CompanyNumber,CompanyStatus\n";
 
         var rawSource = source.Select(s => $"{s.CompanyName},{s.CompanyNumber},{s.CompanyStatus}\n").ToArray();
