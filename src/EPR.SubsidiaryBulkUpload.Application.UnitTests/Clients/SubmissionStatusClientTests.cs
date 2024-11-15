@@ -1,7 +1,7 @@
 ﻿using System.Net;
 using EPR.SubsidiaryBulkUpload.Application.Clients;
 using EPR.SubsidiaryBulkUpload.Application.Models.Submission;
-using EPR.SubsidiaryBulkUpload.Application.Services;
+using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using EPR.SubsidiaryBulkUpload.Application.UnitTests.Support;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq.Protected;

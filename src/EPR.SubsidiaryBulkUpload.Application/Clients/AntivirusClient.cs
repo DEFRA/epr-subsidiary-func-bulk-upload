@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using EPR.SubsidiaryBulkUpload.Application.Clients.Interfaces;
 using EPR.SubsidiaryBulkUpload.Application.Models.Antivirus;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;

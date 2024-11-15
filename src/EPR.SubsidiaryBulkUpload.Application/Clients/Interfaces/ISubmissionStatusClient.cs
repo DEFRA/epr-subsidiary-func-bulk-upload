@@ -2,7 +2,7 @@
 using EPR.SubsidiaryBulkUpload.Application.Models.Events;
 using EPR.SubsidiaryBulkUpload.Application.Models.Submission;
 
-namespace EPR.SubsidiaryBulkUpload.Application.Clients;
+namespace EPR.SubsidiaryBulkUpload.Application.Clients.Interfaces;
 
 public interface ISubmissionStatusClient
 {

@@ -1,4 +1,4 @@
-﻿using EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
+﻿using EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload.Interfaces;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Moq;
