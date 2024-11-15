@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using CsvHelper.Configuration;
+using EPR.SubsidiaryBulkUpload.Application.ClassMaps;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
