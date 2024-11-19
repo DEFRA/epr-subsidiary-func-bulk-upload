@@ -83,6 +83,10 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
 
         var subsidiaryGroupsAndParentOrgWithValidCompaniesHouseNumber = subsidiaryGroupsAndParentOrg.Where(sg => sg.parentOrg != null && sg.SubsidiaryGroup.Parent.companies_house_number == sg.parentOrg.companiesHouseNumber);
 
+        // Scenario 1: Parent with valid ID but no child
+        var parentWithNoChild = subsidiaryGroupsAndParentOrgWithValidCompaniesHouseNumber.Where(p => p.SubsidiaryGroup.Subsidiaries.Count == 0).Select(s => s.SubsidiaryGroup.Parent).ToList();
+        await ReportCompanies(parentWithNoChild, userRequestModel, BulkUpdateErrors.ParentOrganisationWithNoChildErrorMessage, BulkUpdateErrors.ParentOrganisationWithNoChildError);
+
         var addedSubsidiariesCount = 0;
 
         foreach (var subsidiaryGroupAndParentOrg in subsidiaryGroupsAndParentOrgWithValidCompaniesHouseNumber)
