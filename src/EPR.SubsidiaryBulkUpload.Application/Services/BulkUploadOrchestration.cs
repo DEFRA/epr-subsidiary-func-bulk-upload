@@ -5,20 +5,21 @@ using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services;
+
 public class BulkUploadOrchestration : IBulkUploadOrchestration
 {
-    private readonly IRecordExtraction recordExtraction;
-    private readonly ISubsidiaryService organisationService;
-    private readonly IBulkSubsidiaryProcessor childProcessor;
+    private readonly IRecordExtraction _recordExtraction;
+    private readonly ISubsidiaryService _organisationService;
+    private readonly IBulkSubsidiaryProcessor _childProcessor;
     private readonly INotificationService _notificationService;
     private readonly ILogger<BulkUploadOrchestration> _logger;
     private readonly string orphanRecord = "orphan";
 
     public BulkUploadOrchestration(IRecordExtraction recordExtraction, ISubsidiaryService organisationService, IBulkSubsidiaryProcessor childProcessor, INotificationService notificationService, ILogger<BulkUploadOrchestration> logger)
     {
-        this.recordExtraction = recordExtraction;
-        this.organisationService = organisationService;
-        this.childProcessor = childProcessor;
+        _recordExtraction = recordExtraction;
+        _organisationService = organisationService;
+        _childProcessor = childProcessor;
         _notificationService = notificationService;
         _logger = logger;
     }
@@ -66,7 +67,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
     public async Task Orchestrate(IEnumerable<CompaniesHouseCompany> data, UserRequestModel userRequestModel)
     {
         // this holds all the parents and their children records from csv
-        var subsidiaryGroups = recordExtraction
+        var subsidiaryGroups = _recordExtraction
             .ExtractParentsAndSubsidiaries(data.Where(r => !r.Errors.Any()))
             .ToAsyncEnumerable();
 
@@ -77,7 +78,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
 
         // this will fetch data from the org database for all the parents and filter to keep the valid ones (org exists in RPD)
         var subsidiaryGroupsAndParentOrg = await subsidiaryGroupsWithValidParents.SelectAwait(
-            async sg => (SubsidiaryGroup: sg, parentOrg: await organisationService.GetCompanyByReferenceNumber(sg.Parent.organisation_id))).ToListAsync();
+            async sg => (SubsidiaryGroup: sg, parentOrg: await _organisationService.GetCompanyByReferenceNumber(sg.Parent.organisation_id))).ToListAsync();
 
         // parents not found report
         var subsidiaryGroupsAndParentOrgWithParentNotFound = subsidiaryGroupsAndParentOrg.Where(sg => sg.parentOrg == null).Select(s => s.SubsidiaryGroup);
@@ -97,8 +98,10 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
 
         foreach (var subsidiaryGroupAndParentOrg in subsidiaryGroupsAndParentOrgWithValidCompaniesHouseNumber.Where(o => o.SubsidiaryGroup.Subsidiaries.Count > 0).ToList())
         {
-            addedSubsidiariesCount += await childProcessor.Process(
-                subsidiaryGroupAndParentOrg.SubsidiaryGroup.Subsidiaries,
+            var subsidiariesToProcess = await FilterDuplicateSubsidiaries(userRequestModel, subsidiaryGroupAndParentOrg);
+
+            addedSubsidiariesCount += await _childProcessor.Process(
+                subsidiariesToProcess,
                 subsidiaryGroupAndParentOrg.SubsidiaryGroup.Parent,
                 subsidiaryGroupAndParentOrg.parentOrg,
                 userRequestModel);
@@ -106,6 +109,38 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
 
         await _notificationService.SetStatus(userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress), "Finished");
         await _notificationService.SetStatus(userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadRowsAdded), addedSubsidiariesCount.ToString());
+    }
+
+    private async Task<List<CompaniesHouseCompany>> FilterDuplicateSubsidiaries(
+        UserRequestModel userRequestModel,
+        (ParentAndSubsidiaries SubsidiaryGroup, OrganisationResponseModel? ParentOrg) subsidiaryGroupAndParentOrg)
+    {
+        var duplicatesGroup = subsidiaryGroupAndParentOrg.SubsidiaryGroup.Subsidiaries.GroupBy(companiesHouseCompany => new
+        {
+            companiesHouseCompany.subsidiary_id,
+            companiesHouseCompany.organisation_name,
+            companiesHouseCompany.companies_house_number,
+            companiesHouseCompany.parent_child
+        }).Where(grouping => grouping.Key.parent_child.Equals("child", StringComparison.InvariantCultureIgnoreCase)).ToList();
+
+        var subsidiariesToProcess = subsidiaryGroupAndParentOrg.SubsidiaryGroup.Subsidiaries;
+
+        if (duplicatesGroup.Exists(g => g.Count() > 1))
+        {
+            var duplicateItems = subsidiaryGroupAndParentOrg.SubsidiaryGroup.Subsidiaries.Where(company =>
+
+                company.subsidiary_id == duplicatesGroup[0].Key.subsidiary_id &&
+                company.organisation_name == duplicatesGroup[0].Key.organisation_name &&
+                company.companies_house_number == duplicatesGroup[0].Key.companies_house_number &&
+                company.parent_child == duplicatesGroup[0].Key.parent_child).ToList();
+
+            duplicateItems.RemoveAt(0);
+
+            await ReportCompanies(duplicateItems, userRequestModel, BulkUpdateErrors.DuplicateRecordsErrorMessage, BulkUpdateErrors.DuplicateRecordsError);
+            subsidiariesToProcess = subsidiariesToProcess.Except(duplicateItems).ToList();
+        }
+
+        return subsidiariesToProcess;
     }
 
     private async Task ReportCompanies(List<ParentAndSubsidiaries> subsidiaryGroupsAndParentOrgWithParentNotFound, UserRequestModel userRequestModel, string errorMessage, int errorNumber)
@@ -132,7 +167,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
 
             if (company.Subsidiaries.Count > 0)
             {
-                ReportCompanies(company.Subsidiaries, userRequestModel, errorMessage, errorNumber);
+                await ReportCompanies(company.Subsidiaries, userRequestModel, errorMessage, errorNumber);
             }
         }
 

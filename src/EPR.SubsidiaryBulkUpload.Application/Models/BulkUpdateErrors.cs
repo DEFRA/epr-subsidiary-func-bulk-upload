@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Models;
+
 [ExcludeFromCodeCoverage]
 public static class BulkUpdateErrors
 {
@@ -75,4 +76,7 @@ public static class BulkUpdateErrors
 
     public const int OrphanRecordParentOrganisationIsNotFound = 127;
     public const string OrphanRecordParentOrganisationIsNotFoundErrorMessage = "Orphan Child. Parent organisation is not found.";
+
+    public const int DuplicateRecordsError = 128;
+    public const string DuplicateRecordsErrorMessage = "There are two or more lines with duplicate information, check file and try again.";
 }
