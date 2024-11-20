@@ -12,6 +12,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
     private readonly IBulkSubsidiaryProcessor childProcessor;
     private readonly INotificationService _notificationService;
     private readonly ILogger<BulkUploadOrchestration> _logger;
+    private readonly string orphanRecord = "orphan";
 
     public BulkUploadOrchestration(IRecordExtraction recordExtraction, ISubsidiaryService organisationService, IBulkSubsidiaryProcessor childProcessor, INotificationService notificationService, ILogger<BulkUploadOrchestration> logger)
     {
@@ -71,6 +72,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
 
         var subsidiaryGroupsWithoutParentOrg = await subsidiaryGroups.Where(p => p.Parent.organisation_name == "orphan").ToListAsync();
         await ReportCompanies(subsidiaryGroupsWithoutParentOrg.ToList(), userRequestModel, BulkUpdateErrors.OrphanRecordParentOrganisationIsNotFoundErrorMessage, BulkUpdateErrors.OrphanRecordParentOrganisationIsNotFound);
+
         var subsidiaryGroupsWithValidParents = subsidiaryGroups.Where(p => p.Parent.organisation_name != "orphan");
 
         // this will fetch data from the org database for all the parents and filter to keep the valid ones (org exists in RPD)
@@ -120,7 +122,12 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
                 IsError = true,
                 ErrorNumber = errorNumber
             };
-            notificationErrorList.Add(newError);
+
+            if (company.Parent.organisation_name != orphanRecord)
+            {
+                notificationErrorList.Add(newError);
+            }
+
             company.Parent.Errors = notificationErrorList;
 
             if (company.Subsidiaries.Count > 0)
