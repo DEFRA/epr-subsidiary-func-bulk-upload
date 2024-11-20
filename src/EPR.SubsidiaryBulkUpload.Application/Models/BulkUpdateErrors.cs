@@ -72,4 +72,7 @@ public static class BulkUpdateErrors
 
     public const int ParentOrganisationWithNoChildError = 126;
     public const string ParentOrganisationWithNoChildErrorMessage = "There must be at least one child in the subsidiary file.";
+
+    public const int OrphanRecordParentOrganisationIsNotFound = 127;
+    public const string OrphanRecordParentOrganisationIsNotFoundErrorMessage = "Orphan Child. Parent organisation is not found.";
 }

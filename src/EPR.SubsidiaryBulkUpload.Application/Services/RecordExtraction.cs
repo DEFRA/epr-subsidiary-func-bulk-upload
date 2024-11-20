@@ -12,6 +12,11 @@ public class RecordExtraction : IRecordExtraction
         {
             var parent = group.SingleOrDefault(g => g.parent_child == "Parent");
 
+            if (parent == null)
+            {
+                parent = new CompaniesHouseCompany() { organisation_id = group.Key, organisation_name = "orphan", parent_child = "child" };
+            }
+
             var subsidiaries = group.Where(g => g.parent_child != "Parent");
 
             if (parent != null && subsidiaries.Any())
