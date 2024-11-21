@@ -115,9 +115,9 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
         UserRequestModel userRequestModel,
         (ParentAndSubsidiaries SubsidiaryGroup, OrganisationResponseModel? ParentOrg) subsidiaryGroupAndParentOrg)
     {
-        var duplicatesGroup = subsidiaryGroupAndParentOrg.SubsidiaryGroup.Subsidiaries.GroupBy(companiesHouseCompany => new
+        var duplicatesGroupList = subsidiaryGroupAndParentOrg.SubsidiaryGroup.Subsidiaries.GroupBy(companiesHouseCompany => new
         {
-            companiesHouseCompany.subsidiary_id,
+            companiesHouseCompany.organisation_id,
             companiesHouseCompany.organisation_name,
             companiesHouseCompany.companies_house_number,
             companiesHouseCompany.parent_child
@@ -125,19 +125,22 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
 
         var subsidiariesToProcess = subsidiaryGroupAndParentOrg.SubsidiaryGroup.Subsidiaries;
 
-        if (duplicatesGroup.Exists(g => g.Count() > 1))
+        foreach (var group in duplicatesGroupList)
         {
-            var duplicateItems = subsidiaryGroupAndParentOrg.SubsidiaryGroup.Subsidiaries.Where(company =>
+            if (group.Count() > 1)
+            {
+                var duplicateItems = subsidiaryGroupAndParentOrg.SubsidiaryGroup.Subsidiaries.Where(company =>
 
-                company.subsidiary_id == duplicatesGroup[0].Key.subsidiary_id &&
-                company.organisation_name == duplicatesGroup[0].Key.organisation_name &&
-                company.companies_house_number == duplicatesGroup[0].Key.companies_house_number &&
-                company.parent_child == duplicatesGroup[0].Key.parent_child).ToList();
+                    company.organisation_id == group.Key.organisation_id &&
+                    company.organisation_name == group.Key.organisation_name &&
+                    company.companies_house_number == group.Key.companies_house_number &&
+                    company.parent_child == group.Key.parent_child).ToList();
 
-            duplicateItems.RemoveAt(0);
+                duplicateItems.RemoveAt(0);
 
-            await ReportCompanies(duplicateItems, userRequestModel, BulkUpdateErrors.DuplicateRecordsErrorMessage, BulkUpdateErrors.DuplicateRecordsError);
-            subsidiariesToProcess = subsidiariesToProcess.Except(duplicateItems).ToList();
+                await ReportCompanies(duplicateItems, userRequestModel, BulkUpdateErrors.DuplicateRecordsErrorMessage, BulkUpdateErrors.DuplicateRecordsError);
+                subsidiariesToProcess = subsidiariesToProcess.Except(duplicateItems).ToList();
+            }
         }
 
         return subsidiariesToProcess;

@@ -183,7 +183,7 @@ public class BulkUploadOrchestrationTests
         var companiesHouseNumber = parentAndSubsidiaries[0].Parent.companies_house_number;
         var organisationName = parentAndSubsidiaries[0].Parent.organisation_name;
         const string child = "child";
-        const string subsidiaryId = "123";
+        const string orgId = "123";
         parentAndSubsidiaries[0].Subsidiaries[0].companies_house_number = companiesHouseNumber;
         parentAndSubsidiaries[0].Subsidiaries[1].companies_house_number = companiesHouseNumber;
         parentAndSubsidiaries[0].Subsidiaries[2].companies_house_number = companiesHouseNumber;
@@ -196,9 +196,9 @@ public class BulkUploadOrchestrationTests
         parentAndSubsidiaries[0].Subsidiaries[1].parent_child = child;
         parentAndSubsidiaries[0].Subsidiaries[2].parent_child = child;
 
-        parentAndSubsidiaries[0].Subsidiaries[0].subsidiary_id = subsidiaryId;
-        parentAndSubsidiaries[0].Subsidiaries[1].subsidiary_id = subsidiaryId;
-        parentAndSubsidiaries[0].Subsidiaries[2].subsidiary_id = subsidiaryId;
+        parentAndSubsidiaries[0].Subsidiaries[0].organisation_id = orgId;
+        parentAndSubsidiaries[0].Subsidiaries[1].organisation_id = orgId;
+        parentAndSubsidiaries[0].Subsidiaries[2].organisation_id = orgId;
 
         var subsidiaries = _fixture.CreateMany<OrganisationResponseModel>(3).ToArray();
         subsidiaries[0].companiesHouseNumber = parentAndSubsidiaries[0].Parent.companies_house_number;
