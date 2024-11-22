@@ -19,15 +19,7 @@ public class RecordExtraction : IRecordExtraction
 
             var subsidiaries = group.Where(g => g.parent_child != "Parent");
 
-            if (subsidiaries == null)
-            {
-                subsidiaries = new List<CompaniesHouseCompany>();
-            }
-
-            if (parent != null)
-            {
-                yield return new ParentAndSubsidiaries { Parent = parent, Subsidiaries = subsidiaries.ToList() };
-            }
+            yield return new ParentAndSubsidiaries { Parent = parent, Subsidiaries = subsidiaries.ToList() };
         }
     }
 }
