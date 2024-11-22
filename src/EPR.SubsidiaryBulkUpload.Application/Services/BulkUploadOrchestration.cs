@@ -136,8 +136,6 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
                     company.companies_house_number == group.Key.companies_house_number &&
                     company.parent_child == group.Key.parent_child).ToList();
 
-                duplicateItems.RemoveAt(0);
-
                 await ReportCompanies(duplicateItems, userRequestModel, BulkUpdateErrors.DuplicateRecordsErrorMessage, BulkUpdateErrors.DuplicateRecordsError);
                 subsidiariesToProcess = subsidiariesToProcess.Except(duplicateItems).ToList();
             }

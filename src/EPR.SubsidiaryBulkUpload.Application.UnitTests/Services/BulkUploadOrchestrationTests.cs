@@ -232,6 +232,6 @@ public class BulkUploadOrchestrationTests
         await orchestrator.Orchestrate(companyData, userRequestModel);
 
         // Assert
-        _bulkSubsidiaryProcessor.Verify(cp => cp.Process(It.Is<IEnumerable<CompaniesHouseCompany>>(companyData => companyData.Count() == 1), It.IsAny<CompaniesHouseCompany>(), It.IsAny<OrganisationResponseModel>(), It.IsAny<UserRequestModel>()));
+        _bulkSubsidiaryProcessor.Verify(cp => cp.Process(It.Is<IEnumerable<CompaniesHouseCompany>>(companyData => companyData.Count() == 0), It.IsAny<CompaniesHouseCompany>(), It.IsAny<OrganisationResponseModel>(), It.IsAny<UserRequestModel>()));
     }
 }
