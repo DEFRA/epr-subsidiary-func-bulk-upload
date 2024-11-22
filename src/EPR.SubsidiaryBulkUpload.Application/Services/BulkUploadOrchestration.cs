@@ -95,7 +95,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
 
         var addedSubsidiariesCount = 0;
 
-        foreach (var subsidiaryGroupAndParentOrg in subsidiaryGroupsAndParentOrgWithValidCompaniesHouseNumber)
+        foreach (var subsidiaryGroupAndParentOrg in subsidiaryGroupsAndParentOrgWithValidCompaniesHouseNumber.Where(o => o.SubsidiaryGroup.Subsidiaries.Count > 0).ToList())
         {
             addedSubsidiariesCount += await childProcessor.Process(
                 subsidiaryGroupAndParentOrg.SubsidiaryGroup.Subsidiaries,
