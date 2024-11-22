@@ -75,10 +75,11 @@ public class RecordExtractionTests
         var extraction = new RecordExtraction();
 
         // Act
-        var parentAndSubsidiaries = extraction.ExtractParentsAndSubsidiaries(parents);
+        var parentAndSubsidiaries = extraction.ExtractParentsAndSubsidiaries(parents).ToArray();
 
         // Assert
-        parentAndSubsidiaries.Should().BeEmpty();
+        parentAndSubsidiaries[0].Subsidiaries.Count.Should().Be(0);
+        parentAndSubsidiaries[1].Subsidiaries.Count.Should().Be(0);
     }
 
     [TestMethod]
@@ -98,9 +99,9 @@ public class RecordExtractionTests
         var parentAndSubsidiaries = extraction.ExtractParentsAndSubsidiaries(all).ToArray();
 
         // Assert
-        parentAndSubsidiaries.Should().HaveCount(3);
-        parentAndSubsidiaries[0].Parent.organisation_name.Should().BeEquivalentTo("orphan");
-        parentAndSubsidiaries[1].Parent.organisation_name.Should().BeEquivalentTo("orphan");
+        parentAndSubsidiaries.Should().HaveCount(6);
+        parentAndSubsidiaries[3].Parent.organisation_name.Should().BeEquivalentTo("orphan");
+        parentAndSubsidiaries[3].Parent.organisation_name.Should().BeEquivalentTo("orphan");
     }
 
     [TestMethod]
@@ -127,7 +128,7 @@ public class RecordExtractionTests
         var parentAndSubsidiaries = extraction.ExtractParentsAndSubsidiaries(all).ToArray();
 
         // Assert
-        parentAndSubsidiaries.Should().HaveCount(4);
+        parentAndSubsidiaries.Should().HaveCount(5);
         parentAndSubsidiaries[0].Parent.Should().BeEquivalentTo(parents[0]);
         parentAndSubsidiaries[0].Subsidiaries.Should().BeEquivalentTo(parent1Children);
     }
