@@ -12,6 +12,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
     private readonly IBulkSubsidiaryProcessor childProcessor;
     private readonly INotificationService _notificationService;
     private readonly ILogger<BulkUploadOrchestration> _logger;
+    private readonly string orphanRecord = "orphan";
 
     public BulkUploadOrchestration(IRecordExtraction recordExtraction, ISubsidiaryService organisationService, IBulkSubsidiaryProcessor childProcessor, INotificationService notificationService, ILogger<BulkUploadOrchestration> logger)
     {
@@ -69,8 +70,13 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
             .ExtractParentsAndSubsidiaries(data.Where(r => !r.Errors.Any()))
             .ToAsyncEnumerable();
 
+        var subsidiaryGroupsWithoutParentOrg = await subsidiaryGroups.Where(p => p.Parent.organisation_name == "orphan").ToListAsync();
+        await ReportCompanies(subsidiaryGroupsWithoutParentOrg.ToList(), userRequestModel, BulkUpdateErrors.OrphanRecordParentOrganisationIsNotFoundErrorMessage, BulkUpdateErrors.OrphanRecordParentOrganisationIsNotFound);
+
+        var subsidiaryGroupsWithValidParents = subsidiaryGroups.Where(p => p.Parent.organisation_name != "orphan");
+
         // this will fetch data from the org database for all the parents and filter to keep the valid ones (org exists in RPD)
-        var subsidiaryGroupsAndParentOrg = await subsidiaryGroups.SelectAwait(
+        var subsidiaryGroupsAndParentOrg = await subsidiaryGroupsWithValidParents.SelectAwait(
             async sg => (SubsidiaryGroup: sg, parentOrg: await organisationService.GetCompanyByReferenceNumber(sg.Parent.organisation_id))).ToListAsync();
 
         // parents not found report
@@ -83,9 +89,13 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
 
         var subsidiaryGroupsAndParentOrgWithValidCompaniesHouseNumber = subsidiaryGroupsAndParentOrg.Where(sg => sg.parentOrg != null && sg.SubsidiaryGroup.Parent.companies_house_number == sg.parentOrg.companiesHouseNumber);
 
+        // Scenario 1: Parent with valid ID but no child
+        var parentWithNoChild = subsidiaryGroupsAndParentOrgWithValidCompaniesHouseNumber.Where(p => p.SubsidiaryGroup.Subsidiaries.Count == 0).Select(s => s.SubsidiaryGroup.Parent).ToList();
+        await ReportCompanies(parentWithNoChild, userRequestModel, BulkUpdateErrors.ParentOrganisationWithNoChildErrorMessage, BulkUpdateErrors.ParentOrganisationWithNoChildError);
+
         var addedSubsidiariesCount = 0;
 
-        foreach (var subsidiaryGroupAndParentOrg in subsidiaryGroupsAndParentOrgWithValidCompaniesHouseNumber)
+        foreach (var subsidiaryGroupAndParentOrg in subsidiaryGroupsAndParentOrgWithValidCompaniesHouseNumber.Where(o => o.SubsidiaryGroup.Subsidiaries.Count > 0).ToList())
         {
             addedSubsidiariesCount += await childProcessor.Process(
                 subsidiaryGroupAndParentOrg.SubsidiaryGroup.Subsidiaries,
@@ -112,12 +122,17 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
                 IsError = true,
                 ErrorNumber = errorNumber
             };
-            notificationErrorList.Add(newError);
+
+            if (company.Parent.organisation_name != orphanRecord)
+            {
+                notificationErrorList.Add(newError);
+            }
+
             company.Parent.Errors = notificationErrorList;
 
             if (company.Subsidiaries.Count > 0)
             {
-                ReportCompanies(company.Subsidiaries, userRequestModel, BulkUpdateErrors.ParentOrganisationNotValidChildCannotBeProcessedErrorMessage, BulkUpdateErrors.ParentOrganisationNotValidChildCannotBeProcessed);
+                ReportCompanies(company.Subsidiaries, userRequestModel, errorMessage, errorNumber);
             }
         }
 

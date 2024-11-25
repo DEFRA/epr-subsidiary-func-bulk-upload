@@ -60,8 +60,8 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             .Where(subAndLink => subAndLink.LinkModel != null);
 
         var companyHouseAPIProcessStatistics = await ProcessCompanyHouseAPI(newSubsidiariesToAdd_DataFromLocalStorageOrCH, userRequestModel);
-        var remainingToProcessPart2 = remainingToProcess.Except(companyHouseAPIProcessStatistics.CompaniesHouseAPIErrorListReported);
-        var remainingToProcessPart3 = remainingToProcessPart2.Except(companyHouseAPIProcessStatistics.NewAddedSubsidiaries).Except(companyHouseAPIProcessStatistics.DuplicateSubsidiaries).Except(companyHouseAPIProcessStatistics.NotAddedSubsidiaries);
+        var remainingToProcessAfterAPIChecks = remainingToProcess.Except(companyHouseAPIProcessStatistics.CompaniesHouseAPIErrorListReported);
+        var remainingToProcessAfterLocalSubAdditions = remainingToProcessAfterAPIChecks.Except(companyHouseAPIProcessStatistics.NewAddedSubsidiaries).Except(companyHouseAPIProcessStatistics.DuplicateSubsidiaries).Except(companyHouseAPIProcessStatistics.NotAddedSubsidiaries);
 
         /*Scenario 4: The subsidiary found in Offline data. name not match. get it from CH API and name not matches with CH API data. Report Error.*/
         var newSubsidiariesToAdd_DataFromLocalStorageOrCompaniesHouse_NameNoMatch = newSubsidiariesToAdd_DataFromLocalStorageOrCH
@@ -71,13 +71,13 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         var newSubsidiariesToAdd_DataFromLocalStorageOrCH_NameNoMatchList = await newSubsidiariesToAdd_DataFromLocalStorageOrCompaniesHouse_NameNoMatch.Select(s => s.Subsidiary).ToListAsync();
         await ReportCompanies(newSubsidiariesToAdd_DataFromLocalStorageOrCH_NameNoMatchList, userRequestModel, BulkUpdateErrors.CompanyNameIsDifferentInOfflineDataAndDifferentInCHAPIMessage, BulkUpdateErrors.CompanyNameIsDifferentInOfflineDataAndDifferentInCHAPI);
 
-        var remainingToProcessPart4 = remainingToProcessPart3.Except(newSubsidiariesToAdd_DataFromLocalStorageOrCH_NameNoMatchList);
+        var remainingAfterProcessingAllData = remainingToProcessAfterLocalSubAdditions.Except(newSubsidiariesToAdd_DataFromLocalStorageOrCH_NameNoMatchList);
 
         var allAddedNewSubsPlusExisting = await newSubsidiariesToAdd_DataFromLocalStorageOrCH.Where(sta => sta.LinkModel.StatusCode == System.Net.HttpStatusCode.OK).Select(sta => sta.Subsidiary)
             .ToListAsync();
 
         /*Scenario 1: The subsidiary is not found in RPD and not in Local storage and not found on companies house*/
-        await ReportCompanies(remainingToProcessPart4.Except(allAddedNewSubsPlusExisting), userRequestModel, BulkUpdateErrors.CompanyNameNotFoundAnywhereMessage, BulkUpdateErrors.CompanyNameNotFoundAnywhere);
+        await ReportCompanies(remainingAfterProcessingAllData.Except(allAddedNewSubsPlusExisting), userRequestModel, BulkUpdateErrors.CompanyNameNotFoundAnywhereMessage, BulkUpdateErrors.CompanyNameNotFoundAnywhere);
 
         return allAddedNewSubsPlusExisting.Count + franchiseeProcessed.Count() + subsidiariesAndOrgWithValidNameProcessStatistics.NewAddedSubsidiariesRelationships + companyHouseAPIProcessStatistics.NewAddedSubsidiaries.Count;
     }
