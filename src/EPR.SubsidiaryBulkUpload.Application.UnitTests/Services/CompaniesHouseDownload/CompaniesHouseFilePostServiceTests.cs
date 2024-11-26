@@ -4,8 +4,8 @@ using EPR.SubsidiaryBulkUpload.Application.Models.Antivirus;
 using EPR.SubsidiaryBulkUpload.Application.Models.Events;
 using EPR.SubsidiaryBulkUpload.Application.Models.Submission;
 using EPR.SubsidiaryBulkUpload.Application.Options;
-using EPR.SubsidiaryBulkUpload.Application.Services;
 using EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
+using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using EPR.SubsidiaryBulkUpload.Application.UnitTests.Support;
 using Microsoft.Extensions.Logging;
 

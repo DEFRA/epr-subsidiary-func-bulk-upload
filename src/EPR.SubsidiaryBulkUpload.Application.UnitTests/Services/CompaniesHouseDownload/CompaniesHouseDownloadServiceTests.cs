@@ -2,6 +2,7 @@
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Options;
 using EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
+using EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload.Interfaces;
 using EPR.SubsidiaryBulkUpload.Application.UnitTests.Support;
 using Microsoft.Extensions.Time.Testing;
 
