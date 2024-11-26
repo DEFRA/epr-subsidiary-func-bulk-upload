@@ -13,14 +13,14 @@ public class CompaniesHouseDownloadServiceTests
 {
     private const string PartialFilename = "BasicCompanyData";
     private const string DownloadPath = "https://download/";
-    private Fixture fixture;
-    private FakeTimeProvider timeProvider;
+    private Fixture _fixture;
+    private FakeTimeProvider _timeProvider;
 
     [TestInitialize]
     public void TestInitialize()
     {
-        fixture = new();
-        timeProvider = new();
+        _fixture = new();
+        _timeProvider = new();
     }
 
     [TestMethod]
@@ -30,12 +30,12 @@ public class CompaniesHouseDownloadServiceTests
         var month = 3;
         var year = 2024;
         var now = new DateTimeOffset(year, month, 5, 7, 9, 11, TimeSpan.Zero);
-        timeProvider.SetUtcNow(now);
+        _timeProvider.SetUtcNow(now);
 
         var partitionKey = now.ToString("yyyyMM");
 
-        fixture.Customize<CompaniesHouseDownloadOptions>(ctx => ctx.With(a => a.DataDownloadUrl, DownloadPath));
-        var options = fixture.CreateOptions<CompaniesHouseDownloadOptions>();
+        _fixture.Customize<CompaniesHouseDownloadOptions>(ctx => ctx.With(a => a.DataDownloadUrl, DownloadPath));
+        var options = _fixture.CreateOptions<CompaniesHouseDownloadOptions>();
 
         using var stream = new MemoryStream();
 
@@ -43,7 +43,7 @@ public class CompaniesHouseDownloadServiceTests
         var partialFileName = $"{PartialFilename}-2024-03-01-part";
         var numberOfDownloads = 3;
 
-        fixture.Customize<CompaniesHouseFileSetDownloadStatus>(ctx => ctx.With(s => s.CurrentRunExpectedFileCount, numberOfDownloads));
+        _fixture.Customize<CompaniesHouseFileSetDownloadStatus>(ctx => ctx.With(s => s.CurrentRunExpectedFileCount, numberOfDownloads));
 
         var downloadStatusStorage = new Mock<IDownloadStatusStorage>();
         downloadStatusStorage.Setup(dss => dss.GetCompaniesHouseFileDownloadStatusAsync(partitionKey)).ReturnsAsync(true);
@@ -72,7 +72,7 @@ public class CompaniesHouseDownloadServiceTests
             companiesHouseFilePostService.Object,
             companiesHouseWebCrawlerService.Object,
             options,
-            timeProvider);
+            _timeProvider);
 
         // Act
         await downloadService.StartDownload();
@@ -91,17 +91,17 @@ public class CompaniesHouseDownloadServiceTests
         var month = 3;
         var year = 2024;
         var now = new DateTimeOffset(year, month, 5, 7, 9, 11, TimeSpan.Zero);
-        timeProvider.SetUtcNow(now);
+        _timeProvider.SetUtcNow(now);
         var partitionKey = now.ToString("yyyyMM");
 
-        fixture.Customize<CompaniesHouseDownloadOptions>(ctx => ctx.With(a => a.DataDownloadUrl, DownloadPath));
-        var options = fixture.CreateOptions<CompaniesHouseDownloadOptions>();
+        _fixture.Customize<CompaniesHouseDownloadOptions>(ctx => ctx.With(a => a.DataDownloadUrl, DownloadPath));
+        var options = _fixture.CreateOptions<CompaniesHouseDownloadOptions>();
 
         using var stream = new MemoryStream();
         var partialFileName = $"{PartialFilename}-2024-03-01-part";
         var numberOfDownloads = 3;
 
-        fixture.Customize<CompaniesHouseFileSetDownloadStatus>(ctx => ctx.With(s => s.CurrentRunExpectedFileCount, numberOfDownloads));
+        _fixture.Customize<CompaniesHouseFileSetDownloadStatus>(ctx => ctx.With(s => s.CurrentRunExpectedFileCount, numberOfDownloads));
 
         var downloadStatusStorage = new Mock<IDownloadStatusStorage>();
         downloadStatusStorage.Setup(dss => dss.GetCompaniesHouseFileDownloadStatusAsync(partitionKey)).ReturnsAsync(true);
@@ -128,7 +128,7 @@ public class CompaniesHouseDownloadServiceTests
             companiesHouseFilePostService.Object,
             companiesHouseWebCrawlerService.Object,
             options,
-            timeProvider);
+            _timeProvider);
 
         // Act
         await downloadService.StartDownload();
@@ -147,11 +147,11 @@ public class CompaniesHouseDownloadServiceTests
         var month = 3;
         var year = 2024;
         var now = new DateTimeOffset(year, month, 5, 7, 9, 11, TimeSpan.Zero);
-        timeProvider.SetUtcNow(now);
+        _timeProvider.SetUtcNow(now);
         var partitionKey = now.ToString("yyyyMM");
 
-        fixture.Customize<CompaniesHouseDownloadOptions>(ctx => ctx.With(a => a.DataDownloadUrl, DownloadPath));
-        var options = fixture.CreateOptions<CompaniesHouseDownloadOptions>();
+        _fixture.Customize<CompaniesHouseDownloadOptions>(ctx => ctx.With(a => a.DataDownloadUrl, DownloadPath));
+        var options = _fixture.CreateOptions<CompaniesHouseDownloadOptions>();
 
         using var stream = new MemoryStream();
         var partialFileName = $"{PartialFilename}-2024-03-01-part";
@@ -184,7 +184,7 @@ public class CompaniesHouseDownloadServiceTests
             companiesHouseFilePostService.Object,
             companiesHouseWebCrawlerService.Object,
             options,
-            timeProvider);
+            _timeProvider);
 
         // Act
         await downloadService.StartDownload();
@@ -200,11 +200,11 @@ public class CompaniesHouseDownloadServiceTests
         var month = 3;
         var year = 2024;
         var now = new DateTimeOffset(year, month, 5, 7, 9, 11, TimeSpan.Zero);
-        timeProvider.SetUtcNow(now);
+        _timeProvider.SetUtcNow(now);
         var partitionKey = now.ToString("yyyyMM");
 
-        fixture.Customize<CompaniesHouseDownloadOptions>(ctx => ctx.With(a => a.DataDownloadUrl, DownloadPath));
-        var options = fixture.CreateOptions<CompaniesHouseDownloadOptions>();
+        _fixture.Customize<CompaniesHouseDownloadOptions>(ctx => ctx.With(a => a.DataDownloadUrl, DownloadPath));
+        var options = _fixture.CreateOptions<CompaniesHouseDownloadOptions>();
 
         using var stream = new MemoryStream();
         var partialFileName = $"{PartialFilename}-2024-03-01-part";
@@ -235,7 +235,7 @@ public class CompaniesHouseDownloadServiceTests
             companiesHouseFilePostService.Object,
             companiesHouseWebCrawlerService.Object,
             options,
-            timeProvider);
+            _timeProvider);
 
         // Act
         await downloadService.StartDownload();
@@ -252,11 +252,11 @@ public class CompaniesHouseDownloadServiceTests
         var month = 3;
         var year = 2024;
         var now = new DateTimeOffset(year, month, 5, 7, 9, 11, TimeSpan.Zero);
-        timeProvider.SetUtcNow(now);
+        _timeProvider.SetUtcNow(now);
         var partitionKey = now.ToString("yyyyMM");
 
-        fixture.Customize<CompaniesHouseDownloadOptions>(ctx => ctx.With(a => a.DataDownloadUrl, DownloadPath));
-        var options = fixture.CreateOptions<CompaniesHouseDownloadOptions>();
+        _fixture.Customize<CompaniesHouseDownloadOptions>(ctx => ctx.With(a => a.DataDownloadUrl, DownloadPath));
+        var options = _fixture.CreateOptions<CompaniesHouseDownloadOptions>();
 
         using var stream = new MemoryStream();
         var partialFileName = $"{PartialFilename}-2024-03-01-part";
@@ -285,7 +285,7 @@ public class CompaniesHouseDownloadServiceTests
             companiesHouseFilePostService.Object,
             companiesHouseWebCrawlerService.Object,
             options,
-            timeProvider);
+            _timeProvider);
 
         // Act
         await downloadService.StartDownload();
@@ -302,12 +302,12 @@ public class CompaniesHouseDownloadServiceTests
         var month = 3;
         var year = 2024;
         var now = new DateTimeOffset(year, month, 5, 7, 9, 11, TimeSpan.Zero);
-        timeProvider.SetUtcNow(now);
+        _timeProvider.SetUtcNow(now);
         var partitionKey = now.ToString("yyyyMM");
         var partialFileName = $"{PartialFilename}-2024-03-01-part";
 
         var numberOfDownloads = 3;
-        var options = fixture.CreateOptions<CompaniesHouseDownloadOptions>();
+        var options = _fixture.CreateOptions<CompaniesHouseDownloadOptions>();
         var fileDownloadService = new Mock<IFileDownloadService>();
 
         var downloadStatusStorage = new Mock<IDownloadStatusStorage>();
@@ -330,7 +330,7 @@ public class CompaniesHouseDownloadServiceTests
             companiesHouseFilePostService.Object,
             companiesHouseWebCrawlerService.Object,
             options,
-            timeProvider);
+            _timeProvider);
 
         // Act
         await downloadService.DownloadFiles(partitionKey);

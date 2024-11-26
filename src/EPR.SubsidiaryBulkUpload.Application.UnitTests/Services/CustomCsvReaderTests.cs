@@ -7,12 +7,12 @@ namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 [TestClass]
 public class CustomCsvReaderTests
 {
-    private Fixture fixture;
+    private Fixture _fixture;
 
     [TestInitialize]
     public void TestInitialize()
     {
-        fixture = new();
+        _fixture = new();
     }
 
     [TestMethod]
