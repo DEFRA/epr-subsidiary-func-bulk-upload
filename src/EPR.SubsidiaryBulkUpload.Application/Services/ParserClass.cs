@@ -73,9 +73,9 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             csv.ValidateHeader<FileUploadHeader>();
             if (csv.InvalidHeaderErrors is { Count: > 0 })
             {
-                StringBuilder errMess = new StringBuilder();
-                errMess.Append(BulkUpdateErrors.InvalidHeaderOrMissingHeadersMessage);
-                errMess.Append(string.Join(",", csv.InvalidHeaderErrors));
+                var errorMessage = new StringBuilder();
+                errorMessage.Append(BulkUpdateErrors.InvalidHeaderOrMissingHeadersMessage);
+                errorMessage.Append(string.Join(",", csv.InvalidHeaderErrors));
                 var companyHeaderErrors = new CompaniesHouseCompany
                 {
                     companies_house_number = string.Empty,
@@ -88,22 +88,22 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                 companyHeaderErrors.Errors.Add(new Models.UploadFileErrorModel
                 {
                     FileContent = string.Join(",", csv.HeaderRecord),
-                    Message = errMess.ToString(),
+                    Message = errorMessage.ToString(),
                     ErrorNumber = BulkUpdateErrors.InvalidHeader,
                     IsError = true,
                     FileLineNumber = 1
                 });
 
-                _logger.LogError("Invalid header count {Count}. Column header(s) missing: #### {Message} #### ", csv.InvalidHeaderErrors.Count, errMess.ToString());
+                _logger.LogError("Invalid header count {Count}. Column header(s) missing: #### {Message} #### ", csv.InvalidHeaderErrors.Count, errorMessage.ToString());
                 rows.Add(companyHeaderErrors);
                 return rows;
             }
 
             if (csv.ExtraHeaderErrors is { Count: > 0 })
             {
-                StringBuilder errMess = new StringBuilder();
-                errMess.Append(BulkUpdateErrors.FileIsInvalidWithExtraHeadersMessage);
-                errMess.Append(string.Join(",", csv.ExtraHeaderErrors));
+                var errorMessage = new StringBuilder();
+                errorMessage.Append(BulkUpdateErrors.FileIsInvalidWithExtraHeadersMessage);
+                errorMessage.Append(string.Join(",", csv.ExtraHeaderErrors));
                 var companyHeaderErrors = new CompaniesHouseCompany
                 {
                     companies_house_number = string.Empty,
@@ -116,13 +116,13 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                 companyHeaderErrors.Errors.Add(new Models.UploadFileErrorModel
                 {
                     FileContent = string.Join(",", csv.HeaderRecord),
-                    Message = errMess.ToString(),
+                    Message = errorMessage.ToString(),
                     ErrorNumber = BulkUpdateErrors.FileIsInvalidWithExtraHeaders,
                     IsError = true,
                     FileLineNumber = 1
                 });
 
-                _logger.LogError("Invalid header count {Count}. Column header(s) extra: #### {Message} #### ", csv.ExtraHeaderErrors.Count, errMess.ToString());
+                _logger.LogError("Invalid header count {Count}. Column header(s) extra: #### {Message} #### ", csv.ExtraHeaderErrors.Count, errorMessage.ToString());
                 rows.Add(companyHeaderErrors);
                 return rows;
             }
