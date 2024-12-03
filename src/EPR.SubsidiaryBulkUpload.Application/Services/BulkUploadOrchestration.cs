@@ -67,8 +67,10 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
     public async Task Orchestrate(IEnumerable<CompaniesHouseCompany> data, UserRequestModel userRequestModel)
     {
         // this holds all the parents and their children records from csv
+        var dataRefined = await FilterDuplicateParentSubsidiaries(userRequestModel, data.Where(r => !r.Errors.Any()));
+
         var subsidiaryGroups = _recordExtraction
-            .ExtractParentsAndSubsidiaries(data.Where(r => !r.Errors.Any()))
+            .ExtractParentsAndSubsidiaries(dataRefined.Where(r => !r.Errors.Any()))
             .ToAsyncEnumerable();
 
         var subsidiaryGroupsWithoutParentOrg = await subsidiaryGroups.Where(p => p.Parent.organisation_name == "orphan").ToListAsync();
@@ -140,6 +142,40 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
 
                 await ReportCompanies(duplicateItems, userRequestModel, BulkUpdateErrors.DuplicateRecordsErrorMessage, BulkUpdateErrors.DuplicateRecordsError);
                 subsidiariesToProcess = subsidiariesToProcess.Except(duplicateItems).ToList();
+            }
+        }
+
+        return subsidiariesToProcess;
+    }
+
+    private async Task<IEnumerable<CompaniesHouseCompany>> FilterDuplicateParentSubsidiaries(
+        UserRequestModel userRequestModel, IEnumerable<CompaniesHouseCompany> source)
+    {
+        var duplicatesGroupList = source.GroupBy(companiesHouseCompany => new
+        {
+            companiesHouseCompany.organisation_id,
+            companiesHouseCompany.organisation_name,
+            companiesHouseCompany.companies_house_number,
+            companiesHouseCompany.parent_child
+        }).Where(grouping => grouping.Key.parent_child.Equals("parent", StringComparison.InvariantCultureIgnoreCase)).ToList();
+
+        var subsidiariesToProcess = source;
+
+        foreach (var group in duplicatesGroupList)
+        {
+            if (group.Count() > 1)
+            {
+                var duplicateItems = source.Where(company =>
+
+                    company.organisation_id == group.Key.organisation_id &&
+                    company.organisation_name == group.Key.organisation_name &&
+                    company.companies_house_number == group.Key.companies_house_number &&
+                    company.parent_child == group.Key.parent_child).ToList();
+
+                duplicateItems.RemoveAt(0);
+
+                await ReportCompanies(duplicateItems, userRequestModel, BulkUpdateErrors.DuplicateRecordsErrorMessage, BulkUpdateErrors.DuplicateRecordsError);
+                subsidiariesToProcess = subsidiariesToProcess.Except(duplicateItems);
             }
         }
 
