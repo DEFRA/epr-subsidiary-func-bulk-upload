@@ -67,10 +67,10 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
     public async Task Orchestrate(IEnumerable<CompaniesHouseCompany> data, UserRequestModel userRequestModel)
     {
         // this holds all the parents and their children records from csv
-        var dataRefined = await FilterDuplicateParentSubsidiaries(userRequestModel, data.Where(r => !r.Errors.Any()));
+        var dataRefined = await FilterDuplicateParentSubsidiaries(userRequestModel, data.Where(r => r.Errors.Count == 0));
 
         var subsidiaryGroups = _recordExtraction
-            .ExtractParentsAndSubsidiaries(dataRefined.Where(r => !r.Errors.Any()))
+            .ExtractParentsAndSubsidiaries(dataRefined.Where(r => r.Errors.Count == 0))
             .ToAsyncEnumerable();
 
         var subsidiaryGroupsWithoutParentOrg = await subsidiaryGroups.Where(p => p.Parent.organisation_name == "orphan").ToListAsync();
