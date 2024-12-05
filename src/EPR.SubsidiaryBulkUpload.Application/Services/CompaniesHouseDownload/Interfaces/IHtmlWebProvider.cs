@@ -1,6 +1,6 @@
 ﻿using HtmlAgilityPack;
 
-namespace EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
+namespace EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload.Interfaces;
 
 public interface IHtmlWebProvider
 {
