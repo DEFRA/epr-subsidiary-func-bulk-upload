@@ -6,30 +6,30 @@ namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 [TestClass]
 public class RecordExtractionTests
 {
-    private Fixture fixture;
+    private Fixture _fixture;
 
     [TestInitialize]
     public void TestInitialize()
     {
-        fixture = new();
+        _fixture = new();
     }
 
     [TestMethod]
     public void ShouldExtractParentsAndChildren()
     {
         // Arrange
-        fixture.Customize<CompaniesHouseCompany>(ctx => ctx.With(chc => chc.parent_child, "Parent"));
-        var parents = fixture.CreateMany<CompaniesHouseCompany>(2).ToArray();
+        _fixture.Customize<CompaniesHouseCompany>(ctx => ctx.With(chc => chc.parent_child, "Parent"));
+        var parents = _fixture.CreateMany<CompaniesHouseCompany>(2).ToArray();
 
-        fixture.Customize<CompaniesHouseCompany>(ctx =>
+        _fixture.Customize<CompaniesHouseCompany>(ctx =>
             ctx.With(chc => chc.parent_child, "Child")
                .With(chc => chc.organisation_id, parents[0].organisation_id));
-        var parent1Subsidiaries = fixture.CreateMany<CompaniesHouseCompany>();
+        var parent1Subsidiaries = _fixture.CreateMany<CompaniesHouseCompany>();
 
-        fixture.Customize<CompaniesHouseCompany>(ctx =>
+        _fixture.Customize<CompaniesHouseCompany>(ctx =>
             ctx.With(chc => chc.parent_child, "Child")
                .With(chc => chc.organisation_id, parents[1].organisation_id));
-        var parent2Subsidiaries = fixture.CreateMany<CompaniesHouseCompany>();
+        var parent2Subsidiaries = _fixture.CreateMany<CompaniesHouseCompany>();
 
         var all = parents.Concat(parent1Subsidiaries).Concat(parent2Subsidiaries);
 
@@ -50,8 +50,8 @@ public class RecordExtractionTests
     public void ShouldIgnoreRecordsWhereThereAreNoParents()
     {
         // Arrange
-        fixture.Customize<CompaniesHouseCompany>(ctx => ctx.With(chc => chc.parent_child, "Child"));
-        var subsidiaries = fixture.CreateMany<CompaniesHouseCompany>();
+        _fixture.Customize<CompaniesHouseCompany>(ctx => ctx.With(chc => chc.parent_child, "Child"));
+        var subsidiaries = _fixture.CreateMany<CompaniesHouseCompany>();
 
         var extraction = new RecordExtraction();
 
@@ -69,8 +69,8 @@ public class RecordExtractionTests
     public void ShouldIgnoreRecordsWhereThereAreNoSubsidiaries()
     {
         // Arrange
-        fixture.Customize<CompaniesHouseCompany>(ctx => ctx.With(chc => chc.parent_child, "Parent"));
-        var parents = fixture.CreateMany<CompaniesHouseCompany>();
+        _fixture.Customize<CompaniesHouseCompany>(ctx => ctx.With(chc => chc.parent_child, "Parent"));
+        var parents = _fixture.CreateMany<CompaniesHouseCompany>();
 
         var extraction = new RecordExtraction();
 
@@ -86,10 +86,10 @@ public class RecordExtractionTests
     public void ShouldIgnoreRecordsWhereThereAreNoParentsWithChildren()
     {
         // Arrange
-        fixture.Customize<CompaniesHouseCompany>(ctx => ctx.With(chc => chc.parent_child, "Parent"));
-        var parents = fixture.CreateMany<CompaniesHouseCompany>();
-        fixture.Customize<CompaniesHouseCompany>(ctx => ctx.With(chc => chc.parent_child, "Child"));
-        var subsidiaries = fixture.CreateMany<CompaniesHouseCompany>();
+        _fixture.Customize<CompaniesHouseCompany>(ctx => ctx.With(chc => chc.parent_child, "Parent"));
+        var parents = _fixture.CreateMany<CompaniesHouseCompany>();
+        _fixture.Customize<CompaniesHouseCompany>(ctx => ctx.With(chc => chc.parent_child, "Child"));
+        var subsidiaries = _fixture.CreateMany<CompaniesHouseCompany>();
 
         var all = parents.Concat(subsidiaries);
 
@@ -108,17 +108,17 @@ public class RecordExtractionTests
     public void ShouldExtractOnlyParentsWithChildren()
     {
         // Arrange
-        fixture.Customize<CompaniesHouseCompany>(ctx => ctx.With(chc => chc.parent_child, "Parent"));
-        var parents = fixture.CreateMany<CompaniesHouseCompany>(2).ToArray();
+        _fixture.Customize<CompaniesHouseCompany>(ctx => ctx.With(chc => chc.parent_child, "Parent"));
+        var parents = _fixture.CreateMany<CompaniesHouseCompany>(2).ToArray();
 
-        fixture.Customize<CompaniesHouseCompany>(ctx => ctx.With(chc => chc.parent_child, "Child"));
-        var miscSubsidiaries = fixture.CreateMany<CompaniesHouseCompany>();
+        _fixture.Customize<CompaniesHouseCompany>(ctx => ctx.With(chc => chc.parent_child, "Child"));
+        var miscSubsidiaries = _fixture.CreateMany<CompaniesHouseCompany>();
 
-        fixture.Customize<CompaniesHouseCompany>(ctx =>
+        _fixture.Customize<CompaniesHouseCompany>(ctx =>
             ctx.With(chc => chc.parent_child, "Child")
                .With(chc => chc.organisation_id, parents[0].organisation_id));
 
-        var parent1Children = fixture.CreateMany<CompaniesHouseCompany>();
+        var parent1Children = _fixture.CreateMany<CompaniesHouseCompany>();
 
         var all = parents.Concat(miscSubsidiaries).Concat(parent1Children);
 

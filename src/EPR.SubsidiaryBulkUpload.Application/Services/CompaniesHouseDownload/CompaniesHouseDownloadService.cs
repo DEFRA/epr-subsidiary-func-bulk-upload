@@ -1,6 +1,7 @@
 ﻿using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Options;
+using EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload.Interfaces;
 using Microsoft.Extensions.Options;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;

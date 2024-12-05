@@ -2,6 +2,7 @@
 using Azure.Data.Tables;
 using EPR.SubsidiaryBulkUpload.Application.Exceptions;
 using EPR.SubsidiaryBulkUpload.Application.Models;
+using EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;

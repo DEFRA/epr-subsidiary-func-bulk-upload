@@ -1,4 +1,4 @@
-﻿namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
+﻿namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Mocks;
 
 public class ErrorThrowingStream : MemoryStream
 {

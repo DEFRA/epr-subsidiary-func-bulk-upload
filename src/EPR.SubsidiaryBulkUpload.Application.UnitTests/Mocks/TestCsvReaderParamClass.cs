@@ -1,6 +1,6 @@
 ﻿using CsvHelper.Configuration.Attributes;
 
-namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
+namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Mocks;
 
 /// <summary>
 /// Test class for defining "Parameter" members required by the CsvReader's ClassMap.

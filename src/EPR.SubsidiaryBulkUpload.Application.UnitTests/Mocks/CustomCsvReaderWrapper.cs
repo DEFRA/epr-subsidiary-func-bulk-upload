@@ -2,14 +2,14 @@
 using CsvHelper.Configuration;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 
-namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
+namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Mocks;
 
 /// <summary>
 /// Helper class to expose the protected ValidateHeader method for testing.
 /// </summary>
-public class CustomCsvReaderTest : CustomCsvReader
+public class CustomCsvReaderWrapper : CustomCsvReader
 {
-    public CustomCsvReaderTest(TextReader reader, IReaderConfiguration configuration)
+    public CustomCsvReaderWrapper(TextReader reader, IReaderConfiguration configuration)
     : base(reader, configuration)
     {
     }

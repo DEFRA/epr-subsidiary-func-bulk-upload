@@ -1,5 +1,6 @@
 ﻿using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services;
+using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 

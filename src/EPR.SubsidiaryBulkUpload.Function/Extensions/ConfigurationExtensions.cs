@@ -11,6 +11,7 @@ using EPR.SubsidiaryBulkUpload.Application.Options;
 using EPR.SubsidiaryBulkUpload.Application.Resilience;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
+using EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload.Interfaces;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
