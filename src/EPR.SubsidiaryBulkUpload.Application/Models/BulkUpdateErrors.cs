@@ -78,5 +78,5 @@ public static class BulkUpdateErrors
     public const string OrphanRecordParentOrganisationIsNotFoundErrorMessage = "Orphan Child. Parent organisation is not found.";
 
     public const int DuplicateRecordsError = 128;
-    public const string DuplicateRecordsErrorMessage = "There are two or more lines with duplicate information, check file and try again.";
+    public const string DuplicateRecordsErrorMessage = "There are two or more lines with duplicate information. Check file and try again.";
 }

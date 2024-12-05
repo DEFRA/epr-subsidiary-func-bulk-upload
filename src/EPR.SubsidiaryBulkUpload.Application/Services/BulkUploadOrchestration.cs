@@ -154,8 +154,6 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
         var duplicatesGroupList = source.GroupBy(companiesHouseCompany => new
         {
             companiesHouseCompany.organisation_id,
-            companiesHouseCompany.organisation_name,
-            companiesHouseCompany.companies_house_number,
             companiesHouseCompany.parent_child
         }).Where(grouping => grouping.Key.parent_child.Equals("parent", StringComparison.InvariantCultureIgnoreCase)).ToList();
 
@@ -168,8 +166,6 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
                 var duplicateItems = source.Where(company =>
 
                     company.organisation_id == group.Key.organisation_id &&
-                    company.organisation_name == group.Key.organisation_name &&
-                    company.companies_house_number == group.Key.companies_house_number &&
                     company.parent_child == group.Key.parent_child).ToList();
 
                 duplicateItems.RemoveAt(0);
