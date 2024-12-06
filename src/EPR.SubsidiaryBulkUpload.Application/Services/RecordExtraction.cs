@@ -11,7 +11,7 @@ public class RecordExtraction : IRecordExtraction
 
         foreach (var group in groups)
         {
-            var parent = group.SingleOrDefault(g => g.parent_child == "Parent");
+            var parent = group.FirstOrDefault(g => g.parent_child == "Parent");
 
             if (parent == null)
             {

@@ -234,4 +234,91 @@ public class BulkUploadOrchestrationTests
         // Assert
         _bulkSubsidiaryProcessor.Verify(cp => cp.Process(It.Is<IEnumerable<CompaniesHouseCompany>>(companyData => companyData.Count() == 1), It.IsAny<CompaniesHouseCompany>(), It.IsAny<OrganisationResponseModel>(), It.IsAny<UserRequestModel>()));
     }
+
+    [TestMethod]
+    public async Task Should_Process_Duplicate_Parent_Organisations()
+    {
+        var orgaId = "101731";
+        const string child = "child";
+        const string orgId = "123";
+
+        // Arrange
+        var companyData0 = _fixture
+            .Build<CompaniesHouseCompany>()
+            .With(c => c.Errors, () => new List<UploadFileErrorModel>())
+            .CreateMany<CompaniesHouseCompany>(1);
+
+        var companyData = _fixture
+            .Build<CompaniesHouseCompany>()
+            .With(c => c.Errors, () => new List<UploadFileErrorModel>())
+            .CreateMany<CompaniesHouseCompany>();
+
+        var companyDataChildren = _fixture
+            .Build<CompaniesHouseCompany>()
+            .With(c => c.Errors, () => new List<UploadFileErrorModel>())
+            .CreateMany<CompaniesHouseCompany>();
+
+        var combo = companyData.Concat(companyDataChildren).Concat(companyData0);
+
+        var parentAndSubsidiaries = _fixture.CreateMany<ParentAndSubsidiaries>(1).ToArray();
+
+        var companiesHouseNumber = parentAndSubsidiaries[0].Parent.companies_house_number;
+        var organisationName = parentAndSubsidiaries[0].Parent.organisation_name;
+
+        parentAndSubsidiaries[0].Subsidiaries[0].companies_house_number = companiesHouseNumber;
+        parentAndSubsidiaries[0].Subsidiaries[1].companies_house_number = companiesHouseNumber;
+        parentAndSubsidiaries[0].Subsidiaries[2].companies_house_number = companiesHouseNumber;
+
+        parentAndSubsidiaries[0].Subsidiaries[0].organisation_name = organisationName;
+        parentAndSubsidiaries[0].Subsidiaries[1].organisation_name = organisationName;
+        parentAndSubsidiaries[0].Subsidiaries[2].organisation_name = organisationName;
+
+        parentAndSubsidiaries[0].Subsidiaries[0].parent_child = child;
+        parentAndSubsidiaries[0].Subsidiaries[1].parent_child = child;
+        parentAndSubsidiaries[0].Subsidiaries[2].parent_child = child;
+
+        parentAndSubsidiaries[0].Subsidiaries[0].organisation_id = orgId;
+        parentAndSubsidiaries[0].Subsidiaries[1].organisation_id = orgId;
+        parentAndSubsidiaries[0].Subsidiaries[2].organisation_id = orgId;
+
+        var subsidiaries = _fixture.CreateMany<OrganisationResponseModel>(3).ToArray();
+        subsidiaries[0].companiesHouseNumber = parentAndSubsidiaries[0].Parent.companies_house_number;
+        subsidiaries[1].companiesHouseNumber = parentAndSubsidiaries[0].Parent.companies_house_number;
+        subsidiaries[2].companiesHouseNumber = parentAndSubsidiaries[0].Parent.companies_house_number;
+
+        subsidiaries[0].name = parentAndSubsidiaries[0].Parent.organisation_name;
+        subsidiaries[1].name = parentAndSubsidiaries[0].Parent.organisation_name;
+        subsidiaries[2].name = parentAndSubsidiaries[0].Parent.organisation_name;
+
+        _recordExtraction.Setup(re => re.ExtractParentsAndSubsidiaries(combo)).Returns(parentAndSubsidiaries);
+        _bulkSubsidiaryProcessor.Setup(se => se.Process(It.IsAny<IEnumerable<CompaniesHouseCompany>>(), It.IsAny<CompaniesHouseCompany>(), It.IsAny<OrganisationResponseModel>(), It.IsAny<UserRequestModel>())).ReturnsAsync(1);
+
+        _subsidiaryService.Setup(se => se.GetCompanyByReferenceNumber(It.IsAny<string>())).ReturnsAsync(subsidiaries[0]);
+        _subsidiaryService.Setup(se => se.GetCompanyByReferenceNumber(It.IsAny<string>())).ReturnsAsync(subsidiaries[1]);
+        _subsidiaryService.Setup(se => se.GetCompanyByReferenceNumber(It.IsAny<string>())).ReturnsAsync(subsidiaries[2]);
+        _subsidiaryService.Setup(se => se.GetCompanyByCompaniesHouseNumber(It.IsAny<string>())).ReturnsAsync(subsidiaries[0]);
+        _subsidiaryService.Setup(se => se.GetCompanyByCompaniesHouseNumber(It.IsAny<string>())).ReturnsAsync(subsidiaries[1]);
+        _subsidiaryService.Setup(se => se.GetCompanyByCompaniesHouseNumber(It.IsAny<string>())).ReturnsAsync(subsidiaries[2]);
+        var orchestrator = new BulkUploadOrchestration(_recordExtraction.Object, _subsidiaryService.Object, _bulkSubsidiaryProcessor.Object, _notificationService.Object, NullLogger<BulkUploadOrchestration>.Instance);
+
+        var userId = Guid.NewGuid();
+        var organisationId = Guid.NewGuid();
+        var userRequestModel = new UserRequestModel
+        {
+            UserId = userId,
+            OrganisationId = organisationId
+        };
+
+        foreach (var comp in companyData)
+        {
+            comp.organisation_id = companyData0.FirstOrDefault().organisation_id;
+            comp.parent_child = "parent";
+        }
+
+        // Act
+        await orchestrator.Orchestrate(combo, userRequestModel);
+
+        // Assert
+        _recordExtraction.Verify(cp => cp.ExtractParentsAndSubsidiaries(It.IsAny<IEnumerable<CompaniesHouseCompany>>()), Times.AtLeastOnce);
+    }
 }
