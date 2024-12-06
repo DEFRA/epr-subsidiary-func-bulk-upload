@@ -18,7 +18,7 @@ public class RecordExtraction : IRecordExtraction
                 parent = new CompaniesHouseCompany() { organisation_id = group.Key, organisation_name = "orphan", parent_child = "child" };
             }
 
-            var subsidiaries = group.Where(g => string.Equals(g.parent_child, "parent", StringComparison.OrdinalIgnoreCase));
+            var subsidiaries = group.Where(g => !string.Equals(g.parent_child, "parent", StringComparison.OrdinalIgnoreCase));
 
             yield return new ParentAndSubsidiaries { Parent = parent, Subsidiaries = subsidiaries.ToList() };
         }
