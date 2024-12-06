@@ -12,12 +12,14 @@ public class CompaniesHouseCompanyMapTests
     private const string _csvHeader = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
 
     [TestMethod]
-    public void ClassMap_Returns_Valid_Data()
+    [DataRow("123456")]
+    [DataRow("")]
+    public void ClassMap_Returns_Valid_Data(string companyHouseNumber)
     {
         // Arrange
         var dataModel = new List<CompaniesHouseCompany>
             {
-                new() { organisation_id = "23123",  subsidiary_id = "Sub1", organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Parent", franchisee_licensee_tenant = string.Empty, Errors = new() }
+                new() { organisation_id = "23123",  subsidiary_id = "Sub1", organisation_name = "OrgA", companies_house_number = companyHouseNumber, parent_child = "Parent", franchisee_licensee_tenant = string.Empty, Errors = new() }
             };
         var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
         string[] all = [_csvHeader, .. rawSource];
@@ -40,7 +42,7 @@ public class CompaniesHouseCompanyMapTests
         rows[0].organisation_id.Should().Be("23123");
         rows[0].subsidiary_id.Should().Be("Sub1");
         rows[0].organisation_name.Should().Be("OrgA");
-        rows[0].companies_house_number.Should().Be("123456");
+        rows[0].companies_house_number.Should().Be(companyHouseNumber);
         rows[0].parent_child.Should().Be("Parent");
         rows[0].franchisee_licensee_tenant.Should().Be(string.Empty);
         rows[0].Errors.Should().BeEmpty();
