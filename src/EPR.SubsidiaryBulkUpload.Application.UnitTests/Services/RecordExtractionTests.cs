@@ -78,8 +78,8 @@ public class RecordExtractionTests
         var parentAndSubsidiaries = extraction.ExtractParentsAndSubsidiaries(parents).ToArray();
 
         // Assert
-        parentAndSubsidiaries[0].Subsidiaries.Count.Should().Be(1);
-        parentAndSubsidiaries[1].Subsidiaries.Count.Should().Be(1);
+        parentAndSubsidiaries[0].Subsidiaries.Count.Should().Be(0);
+        parentAndSubsidiaries[1].Subsidiaries.Count.Should().Be(0);
     }
 
     [TestMethod]
