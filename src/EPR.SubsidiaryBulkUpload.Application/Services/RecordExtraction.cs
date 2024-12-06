@@ -11,14 +11,14 @@ public class RecordExtraction : IRecordExtraction
 
         foreach (var group in groups)
         {
-            var parent = group.FirstOrDefault(g => g.parent_child.ToLower() == "parent");
+            var parent = group.FirstOrDefault(g => string.Equals(g.parent_child, "parent", StringComparison.OrdinalIgnoreCase));
 
             if (parent == null)
             {
                 parent = new CompaniesHouseCompany() { organisation_id = group.Key, organisation_name = "orphan", parent_child = "child" };
             }
 
-            var subsidiaries = group.Where(g => g.parent_child.ToLower() != "parent");
+            var subsidiaries = group.Where(g => string.Equals(g.parent_child, "parent", StringComparison.OrdinalIgnoreCase));
 
             yield return new ParentAndSubsidiaries { Parent = parent, Subsidiaries = subsidiaries.ToList() };
         }
