@@ -48,7 +48,7 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
                     lineNumber, rawData, BulkUpdateErrors.OrganisationNameRequiredMessage, BulkUpdateErrors.OrganisationNameRequired));
         }
 
-        if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.companies_house_number))) && string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.franchisee_licensee_tenant))))
+        if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.companies_house_number))) && string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.franchisee_licensee_tenant))) && !string.Equals(row.GetField(nameof(CompaniesHouseCompany.parent_child)), "parent", StringComparison.OrdinalIgnoreCase))
         {
             errors.Add(
                 CreateError(

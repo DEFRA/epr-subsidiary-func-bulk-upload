@@ -86,19 +86,15 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
         var subsidiaryGroupsAndParentOrgWithParentNotFound = subsidiaryGroupsAndParentOrg.Where(sg => sg.parentOrg == null).Select(s => s.SubsidiaryGroup);
         await ReportCompanies(subsidiaryGroupsAndParentOrgWithParentNotFound.ToList(), userRequestModel, BulkUpdateErrors.ParentOrganisationIsNotFoundErrorMessage, BulkUpdateErrors.ParentOrganisationIsNotFound);
 
-        // parents companies house company number not found report
-        var subsidiaryGroupsAndParentOrgWith_InvalidCompaniesHouseNumber = subsidiaryGroupsAndParentOrg.Where(sg => sg.parentOrg != null && sg.SubsidiaryGroup.Parent.companies_house_number != sg.parentOrg.companiesHouseNumber).Select(s => s.SubsidiaryGroup);
-        await ReportCompanies(subsidiaryGroupsAndParentOrgWith_InvalidCompaniesHouseNumber.ToList(), userRequestModel, BulkUpdateErrors.ParentOrganisationFoundCompaniesHouseNumberNotMatchingMessage, BulkUpdateErrors.ParentOrganisationFoundCompaniesHouseNumberNotMatching);
-
-        var subsidiaryGroupsAndParentOrgWithValidCompaniesHouseNumber = subsidiaryGroupsAndParentOrg.Where(sg => sg.parentOrg != null && sg.SubsidiaryGroup.Parent.companies_house_number == sg.parentOrg.companiesHouseNumber);
+        var subsidiaryGroupsAndParentOrgToCheckForChildren = subsidiaryGroupsAndParentOrg.Where(sg => sg.parentOrg != null);
 
         // Scenario 1: Parent with valid ID but no child
-        var parentWithNoChild = subsidiaryGroupsAndParentOrgWithValidCompaniesHouseNumber.Where(p => p.SubsidiaryGroup.Subsidiaries.Count == 0).Select(s => s.SubsidiaryGroup.Parent).ToList();
+        var parentWithNoChild = subsidiaryGroupsAndParentOrgToCheckForChildren.Where(p => p.SubsidiaryGroup.Subsidiaries.Count == 0).Select(s => s.SubsidiaryGroup.Parent).ToList();
         await ReportCompanies(parentWithNoChild, userRequestModel, BulkUpdateErrors.ParentOrganisationWithNoChildErrorMessage, BulkUpdateErrors.ParentOrganisationWithNoChildError);
 
         var addedSubsidiariesCount = 0;
 
-        foreach (var subsidiaryGroupAndParentOrg in subsidiaryGroupsAndParentOrgWithValidCompaniesHouseNumber.Where(o => o.SubsidiaryGroup.Subsidiaries.Count > 0).ToList())
+        foreach (var subsidiaryGroupAndParentOrg in subsidiaryGroupsAndParentOrgToCheckForChildren.Where(o => o.SubsidiaryGroup.Subsidiaries.Count > 0).ToList())
         {
             var subsidiariesToProcess = await FilterDuplicateSubsidiaries(userRequestModel, subsidiaryGroupAndParentOrg);
 
