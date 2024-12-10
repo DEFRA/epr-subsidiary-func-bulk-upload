@@ -51,8 +51,8 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
         if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.companies_house_number))) && string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.franchisee_licensee_tenant))) && !string.Equals(row.GetField(nameof(CompaniesHouseCompany.parent_child)), "parent", StringComparison.OrdinalIgnoreCase))
         {
             errors.Add(
-            CreateError(
-            lineNumber, rawData, BulkUpdateErrors.CompaniesHouseNumberRequiredMessage, BulkUpdateErrors.CompaniesHouseNumberRequired));
+                CreateError(
+                    lineNumber, rawData, BulkUpdateErrors.CompaniesHouseNumberRequiredMessage, BulkUpdateErrors.CompaniesHouseNumberRequired));
         }
 
         if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.companies_house_number))) && !string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.franchisee_licensee_tenant))) && row.GetField(nameof(CompaniesHouseCompany.franchisee_licensee_tenant)) != "Y")

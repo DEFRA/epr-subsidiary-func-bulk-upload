@@ -86,10 +86,6 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
         var subsidiaryGroupsAndParentOrgWithParentNotFound = subsidiaryGroupsAndParentOrg.Where(sg => sg.parentOrg == null).Select(s => s.SubsidiaryGroup);
         await ReportCompanies(subsidiaryGroupsAndParentOrgWithParentNotFound.ToList(), userRequestModel, BulkUpdateErrors.ParentOrganisationIsNotFoundErrorMessage, BulkUpdateErrors.ParentOrganisationIsNotFound);
 
-        /* // parents companies house company number not found report
-        var subsidiaryGroupsAndParentOrgWith_InvalidCompaniesHouseNumber = subsidiaryGroupsAndParentOrg.Where(sg => sg.parentOrg != null).Select(s => s.SubsidiaryGroup);
-        await ReportCompanies(subsidiaryGroupsAndParentOrgWith_InvalidCompaniesHouseNumber.ToList(), userRequestModel, BulkUpdateErrors.ParentOrganisationFoundCompaniesHouseNumberNotMatchingMessage, BulkUpdateErrors.ParentOrganisationFoundCompaniesHouseNumberNotMatching);
-        */
         var subsidiaryGroupsAndParentOrgToCheckForChildren = subsidiaryGroupsAndParentOrg.Where(sg => sg.parentOrg != null);
 
         // Scenario 1: Parent with valid ID but no child
