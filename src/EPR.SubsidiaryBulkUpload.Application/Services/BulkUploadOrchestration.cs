@@ -183,12 +183,12 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
         var subsidiariesToProcess = subsidiaryGroupsAndParentOrg;
 
         // force the direct producers for their own data. CS users to process as is.
-        if (userRequestModel.ComplianceSchemeId is null)
+        if (userRequestModel.ComplianceSchemeId is null || userRequestModel.ComplianceSchemeId == Guid.Empty)
         {
-            var nonComplianceParentRecordsToReport = subsidiaryGroupsAndParentOrg.Where(sg => sg.ParentOrg != null && sg.ParentOrg.ExternalId != userRequestModel.ComplianceSchemeId).Select(s => s.SubsidiaryGroup.Parent).ToList();
-            await ReportCompanies(nonComplianceParentRecordsToReport, userRequestModel, BulkUpdateErrors.CompanyBelongstoOtherParentMessage, BulkUpdateErrors.CompanyBelongstoOtherParent);
+            var nonComplianceParentRecordsToReport = subsidiaryGroupsAndParentOrg.Where(sg => sg.ParentOrg != null && sg.ParentOrg.ExternalId != userRequestModel.OrganisationId).Select(s => s.SubsidiaryGroup.Parent).ToList();
+            await ReportCompanies(nonComplianceParentRecordsToReport, userRequestModel, BulkUpdateErrors.OrganisationIdIsForAnotherOrganisationMessage, BulkUpdateErrors.OrganisationIdIsForAnotherOrganisation);
 
-            var nonComplianceParentRecords = subsidiaryGroupsAndParentOrg.Where(sg => sg.ParentOrg != null && sg.ParentOrg.ExternalId != userRequestModel.ComplianceSchemeId).ToList();
+            var nonComplianceParentRecords = subsidiaryGroupsAndParentOrg.Where(sg => sg.ParentOrg != null && sg.ParentOrg.ExternalId != userRequestModel.OrganisationId).ToList();
             subsidiariesToProcess = subsidiaryGroupsAndParentOrg.Except(nonComplianceParentRecords).ToList();
         }
 

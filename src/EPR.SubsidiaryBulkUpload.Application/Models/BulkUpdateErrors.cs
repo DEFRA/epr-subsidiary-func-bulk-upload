@@ -80,6 +80,6 @@ public static class BulkUpdateErrors
     public const int DuplicateRecordsError = 128;
     public const string DuplicateRecordsErrorMessage = "There are two or more lines with duplicate information. Check file and try again.";
 
-    public const int CompanyBelongstoOtherParent = 129;
-    public const string CompanyBelongstoOtherParentMessage = "SubsidiaryWithExistingRelationshipsWithOtherParent";
+    public const int OrganisationIdIsForAnotherOrganisation = 129;
+    public const string OrganisationIdIsForAnotherOrganisationMessage = "The organisation id is for another organisation";
 }
