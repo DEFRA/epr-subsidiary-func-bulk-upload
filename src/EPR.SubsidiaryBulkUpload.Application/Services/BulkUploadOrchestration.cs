@@ -82,14 +82,14 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
         var subsidiaryGroupsAndParentOrg = await subsidiaryGroupsWithValidParents.SelectAwait(
             async sg => (SubsidiaryGroup: sg, parentOrg: await _organisationService.GetCompanyByReferenceNumber(sg.Parent.organisation_id))).ToListAsync();
 
-        // this holds all the parents and their children records from csv
-        var dataRefinedForDP = await FilterNonComplianceParentSubsidiaries(userRequestModel, subsidiaryGroupsAndParentOrg);
+        // filter the non CS parents
+        var dataRefinedAfterNonComplianceFilter = await FilterNonComplianceParentSubsidiaries(userRequestModel, subsidiaryGroupsAndParentOrg);
 
         // parents not found report
-        var subsidiaryGroupsAndParentOrgWithParentNotFound = subsidiaryGroupsAndParentOrg.Where(sg => sg.parentOrg == null).Select(s => s.SubsidiaryGroup);
+        var subsidiaryGroupsAndParentOrgWithParentNotFound = dataRefinedAfterNonComplianceFilter.Where(sg => sg.ParentOrg == null).Select(s => s.SubsidiaryGroup);
         await ReportCompanies(subsidiaryGroupsAndParentOrgWithParentNotFound.ToList(), userRequestModel, BulkUpdateErrors.ParentOrganisationIsNotFoundErrorMessage, BulkUpdateErrors.ParentOrganisationIsNotFound);
 
-        var subsidiaryGroupsAndParentOrgToCheckForChildren = subsidiaryGroupsAndParentOrg.Where(sg => sg.parentOrg != null);
+        var subsidiaryGroupsAndParentOrgToCheckForChildren = dataRefinedAfterNonComplianceFilter.Where(sg => sg.ParentOrg != null);
 
         // Scenario 1: Parent with valid ID but no child
         var parentWithNoChild = subsidiaryGroupsAndParentOrgToCheckForChildren.Where(p => p.SubsidiaryGroup.Subsidiaries.Count == 0).Select(s => s.SubsidiaryGroup.Parent).ToList();
@@ -104,7 +104,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
             addedSubsidiariesCount += await _childProcessor.Process(
                 subsidiariesToProcess,
                 subsidiaryGroupAndParentOrg.SubsidiaryGroup.Parent,
-                subsidiaryGroupAndParentOrg.parentOrg,
+                subsidiaryGroupAndParentOrg.ParentOrg,
                 userRequestModel);
         }
 
@@ -177,38 +177,19 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
         return subsidiariesToProcess;
     }
 
-    private async Task<IEnumerable<CompaniesHouseCompany>> FilterNonComplianceParentSubsidiaries(
-        UserRequestModel userRequestModel, IEnumerable<CompaniesHouseCompany> source)
+    private async Task<List<(ParentAndSubsidiaries SubsidiaryGroup, OrganisationResponseModel? ParentOrg)>> FilterNonComplianceParentSubsidiaries(
+        UserRequestModel userRequestModel, List<(ParentAndSubsidiaries SubsidiaryGroup, OrganisationResponseModel? ParentOrg)> subsidiaryGroupsAndParentOrg)
     {
+        var subsidiariesToProcess = subsidiaryGroupsAndParentOrg;
+
         // force the direct producers for their own data. CS users to process as is.
         if (userRequestModel.ComplianceSchemeId is null)
         {
-            var sdfsd = subsidiaryGroupsAndParentOrg.Where(sg => sg.parentOrg != null && sg.parentOrg.ExternalId != userRequestModel.ComplianceSchemeId);
+            var nonComplianceParentRecordsToReport = subsidiaryGroupsAndParentOrg.Where(sg => sg.ParentOrg != null && sg.ParentOrg.ExternalId != userRequestModel.ComplianceSchemeId).Select(s => s.SubsidiaryGroup.Parent).ToList();
+            await ReportCompanies(nonComplianceParentRecordsToReport, userRequestModel, BulkUpdateErrors.CompanyBelongstoOtherParentMessage, BulkUpdateErrors.CompanyBelongstoOtherParent);
 
-        }
-
-        var duplicatesGroupList = source.GroupBy(companiesHouseCompany => new
-        {
-            companiesHouseCompany.organisation_id,
-            companiesHouseCompany.parent_child
-        }).Where(grouping => grouping.Key.parent_child.Equals("parent", StringComparison.InvariantCultureIgnoreCase)).ToList();
-
-        var subsidiariesToProcess = source;
-
-        foreach (var group in duplicatesGroupList)
-        {
-            if (group.Count() > 1)
-            {
-                var duplicateItems = source.Where(company =>
-
-                    company.organisation_id == group.Key.organisation_id &&
-                    company.parent_child == group.Key.parent_child).ToList();
-
-                duplicateItems.RemoveAt(0);
-
-                await ReportCompanies(duplicateItems, userRequestModel, BulkUpdateErrors.DuplicateRecordsErrorMessage, BulkUpdateErrors.DuplicateRecordsError);
-                subsidiariesToProcess = subsidiariesToProcess.Except(duplicateItems);
-            }
+            var nonComplianceParentRecords = subsidiaryGroupsAndParentOrg.Where(sg => sg.ParentOrg != null && sg.ParentOrg.ExternalId != userRequestModel.ComplianceSchemeId).ToList();
+            subsidiariesToProcess = subsidiaryGroupsAndParentOrg.Except(nonComplianceParentRecords).ToList();
         }
 
         return subsidiariesToProcess;
