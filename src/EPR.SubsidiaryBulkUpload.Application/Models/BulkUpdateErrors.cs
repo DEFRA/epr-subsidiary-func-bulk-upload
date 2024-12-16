@@ -32,6 +32,9 @@ public static class BulkUpdateErrors
     public const int CompanyNameIsDifferentInRPD = 109;
     public const string CompanyNameIsDifferentInRPDMessage = "The company name does not match the one on record. Check company name and try again.";
 
+    public const int CompanyBelongstoOtherParent = 129;
+    public const string CompanyBelongstoOtherParentMessageg = "SubsidiaryWithExistingRelationshipsWithOtherParent";
+
     public const int CompanyNameIsDifferentInOfflineDataAndDifferentInCHAPI = 110;
     public const string CompanyNameIsDifferentInOfflineDataAndDifferentInCHAPIMessage = "The company name does not match the one on record. Check your company name and try again.";
 
