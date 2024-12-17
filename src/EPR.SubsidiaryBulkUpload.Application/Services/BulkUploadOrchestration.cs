@@ -83,13 +83,13 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
             async sg => (SubsidiaryGroup: sg, parentOrg: await _organisationService.GetCompanyByReferenceNumber(sg.Parent.organisation_id))).ToListAsync();
 
         // filter the non CS parents
-        var dataRefinedAfterNonComplianceFilter = await FilterNonComplianceParentSubsidiaries(userRequestModel, subsidiaryGroupsAndParentOrg);
+        var dataRefinedAfterNonComplianceSchemeFilter = await FilterNonComplianceSchemeParentSubsidiaries(userRequestModel, subsidiaryGroupsAndParentOrg);
 
         // parents not found report
-        var subsidiaryGroupsAndParentOrgWithParentNotFound = dataRefinedAfterNonComplianceFilter.Where(sg => sg.ParentOrg == null).Select(s => s.SubsidiaryGroup);
+        var subsidiaryGroupsAndParentOrgWithParentNotFound = dataRefinedAfterNonComplianceSchemeFilter.Where(sg => sg.ParentOrg == null).Select(s => s.SubsidiaryGroup);
         await ReportCompanies(subsidiaryGroupsAndParentOrgWithParentNotFound.ToList(), userRequestModel, BulkUpdateErrors.ParentOrganisationIsNotFoundErrorMessage, BulkUpdateErrors.ParentOrganisationIsNotFound);
 
-        var subsidiaryGroupsAndParentOrgToCheckForChildren = dataRefinedAfterNonComplianceFilter.Where(sg => sg.ParentOrg != null);
+        var subsidiaryGroupsAndParentOrgToCheckForChildren = dataRefinedAfterNonComplianceSchemeFilter.Where(sg => sg.ParentOrg != null);
 
         // Scenario 1: Parent with valid ID but no child
         var parentWithNoChild = subsidiaryGroupsAndParentOrgToCheckForChildren.Where(p => p.SubsidiaryGroup.Subsidiaries.Count == 0).Select(s => s.SubsidiaryGroup.Parent).ToList();
@@ -177,7 +177,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
         return subsidiariesToProcess;
     }
 
-    private async Task<List<(ParentAndSubsidiaries SubsidiaryGroup, OrganisationResponseModel? ParentOrg)>> FilterNonComplianceParentSubsidiaries(
+    private async Task<List<(ParentAndSubsidiaries SubsidiaryGroup, OrganisationResponseModel? ParentOrg)>> FilterNonComplianceSchemeParentSubsidiaries(
         UserRequestModel userRequestModel, List<(ParentAndSubsidiaries SubsidiaryGroup, OrganisationResponseModel? ParentOrg)> subsidiaryGroupsAndParentOrg)
     {
         var subsidiariesToProcess = subsidiaryGroupsAndParentOrg;
