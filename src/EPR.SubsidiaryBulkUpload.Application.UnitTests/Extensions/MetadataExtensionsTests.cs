@@ -131,13 +131,32 @@ public class MetadataExtensionsTests
     }
 
     [TestMethod]
+    public void ToUserRequestModel_ReturnsNull_WhenInvalidComplianceId()
+    {
+        // Arrange
+        var metadata = new Dictionary<string, string>
+            {
+                { "UserId", "d2c12e8a-0d47-4cd9-b8e1-1f766a5c6e4b" },
+                { "OrganisationId", "f2c12e8a-1d47-4cd9-b8e1-2f766a5c6e4c" },
+                { "ComplianceSchemeId", "InvalidGUID" }
+            };
+
+        // Act
+        var result = metadata.ToUserRequestModel();
+
+        // Assert
+        result.Should().NotBeNull();
+    }
+
+    [TestMethod]
     public void ToUserRequestModel_ReturnsUserRequestModel_WhenValidGuids()
     {
         // Arrange
         var metadata = new Dictionary<string, string>
             {
                 { "UserId", "d2c12e8a-0d47-4cd9-b8e1-1f766a5c6e4b" },
-                { "OrganisationId", "f2c12e8a-1d47-4cd9-b8e1-2f766a5c6e4c" }
+                { "OrganisationId", "f2c12e8a-1d47-4cd9-b8e1-2f766a5c6e4c" },
+                { "ComplianceSchemeId", "033593e1-98d3-4451-84a5-465482ed4b53" }
             };
 
         // Act
@@ -238,5 +257,26 @@ public class MetadataExtensionsTests
         // Assert
         var expected = "d2c12e8a-0d47-4cd9-b8e1-1f766a5c6e4bf2c12e8a-1d47-4cd9-b8e1-2f766a5c6e4c";
         result.Should().Be(expected);
+    }
+
+    [TestMethod]
+    public void ToUserRequestModel_ReturnsUserRequestModel_WhenValidGuids_WithComplianceSchemeId()
+    {
+        // Arrange
+        var metadata = new Dictionary<string, string>
+            {
+                { "UserId", "d2c12e8a-0d47-4cd9-b8e1-1f766a5c6e4b" },
+                { "OrganisationId", "f2c12e8a-1d47-4cd9-b8e1-2f766a5c6e4c" },
+                { "ComplianceSchemeId", "033593e1-98d3-4451-84a5-465482ed4b53" }
+            };
+
+        // Act
+        var result = metadata.ToUserRequestModel();
+
+        // Assert
+        result.Should().NotBeNull();
+        result.UserId.Should().Be("d2c12e8a-0d47-4cd9-b8e1-1f766a5c6e4b");
+        result.OrganisationId.Should().Be("f2c12e8a-1d47-4cd9-b8e1-2f766a5c6e4c");
+        result.ComplianceSchemeId.Should().Be("033593e1-98d3-4451-84a5-465482ed4b53");
     }
 }
