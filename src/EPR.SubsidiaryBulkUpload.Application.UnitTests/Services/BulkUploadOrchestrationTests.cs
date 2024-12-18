@@ -327,6 +327,9 @@ public class BulkUploadOrchestrationTests
     [TestMethod]
     public async Task Should_Process_Organisation_With_null_compliance()
     {
+        var userId = Guid.NewGuid();
+        var organisationId = Guid.NewGuid();
+
         // Arrange
         var companyData = _fixture
             .Build<CompaniesHouseCompany>()
@@ -334,13 +337,14 @@ public class BulkUploadOrchestrationTests
             .CreateMany<CompaniesHouseCompany>();
 
         var parentAndSubsidiaries = _fixture.CreateMany<ParentAndSubsidiaries>(2).ToArray();
-
         var subsidiaries = _fixture.CreateMany<OrganisationResponseModel>(2).ToArray();
 
         subsidiaries[0].companiesHouseNumber = parentAndSubsidiaries[0].Parent.companies_house_number;
         subsidiaries[1].companiesHouseNumber = parentAndSubsidiaries[1].Parent.companies_house_number;
         subsidiaries[0].name = parentAndSubsidiaries[0].Parent.organisation_name;
         subsidiaries[1].name = parentAndSubsidiaries[1].Parent.organisation_name;
+        subsidiaries[0].ExternalId = organisationId;
+        subsidiaries[1].ExternalId = organisationId;
 
         _recordExtraction.Setup(re => re.ExtractParentsAndSubsidiaries(companyData)).Returns(parentAndSubsidiaries);
         _bulkSubsidiaryProcessor.Setup(se => se.Process(It.IsAny<IEnumerable<CompaniesHouseCompany>>(), It.IsAny<CompaniesHouseCompany>(), It.IsAny<OrganisationResponseModel>(), It.IsAny<UserRequestModel>())).ReturnsAsync(1);
@@ -351,8 +355,6 @@ public class BulkUploadOrchestrationTests
 
         var orchestrator = new BulkUploadOrchestration(_recordExtraction.Object, _subsidiaryService.Object, _bulkSubsidiaryProcessor.Object, _notificationService.Object, NullLogger<BulkUploadOrchestration>.Instance);
 
-        var userId = Guid.NewGuid();
-        var organisationId = Guid.NewGuid();
         var userRequestModel = new UserRequestModel
         {
             UserId = userId,
