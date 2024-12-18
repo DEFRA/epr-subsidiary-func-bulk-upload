@@ -279,5 +279,4 @@ public class MetadataExtensionsTests
         result.OrganisationId.Should().Be("f2c12e8a-1d47-4cd9-b8e1-2f766a5c6e4c");
         result.ComplianceSchemeId.Should().Be("033593e1-98d3-4451-84a5-465482ed4b53");
     }
-
 }
