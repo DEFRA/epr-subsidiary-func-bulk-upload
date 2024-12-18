@@ -155,7 +155,8 @@ public class MetadataExtensionsTests
         var metadata = new Dictionary<string, string>
             {
                 { "UserId", "d2c12e8a-0d47-4cd9-b8e1-1f766a5c6e4b" },
-                { "OrganisationId", "f2c12e8a-1d47-4cd9-b8e1-2f766a5c6e4c" }
+                { "OrganisationId", "f2c12e8a-1d47-4cd9-b8e1-2f766a5c6e4c" },
+                { "ComplianceSchemeId", "033593e1-98d3-4451-84a5-465482ed4b53" }
             };
 
         // Act
