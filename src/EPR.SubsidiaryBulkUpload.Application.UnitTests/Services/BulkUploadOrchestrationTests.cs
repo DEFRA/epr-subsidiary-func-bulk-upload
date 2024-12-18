@@ -57,7 +57,8 @@ public class BulkUploadOrchestrationTests
         var userRequestModel = new UserRequestModel
         {
             UserId = userId,
-            OrganisationId = organisationId
+            OrganisationId = organisationId,
+            ComplianceSchemeId = Guid.NewGuid()
         };
 
         // Act
@@ -225,7 +226,8 @@ public class BulkUploadOrchestrationTests
         var userRequestModel = new UserRequestModel
         {
             UserId = userId,
-            OrganisationId = organisationId
+            OrganisationId = organisationId,
+            ComplianceSchemeId = Guid.NewGuid()
         };
 
         // Act

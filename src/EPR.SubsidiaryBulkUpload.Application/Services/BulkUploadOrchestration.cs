@@ -82,11 +82,14 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
         var subsidiaryGroupsAndParentOrg = await subsidiaryGroupsWithValidParents.SelectAwait(
             async sg => (SubsidiaryGroup: sg, parentOrg: await _organisationService.GetCompanyByReferenceNumber(sg.Parent.organisation_id))).ToListAsync();
 
+        // filter the non CS parents
+        var dataRefinedAfterNonComplianceSchemeFilter = await FilterNonComplianceSchemeParentSubsidiaries(userRequestModel, subsidiaryGroupsAndParentOrg);
+
         // parents not found report
-        var subsidiaryGroupsAndParentOrgWithParentNotFound = subsidiaryGroupsAndParentOrg.Where(sg => sg.parentOrg == null).Select(s => s.SubsidiaryGroup);
+        var subsidiaryGroupsAndParentOrgWithParentNotFound = dataRefinedAfterNonComplianceSchemeFilter.Where(sg => sg.ParentOrg == null).Select(s => s.SubsidiaryGroup);
         await ReportCompanies(subsidiaryGroupsAndParentOrgWithParentNotFound.ToList(), userRequestModel, BulkUpdateErrors.ParentOrganisationIsNotFoundErrorMessage, BulkUpdateErrors.ParentOrganisationIsNotFound);
 
-        var subsidiaryGroupsAndParentOrgToCheckForChildren = subsidiaryGroupsAndParentOrg.Where(sg => sg.parentOrg != null);
+        var subsidiaryGroupsAndParentOrgToCheckForChildren = dataRefinedAfterNonComplianceSchemeFilter.Where(sg => sg.ParentOrg != null);
 
         // Scenario 1: Parent with valid ID but no child
         var parentWithNoChild = subsidiaryGroupsAndParentOrgToCheckForChildren.Where(p => p.SubsidiaryGroup.Subsidiaries.Count == 0).Select(s => s.SubsidiaryGroup.Parent).ToList();
@@ -101,7 +104,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
             addedSubsidiariesCount += await _childProcessor.Process(
                 subsidiariesToProcess,
                 subsidiaryGroupAndParentOrg.SubsidiaryGroup.Parent,
-                subsidiaryGroupAndParentOrg.parentOrg,
+                subsidiaryGroupAndParentOrg.ParentOrg,
                 userRequestModel);
         }
 
@@ -169,6 +172,24 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
                 await ReportCompanies(duplicateItems, userRequestModel, BulkUpdateErrors.DuplicateRecordsErrorMessage, BulkUpdateErrors.DuplicateRecordsError);
                 subsidiariesToProcess = subsidiariesToProcess.Except(duplicateItems);
             }
+        }
+
+        return subsidiariesToProcess;
+    }
+
+    private async Task<List<(ParentAndSubsidiaries SubsidiaryGroup, OrganisationResponseModel? ParentOrg)>> FilterNonComplianceSchemeParentSubsidiaries(
+        UserRequestModel userRequestModel, List<(ParentAndSubsidiaries SubsidiaryGroup, OrganisationResponseModel? ParentOrg)> subsidiaryGroupsAndParentOrg)
+    {
+        var subsidiariesToProcess = subsidiaryGroupsAndParentOrg;
+
+        // force the direct producers for their own data. CS users to process as is.
+        if (userRequestModel.ComplianceSchemeId is null || userRequestModel.ComplianceSchemeId == Guid.Empty)
+        {
+            var nonComplianceParentRecordsToReport = subsidiaryGroupsAndParentOrg.Where(sg => sg.ParentOrg != null && sg.ParentOrg.ExternalId != userRequestModel.OrganisationId).Select(s => s.SubsidiaryGroup.Parent).ToList();
+            await ReportCompanies(nonComplianceParentRecordsToReport, userRequestModel, BulkUpdateErrors.OrganisationIdIsForAnotherOrganisationMessage, BulkUpdateErrors.OrganisationIdIsForAnotherOrganisation);
+
+            var nonComplianceParentRecords = subsidiaryGroupsAndParentOrg.Where(sg => sg.ParentOrg != null && sg.ParentOrg.ExternalId != userRequestModel.OrganisationId).ToList();
+            subsidiariesToProcess = subsidiaryGroupsAndParentOrg.Except(nonComplianceParentRecords).ToList();
         }
 
         return subsidiariesToProcess;
