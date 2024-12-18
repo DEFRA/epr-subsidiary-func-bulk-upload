@@ -183,6 +183,26 @@ public class MetadataExtensionsTests
     }
 
     [TestMethod]
+    public void GenerateKey_ReturnsConcatenatedString_WhenValidUserRequestModelWithComplianceSchemeAndSuffix()
+    {
+        // Arrange
+        var userRequestModel = new UserRequestModel
+        {
+            UserId = Guid.Parse("d2c12e8a-0d47-4cd9-b8e1-1f766a5c6e4b"),
+            OrganisationId = Guid.Parse("f2c12e8a-1d47-4cd9-b8e1-2f766a5c6e4c"),
+            ComplianceSchemeId = Guid.Parse("033593e1-98d3-4451-84a5-465482ed4b53")
+        };
+        string suffix = "TestSuffix";
+
+        // Act
+        var result = userRequestModel.GenerateKey(suffix);
+
+        // Assert
+        var expected = "d2c12e8a-0d47-4cd9-b8e1-1f766a5c6e4bf2c12e8a-1d47-4cd9-b8e1-2f766a5c6e4cTestSuffix";
+        result.Should().Be(expected);
+    }
+
+    [TestMethod]
     public void GenerateKey_ReturnsConcatenatedStringWithoutSuffix_WhenEmptySuffix()
     {
         // Arrange
