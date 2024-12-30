@@ -28,10 +28,17 @@ public static class MetadataExtensions
             return null;
         }
 
+        Guid? complianceSchemeId = null;
+        if (caseInsensitiveMetadata.TryGetValue("ComplianceSchemeId", out var complianceSchemeIdString))
+        {
+            complianceSchemeId = Guid.TryParse(complianceSchemeIdString, out var complianceSchemeIdRetrieved) ? complianceSchemeIdRetrieved : null;
+        }
+
         return new UserRequestModel
         {
             UserId = userId,
-            OrganisationId = organisationId
+            OrganisationId = organisationId,
+            ComplianceSchemeId = complianceSchemeId
         };
     }
 

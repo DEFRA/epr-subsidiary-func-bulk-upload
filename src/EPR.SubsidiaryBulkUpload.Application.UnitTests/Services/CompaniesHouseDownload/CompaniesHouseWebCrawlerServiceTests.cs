@@ -1,5 +1,6 @@
 ﻿using EPR.SubsidiaryBulkUpload.Application.Exceptions;
 using EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
+using EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload.Interfaces;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
 

@@ -10,20 +10,20 @@ namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services.CompaniesHouse
 [TestClass]
 public class FileDownloadServiceTests
 {
-    private Fixture fixture;
+    private Fixture _fixture;
 
     [TestInitialize]
     public void TestInitialize()
     {
-        fixture = new();
+        _fixture = new();
     }
 
     [TestMethod]
     public async Task ShouldDownloadTheFile()
     {
         // Arrange
-        var filePath = fixture.Create<Uri>().ToString();
-        var content = fixture.Create<string>();
+        var filePath = _fixture.Create<Uri>().ToString();
+        var content = _fixture.Create<string>();
 
         var stream = new MemoryStream(Encoding.ASCII.GetBytes(content));
 
@@ -52,7 +52,7 @@ public class FileDownloadServiceTests
     {
         // Arrange
         var filePath = "Invalid URI";
-        var content = fixture.Create<string>();
+        var content = _fixture.Create<string>();
 
         var handler = new Mock<HttpMessageHandler>();
         handler.Protected().Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
@@ -74,8 +74,8 @@ public class FileDownloadServiceTests
     public async Task ShouldReplyNothingWhenFileMPathNotFound()
     {
         // Arrange
-        var filePath = fixture.Create<Uri>().ToString();
-        var content = fixture.Create<string>();
+        var filePath = _fixture.Create<Uri>().ToString();
+        var content = _fixture.Create<string>();
 
         var handler = new Mock<HttpMessageHandler>();
         handler.Protected().Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
@@ -97,8 +97,8 @@ public class FileDownloadServiceTests
     public async Task ShouldReplyNothingWhenTimeoutOccurs()
     {
         // Arrange
-        var filePath = fixture.Create<Uri>().ToString();
-        var content = fixture.Create<string>();
+        var filePath = _fixture.Create<Uri>().ToString();
+        var content = _fixture.Create<string>();
 
         var handler = new Mock<HttpMessageHandler>();
         handler.Protected().Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
@@ -120,8 +120,8 @@ public class FileDownloadServiceTests
     public async Task ShouldReplyNothingWhenDownloadCancelled()
     {
         // Arrange
-        var filePath = fixture.Create<Uri>().ToString();
-        var content = fixture.Create<string>();
+        var filePath = _fixture.Create<Uri>().ToString();
+        var content = _fixture.Create<string>();
 
         var handler = new Mock<HttpMessageHandler>();
         handler.Protected().Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
@@ -143,8 +143,8 @@ public class FileDownloadServiceTests
     public async Task ShouldReplyNothingWhenDownloadCancelledLocally()
     {
         // Arrange
-        var filePath = fixture.Create<Uri>().ToString();
-        var content = fixture.Create<string>();
+        var filePath = _fixture.Create<Uri>().ToString();
+        var content = _fixture.Create<string>();
 
         var handler = new Mock<HttpMessageHandler>();
 

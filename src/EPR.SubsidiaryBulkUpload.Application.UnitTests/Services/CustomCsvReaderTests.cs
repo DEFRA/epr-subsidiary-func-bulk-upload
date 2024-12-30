@@ -1,18 +1,19 @@
 ﻿using System.Text;
 using CsvHelper;
 using EPR.SubsidiaryBulkUpload.Application.CsvReaderConfiguration;
+using EPR.SubsidiaryBulkUpload.Application.UnitTests.Mocks;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 
 [TestClass]
 public class CustomCsvReaderTests
 {
-    private Fixture fixture;
+    private Fixture _fixture;
 
     [TestInitialize]
     public void TestInitialize()
     {
-        fixture = new();
+        _fixture = new();
     }
 
     [TestMethod]
@@ -29,7 +30,7 @@ public class CustomCsvReaderTests
         using var reader = new StreamReader(stream);
         var map = new TestCsvReaderClassParamMap();
         var invalidHeaders = new List<InvalidHeader>(); // Initialize with appropriate values
-        var customCsvReader = new CustomCsvReaderTest(reader, configuration);
+        var customCsvReader = new CustomCsvReaderWrapper(reader, configuration);
 
         customCsvReader.Context.RegisterClassMap<TestCsvReaderClassParamMap>();
         customCsvReader.Read();

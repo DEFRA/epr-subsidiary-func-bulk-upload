@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Models;
+
 [ExcludeFromCodeCoverage]
 public static class BulkUpdateErrors
 {
@@ -69,4 +70,16 @@ public static class BulkUpdateErrors
 
     public const int ParentOrganisationNotValidChildCannotBeProcessed = 125;
     public const string ParentOrganisationNotValidChildCannotBeProcessedErrorMessage = "The parent Organisation is not valid. Child cannot be processed.";
+
+    public const int ParentOrganisationWithNoChildError = 126;
+    public const string ParentOrganisationWithNoChildErrorMessage = "There must be at least one child in the subsidiary file.";
+
+    public const int OrphanRecordParentOrganisationIsNotFound = 127;
+    public const string OrphanRecordParentOrganisationIsNotFoundErrorMessage = "Orphan Child. Parent organisation is not found.";
+
+    public const int DuplicateRecordsError = 128;
+    public const string DuplicateRecordsErrorMessage = "There are two or more lines with duplicate information. Check file and try again.";
+
+    public const int OrganisationIdIsForAnotherOrganisation = 129;
+    public const string OrganisationIdIsForAnotherOrganisationMessage = "The organisation id is for another organisation";
 }
