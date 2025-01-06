@@ -2,8 +2,6 @@
 
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
-using System.Security.Authentication;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using EPR.SubsidiaryBulkUpload.Application.Clients;
 using EPR.SubsidiaryBulkUpload.Application.Handlers;
@@ -104,7 +102,7 @@ public static class ConfigurationExtensions
 
                 client.BaseAddress = new Uri(apiOptions.CompaniesHouseLookupBaseUrl);
             })
-                .ConfigurePrimaryHttpMessageHandler(GetClientCertificateHandler)
+                .AddHttpMessageHandler<CompaniesHouseCredentialHandler>()
                 .AddCompaniesHouseResilienceHandler();
         }
 
@@ -126,6 +124,8 @@ public static class ConfigurationExtensions
         services.AddScoped<ISystemDetailsProvider, SystemDetailsProvider>();
 
         services.AddTransient<AccountServiceAuthorisationHandler>();
+        services.AddTransient<CompaniesHouseCredentialHandler>();
+
         services.AddTransient<IAntivirusClient, AntivirusClient>();
         services.AddTransient<IBulkSubsidiaryProcessor, BulkSubsidiaryProcessor>();
         services.AddTransient<IBulkUploadOrchestration, BulkUploadOrchestration>();
@@ -153,22 +153,5 @@ public static class ConfigurationExtensions
         services.AddTransient<ISubmissionStatusClient, SubmissionStatusClient>();
 
         return services;
-    }
-
-    private static HttpMessageHandler GetClientCertificateHandler(IServiceProvider sp)
-    {
-        if (sp == null)
-        {
-            throw new ArgumentException("ServiceProvider must not be null");
-        }
-
-        var handler = new HttpClientHandler();
-        handler.ClientCertificateOptions = ClientCertificateOption.Manual;
-        handler.SslProtocols = SslProtocols.Tls12;
-        handler.ClientCertificates
-            .Add(new X509Certificate2(
-                Convert.FromBase64String(sp.GetRequiredService<IOptions<ApiOptions>>().Value.Certificate)));
-
-        return handler;
     }
 }

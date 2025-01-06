@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 namespace EPR.SubsidiaryBulkUpload.Application.Services;
 public class CompaniesHouseLookupService : ICompaniesHouseLookupService
 {
-    private const string CompaniesHouseEndpoint = "CompaniesHouse/companies";
+    private const string CompaniesHouseEndpoint = "companies";
 
     private readonly ILogger<CompaniesHouseLookupService> _logger;
     private readonly HttpClient _httpClient;
@@ -26,7 +26,7 @@ public class CompaniesHouseLookupService : ICompaniesHouseLookupService
         {
             _logger.LogInformation("Calling companies house api {Url}", $"{CompaniesHouseEndpoint}/{id}");
 
-            var response = await _httpClient.GetAsync($"{CompaniesHouseEndpoint}/{id}");
+            var response = await _httpClient.GetAsync($"{CompaniesHouseEndpoint}/{Uri.EscapeDataString(id)}");
 
             _logger.LogInformation("Got response {Status}", response.StatusCode);
 

@@ -12,7 +12,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 [TestClass]
 public class CompaniesHouseLookupServiceTests
 {
-    private const string CompaniesHouseEndpoint = "CompaniesHouse/companies";
+    private const string CompaniesHouseEndpoint = "companies";
     private const string CompaniesHouseNumber = "0123456X";
     private const string BaseAddress = "http://localhost";
     private const string ExpectedUrl = $"{BaseAddress}/{CompaniesHouseEndpoint}/{CompaniesHouseNumber}";
