@@ -1,6 +1,6 @@
 ﻿using System.Net;
 
-namespace EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload;
+namespace EPR.SubsidiaryBulkUpload.Application.Services.CompaniesHouseDownload.Interfaces;
 
 public interface ICompaniesHouseFilePostService
 {

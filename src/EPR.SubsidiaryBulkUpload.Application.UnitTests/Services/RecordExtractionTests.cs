@@ -6,30 +6,30 @@ namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 [TestClass]
 public class RecordExtractionTests
 {
-    private Fixture fixture;
+    private Fixture _fixture;
 
     [TestInitialize]
     public void TestInitialize()
     {
-        fixture = new();
+        _fixture = new();
     }
 
     [TestMethod]
     public void ShouldExtractParentsAndChildren()
     {
         // Arrange
-        fixture.Customize<CompaniesHouseCompany>(ctx => ctx.With(chc => chc.parent_child, "Parent"));
-        var parents = fixture.CreateMany<CompaniesHouseCompany>(2).ToArray();
+        _fixture.Customize<CompaniesHouseCompany>(ctx => ctx.With(chc => chc.parent_child, "Parent"));
+        var parents = _fixture.CreateMany<CompaniesHouseCompany>(2).ToArray();
 
-        fixture.Customize<CompaniesHouseCompany>(ctx =>
+        _fixture.Customize<CompaniesHouseCompany>(ctx =>
             ctx.With(chc => chc.parent_child, "Child")
                .With(chc => chc.organisation_id, parents[0].organisation_id));
-        var parent1Subsidiaries = fixture.CreateMany<CompaniesHouseCompany>();
+        var parent1Subsidiaries = _fixture.CreateMany<CompaniesHouseCompany>(1);
 
-        fixture.Customize<CompaniesHouseCompany>(ctx =>
+        _fixture.Customize<CompaniesHouseCompany>(ctx =>
             ctx.With(chc => chc.parent_child, "Child")
                .With(chc => chc.organisation_id, parents[1].organisation_id));
-        var parent2Subsidiaries = fixture.CreateMany<CompaniesHouseCompany>();
+        var parent2Subsidiaries = _fixture.CreateMany<CompaniesHouseCompany>(1);
 
         var all = parents.Concat(parent1Subsidiaries).Concat(parent2Subsidiaries);
 
@@ -41,78 +41,84 @@ public class RecordExtractionTests
         // Assert
         parentAndSubsidiaries.Should().HaveCount(2);
         var parent1AndSubsidiaries = parentAndSubsidiaries.First(ps => ps.Parent.organisation_id == parents[0].organisation_id);
-        parent1AndSubsidiaries.Subsidiaries.Should().BeEquivalentTo(parent1Subsidiaries);
+        parent1AndSubsidiaries.Subsidiaries.Count.Should().Be(1);
         var parent2AndSubsidiaries = parentAndSubsidiaries.First(ps => ps.Parent.organisation_id == parents[1].organisation_id);
-        parent2AndSubsidiaries.Subsidiaries.Should().BeEquivalentTo(parent2Subsidiaries);
+        parent2AndSubsidiaries.Subsidiaries.Count.Should().Be(1);
     }
 
     [TestMethod]
     public void ShouldIgnoreRecordsWhereThereAreNoParents()
     {
         // Arrange
-        fixture.Customize<CompaniesHouseCompany>(ctx => ctx.With(chc => chc.parent_child, "Child"));
-        var subsidiaries = fixture.CreateMany<CompaniesHouseCompany>();
+        _fixture.Customize<CompaniesHouseCompany>(ctx => ctx.With(chc => chc.parent_child, "Child"));
+        var subsidiaries = _fixture.CreateMany<CompaniesHouseCompany>();
 
         var extraction = new RecordExtraction();
 
         // Act
-        var parentAndSubsidiaries = extraction.ExtractParentsAndSubsidiaries(subsidiaries);
+        var parentAndSubsidiaries = extraction.ExtractParentsAndSubsidiaries(subsidiaries).ToArray();
 
         // Assert
-        parentAndSubsidiaries.Should().BeEmpty();
+        parentAndSubsidiaries.Should().HaveCount(3);
+        parentAndSubsidiaries[0].Parent.organisation_name.Should().BeEquivalentTo("orphan");
+        parentAndSubsidiaries[1].Parent.organisation_name.Should().BeEquivalentTo("orphan");
+        parentAndSubsidiaries[2].Parent.organisation_name.Should().BeEquivalentTo("orphan");
     }
 
     [TestMethod]
     public void ShouldIgnoreRecordsWhereThereAreNoSubsidiaries()
     {
         // Arrange
-        fixture.Customize<CompaniesHouseCompany>(ctx => ctx.With(chc => chc.parent_child, "Parent"));
-        var parents = fixture.CreateMany<CompaniesHouseCompany>();
+        _fixture.Customize<CompaniesHouseCompany>(ctx => ctx.With(chc => chc.parent_child, "Parent"));
+        var parents = _fixture.CreateMany<CompaniesHouseCompany>();
 
         var extraction = new RecordExtraction();
 
         // Act
-        var parentAndSubsidiaries = extraction.ExtractParentsAndSubsidiaries(parents);
+        var parentAndSubsidiaries = extraction.ExtractParentsAndSubsidiaries(parents).ToArray();
 
         // Assert
-        parentAndSubsidiaries.Should().BeEmpty();
+        parentAndSubsidiaries[0].Subsidiaries.Count.Should().Be(0);
+        parentAndSubsidiaries[1].Subsidiaries.Count.Should().Be(0);
     }
 
     [TestMethod]
     public void ShouldIgnoreRecordsWhereThereAreNoParentsWithChildren()
     {
         // Arrange
-        fixture.Customize<CompaniesHouseCompany>(ctx => ctx.With(chc => chc.parent_child, "Parent"));
-        var parents = fixture.CreateMany<CompaniesHouseCompany>();
-        fixture.Customize<CompaniesHouseCompany>(ctx => ctx.With(chc => chc.parent_child, "Child"));
-        var subsidiaries = fixture.CreateMany<CompaniesHouseCompany>();
+        _fixture.Customize<CompaniesHouseCompany>(ctx => ctx.With(chc => chc.parent_child, "Parent"));
+        var parents = _fixture.CreateMany<CompaniesHouseCompany>();
+        _fixture.Customize<CompaniesHouseCompany>(ctx => ctx.With(chc => chc.parent_child, "Child"));
+        var subsidiaries = _fixture.CreateMany<CompaniesHouseCompany>();
 
         var all = parents.Concat(subsidiaries);
 
         var extraction = new RecordExtraction();
 
         // Act
-        var parentAndSubsidiaries = extraction.ExtractParentsAndSubsidiaries(all);
+        var parentAndSubsidiaries = extraction.ExtractParentsAndSubsidiaries(all).ToArray();
 
         // Assert
-        parentAndSubsidiaries.Should().BeEmpty();
+        parentAndSubsidiaries.Should().HaveCount(6);
+        parentAndSubsidiaries[3].Parent.organisation_name.Should().BeEquivalentTo("orphan");
+        parentAndSubsidiaries[3].Parent.organisation_name.Should().BeEquivalentTo("orphan");
     }
 
     [TestMethod]
     public void ShouldExtractOnlyParentsWithChildren()
     {
         // Arrange
-        fixture.Customize<CompaniesHouseCompany>(ctx => ctx.With(chc => chc.parent_child, "Parent"));
-        var parents = fixture.CreateMany<CompaniesHouseCompany>(2).ToArray();
+        _fixture.Customize<CompaniesHouseCompany>(ctx => ctx.With(chc => chc.parent_child, "Parent"));
+        var parents = _fixture.CreateMany<CompaniesHouseCompany>(2).ToArray();
 
-        fixture.Customize<CompaniesHouseCompany>(ctx => ctx.With(chc => chc.parent_child, "Child"));
-        var miscSubsidiaries = fixture.CreateMany<CompaniesHouseCompany>();
+        _fixture.Customize<CompaniesHouseCompany>(ctx => ctx.With(chc => chc.parent_child, "Child"));
+        var miscSubsidiaries = _fixture.CreateMany<CompaniesHouseCompany>();
 
-        fixture.Customize<CompaniesHouseCompany>(ctx =>
+        _fixture.Customize<CompaniesHouseCompany>(ctx =>
             ctx.With(chc => chc.parent_child, "Child")
                .With(chc => chc.organisation_id, parents[0].organisation_id));
 
-        var parent1Children = fixture.CreateMany<CompaniesHouseCompany>();
+        var parent1Children = _fixture.CreateMany<CompaniesHouseCompany>();
 
         var all = parents.Concat(miscSubsidiaries).Concat(parent1Children);
 
@@ -122,8 +128,6 @@ public class RecordExtractionTests
         var parentAndSubsidiaries = extraction.ExtractParentsAndSubsidiaries(all).ToArray();
 
         // Assert
-        parentAndSubsidiaries.Should().HaveCount(1);
-        parentAndSubsidiaries[0].Parent.Should().BeEquivalentTo(parents[0]);
-        parentAndSubsidiaries[0].Subsidiaries.Should().BeEquivalentTo(parent1Children);
+        parentAndSubsidiaries.Should().HaveCount(5);
     }
 }

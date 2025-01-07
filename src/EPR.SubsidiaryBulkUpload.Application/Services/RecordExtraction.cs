@@ -1,4 +1,5 @@
 ﻿using EPR.SubsidiaryBulkUpload.Application.DTOs;
+using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services;
 
@@ -10,14 +11,16 @@ public class RecordExtraction : IRecordExtraction
 
         foreach (var group in groups)
         {
-            var parent = group.SingleOrDefault(g => g.parent_child == "Parent");
+            var parent = group.FirstOrDefault(g => string.Equals(g.parent_child, "parent", StringComparison.OrdinalIgnoreCase));
 
-            var subsidiaries = group.Where(g => g.parent_child != "Parent");
-
-            if (parent != null && subsidiaries.Any())
+            if (parent == null)
             {
-                yield return new ParentAndSubsidiaries { Parent = parent, Subsidiaries = subsidiaries.ToList() };
+                parent = new CompaniesHouseCompany() { organisation_id = group.Key, organisation_name = "orphan", parent_child = "child" };
             }
+
+            var subsidiaries = group.Where(g => !string.Equals(g.parent_child, "parent", StringComparison.OrdinalIgnoreCase));
+
+            yield return new ParentAndSubsidiaries { Parent = parent, Subsidiaries = subsidiaries.ToList() };
         }
     }
 }
