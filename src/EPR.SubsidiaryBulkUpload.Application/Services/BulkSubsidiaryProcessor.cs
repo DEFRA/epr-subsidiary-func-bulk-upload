@@ -279,9 +279,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
     private async Task<AddSubsidiariesFigures> ProcessValidNamedOrgs(IAsyncEnumerable<(CompaniesHouseCompany Subsidiary, OrganisationResponseModel SubsidiaryOrg)> subsidiariesAndOrgWithValidName, OrganisationResponseModel parentOrg, UserRequestModel userRequestModel)
     {
         var counts = new AddSubsidiariesFigures();
-
         var count = 0;
-        var result = HttpStatusCode.BadGateway;
 
         var knownSubsidiariesToAddCheck = await subsidiariesAndOrgWithValidName.Where(co => co.SubsidiaryOrg != null)
         .SelectAwait(async co =>
@@ -295,7 +293,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         foreach (var subsidiaryAddModel in knownSubsidiariesToAdd)
         {
-            result = await AddSubsidiary(parentOrg, subsidiaryAddModel!.SubsidiaryOrg, userRequestModel.UserId);
+            var result = await AddSubsidiary(parentOrg, subsidiaryAddModel!.SubsidiaryOrg, userRequestModel.UserId);
             count = count + (result == HttpStatusCode.OK ? 1 : 0);
             counts.NewAddedSubsidiaries.Add(subsidiaryAddModel.Subsidiary);
         }
