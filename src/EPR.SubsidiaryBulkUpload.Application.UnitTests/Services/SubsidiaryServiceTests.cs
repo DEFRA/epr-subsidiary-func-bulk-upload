@@ -1,5 +1,4 @@
 ﻿using System.Net;
-using System.Text;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Models;
@@ -565,7 +564,7 @@ public class SubsidiaryServiceTests
     {
         // Arrange
         var subsidiaryAddModel = _fixture.Create<SubsidiaryAddModel>();
-        var apiResponse = "123456";
+        var apiResponse = HttpStatusCode.OK;
 
         var expectedUri = $"{BaseAddress}/{OrganisationAddSubsidiaryUri}";
 
@@ -576,8 +575,7 @@ public class SubsidiaryServiceTests
                 ItExpr.IsAny<CancellationToken>())
         .ReturnsAsync(new HttpResponseMessage
         {
-            StatusCode = HttpStatusCode.OK,
-            Content = new StringContent(apiResponse, Encoding.UTF8)
+            StatusCode = HttpStatusCode.OK
         }).Verifiable();
 
         // Act
@@ -611,7 +609,7 @@ public class SubsidiaryServiceTests
         var response = await _sut.AddSubsidiaryRelationshipAsync(subsidiaryAddModel);
 
         // Assert
-        response.Should().BeNull();
+        response.Should().NotBe(HttpStatusCode.OK);
     }
 
     [TestMethod]
