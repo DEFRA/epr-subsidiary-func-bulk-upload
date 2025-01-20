@@ -11,7 +11,7 @@ public interface ISubsidiaryService
 
     Task<HttpStatusCode> CreateAndAddSubsidiaryAsync(LinkOrganisationModel linkOrganisationModel);
 
-    Task<string?> AddSubsidiaryRelationshipAsync(SubsidiaryAddModel subsidiaryAddModel);
+    Task<HttpStatusCode> AddSubsidiaryRelationshipAsync(SubsidiaryAddModel subsidiaryAddModel);
 
     Task<bool> GetSubsidiaryRelationshipAsync(int parentOrganisationId, int subsidiaryOrganisationId);
 
