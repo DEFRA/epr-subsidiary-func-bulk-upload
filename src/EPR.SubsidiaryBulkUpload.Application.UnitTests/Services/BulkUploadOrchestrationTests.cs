@@ -254,7 +254,6 @@ public class BulkUploadOrchestrationTests
         parentAndSubsidiaries[0].Subsidiaries[1].Errors = null;
         parentAndSubsidiaries[0].Subsidiaries[2].Errors = null;
 
-        // parentAndSubsidiaries[0].Parent = new CompaniesHouseCompany();
         parentAndSubsidiaries[0].Parent.organisation_name = "orphan";
         parentAndSubsidiaries[0].Subsidiaries[0].parent_child = child;
         parentAndSubsidiaries[0].Subsidiaries[1].parent_child = child;
