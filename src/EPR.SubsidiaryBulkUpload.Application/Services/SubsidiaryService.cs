@@ -179,7 +179,7 @@ public class SubsidiaryService : ISubsidiaryService
         return response.StatusCode;
     }
 
-    public async Task<string?> AddSubsidiaryRelationshipAsync(SubsidiaryAddModel subsidiaryAddModel)
+    public async Task<HttpStatusCode> AddSubsidiaryRelationshipAsync(SubsidiaryAddModel subsidiaryAddModel)
     {
         string json = JsonConvert.SerializeObject(subsidiaryAddModel);
 
@@ -196,11 +196,10 @@ public class SubsidiaryService : ISubsidiaryService
                 _logger.LogError("Failed to add subsidiary relationship for Parent: {Parent} Subsidiary: {Subsidiary}", subsidiaryAddModel.ParentOrganisationId, subsidiaryAddModel.ChildOrganisationId);
             }
 
-            return null;
+            return HttpStatusCode.InternalServerError;
         }
 
-        var result = await response.Content.ReadAsStringAsync();
-        return result;
+        return response.StatusCode;
     }
 
     public async Task<UserOrganisation> GetSystemUserAndOrganisation()

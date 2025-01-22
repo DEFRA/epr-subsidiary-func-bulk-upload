@@ -1,4 +1,5 @@
-﻿using EPR.SubsidiaryBulkUpload.Application.Comparers;
+﻿using System.Net;
+using EPR.SubsidiaryBulkUpload.Application.Comparers;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Models;
@@ -157,7 +158,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         return modelLoaded ? newSubsidiaryModel : null;
     }
 
-    private async Task<string> AddSubsidiary(OrganisationResponseModel parent, OrganisationResponseModel subsidiary, Guid userId)
+    private async Task<HttpStatusCode> AddSubsidiary(OrganisationResponseModel parent, OrganisationResponseModel subsidiary, Guid userId)
     {
         var subsidiaryModel = new SubsidiaryAddModel
         {
@@ -194,9 +195,12 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
                RelationshipExists: await organisationService.GetSubsidiaryRelationshipAsync(parentOrg.id, co.SubsidiaryOrg.id)))
           .Where(co => !co.RelationshipExists);
 
-        await foreach (var subsidiaryAddModel in knownFranchiseeToAddRelationship)
+        var knownFranchiseeToAddRelationshipToDB = await knownFranchiseeToAddRelationship.ToListAsync();
+
+        foreach (var subsidiaryAddModel in knownFranchiseeToAddRelationshipToDB)
         {
-            await AddSubsidiary(parentOrg, subsidiaryAddModel!.SubsidiaryOrg, userRequestModel.UserId);
+            var status = await AddSubsidiary(parentOrg, subsidiaryAddModel!.SubsidiaryOrg, userRequestModel.UserId);
+            subsidiaryAddModel.Subsidiary.StatusCode = status;
         }
 
         var subsidiariesAndOrgNonExistsInTheDB = await companiesWithFranchiseeFlagRecords.Where(co => co.SubsidiaryOrg == null).ToListAsync();
@@ -227,7 +231,9 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             subsidiaryAddModel.Subsidiary.StatusCode = await organisationService.CreateAndAddSubsidiaryAsync(franchisee);
         }
 
-        return subsidiariesAndOrgNonExistsInTheDB.Where(s => s.Subsidiary.StatusCode == System.Net.HttpStatusCode.OK).Select(s => s.Subsidiary).ToList();
+        var knowFranchiseeRelationshipsAdded = knownFranchiseeToAddRelationshipToDB.Where(s => s.Subsidiary.StatusCode == System.Net.HttpStatusCode.OK).Select(s => s.Subsidiary).ToList();
+        var subsNewlyAdded = subsidiariesAndOrgNonExistsInTheDB.Where(s => s.Subsidiary.StatusCode == System.Net.HttpStatusCode.OK).Select(s => s.Subsidiary).ToList();
+        return subsNewlyAdded.Concat(knowFranchiseeRelationshipsAdded);
     }
 
     private async Task<AddSubsidiariesFigures> ProcessCompanyHouseAPI(IAsyncEnumerable<(CompaniesHouseCompany Subsidiary, LinkOrganisationModel LinkModel)> newSubsidiariesToAdd_DataFromLocalStorageOrCH, UserRequestModel userRequestModel)
@@ -273,9 +279,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
     private async Task<AddSubsidiariesFigures> ProcessValidNamedOrgs(IAsyncEnumerable<(CompaniesHouseCompany Subsidiary, OrganisationResponseModel SubsidiaryOrg)> subsidiariesAndOrgWithValidName, OrganisationResponseModel parentOrg, UserRequestModel userRequestModel)
     {
         var counts = new AddSubsidiariesFigures();
-
         var count = 0;
-        var result = string.Empty;
 
         var knownSubsidiariesToAddCheck = await subsidiariesAndOrgWithValidName.Where(co => co.SubsidiaryOrg != null)
         .SelectAwait(async co =>
@@ -289,8 +293,8 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         foreach (var subsidiaryAddModel in knownSubsidiariesToAdd)
         {
-            result = await AddSubsidiary(parentOrg, subsidiaryAddModel!.SubsidiaryOrg, userRequestModel.UserId);
-            count = count + (result != null ? 1 : 0);
+            var result = await AddSubsidiary(parentOrg, subsidiaryAddModel!.SubsidiaryOrg, userRequestModel.UserId);
+            count = count + (result == HttpStatusCode.OK ? 1 : 0);
             counts.NewAddedSubsidiaries.Add(subsidiaryAddModel.Subsidiary);
         }
 
