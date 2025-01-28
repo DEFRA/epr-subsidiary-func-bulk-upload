@@ -6,6 +6,7 @@ using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using EPR.SubsidiaryBulkUpload.Application.Clients;
+using EPR.SubsidiaryBulkUpload.Application.Constants;
 using EPR.SubsidiaryBulkUpload.Application.Handlers;
 using EPR.SubsidiaryBulkUpload.Application.Options;
 using EPR.SubsidiaryBulkUpload.Application.Resilience;
@@ -17,6 +18,7 @@ using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Microsoft.FeatureManagement;
 using StackExchange.Redis;
 
 [ExcludeFromCodeCoverage]
@@ -51,8 +53,12 @@ public static class ConfigurationExtensions
 
     public static IServiceCollection AddHttpClients(this IServiceCollection services, IConfiguration configuration)
     {
-        var sp = services.BuildServiceProvider();
-        var apiOptions = sp.GetRequiredService<IOptions<ApiOptions>>().Value;
+        var serviceProvider = services.BuildServiceProvider();
+        var apiOptions = serviceProvider.GetRequiredService<IOptions<ApiOptions>>().Value;
+        var antivirusOptions = serviceProvider.GetRequiredService<IOptions<AntivirusApiOptions>>().Value;
+
+        var featureManager = serviceProvider.GetRequiredService<IFeatureManager>();
+        var useBoomiOAuth = featureManager.IsEnabledAsync(FeatureFlags.UseBoomiOAuth).GetAwaiter().GetResult();
 
         services.AddHttpClient<ISubmissionStatusClient, SubmissionStatusClient>((sp, client) =>
         {
@@ -60,8 +66,6 @@ public static class ConfigurationExtensions
             client.BaseAddress = new Uri($"{options.BaseUrl?.TrimEnd('/')}/v1/");
         })
             .AddPolicyHandler((services, _) => Policies.DefaultRetryPolicy<SubmissionStatusClient>(services));
-
-        var antivirusOptions = services.BuildServiceProvider().GetRequiredService<IOptions<AntivirusApiOptions>>().Value;
 
         services.AddHttpClient<IAntivirusClient, AntivirusClient>(client =>
         {
@@ -104,7 +108,7 @@ public static class ConfigurationExtensions
 
                 client.BaseAddress = new Uri(apiOptions.CompaniesHouseLookupBaseUrl);
             })
-                .ConfigurePrimaryHttpMessageHandler(GetClientCertificateHandler)
+                .AddCredentialHandler(useBoomiOAuth)
                 .AddCompaniesHouseResilienceHandler();
         }
 
@@ -126,6 +130,8 @@ public static class ConfigurationExtensions
         services.AddScoped<ISystemDetailsProvider, SystemDetailsProvider>();
 
         services.AddTransient<AccountServiceAuthorisationHandler>();
+        services.AddTransient<CompaniesHouseCredentialHandler>();
+
         services.AddTransient<IAntivirusClient, AntivirusClient>();
         services.AddTransient<IBulkSubsidiaryProcessor, BulkSubsidiaryProcessor>();
         services.AddTransient<IBulkUploadOrchestration, BulkUploadOrchestration>();
@@ -153,6 +159,20 @@ public static class ConfigurationExtensions
         services.AddTransient<ISubmissionStatusClient, SubmissionStatusClient>();
 
         return services;
+    }
+
+    public static IHttpClientBuilder AddCredentialHandler(this IHttpClientBuilder builder, bool useBoomiOAuth)
+    {
+        if (useBoomiOAuth)
+        {
+            builder.AddHttpMessageHandler<CompaniesHouseCredentialHandler>();
+        }
+        else
+        {
+            builder.ConfigurePrimaryHttpMessageHandler(GetClientCertificateHandler);
+        }
+
+        return builder;
     }
 
     private static HttpMessageHandler GetClientCertificateHandler(IServiceProvider sp)

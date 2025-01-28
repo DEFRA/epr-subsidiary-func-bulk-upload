@@ -15,11 +15,19 @@ public class ApiOptions : ApiResilienceOptions
 
     public string CompaniesHouseDirectApiKey { get; set; }
 
-    public string AccountServiceClientId { get; set; } = null!;
+    public string CompaniesHouseScope { get; set; }
+
+    public string ClientId { get; set; }
+
+    public string ClientSecret { get; set; }
+
+    public string TenantId { get; set; }
 
     public string Certificate { get; set; } = null!;
 
     public int Timeout { get; set; }
+
+    public string AccountServiceClientId { get; set; } = null!;
 
     public string SubsidiaryServiceBaseUrl { get; set; } = null!;
 }
