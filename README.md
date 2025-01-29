@@ -15,9 +15,14 @@ The structure of the application settings can be found in the repository. Exampl
 | ApiConfig__Timeout                                    | Number of seconds before timing out request to Accounts API                |
 | ApiConfig__CompaniesHouseLookupBaseUrl                | Url for the gateway to Companies House data                                |
 | ApiConfig__AccountServiceClientId                     | Accounts API client ID                                                     | 
+| ApiConfig__Certificate                                | Certificate for authenticating calls to the Companies House API gateway    |
 | ApiConfig__CompaniesHouseDirectBaseUri                | Url for direct access to Companies House data                              |
 | ApiConfig__CompaniesHouseDirectApiKey                 | API key for the Companies House API - used for direct access only          |
 | ApiConfig__UseDirectCompaniesHouseLookup              | Whether or not to access Companies House API directly                      |
+| ApiConfig__CompaniesHouseScope                        | Scope for the Companies House API                                          |
+| ApiConfig__ClientId                                   | Client ID for the Companies House API                                      |
+| ApiConfig__ClientSecret                               | Client secret for the Companies House API                                  |
+| ApiConfig__TenantId                                   | Tenant ID for the Companies House API                                      |
 | ApiConfig__RetryPolicyInitialWaitTime                 | The time to wait when calls to the Companies House API fail for the first time |
 | ApiConfig__RetryPolicyMaxRetries                      | The number of times to retry failing calls to the Companies House API      |
 | ApiConfig__RetryPolicyTooManyAttemptsWaitTime         | The time to wait when the Companies House API returns a 429 response for the first time       |
@@ -40,6 +45,7 @@ The structure of the application settings can be found in the repository. Exampl
 | CompaniesHouseDownload__CompaniesHouseDataDownloadUrl | URL for downloading Companies House data                                   |
 | CompaniesHouseDownload__RetryPolicyMaxRetries         | The number of times to retry failing calls to the Companies House downloads         |
 | CompaniesHouseDownload__RetryPolicyInitialWaitTime    | The time to wait when calls to the Companies House downloads fail for the first time       |
+| FeatureManagement__UseBoomiOAuth                      | Feature flag used to determine whether OAuth should be used instead of a certificate  |
 | Redis__ConnectionString                               | Connection string for Redis                                                |
 | Redis__TimeToLiveInMinutes                            | Time to live (expiry) for Redis keysConnection string for Redis            |
 | SubmissionApi__BaseUrl                                | The base URL for the Submission Status API WebApp                          |
