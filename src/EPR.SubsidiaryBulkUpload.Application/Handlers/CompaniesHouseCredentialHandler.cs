@@ -8,16 +8,16 @@ using Microsoft.Extensions.Options;
 namespace EPR.SubsidiaryBulkUpload.Application.Handlers;
 
 [ExcludeFromCodeCoverage]
-public class AntivirusApiAuthorizationHandler : DelegatingHandler
+public class CompaniesHouseCredentialHandler : DelegatingHandler
 {
     private readonly TokenRequestContext _tokenRequestContext;
     private readonly ClientSecretCredential _credentials;
 
-    public AntivirusApiAuthorizationHandler(IOptions<AntivirusApiOptions> options)
+    public CompaniesHouseCredentialHandler(IOptions<ApiOptions> options)
     {
-        var antivirusApiOptions = options.Value;
-        _tokenRequestContext = new TokenRequestContext([antivirusApiOptions.Scope]);
-        _credentials = new ClientSecretCredential(antivirusApiOptions.TenantId, antivirusApiOptions.ClientId, antivirusApiOptions.ClientSecret);
+        var clientApiOptions = options.Value;
+        _tokenRequestContext = new TokenRequestContext(new[] { clientApiOptions.CompaniesHouseScope });
+        _credentials = new ClientSecretCredential(clientApiOptions.TenantId, clientApiOptions.ClientId, clientApiOptions.ClientSecret);
     }
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
