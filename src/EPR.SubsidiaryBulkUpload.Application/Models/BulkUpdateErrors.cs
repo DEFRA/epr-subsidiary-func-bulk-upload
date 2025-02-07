@@ -82,4 +82,10 @@ public static class BulkUpdateErrors
 
     public const int OrganisationIdIsForAnotherOrganisation = 129;
     public const string OrganisationIdIsForAnotherOrganisationMessage = "The organisation id is for another organisation";
+
+    public const int JoinerDateRequired = 130;
+    public const string JoinerDateRequiredMessage = "The 'joiner date' column is missing.";
+
+    public const int ReportingTypeRequired = 131;
+    public const string ReportingTypeRequiredMessage = "The 'reporting type' column is missing.";
 }

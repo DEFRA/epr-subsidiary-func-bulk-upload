@@ -20,6 +20,8 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
         Map(m => m.Errors).Index(6).Convert(args => GetRowValidationErrors(args.Row));
         Map(m => m.RawRow).Convert(args => args.Row.Context.Reader.Parser.RawRecord);
         Map(m => m.FileLineNumber).Convert(args => args.Row.Context.Reader.Parser.Row);
+        Map(m => m.joiner_date).Validate(field => !field.Equals(string.Empty));
+        Map(m => m.reporting_type).Validate(field => !field.Equals(string.Empty));
     }
 
     private static List<UploadFileErrorModel> GetRowValidationErrors(IReaderRow row)
@@ -99,6 +101,20 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
             errors.Add(
                    CreateError(
                        lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
+        }
+
+        if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.joiner_date))))
+        {
+            errors.Add(
+                CreateError(
+                    lineNumber, rawData, BulkUpdateErrors.JoinerDateRequiredMessage, BulkUpdateErrors.JoinerDateRequired));
+        }
+
+        if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.reporting_type))))
+        {
+            errors.Add(
+                CreateError(
+                    lineNumber, rawData, BulkUpdateErrors.ReportingTypeRequiredMessage, BulkUpdateErrors.ReportingTypeRequired));
         }
 
         return errors;

@@ -24,6 +24,10 @@ public class CompaniesHouseCompany
     [Optional]
     public string franchisee_licensee_tenant { get; set; }
 
+    required public string joiner_date { get; set; }
+
+    required public string reporting_type { get; set; }
+
     [Optional]
     public OrganisationDto? Organisation { get; init; }
 
