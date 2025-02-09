@@ -53,6 +53,8 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                     organisation_name = string.Empty,
                     organisation_id = string.Empty,
                     parent_child = string.Empty,
+                    joiner_date = string.Empty,
+                    reporting_type = string.Empty,
                     Errors = new List<Models.UploadFileErrorModel>()
                 };
 
@@ -83,6 +85,8 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                     organisation_name = string.Empty,
                     organisation_id = string.Empty,
                     parent_child = string.Empty,
+                    joiner_date = string.Empty,
+                    reporting_type = string.Empty,
                     Errors = new List<Models.UploadFileErrorModel>()
                 };
 
@@ -111,6 +115,8 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                     organisation_name = string.Empty,
                     organisation_id = string.Empty,
                     parent_child = string.Empty,
+                    joiner_date = string.Empty,
+                    reporting_type = string.Empty,
                     Errors = new List<Models.UploadFileErrorModel>()
                 };
 
