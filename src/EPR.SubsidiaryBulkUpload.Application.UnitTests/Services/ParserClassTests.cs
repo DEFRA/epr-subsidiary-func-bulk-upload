@@ -30,8 +30,8 @@ public class ParserClassTests
 
         _listDataModel = new List<CompaniesHouseCompany>
             {
-                new() { organisation_id = "23123",  subsidiary_id = string.Empty, organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Parent", franchisee_licensee_tenant = string.Empty, Errors = new() },
-                new() { organisation_id = "23123", subsidiary_id = "Sub1", organisation_name = "OrgB", companies_house_number = "654321", parent_child = "Child", franchisee_licensee_tenant = string.Empty, Errors = new() }
+                new() { organisation_id = "23123",  subsidiary_id = string.Empty, organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Parent", franchisee_licensee_tenant = string.Empty, joiner_date = "01/10/2024", reporting_type = "SELF", Errors = new() },
+                new() { organisation_id = "23123", subsidiary_id = "Sub1", organisation_name = "OrgB", companies_house_number = "654321", parent_child = "Child", franchisee_licensee_tenant = string.Empty, joiner_date = "01/10/2024", reporting_type = "SELF", Errors = new() }
             };
 
         _sut = new ParserClass(_loggerMock.Object);
@@ -179,8 +179,8 @@ public class ParserClassTests
         // Arrange
         var badDataModel = new List<CompaniesHouseCompany>
             {
-                new() { organisation_id = "23123",  subsidiary_id = string.Empty, organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Parent", franchisee_licensee_tenant = string.Empty, Errors = new() },
-                new() { organisation_id = "23123", subsidiary_id = "Sub1", organisation_name = string.Empty, companies_house_number = "654321", parent_child = "Child", franchisee_licensee_tenant = "License123", Errors = new() }
+                new() { organisation_id = "23123",  subsidiary_id = string.Empty, organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Parent", franchisee_licensee_tenant = string.Empty, joiner_date = "01/10/2024", reporting_type = "SELF", Errors = new() },
+                new() { organisation_id = "23123", subsidiary_id = "Sub1", organisation_name = string.Empty, companies_house_number = "654321", parent_child = "Child", franchisee_licensee_tenant = "License123", joiner_date = "01/10/2024", reporting_type = "SELF", Errors = new() }
             };
 
         var rawSource = badDataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");

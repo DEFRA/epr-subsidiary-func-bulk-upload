@@ -11,7 +11,9 @@ public class CompaniesHouseCompanyTests
         organisation_id = "1234",
         companies_house_number = "01234567",
         organisation_name = "Test organisation",
-        parent_child = "Child"
+        parent_child = "Child",
+        joiner_date = "01/10/2024",
+        reporting_type = "SELF"
     };
 
     [TestMethod]

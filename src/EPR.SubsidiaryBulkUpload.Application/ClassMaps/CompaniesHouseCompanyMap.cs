@@ -20,8 +20,8 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
         Map(m => m.Errors).Index(6).Convert(args => GetRowValidationErrors(args.Row));
         Map(m => m.RawRow).Convert(args => args.Row.Context.Reader.Parser.RawRecord);
         Map(m => m.FileLineNumber).Convert(args => args.Row.Context.Reader.Parser.Row);
-        Map(m => m.joiner_date).Validate(field => !field.Equals(string.Empty));
-        Map(m => m.reporting_type).Validate(field => !field.Equals(string.Empty));
+        Map(m => m.joiner_date);
+        Map(m => m.reporting_type);
     }
 
     private static List<UploadFileErrorModel> GetRowValidationErrors(IReaderRow row)
@@ -103,14 +103,14 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
                        lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
         }
 
-        if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.joiner_date))))
+        if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.joiner_date))) && !string.Equals(row.GetField(nameof(CompaniesHouseCompany.parent_child)), "parent", StringComparison.OrdinalIgnoreCase))
         {
             errors.Add(
                 CreateError(
                     lineNumber, rawData, BulkUpdateErrors.JoinerDateRequiredMessage, BulkUpdateErrors.JoinerDateRequired));
         }
 
-        if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.reporting_type))))
+        if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.reporting_type))) && !string.Equals(row.GetField(nameof(CompaniesHouseCompany.parent_child)), "parent", StringComparison.OrdinalIgnoreCase))
         {
             errors.Add(
                 CreateError(

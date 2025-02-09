@@ -2,5 +2,5 @@
 
 public static class CsvFileValidationConditions
 {
-    public const int MaxNumberOfColumnsAllowed = 6;
+    public const int MaxNumberOfColumnsAllowed = 8;
 }
