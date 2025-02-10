@@ -88,4 +88,7 @@ public static class BulkUpdateErrors
 
     public const int ReportingTypeRequired = 131;
     public const string ReportingTypeRequiredMessage = "The 'reporting type' column is missing.";
+
+    public const int ReportingTypeValidValueCheck = 132;
+    public const string ReportingTypeValidValueCheckMessage = "The 'reporting type' column only allowed 'GROUP' or 'SELF'.";
 }

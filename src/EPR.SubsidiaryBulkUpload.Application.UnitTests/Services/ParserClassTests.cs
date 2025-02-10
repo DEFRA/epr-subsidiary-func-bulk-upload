@@ -10,10 +10,10 @@ namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 [TestClass]
 public class ParserClassTests
 {
-    private const string _csvHeader = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,joiner_date,reporting_type,\n";
-    private const string _csvHeaderWithMissingSubsidiaryId = "organisation_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,joiner_date,reporting_type,\n";
+    private const string _csvHeader = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,joiner_date,reporting_type\n";
+    private const string _csvHeaderWithMissingSubsidiaryId = "organisation_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,joiner_date,reporting_type\n";
     private const string _csvHeaderWithNullValues = "";
-    private const string _badHeader = "organisation,subsidiary,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,joiner_date,reporting_type,\n";
+    private const string _badHeader = "organisation,subsidiary,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,joiner_date,reporting_type\n";
     private const string _badHeaderWithExtras = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,joiner_date,reporting_type,invalid_item\n";
 
     private Fixture _fixture;
@@ -55,7 +55,7 @@ public class ParserClassTests
     [TestMethod]
     public void ParseClass_InvalidCsvHeader_ReturnsError()
     {
-        var rawSource = _listDataModel.Take(1).Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
+        var rawSource = _listDataModel.Take(1).Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant},{s.joiner_date},{s.reporting_type}\n");
         string[] all = [_badHeader, .. rawSource];
 
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
@@ -74,14 +74,14 @@ public class ParserClassTests
         var errorRow = returnValue.CompaniesHouseCompany[0];
 
         errorRow.Errors.Should().NotBeEmpty();
-        errorRow.Errors[0].FileContent.Should().Be("organisation,subsidiary,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant");
+        errorRow.Errors[0].FileContent.Should().Be("organisation,subsidiary,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,joiner_date,reporting_type");
         errorRow.Errors[0].Message.Should().Contain("The headers are missing.");
     }
 
     [TestMethod]
     public void ParseClass_Missing_Column_ReturnsError()
     {
-        var rawSource = _listDataModel.Take(1).Select(s => $"{s.organisation_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
+        var rawSource = _listDataModel.Take(1).Select(s => $"{s.organisation_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant},{s.joiner_date},{s.reporting_type}\n");
         string[] all = [_csvHeaderWithMissingSubsidiaryId, .. rawSource];
 
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
@@ -100,7 +100,7 @@ public class ParserClassTests
         var errorRow = returnValue.CompaniesHouseCompany[0];
 
         errorRow.Errors[0].Should().NotBeNull();
-        errorRow.Errors[0].FileContent.Should().Be("organisation_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant");
+        errorRow.Errors[0].FileContent.Should().Be("organisation_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,joiner_date,reporting_type");
         errorRow.Errors[0].Message.Should().Contain("The headers are missing.");
     }
 
@@ -127,7 +127,7 @@ public class ParserClassTests
         var errorRow = returnValue.CompaniesHouseCompany[0];
 
         errorRow.Errors[0].Should().NotBeNull();
-        errorRow.Errors[0].FileContent.Should().Be("organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,,joiner_date,reporting_type,invalid_item");
+        errorRow.Errors[0].FileContent.Should().Be("organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,joiner_date,reporting_type,invalid_item");
         errorRow.Errors[0].Message.Should().Contain("The file has additional column headers: The file has too many column headers. Remove these and try again.");
 
         var parsedResult = returnValue.CompaniesHouseCompany;
@@ -137,7 +137,7 @@ public class ParserClassTests
     public void ParseClass_ValidCsvFile_ReturnsCorrectData()
     {
         // Arrange
-        var rawSource = _listDataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
+        var rawSource = _listDataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant},{s.joiner_date},{s.reporting_type}\n");
         string[] all = [_csvHeader, .. rawSource];
 
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
@@ -274,5 +274,51 @@ public class ParserClassTests
         returnValue.CompaniesHouseCompany.Count.Should().Be(1);
 
         returnValue.CompaniesHouseCompany[0].Errors.Should().NotBeEmpty();
+    }
+
+    [TestMethod]
+    public void ParseClass_InvalidReportingData_ReturnsErrorMessage()
+    {
+        // Arrange
+        var badDataModel = new List<CompaniesHouseCompany>
+            {
+                new() { organisation_id = "23123",  subsidiary_id = string.Empty, organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Parent", franchisee_licensee_tenant = string.Empty, joiner_date = "01/10/2024", reporting_type = "SELF", Errors = new() },
+                new() { organisation_id = "23123", subsidiary_id = "Sub1", organisation_name = string.Empty, companies_house_number = "654321", parent_child = "Child", franchisee_licensee_tenant = "License123", joiner_date = "01/10/2024", reporting_type = string.Empty, Errors = new() }
+            };
+
+        var rawSource = badDataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant},{s.joiner_date},{s.reporting_type}\n");
+        string[] all = [_csvHeader, .. rawSource];
+
+        using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
+
+        // Act
+        var returnValue = _sut.ParseWithHelper(stream, CsvConfigurations.BulkUploadCsvConfiguration);
+
+        // Assert
+        returnValue.Should().NotBeNull();
+        returnValue.CompaniesHouseCompany.Should().NotBeNull();
+        returnValue.CompaniesHouseCompany.Count.Should().Be(2);
+
+        var parsedResult = returnValue.CompaniesHouseCompany;
+
+        parsedResult[0].organisation_id.Should().Be("23123");
+        parsedResult[0].subsidiary_id.Should().Be(string.Empty);
+        parsedResult[0].organisation_name.Should().Be("OrgA");
+        parsedResult[0].companies_house_number.Should().Be("123456");
+        parsedResult[0].parent_child.Should().Be("Parent");
+        parsedResult[0].franchisee_licensee_tenant.Should().Be(string.Empty);
+        parsedResult[0].Errors.Should().BeNullOrEmpty();
+
+        parsedResult[1].organisation_id.Should().Be("23123");
+        parsedResult[1].subsidiary_id.Should().Be("Sub1");
+        parsedResult[1].organisation_name.Should().Be(string.Empty);
+        parsedResult[1].companies_house_number.Should().Be("654321");
+        parsedResult[1].parent_child.Should().Be("Child");
+        parsedResult[1].franchisee_licensee_tenant.Should().Be("License123");
+
+        parsedResult[1].Errors.Should().NotBeEmpty();
+        parsedResult[1].Errors[0].Message.Should().Contain("The 'organisation name' column is missing.");
+        parsedResult[1].Errors[1].Message.Should().Contain("You can only enter 'Y' to the 'franchisee licensee tenant' column, or leave it blank.");
+        parsedResult[1].Errors[2].Message.Should().Contain("The 'reporting type' column is missing.");
     }
 }
