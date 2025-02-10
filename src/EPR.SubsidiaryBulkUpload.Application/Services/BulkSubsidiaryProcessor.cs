@@ -6,6 +6,7 @@ using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 using Pipelines.Sockets.Unofficial.Arenas;
+using StackExchange.Redis;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services;
 
@@ -134,6 +135,9 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
     private async Task<LinkOrganisationModel?> GetLinkModelForCompaniesHouseData(CompaniesHouseCompany subsidiary, OrganisationResponseModel parentOrg, Guid userId)
     {
+        ReportingType reportingTypeEnum;
+        Enum.TryParse(subsidiary.reporting_type, out reportingTypeEnum);
+
         var newSubsidiaryModel = new LinkOrganisationModel()
         {
             UserId = userId,
@@ -148,7 +152,9 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
                 Nation = Nation.NotSet,
                 SubsidiaryOrganisationId = subsidiary.subsidiary_id,
                 RawContent = subsidiary.RawRow,
-                FileLineNumber = subsidiary.FileLineNumber
+                FileLineNumber = subsidiary.FileLineNumber,
+                JoinerDate = subsidiary.joiner_date,
+                ReportingTypeId = (int?)reportingTypeEnum
             },
             ParentOrganisationId = parentOrg.ExternalId.Value
         };
