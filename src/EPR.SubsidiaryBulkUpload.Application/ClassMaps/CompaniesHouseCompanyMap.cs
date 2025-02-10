@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using CsvHelper;
 using CsvHelper.Configuration;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
@@ -131,6 +132,19 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
                         CreateError(
                             lineNumber, rawData, BulkUpdateErrors.ReportingTypeValidValueCheckMessage, BulkUpdateErrors.ReportingTypeValidValueCheck));
                     break;
+            }
+        }
+
+        string[] formats = { "dd/MM/yyyy", "dd/MMM/yyyy" };
+        DateTime dateValue;
+        if (!string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.joiner_date))))
+            {
+            var jointerDate = row.GetField(nameof(CompaniesHouseCompany.joiner_date));
+            if (!DateTime.TryParseExact(jointerDate, formats, new CultureInfo("en-GB"), DateTimeStyles.None, out dateValue))
+            {
+                errors.Add(
+                    CreateError(
+                        lineNumber, rawData, BulkUpdateErrors.JointerDateFormatIncorrectMessage, BulkUpdateErrors.JointerDateFormatIncorrect));
             }
         }
 
