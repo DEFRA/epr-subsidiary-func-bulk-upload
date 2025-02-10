@@ -10,11 +10,11 @@ namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 [TestClass]
 public class ParserClassTests
 {
-    private const string _csvHeader = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
-    private const string _csvHeaderWithMissingSubsidiaryId = "organisation_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
+    private const string _csvHeader = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,joiner_date,reporting_type,\n";
+    private const string _csvHeaderWithMissingSubsidiaryId = "organisation_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,joiner_date,reporting_type,\n";
     private const string _csvHeaderWithNullValues = "";
-    private const string _badHeader = "organisation,subsidiary,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
-    private const string _badHeaderWithExtras = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,invalid_item\n";
+    private const string _badHeader = "organisation,subsidiary,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,joiner_date,reporting_type,\n";
+    private const string _badHeaderWithExtras = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,joiner_date,reporting_type,invalid_item\n";
 
     private Fixture _fixture;
     private List<CompaniesHouseCompany> _listDataModel = null;
@@ -107,7 +107,7 @@ public class ParserClassTests
     [TestMethod]
     public void ParseClass_ExtraColumn_IsError()
     {
-        var rawSource = _listDataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
+        var rawSource = _listDataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant},{s.joiner_date},{s.reporting_type}\n");
 
         string[] all = [_badHeaderWithExtras, .. rawSource];
 
@@ -127,7 +127,7 @@ public class ParserClassTests
         var errorRow = returnValue.CompaniesHouseCompany[0];
 
         errorRow.Errors[0].Should().NotBeNull();
-        errorRow.Errors[0].FileContent.Should().Be("organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,invalid_item");
+        errorRow.Errors[0].FileContent.Should().Be("organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,,joiner_date,reporting_type,invalid_item");
         errorRow.Errors[0].Message.Should().Contain("The file has additional column headers: The file has too many column headers. Remove these and try again.");
 
         var parsedResult = returnValue.CompaniesHouseCompany;

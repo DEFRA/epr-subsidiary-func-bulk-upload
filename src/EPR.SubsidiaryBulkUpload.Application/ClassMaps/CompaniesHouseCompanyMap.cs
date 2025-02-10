@@ -117,6 +117,23 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
                     lineNumber, rawData, BulkUpdateErrors.ReportingTypeRequiredMessage, BulkUpdateErrors.ReportingTypeRequired));
         }
 
+        if (!string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.reporting_type))) && !string.Equals(row.GetField(nameof(CompaniesHouseCompany.parent_child)), "parent", StringComparison.OrdinalIgnoreCase))
+        {
+            var reportingType = row.GetField(nameof(CompaniesHouseCompany.reporting_type));
+
+            switch (reportingType)
+            {
+                case "SELF":
+                case "GROUP":
+                    break;
+                default:
+                    errors.Add(
+                        CreateError(
+                            lineNumber, rawData, BulkUpdateErrors.ReportingTypeValidValueCheckMessage, BulkUpdateErrors.ReportingTypeValidValueCheck));
+                    break;
+            }
+        }
+
         return errors;
     }
 

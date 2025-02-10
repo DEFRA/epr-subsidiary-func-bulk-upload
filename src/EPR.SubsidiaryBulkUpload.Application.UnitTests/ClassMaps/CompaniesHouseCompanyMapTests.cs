@@ -9,7 +9,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.ClassMaps;
 [TestClass]
 public class CompaniesHouseCompanyMapTests
 {
-    private const string _csvHeader = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
+    private const string _csvHeader = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,joiner_date,reporting_type\n";
 
     [TestMethod]
     [DataRow("123456")]
@@ -21,7 +21,7 @@ public class CompaniesHouseCompanyMapTests
             {
                 new() { organisation_id = "23123",  subsidiary_id = "Sub1", organisation_name = "OrgA", companies_house_number = companyHouseNumber, parent_child = "Parent", franchisee_licensee_tenant = string.Empty, joiner_date = "01/10/2024", reporting_type = "SELF", Errors = new() }
             };
-        var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
+        var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant},{s.joiner_date},{s.reporting_type}\n");
         string[] all = [_csvHeader, .. rawSource];
 
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
@@ -56,7 +56,7 @@ public class CompaniesHouseCompanyMapTests
             {
                 new() { organisation_id = "23123",  subsidiary_id = "Sub1", organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Child", franchisee_licensee_tenant = "Y", joiner_date = "01/10/2024", reporting_type = "SELF", Errors = new() }
             };
-        var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
+        var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant},{s.joiner_date},{s.reporting_type}\n");
         string[] all = [_csvHeader, .. rawSource];
 
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
@@ -91,7 +91,7 @@ public class CompaniesHouseCompanyMapTests
             {
                 new() { organisation_id = "23123",  subsidiary_id = "Sub1", organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Parent", franchisee_licensee_tenant = string.Empty, joiner_date = "01/10/2024", reporting_type = "SELF", Errors = new() }
             };
-        var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
+        var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant},{s.joiner_date},{s.reporting_type}\n");
         string[] all = [_csvHeader, .. rawSource];
 
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
@@ -119,15 +119,17 @@ public class CompaniesHouseCompanyMapTests
     }
 
     [TestMethod]
-    [DataRow("", "", "OrgA", "123456", "Child", "", "The 'organisation id' column is missing.")]
-    [DataRow("23123", "", "", "123456", "Child", "", "The 'organisation name' column is missing.")]
-    [DataRow("23123", "", "OrgA", "", "Child", "", "The 'companies house number' column is missing.")]
-    [DataRow("23123", "", "OrgA", " ", "Child", "", "The 'companies house number' column is missing.")]
-    [DataRow("23123", "", "OrgA", "123456", "", "", "The 'parent or child' column is missing.")]
-    [DataRow("23123", "", "OrgA", "123456789", "Child", "", "Your Companies House number must be 8 characters or fewer.")]
-    [DataRow("23123", "", "OrgA", " 123 456", "Child", "", "Spaces in Companies House Number not allowed. Invalid Number.")]
-    [DataRow("23123", "", "OrgA", "A123 456 ", "Child", "", "Spaces in Companies House Number not allowed. Invalid Number.")]
-    [DataRow("23123", "", "OrgA", "B123 456", "Child", "", "Spaces in Companies House Number not allowed. Invalid Number.")]
+    [DataRow("", "", "OrgA", "123456", "Child", "", "10/10/2024", "SELF", "The 'organisation id' column is missing.")]
+    [DataRow("23123", "", "", "123456", "Child", "", "10/10/2024", "SELF", "The 'organisation name' column is missing.")]
+    [DataRow("23123", "", "OrgA", "", "Child", "", "10/10/2024", "SELF", "The 'companies house number' column is missing.")]
+    [DataRow("23123", "", "OrgA", " ", "Child", "", "10/10/2024", "SELF", "The 'companies house number' column is missing.")]
+    [DataRow("23123", "", "OrgA", "123456", "", "", "10/10/2024", "SELF", "The 'parent or child' column is missing.")]
+    [DataRow("23123", "", "OrgA", "123456789", "Child", "", "10/10/2024", "SELF", "Your Companies House number must be 8 characters or fewer.")]
+    [DataRow("23123", "", "OrgA", " 123 456", "Child", "", "10/10/2024", "SELF", "Spaces in Companies House Number not allowed. Invalid Number.")]
+    [DataRow("23123", "", "OrgA", "A123 456 ", "Child", "", "10/10/2024", "SELF", "Spaces in Companies House Number not allowed. Invalid Number.")]
+    [DataRow("23123", "", "OrgA", "B123 456", "Child", "", "10/10/2024", "SELF", "Spaces in Companies House Number not allowed. Invalid Number.")]
+    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "", "SELF", "The 'joiner date' column is missing.")]
+    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "", "The 'reporting type' column is missing.")]
     public void ClassMap_Returns_Error(
         string organisationId,
         string subsidiaryId,
@@ -135,14 +137,16 @@ public class CompaniesHouseCompanyMapTests
         string companiesHouseNumber,
         string parentChild,
         string franchiseeLicenseeTenant,
+        string joinerDate,
+        string reportingType,
         string expectedErrorMessage)
     {
         // Arrange
         var dataModel = new List<CompaniesHouseCompany>
             {
-                new() { organisation_id = organisationId,  subsidiary_id = subsidiaryId, organisation_name = organisationName, companies_house_number = companiesHouseNumber, parent_child = parentChild, franchisee_licensee_tenant = franchiseeLicenseeTenant, joiner_date = "01/10/2024", reporting_type = "SELF", Errors = new() },
+                new() { organisation_id = organisationId,  subsidiary_id = subsidiaryId, organisation_name = organisationName, companies_house_number = companiesHouseNumber, parent_child = parentChild, franchisee_licensee_tenant = franchiseeLicenseeTenant, joiner_date = joinerDate, reporting_type = reportingType, Errors = new() },
             };
-        var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
+        var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant},{s.joiner_date},{s.reporting_type}\n");
         string[] all = [_csvHeader, .. rawSource];
 
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
@@ -164,11 +168,11 @@ public class CompaniesHouseCompanyMapTests
     }
 
     [TestMethod]
-    [DataRow("23123", "", "OrgA", "", "Child", "", "The 'companies house number' column is missing.")]
-    [DataRow("23123", "", "OrgA", "123456", "Child", "NO", "You can only enter 'Y' to the 'franchisee licensee tenant' column, or leave it blank.")]
-    [DataRow("23123", "", "OrgA", "123456", "", "", "The 'parent or child' column is missing.")]
-    [DataRow("23123", "", "OrgA", "123456789", "Child", "", "Your Companies House number must be 8 characters or fewer.")]
-    [DataRow("23123", "", "OrgA", " 123 456", "Child", "", "Spaces in Companies House Number not allowed. Invalid Number.")]
+    [DataRow("23123", "", "OrgA", "", "Child", "", "10/10/2024", "SELF", "The 'companies house number' column is missing.")]
+    [DataRow("23123", "", "OrgA", "123456", "Child", "NO", "10/10/2024", "SELF", "You can only enter 'Y' to the 'franchisee licensee tenant' column, or leave it blank.")]
+    [DataRow("23123", "", "OrgA", "123456", "", "", "10/10/2024", "SELF", "The 'parent or child' column is missing.")]
+    [DataRow("23123", "", "OrgA", "123456789", "Child", "", "10/10/2024", "SELF", "Your Companies House number must be 8 characters or fewer.")]
+    [DataRow("23123", "", "OrgA", " 123 456", "Child", "", "10/10/2024", "SELF", "Spaces in Companies House Number not allowed. Invalid Number.")]
     public void ClassMap_ValidationChecks_Returns_Error(
        string organisationId,
        string subsidiaryId,
@@ -176,14 +180,16 @@ public class CompaniesHouseCompanyMapTests
        string companiesHouseNumber,
        string parentChild,
        string franchiseeLicenseeTenant,
+       string joinerDate,
+       string reportingType,
        string expectedErrorMessage)
     {
         // Arrange
         var dataModel = new List<CompaniesHouseCompany>
             {
-                new() { organisation_id = organisationId,  subsidiary_id = subsidiaryId, organisation_name = organisationName, companies_house_number = companiesHouseNumber, parent_child = parentChild, franchisee_licensee_tenant = franchiseeLicenseeTenant, joiner_date = "01/10/2024", reporting_type = "SELF", Errors = new() },
+                new() { organisation_id = organisationId,  subsidiary_id = subsidiaryId, organisation_name = organisationName, companies_house_number = companiesHouseNumber, parent_child = parentChild, franchisee_licensee_tenant = franchiseeLicenseeTenant, joiner_date = joinerDate, reporting_type = reportingType, Errors = new() },
             };
-        var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
+        var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant},{s.joiner_date},{s.reporting_type}\n");
         string[] all = [_csvHeader, .. rawSource];
 
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
@@ -212,7 +218,7 @@ public class CompaniesHouseCompanyMapTests
             {
                 new() { organisation_id = "23123",  subsidiary_id = "Sub1", organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Parent", franchisee_licensee_tenant = string.Empty, joiner_date = "01/10/2024", reporting_type = "SELF", Errors = new() }
             };
-        var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
+        var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant},{s.joiner_date},{s.reporting_type}\n");
         string[] all = [
             _csvHeader,
             rawSource.First(),
