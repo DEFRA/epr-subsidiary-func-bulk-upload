@@ -1,26 +1,32 @@
 ﻿using System.Text;
 using CsvHelper.Configuration;
 using EPR.SubsidiaryBulkUpload.Application.ClassMaps;
+using EPR.SubsidiaryBulkUpload.Application.Constants;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
-using FrontendSchemeRegistration.Application.ClassMaps;
 using Microsoft.Extensions.Logging;
+using Microsoft.FeatureManagement;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services
 {
-    public class ParserClass(ILogger<ParserClass> logger) : IParserClass
+    public class ParserClass(ILogger<ParserClass> logger, IFeatureManager featureManager) : IParserClass
     {
         private readonly ILogger<ParserClass> _logger = logger;
+
+        private bool? enableSubsidiaryJoinerColumns { get; set; }
 
         public (ResponseClass ResponseClass, List<CompaniesHouseCompany> CompaniesHouseCompany) ParseWithHelper(Stream stream, IReaderConfiguration configuration)
         {
             var response = new ResponseClass { isDone = false, Messages = "None" };
             var rows = new List<CompaniesHouseCompany>();
+            enableSubsidiaryJoinerColumns = featureManager.IsEnabledAsync(FeatureFlags.EnableSubsidiaryJoinerColumns).GetAwaiter().GetResult()
+                ? false
+                : true;
 
             try
             {
-                rows = ParseFileData(stream, configuration, false);
+                rows = ParseFileData(stream, configuration, enableSubsidiaryJoinerColumns.Value);
                 response = new ResponseClass { isDone = true, Messages = "All Done!" };
             }
             catch (Exception ex)
@@ -32,33 +38,14 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             return (response, rows);
         }
 
-        public (ResponseClass ResponseClass, List<CompaniesHouseCompany> CompaniesHouseCompany) ParseWithHelper(Stream stream, IReaderConfiguration configuration, bool includeSubsidiaryJoinerAndLeaverColumns)
-        {
-            var response = new ResponseClass { isDone = false, Messages = "None" };
-            var rows = new List<CompaniesHouseCompany>();
-
-            try
-            {
-                rows = ParseFileData(stream, configuration, includeSubsidiaryJoinerAndLeaverColumns);
-                response = new ResponseClass { isDone = true, Messages = "All Done!" };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred while processing the CSV file. {Message}", ex.Message);
-                response = new ResponseClass { isDone = false, Messages = ex.Message };
-            }
-
-            return (response, rows);
-        }
-
-        private List<CompaniesHouseCompany> ParseFileData(Stream stream, IReaderConfiguration configuration, bool includeSubsidiaryJoinerAndLeaverColumns)
+        private List<CompaniesHouseCompany> ParseFileData(Stream stream, IReaderConfiguration configuration, bool includeSubsidiaryJoinerColumns)
         {
             var rows = new List<CompaniesHouseCompany>();
             using var reader = new StreamReader(stream);
             using var csv = new CustomCsvReader(reader, configuration);
 
-            csv.Context.RegisterClassMap<CompaniesHouseCompanyMap>();
-            csv.Context.RegisterClassMap(new ExportOrganisationSubsidiariesRowMap(includeSubsidiaryJoinerAndLeaverColumns));
+            // csv.Context.RegisterClassMap<CompaniesHouseCompanyMap>(includeSubsidiaryJoinerColumns);
+            csv.Context.RegisterClassMap(new CompaniesHouseCompanyMap(includeSubsidiaryJoinerColumns));
 
             try
             {

@@ -6,7 +6,5 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services.Interfaces
     public interface IParserClass
     {
         public (ResponseClass ResponseClass, List<CompaniesHouseCompany> CompaniesHouseCompany) ParseWithHelper(Stream stream, IReaderConfiguration configuration);
-
-        public (ResponseClass ResponseClass, List<CompaniesHouseCompany> CompaniesHouseCompany) ParseWithHelper(Stream stream, IReaderConfiguration configuration, bool includeSubsidiaryJoinerAndLeaverColumns);
     }
 }
