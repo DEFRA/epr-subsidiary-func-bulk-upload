@@ -138,33 +138,36 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
                     lineNumber, rawData, BulkUpdateErrors.ReportingTypeRequiredMessage, BulkUpdateErrors.ReportingTypeRequired));
         }
 
-        if (!string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.reporting_type))) && !string.Equals(row.GetField(nameof(CompaniesHouseCompany.parent_child)), "parent", StringComparison.OrdinalIgnoreCase))
+        if (IncludeSubsidiaryJoinerColumns == true)
         {
-            var reportingType = row.GetField(nameof(CompaniesHouseCompany.reporting_type));
-
-            switch (reportingType)
+            if (!string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.reporting_type))) && !string.Equals(row.GetField(nameof(CompaniesHouseCompany.parent_child)), "parent", StringComparison.OrdinalIgnoreCase))
             {
-                case "SELF":
-                case "GROUP":
-                    break;
-                default:
+                var reportingType = row.GetField(nameof(CompaniesHouseCompany.reporting_type));
+
+                switch (reportingType)
+                {
+                    case "SELF":
+                    case "GROUP":
+                        break;
+                    default:
+                        errors.Add(
+                            CreateError(
+                                lineNumber, rawData, BulkUpdateErrors.ReportingTypeValidValueCheckMessage, BulkUpdateErrors.ReportingTypeValidValueCheck));
+                        break;
+                }
+            }
+
+            string[] formats = { "dd/MM/yyyy", "dd/MMM/yyyy" };
+            DateTime dateValue;
+            if (!string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.joiner_date))))
+            {
+                var jointerDate = row.GetField(nameof(CompaniesHouseCompany.joiner_date));
+                if (!DateTime.TryParseExact(jointerDate, formats, new CultureInfo("en-GB"), DateTimeStyles.None, out dateValue))
+                {
                     errors.Add(
                         CreateError(
-                            lineNumber, rawData, BulkUpdateErrors.ReportingTypeValidValueCheckMessage, BulkUpdateErrors.ReportingTypeValidValueCheck));
-                    break;
-            }
-        }
-
-        string[] formats = { "dd/MM/yyyy", "dd/MMM/yyyy" };
-        DateTime dateValue;
-        if (!string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.joiner_date))))
-            {
-            var jointerDate = row.GetField(nameof(CompaniesHouseCompany.joiner_date));
-            if (!DateTime.TryParseExact(jointerDate, formats, new CultureInfo("en-GB"), DateTimeStyles.None, out dateValue))
-            {
-                errors.Add(
-                    CreateError(
-                        lineNumber, rawData, BulkUpdateErrors.JointerDateFormatIncorrectMessage, BulkUpdateErrors.JointerDateFormatIncorrect));
+                            lineNumber, rawData, BulkUpdateErrors.JointerDateFormatIncorrectMessage, BulkUpdateErrors.JointerDateFormatIncorrect));
+                }
             }
         }
 
