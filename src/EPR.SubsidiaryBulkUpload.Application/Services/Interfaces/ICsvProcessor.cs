@@ -7,5 +7,8 @@ public interface ICsvProcessor
     Task<IEnumerable<TD>> ProcessStreamWithMapping<TD, TM>(Stream stream, IReaderConfiguration configuration)
         where TM : ClassMap;
 
+    Task<IEnumerable<TD>> ProcessStreamWithMapping<TD, TM>(Stream stream, IReaderConfiguration configuration, bool includeSubsidiaryJoinerAndLeaverColumns)
+        where TM : ClassMap;
+
     Task<IEnumerable<T>> ProcessStream<T>(Stream stream, IReaderConfiguration configuration);
 }

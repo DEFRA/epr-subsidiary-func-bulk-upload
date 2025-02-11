@@ -4,6 +4,7 @@ using EPR.SubsidiaryBulkUpload.Application.ClassMaps;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
+using FrontendSchemeRegistration.Application.ClassMaps;
 using Microsoft.Extensions.Logging;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services
@@ -19,7 +20,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
 
             try
             {
-                rows = ParseFileData(stream, configuration);
+                rows = ParseFileData(stream, configuration, false);
                 response = new ResponseClass { isDone = true, Messages = "All Done!" };
             }
             catch (Exception ex)
@@ -31,13 +32,33 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             return (response, rows);
         }
 
-        private List<CompaniesHouseCompany> ParseFileData(Stream stream, IReaderConfiguration configuration)
+        public (ResponseClass ResponseClass, List<CompaniesHouseCompany> CompaniesHouseCompany) ParseWithHelper(Stream stream, IReaderConfiguration configuration, bool includeSubsidiaryJoinerAndLeaverColumns)
+        {
+            var response = new ResponseClass { isDone = false, Messages = "None" };
+            var rows = new List<CompaniesHouseCompany>();
+
+            try
+            {
+                rows = ParseFileData(stream, configuration, includeSubsidiaryJoinerAndLeaverColumns);
+                response = new ResponseClass { isDone = true, Messages = "All Done!" };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while processing the CSV file. {Message}", ex.Message);
+                response = new ResponseClass { isDone = false, Messages = ex.Message };
+            }
+
+            return (response, rows);
+        }
+
+        private List<CompaniesHouseCompany> ParseFileData(Stream stream, IReaderConfiguration configuration, bool includeSubsidiaryJoinerAndLeaverColumns)
         {
             var rows = new List<CompaniesHouseCompany>();
             using var reader = new StreamReader(stream);
             using var csv = new CustomCsvReader(reader, configuration);
 
             csv.Context.RegisterClassMap<CompaniesHouseCompanyMap>();
+            csv.Context.RegisterClassMap(new ExportOrganisationSubsidiariesRowMap(includeSubsidiaryJoinerAndLeaverColumns));
 
             try
             {

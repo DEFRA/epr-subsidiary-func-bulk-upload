@@ -22,12 +22,29 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             return records;
         }
 
+        public async Task<IEnumerable<TD>> ProcessStreamWithMapping<TD, TM>(Stream stream, IReaderConfiguration configuration, bool includeSubsidiaryJoinerAndLeaverColumns)
+             where TM : ClassMap
+        {
+            try
+            {
+                var (_, theList) = _parserClass.ParseWithHelper(stream, configuration, includeSubsidiaryJoinerAndLeaverColumns);
+                return (IEnumerable<TD>)theList;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while processing ProcessStream {Error}", ex.Message);
+                throw;
+            }
+
+            return Enumerable.Empty<TD>();
+        }
+
         public async Task<IEnumerable<TD>> ProcessStreamWithMapping<TD, TM>(Stream stream, IReaderConfiguration configuration)
             where TM : ClassMap
         {
             try
             {
-                var (_, theList) = _parserClass.ParseWithHelper(stream, configuration);
+                var (_, theList) = _parserClass.ParseWithHelper(stream, configuration, false);
                 return (IEnumerable<TD>)theList;
             }
             catch (Exception ex)

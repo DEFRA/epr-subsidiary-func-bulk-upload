@@ -46,11 +46,11 @@ public class BulkUploadFunction
         }
 
         var userRequestModel = metaData.ToUserRequestModel();
-
+        bool includeSubsidiaryJoinerColumns = false;
         if (userRequestModel != null)
         {
             await _orchestration.NotifyStart(userRequestModel);
-            var records = await _csvProcessor.ProcessStreamWithMapping<CompaniesHouseCompany, CompaniesHouseCompanyMap>(content, CsvConfigurations.BulkUploadCsvConfiguration);
+            var records = await _csvProcessor.ProcessStreamWithMapping<CompaniesHouseCompany, CompaniesHouseCompanyMap>(content, CsvConfigurations.BulkUploadCsvConfiguration, includeSubsidiaryJoinerColumns);
             await _orchestration.NotifyErrors(records, userRequestModel);
             await _orchestration.Orchestrate(records, userRequestModel);
             _logger.LogInformation("Blob trigger processed {Count} records from csv blob {Name}", records.Count(), client.Name);

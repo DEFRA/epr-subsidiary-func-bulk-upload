@@ -56,4 +56,7 @@
       <Value>Program.cs</Value>
 	</SonarQubeSetting>
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Constants\" />
+  </ItemGroup>
 </Project>
