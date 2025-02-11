@@ -10,7 +10,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.ClassMaps;
 [ExcludeFromCodeCoverage]
 public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
 {
-    public CompaniesHouseCompanyMap(bool includeSubsidiaryJoinerAndLeaverColumns)
+    public CompaniesHouseCompanyMap(bool includeSubsidiaryJoinerColumns)
     {
         Map(m => m.organisation_id).Index(0).Validate(field => !field.Equals(null));
         Map(m => m.subsidiary_id);
@@ -22,7 +22,7 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
         Map(m => m.RawRow).Convert(args => args.Row.Context.Reader.Parser.RawRecord);
         Map(m => m.FileLineNumber).Convert(args => args.Row.Context.Reader.Parser.Row);
 
-        if (includeSubsidiaryJoinerAndLeaverColumns)
+        if (includeSubsidiaryJoinerColumns)
         {
             Map(m => m.joiner_date);
             Map(m => m.reporting_type);
