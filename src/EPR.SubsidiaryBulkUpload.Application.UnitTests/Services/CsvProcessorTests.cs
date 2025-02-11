@@ -91,7 +91,7 @@ public class CsvProcessorTests
 
         // Act & Assert
         await Assert.ThrowsExceptionAsync<Exception>(() =>
-            processor.ProcessStreamWithMapping<CompaniesHouseCompany, CompaniesHouseCompanyMap>(stream, configuration, false));
+            processor.ProcessStreamWithMapping<CompaniesHouseCompany, CompaniesHouseCompanyMap>(stream, configuration));
 
         // Assert
         _mockLogger.Verify(

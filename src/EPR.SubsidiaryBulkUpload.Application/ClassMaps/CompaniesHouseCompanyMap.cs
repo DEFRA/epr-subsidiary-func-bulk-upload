@@ -22,12 +22,16 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
         Map(m => m.RawRow).Convert(args => args.Row.Context.Reader.Parser.RawRecord);
         Map(m => m.FileLineNumber).Convert(args => args.Row.Context.Reader.Parser.Row);
 
-        if (includeSubsidiaryJoinerColumns)
+        IncludeSubsidiaryJoinerColumns = includeSubsidiaryJoinerColumns;
+
+        if (IncludeSubsidiaryJoinerColumns)
         {
             Map(m => m.joiner_date);
             Map(m => m.reporting_type);
         }
     }
+
+    private static bool IncludeSubsidiaryJoinerColumns { get; set; }
 
     private static List<UploadFileErrorModel> GetRowValidationErrors(IReaderRow row)
     {
@@ -101,11 +105,23 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
             }
         }
 
-        if (row.ColumnCount > CsvFileValidationConditions.MaxNumberOfColumnsAllowed)
+        if (IncludeSubsidiaryJoinerColumns == true)
         {
-            errors.Add(
-                   CreateError(
-                       lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
+            if (row.ColumnCount > CsvFileValidationConditions.MaxNumberOfColumnsAllowed)
+            {
+                errors.Add(
+                       CreateError(
+                           lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
+            }
+        }
+        else
+        {
+            if (row.ColumnCount > 6)
+            {
+                errors.Add(
+                       CreateError(
+                           lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
+            }
         }
 
         if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.joiner_date))) && !string.Equals(row.GetField(nameof(CompaniesHouseCompany.parent_child)), "parent", StringComparison.OrdinalIgnoreCase))

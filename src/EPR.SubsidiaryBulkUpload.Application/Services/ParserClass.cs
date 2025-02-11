@@ -14,19 +14,15 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
     {
         private readonly ILogger<ParserClass> _logger = logger;
 
-        private bool? enableSubsidiaryJoinerColumns { get; set; }
-
         public (ResponseClass ResponseClass, List<CompaniesHouseCompany> CompaniesHouseCompany) ParseWithHelper(Stream stream, IReaderConfiguration configuration)
         {
             var response = new ResponseClass { isDone = false, Messages = "None" };
             var rows = new List<CompaniesHouseCompany>();
-            enableSubsidiaryJoinerColumns = featureManager.IsEnabledAsync(FeatureFlags.EnableSubsidiaryJoinerColumns).GetAwaiter().GetResult()
-                ? false
-                : true;
+            var enableSubsidiaryJoinerColumns = featureManager.IsEnabledAsync(FeatureFlags.EnableSubsidiaryJoinerColumns).GetAwaiter().GetResult();
 
             try
             {
-                rows = ParseFileData(stream, configuration, enableSubsidiaryJoinerColumns.Value);
+                rows = ParseFileData(stream, configuration, enableSubsidiaryJoinerColumns);
                 response = new ResponseClass { isDone = true, Messages = "All Done!" };
             }
             catch (Exception ex)

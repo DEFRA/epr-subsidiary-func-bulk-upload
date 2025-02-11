@@ -6,7 +6,6 @@ using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 using Pipelines.Sockets.Unofficial.Arenas;
-using StackExchange.Redis;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services;
 

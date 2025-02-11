@@ -4,6 +4,7 @@ using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using EPR.SubsidiaryBulkUpload.Application.UnitTests.Mocks;
 using Microsoft.Extensions.Logging;
+using Microsoft.FeatureManagement;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 
@@ -20,6 +21,7 @@ public class ParserClassTests
     private List<CompaniesHouseCompany> _listDataModel = null;
     private Mock<ILogger<ParserClass>> _loggerMock;
     private ParserClass _sut;
+    private Mock<IFeatureManager> _mockFeatureManager;
 
     [TestInitialize]
     public void TestInitialize()
@@ -27,14 +29,14 @@ public class ParserClassTests
         _fixture = new();
 
         _loggerMock = new Mock<ILogger<ParserClass>>();
-
+        _mockFeatureManager = new Mock<IFeatureManager>();
         _listDataModel = new List<CompaniesHouseCompany>
             {
                 new() { organisation_id = "23123",  subsidiary_id = string.Empty, organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Parent", franchisee_licensee_tenant = string.Empty, joiner_date = "01/10/2024", reporting_type = "SELF", Errors = new() },
                 new() { organisation_id = "23123", subsidiary_id = "Sub1", organisation_name = "OrgB", companies_house_number = "654321", parent_child = "Child", franchisee_licensee_tenant = string.Empty, joiner_date = "01/10/2024", reporting_type = "SELF", Errors = new() }
             };
 
-        _sut = new ParserClass(_loggerMock.Object);
+        _sut = new ParserClass(_loggerMock.Object, _mockFeatureManager.Object);
     }
 
     [TestMethod]
