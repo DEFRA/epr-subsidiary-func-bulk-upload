@@ -134,8 +134,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
     private async Task<LinkOrganisationModel?> GetLinkModelForCompaniesHouseData(CompaniesHouseCompany subsidiary, OrganisationResponseModel parentOrg, Guid userId)
     {
-        ReportingType reportingTypeEnum;
-        Enum.TryParse(subsidiary.reporting_type, out reportingTypeEnum);
+        var reportingTypeEnum = Enum.TryParse<ReportingType>(subsidiary.reporting_type, true, out var reportingType) ? reportingType : (ReportingType?)null;
 
         var newSubsidiaryModel = new LinkOrganisationModel()
         {

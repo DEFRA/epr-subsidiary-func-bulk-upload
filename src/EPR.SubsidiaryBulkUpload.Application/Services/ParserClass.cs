@@ -39,8 +39,6 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             var rows = new List<CompaniesHouseCompany>();
             using var reader = new StreamReader(stream);
             using var csv = new CustomCsvReader(reader, configuration);
-
-            // csv.Context.RegisterClassMap<CompaniesHouseCompanyMap>(includeSubsidiaryJoinerColumns);
             csv.Context.RegisterClassMap(new CompaniesHouseCompanyMap(includeSubsidiaryJoinerColumns));
 
             try

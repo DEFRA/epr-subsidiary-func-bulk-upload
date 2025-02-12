@@ -105,7 +105,7 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
             }
         }
 
-        if (IncludeSubsidiaryJoinerColumns == true)
+        if (IncludeSubsidiaryJoinerColumns)
         {
             if (row.ColumnCount > CsvFileValidationConditions.MaxNumberOfColumnsAllowed)
             {
@@ -138,7 +138,7 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
                     lineNumber, rawData, BulkUpdateErrors.ReportingTypeRequiredMessage, BulkUpdateErrors.ReportingTypeRequired));
         }
 
-        if (IncludeSubsidiaryJoinerColumns == true)
+        if (IncludeSubsidiaryJoinerColumns)
         {
             if (!string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.reporting_type))) && !string.Equals(row.GetField(nameof(CompaniesHouseCompany.parent_child)), "parent", StringComparison.OrdinalIgnoreCase))
             {

@@ -3,6 +3,6 @@
 public enum ReportingType
 {
     NotSet = 0,
-    SELF = 1,
-    GROUP = 2
+    Self = 1,
+    Group = 2
 }
