@@ -29,7 +29,8 @@ public class CompaniesHouseCompanyMapTests
         using var reader = new StreamReader(stream);
         using var csvReader = new CustomCsvReader(reader, CsvConfigurations.BulkUploadCsvConfiguration);
 
-        csvReader.Context.RegisterClassMap<CompaniesHouseCompanyMap>();
+        var map = new CompaniesHouseCompanyMap(true);
+        csvReader.Context.RegisterClassMap(map);
 
         // Act
         csvReader.Read();
@@ -60,11 +61,10 @@ public class CompaniesHouseCompanyMapTests
         string[] all = [_csvHeader, .. rawSource];
 
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
-
         using var reader = new StreamReader(stream);
         using var csvReader = new CustomCsvReader(reader, CsvConfigurations.BulkUploadCsvConfiguration);
-
-        csvReader.Context.RegisterClassMap<CompaniesHouseCompanyMap>();
+        var map = new CompaniesHouseCompanyMap(true);
+        csvReader.Context.RegisterClassMap(map);
 
         // Act
         csvReader.Read();
@@ -99,7 +99,8 @@ public class CompaniesHouseCompanyMapTests
         using var reader = new StreamReader(stream);
         using var csvReader = new CustomCsvReader(reader, CsvConfigurations.BulkUploadCsvConfiguration);
 
-        csvReader.Context.RegisterClassMap<CompaniesHouseCompanyMap>();
+        var map = new CompaniesHouseCompanyMap(true);
+        csvReader.Context.RegisterClassMap(map);
 
         // Act
         csvReader.Read();
@@ -154,7 +155,8 @@ public class CompaniesHouseCompanyMapTests
         using var reader = new StreamReader(stream);
         using var csvReader = new CustomCsvReader(reader, CsvConfigurations.BulkUploadCsvConfiguration);
 
-        csvReader.Context.RegisterClassMap<CompaniesHouseCompanyMap>();
+        var map = new CompaniesHouseCompanyMap(true);
+        csvReader.Context.RegisterClassMap(map);
 
         // Act
         csvReader.Read();
@@ -197,7 +199,8 @@ public class CompaniesHouseCompanyMapTests
         using var reader = new StreamReader(stream);
         using var csvReader = new CustomCsvReader(reader, CsvConfigurations.BulkUploadCsvConfiguration);
 
-        csvReader.Context.RegisterClassMap<CompaniesHouseCompanyMap>();
+        var map = new CompaniesHouseCompanyMap(true);
+        csvReader.Context.RegisterClassMap(map);
 
         // Act
         csvReader.Read();
@@ -232,7 +235,8 @@ public class CompaniesHouseCompanyMapTests
         using var reader = new StreamReader(stream);
         using var csvReader = new CustomCsvReader(reader, CsvConfigurations.BulkUploadCsvConfiguration);
 
-        csvReader.Context.RegisterClassMap<CompaniesHouseCompanyMap>();
+        var map = new CompaniesHouseCompanyMap(true);
+        csvReader.Context.RegisterClassMap(map);
 
         // Act
         csvReader.Read();
