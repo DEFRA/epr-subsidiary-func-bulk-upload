@@ -46,7 +46,6 @@ public class BulkUploadFunction
         }
 
         var userRequestModel = metaData.ToUserRequestModel();
-        bool includeSubsidiaryJoinerColumns = false;
         if (userRequestModel != null)
         {
             await _orchestration.NotifyStart(userRequestModel);
