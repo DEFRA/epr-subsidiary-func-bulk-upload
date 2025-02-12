@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using EPR.SubsidiaryBulkUpload.Application.Constants;
 using EPR.SubsidiaryBulkUpload.Application.CsvReaderConfiguration;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Services;
@@ -30,6 +31,10 @@ public class ParserClassTests
 
         _loggerMock = new Mock<ILogger<ParserClass>>();
         _mockFeatureManager = new Mock<IFeatureManager>();
+        _mockFeatureManager
+            .Setup(x => x.IsEnabledAsync(FeatureFlags.EnableSubsidiaryJoinerColumns))
+            .ReturnsAsync(true);
+
         _listDataModel = new List<CompaniesHouseCompany>
             {
                 new() { organisation_id = "23123",  subsidiary_id = string.Empty, organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Parent", franchisee_licensee_tenant = string.Empty, joiner_date = "01/10/2024", reporting_type = "SELF", Errors = new() },
