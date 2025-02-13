@@ -148,6 +148,10 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
                 {
                     case "SELF":
                     case "GROUP":
+                    case "Self":
+                    case "Group":
+                    case "self":
+                    case "group":
                         break;
                     default:
                         errors.Add(

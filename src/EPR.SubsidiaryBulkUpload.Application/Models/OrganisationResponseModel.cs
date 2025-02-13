@@ -28,4 +28,10 @@ public class OrganisationResponseModel
     public string referenceNumber { get; set; }
 
     public string nation { get; set; }
+
+    public OrganisationRelationshipModel? OrganisationRelationship { get; set; }
+
+    public string joinerDate { get; set; }
+
+    public string reportingType { get; set; }
 }
