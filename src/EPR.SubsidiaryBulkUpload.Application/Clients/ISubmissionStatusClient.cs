@@ -8,5 +8,5 @@ public interface ISubmissionStatusClient
 {
     Task<HttpStatusCode> CreateSubmissionAsync(CreateSubmission submission);
 
-    Task<HttpStatusCode> CreateEventAsync(AntivirusCheckEvent antivirusEvent, Guid submissionId);
+    Task<HttpStatusCode> CreateEventAsync(AbstractEvent @event, Guid submissionId);
 }

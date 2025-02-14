@@ -10,4 +10,8 @@ public class UserRequestModel
     public Guid OrganisationId { get; set; }
 
     public Guid? ComplianceSchemeId { get; set; }
+
+    public string? FileName { get; set; }
+
+    public Guid? SubmissionId { get; set; }
 }

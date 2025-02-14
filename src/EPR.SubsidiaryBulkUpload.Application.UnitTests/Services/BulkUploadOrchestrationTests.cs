@@ -1,5 +1,7 @@
-﻿using EPR.SubsidiaryBulkUpload.Application.DTOs;
+﻿using EPR.SubsidiaryBulkUpload.Application.Clients;
+using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Models;
+using EPR.SubsidiaryBulkUpload.Application.Models.Events;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -14,6 +16,7 @@ public class BulkUploadOrchestrationTests
     private Mock<ISubsidiaryService> _subsidiaryService;
     private Mock<IBulkSubsidiaryProcessor> _bulkSubsidiaryProcessor;
     private Mock<INotificationService> _notificationService;
+    private Mock<ISubmissionStatusClient> _submissionStatusClient;
 
     [TestInitialize]
     public void TestInitialize()
@@ -23,6 +26,7 @@ public class BulkUploadOrchestrationTests
         _subsidiaryService = new Mock<ISubsidiaryService>();
         _bulkSubsidiaryProcessor = new Mock<IBulkSubsidiaryProcessor>();
         _notificationService = new Mock<INotificationService>();
+        _submissionStatusClient = new Mock<ISubmissionStatusClient>();
     }
 
     [TestMethod]
@@ -50,7 +54,7 @@ public class BulkUploadOrchestrationTests
         _subsidiaryService.Setup(se => se.GetCompanyByCompaniesHouseNumber(It.IsAny<string>())).ReturnsAsync(subsidiaries[0]);
         _subsidiaryService.Setup(se => se.GetCompanyByCompaniesHouseNumber(It.IsAny<string>())).ReturnsAsync(subsidiaries[1]);
 
-        var orchestrator = new BulkUploadOrchestration(_recordExtraction.Object, _subsidiaryService.Object, _bulkSubsidiaryProcessor.Object, _notificationService.Object, NullLogger<BulkUploadOrchestration>.Instance);
+        var orchestrator = new BulkUploadOrchestration(_recordExtraction.Object, _subsidiaryService.Object, _bulkSubsidiaryProcessor.Object, _notificationService.Object, _submissionStatusClient.Object, NullLogger<BulkUploadOrchestration>.Instance);
 
         var userId = Guid.NewGuid();
         var organisationId = Guid.NewGuid();
@@ -69,6 +73,74 @@ public class BulkUploadOrchestrationTests
     }
 
     [TestMethod]
+    public async Task Should_Create_SubsidiariesBulkUploadCompleteEvent()
+    {
+        // Arrange
+        var companyData = _fixture
+            .Build<CompaniesHouseCompany>()
+            .With(c => c.Errors, () => new List<UploadFileErrorModel>())
+            .CreateMany<CompaniesHouseCompany>();
+
+        var parentAndSubsidiaries = _fixture.CreateMany<ParentAndSubsidiaries>(2).ToArray();
+
+        var subsidiaries = _fixture.CreateMany<OrganisationResponseModel>(2).ToArray();
+
+        subsidiaries[0].companiesHouseNumber = parentAndSubsidiaries[0].Parent.companies_house_number;
+        subsidiaries[1].companiesHouseNumber = parentAndSubsidiaries[1].Parent.companies_house_number;
+        subsidiaries[0].name = parentAndSubsidiaries[0].Parent.organisation_name;
+        subsidiaries[1].name = parentAndSubsidiaries[1].Parent.organisation_name;
+
+        _recordExtraction.Setup(re => re.ExtractParentsAndSubsidiaries(companyData)).Returns(parentAndSubsidiaries);
+        _bulkSubsidiaryProcessor.Setup(se => se.Process(It.IsAny<IEnumerable<CompaniesHouseCompany>>(), It.IsAny<CompaniesHouseCompany>(), It.IsAny<OrganisationResponseModel>(), It.IsAny<UserRequestModel>())).ReturnsAsync(1);
+        _subsidiaryService.Setup(se => se.GetCompanyByReferenceNumber(It.IsAny<string>())).ReturnsAsync(subsidiaries[0]);
+        _subsidiaryService.Setup(se => se.GetCompanyByReferenceNumber(It.IsAny<string>())).ReturnsAsync(subsidiaries[1]);
+        _subsidiaryService.Setup(se => se.GetCompanyByCompaniesHouseNumber(It.IsAny<string>())).ReturnsAsync(subsidiaries[0]);
+        _subsidiaryService.Setup(se => se.GetCompanyByCompaniesHouseNumber(It.IsAny<string>())).ReturnsAsync(subsidiaries[1]);
+
+        var orchestrator = new BulkUploadOrchestration(_recordExtraction.Object, _subsidiaryService.Object, _bulkSubsidiaryProcessor.Object, _notificationService.Object, _submissionStatusClient.Object, NullLogger<BulkUploadOrchestration>.Instance);
+
+        const string fileName = "test.csv";
+        var fileId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var organisationId = Guid.NewGuid();
+        var complianceSchemeId = Guid.NewGuid();
+
+        var submissionId = Guid.NewGuid();
+        var userRequestModel = new UserRequestModel
+        {
+            FileName = fileName,
+            UserId = userId,
+            OrganisationId = organisationId,
+            SubmissionId = submissionId,
+            ComplianceSchemeId = complianceSchemeId
+        };
+
+        var expectedCompletionEvent = new SubsidiariesBulkUploadCompleteEvent
+        {
+            FileName = fileName,
+            UserId = userId,
+            OrganisationId = organisationId,
+            ComplianceSchemeId = complianceSchemeId,
+        };
+
+        // Act
+        await orchestrator.Orchestrate(companyData, userRequestModel);
+
+        // Assert
+        _submissionStatusClient.Verify(s => s.CreateEventAsync(It.IsAny<SubsidiariesBulkUploadCompleteEvent>(), submissionId));
+        _submissionStatusClient.Verify(s =>
+            s.CreateEventAsync(
+                It.Is<SubsidiariesBulkUploadCompleteEvent>(e =>
+                    e.Type == EventType.SubsidiariesBulkUploadComplete &&
+                    e.FileName == fileName &&
+                    e.FileType == FileType.Subsidiaries &&
+                    e.UserId == userId &&
+                    e.OrganisationId == organisationId &&
+                    e.ComplianceSchemeId == complianceSchemeId),
+                submissionId));
+    }
+
+    [TestMethod]
     public async Task Should_Notify_Errors()
     {
         // Arrange
@@ -83,7 +155,7 @@ public class BulkUploadOrchestrationTests
         var organisationId = Guid.NewGuid();
         var userRequestModel = new UserRequestModel { UserId = userId, OrganisationId = organisationId };
 
-        var orchestrator = new BulkUploadOrchestration(_recordExtraction.Object, _subsidiaryService.Object, _bulkSubsidiaryProcessor.Object, _notificationService.Object, NullLogger<BulkUploadOrchestration>.Instance);
+        var orchestrator = new BulkUploadOrchestration(_recordExtraction.Object, _subsidiaryService.Object, _bulkSubsidiaryProcessor.Object, _notificationService.Object, _submissionStatusClient.Object, NullLogger<BulkUploadOrchestration>.Instance);
 
         // Act
         await orchestrator.NotifyErrors(companyData, userRequestModel);
@@ -101,7 +173,7 @@ public class BulkUploadOrchestrationTests
         var organisationId = Guid.NewGuid();
         var userRequestModel = new UserRequestModel { UserId = userId, OrganisationId = organisationId };
 
-        var orchestrator = new BulkUploadOrchestration(_recordExtraction.Object, _subsidiaryService.Object, _bulkSubsidiaryProcessor.Object, _notificationService.Object, NullLogger<BulkUploadOrchestration>.Instance);
+        var orchestrator = new BulkUploadOrchestration(_recordExtraction.Object, _subsidiaryService.Object, _bulkSubsidiaryProcessor.Object, _notificationService.Object, _submissionStatusClient.Object, NullLogger<BulkUploadOrchestration>.Instance);
 
         // Act
         await orchestrator.NotifyStart(userRequestModel);
@@ -118,7 +190,7 @@ public class BulkUploadOrchestrationTests
         var organisationId = Guid.NewGuid();
         var userRequestModel = new UserRequestModel { UserId = userId, OrganisationId = organisationId };
 
-        var orchestrator = new BulkUploadOrchestration(_recordExtraction.Object, _subsidiaryService.Object, _bulkSubsidiaryProcessor.Object, _notificationService.Object, NullLogger<BulkUploadOrchestration>.Instance);
+        var orchestrator = new BulkUploadOrchestration(_recordExtraction.Object, _subsidiaryService.Object, _bulkSubsidiaryProcessor.Object, _notificationService.Object, _submissionStatusClient.Object, NullLogger<BulkUploadOrchestration>.Instance);
 
         // Act
         await orchestrator.NotifyErrors(companyData, userRequestModel);
@@ -141,7 +213,7 @@ public class BulkUploadOrchestrationTests
         var organisationId = Guid.NewGuid();
         var userRequestModel = new UserRequestModel { UserId = userId, OrganisationId = organisationId };
 
-        var orchestrator = new BulkUploadOrchestration(_recordExtraction.Object, _subsidiaryService.Object, _bulkSubsidiaryProcessor.Object, _notificationService.Object, NullLogger<BulkUploadOrchestration>.Instance);
+        var orchestrator = new BulkUploadOrchestration(_recordExtraction.Object, _subsidiaryService.Object, _bulkSubsidiaryProcessor.Object, _notificationService.Object, _submissionStatusClient.Object, NullLogger<BulkUploadOrchestration>.Instance);
 
         // Act
         await orchestrator.NotifyErrors(companyData, userRequestModel);
@@ -160,7 +232,7 @@ public class BulkUploadOrchestrationTests
         var organisationId = Guid.NewGuid();
         var userRequestModel = new UserRequestModel { UserId = userId, OrganisationId = organisationId };
 
-        var orchestrator = new BulkUploadOrchestration(_recordExtraction.Object, _subsidiaryService.Object, _bulkSubsidiaryProcessor.Object, _notificationService.Object, NullLogger<BulkUploadOrchestration>.Instance);
+        var orchestrator = new BulkUploadOrchestration(_recordExtraction.Object, _subsidiaryService.Object, _bulkSubsidiaryProcessor.Object, _notificationService.Object, _submissionStatusClient.Object, NullLogger<BulkUploadOrchestration>.Instance);
 
         // Act
         await orchestrator.NotifyErrors(companyData, userRequestModel);
@@ -219,7 +291,7 @@ public class BulkUploadOrchestrationTests
         _subsidiaryService.Setup(se => se.GetCompanyByCompaniesHouseNumber(It.IsAny<string>())).ReturnsAsync(subsidiaries[0]);
         _subsidiaryService.Setup(se => se.GetCompanyByCompaniesHouseNumber(It.IsAny<string>())).ReturnsAsync(subsidiaries[1]);
         _subsidiaryService.Setup(se => se.GetCompanyByCompaniesHouseNumber(It.IsAny<string>())).ReturnsAsync(subsidiaries[2]);
-        var orchestrator = new BulkUploadOrchestration(_recordExtraction.Object, _subsidiaryService.Object, _bulkSubsidiaryProcessor.Object, _notificationService.Object, NullLogger<BulkUploadOrchestration>.Instance);
+        var orchestrator = new BulkUploadOrchestration(_recordExtraction.Object, _subsidiaryService.Object, _bulkSubsidiaryProcessor.Object, _notificationService.Object, _submissionStatusClient.Object, NullLogger<BulkUploadOrchestration>.Instance);
 
         var userId = Guid.NewGuid();
         var organisationId = Guid.NewGuid();
@@ -359,7 +431,7 @@ public class BulkUploadOrchestrationTests
         _subsidiaryService.Setup(se => se.GetCompanyByCompaniesHouseNumber(It.IsAny<string>())).ReturnsAsync(subsidiaries[0]);
         _subsidiaryService.Setup(se => se.GetCompanyByCompaniesHouseNumber(It.IsAny<string>())).ReturnsAsync(subsidiaries[1]);
         _subsidiaryService.Setup(se => se.GetCompanyByCompaniesHouseNumber(It.IsAny<string>())).ReturnsAsync(subsidiaries[2]);
-        var orchestrator = new BulkUploadOrchestration(_recordExtraction.Object, _subsidiaryService.Object, _bulkSubsidiaryProcessor.Object, _notificationService.Object, NullLogger<BulkUploadOrchestration>.Instance);
+        var orchestrator = new BulkUploadOrchestration(_recordExtraction.Object, _subsidiaryService.Object, _bulkSubsidiaryProcessor.Object, _notificationService.Object, _submissionStatusClient.Object, NullLogger<BulkUploadOrchestration>.Instance);
 
         var userId = Guid.NewGuid();
         var organisationId = Guid.NewGuid();
@@ -411,7 +483,7 @@ public class BulkUploadOrchestrationTests
         _subsidiaryService.Setup(se => se.GetCompanyByCompaniesHouseNumber(It.IsAny<string>())).ReturnsAsync(subsidiaries[0]);
         _subsidiaryService.Setup(se => se.GetCompanyByCompaniesHouseNumber(It.IsAny<string>())).ReturnsAsync(subsidiaries[1]);
 
-        var orchestrator = new BulkUploadOrchestration(_recordExtraction.Object, _subsidiaryService.Object, _bulkSubsidiaryProcessor.Object, _notificationService.Object, NullLogger<BulkUploadOrchestration>.Instance);
+        var orchestrator = new BulkUploadOrchestration(_recordExtraction.Object, _subsidiaryService.Object, _bulkSubsidiaryProcessor.Object, _notificationService.Object, _submissionStatusClient.Object, NullLogger<BulkUploadOrchestration>.Instance);
 
         var userRequestModel = new UserRequestModel
         {
@@ -456,7 +528,7 @@ public class BulkUploadOrchestrationTests
         _subsidiaryService.Setup(se => se.GetCompanyByCompaniesHouseNumber(It.IsAny<string>())).ReturnsAsync(subsidiaries[0]);
         _subsidiaryService.Setup(se => se.GetCompanyByCompaniesHouseNumber(It.IsAny<string>())).ReturnsAsync(subsidiaries[1]);
 
-        var orchestrator = new BulkUploadOrchestration(_recordExtraction.Object, _subsidiaryService.Object, _bulkSubsidiaryProcessor.Object, _notificationService.Object, NullLogger<BulkUploadOrchestration>.Instance);
+        var orchestrator = new BulkUploadOrchestration(_recordExtraction.Object, _subsidiaryService.Object, _bulkSubsidiaryProcessor.Object, _notificationService.Object, _submissionStatusClient.Object, NullLogger<BulkUploadOrchestration>.Instance);
 
         var userRequestModel = new UserRequestModel
         {

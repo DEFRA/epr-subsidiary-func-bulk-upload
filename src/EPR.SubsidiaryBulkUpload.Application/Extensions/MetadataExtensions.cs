@@ -34,11 +34,19 @@ public static class MetadataExtensions
             complianceSchemeId = Guid.TryParse(complianceSchemeIdString, out var complianceSchemeIdRetrieved) ? complianceSchemeIdRetrieved : null;
         }
 
+        Guid? submissionId = null;
+        if (caseInsensitiveMetadata.TryGetValue("SubmissionId", out var submissionIdString))
+        {
+            submissionId = Guid.TryParse(submissionIdString, out var submissionIdRetrieved) ? submissionIdRetrieved : null;
+        }
+
         return new UserRequestModel
         {
             UserId = userId,
             OrganisationId = organisationId,
-            ComplianceSchemeId = complianceSchemeId
+            ComplianceSchemeId = complianceSchemeId,
+            FileName = metadata.GetFileName(),
+            SubmissionId = submissionId
         };
     }
 

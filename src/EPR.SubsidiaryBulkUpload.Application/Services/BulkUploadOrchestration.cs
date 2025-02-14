@@ -1,6 +1,8 @@
-﻿using EPR.SubsidiaryBulkUpload.Application.DTOs;
+﻿using EPR.SubsidiaryBulkUpload.Application.Clients;
+using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Models;
+using EPR.SubsidiaryBulkUpload.Application.Models.Events;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 
@@ -13,14 +15,22 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
     private readonly IBulkSubsidiaryProcessor _childProcessor;
     private readonly INotificationService _notificationService;
     private readonly ILogger<BulkUploadOrchestration> _logger;
+    private readonly ISubmissionStatusClient _submissionStatusClient;
     private readonly string orphanRecord = "orphan";
 
-    public BulkUploadOrchestration(IRecordExtraction recordExtraction, ISubsidiaryService organisationService, IBulkSubsidiaryProcessor childProcessor, INotificationService notificationService, ILogger<BulkUploadOrchestration> logger)
+    public BulkUploadOrchestration(
+        IRecordExtraction recordExtraction,
+        ISubsidiaryService organisationService,
+        IBulkSubsidiaryProcessor childProcessor,
+        INotificationService notificationService,
+        ISubmissionStatusClient submissionStatusClient,
+        ILogger<BulkUploadOrchestration> logger)
     {
         _recordExtraction = recordExtraction;
         _organisationService = organisationService;
         _childProcessor = childProcessor;
         _notificationService = notificationService;
+        _submissionStatusClient = submissionStatusClient;
         _logger = logger;
     }
 
@@ -110,6 +120,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
 
         await _notificationService.SetStatus(userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadProgress), "Finished");
         await _notificationService.SetStatus(userRequestModel.GenerateKey(NotificationStatusKeys.SubsidiaryBulkUploadRowsAdded), addedSubsidiariesCount.ToString());
+        await CreateSubmissionCompletionEvent(userRequestModel);
     }
 
     private async Task<List<CompaniesHouseCompany>> FilterDuplicateSubsidiaries(
@@ -261,5 +272,19 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
         await _notificationService.SetStatus(key, "Error Reporting Child Record.");
         await _notificationService.SetErrorStatus(keyErrors, notificationErrorListForSubsidiaries);
         _logger.LogInformation("{ErrorMessage}", errorMessage);
+    }
+
+    private async Task CreateSubmissionCompletionEvent(UserRequestModel userRequestModel)
+    {
+        var completionEvent = new SubsidiariesBulkUploadCompleteEvent
+        {
+            FileName = userRequestModel.FileName,
+            FileType = FileType.Subsidiaries,
+            OrganisationId = userRequestModel.OrganisationId,
+            UserId = userRequestModel.UserId,
+            ComplianceSchemeId = userRequestModel.ComplianceSchemeId
+        };
+
+        await _submissionStatusClient.CreateEventAsync(completionEvent, userRequestModel.SubmissionId ?? Guid.Empty);
     }
 }
