@@ -225,7 +225,7 @@ public class SubsidiaryService : ISubsidiaryService
         return await response.Content.ReadFromJsonAsync<UserOrganisation>();
     }
 
-    public async Task<OrganisationRelationshipModel1> GetOrganisationRelationships(Guid organisationId)
+    public async Task<OrganisationRelationshipModel> GetOrganisationRelationships(Guid organisationId)
     {
         string organisationSubsidiaryUri = $"organisations/{organisationId}/organisationRelationships";
         string organisationSubsidiaryViaBULKUri = "api/bulkuploadorganisations/organisationRelationships";
@@ -246,7 +246,7 @@ public class SubsidiaryService : ISubsidiaryService
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<OrganisationRelationshipModel1>(content);
+            return JsonConvert.DeserializeObject<OrganisationRelationshipModel>(content);
         }
         catch (Exception ex)
         {

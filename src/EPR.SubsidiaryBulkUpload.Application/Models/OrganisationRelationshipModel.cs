@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
-namespace BackendAccountService.Core.Models;
+namespace EPR.SubsidiaryBulkUpload.Application.Models;
 
 [ExcludeFromCodeCoverage]
 public class OrganisationRelationshipModel
@@ -22,4 +22,8 @@ public class OrganisationRelationshipModel
     public DateTime? LastUpdatedOn { get; set; }
 
     public int LastUpdatedByOrganisationId { get; set; }
+
+    public DateTime? JoinerDate { get; set; }
+
+    public int? ReportingTypeId { get; set; }
 }

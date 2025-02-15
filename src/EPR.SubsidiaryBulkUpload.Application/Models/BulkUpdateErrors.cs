@@ -94,4 +94,7 @@ public static class BulkUpdateErrors
 
     public const int JointerDateFormatIncorrect = 133;
     public const string JointerDateFormatIncorrectMessage = "The 'jointer date ' column only allowed British Date Format 'DD/MM/YYYY'.";
+
+    public const int JointerDateInvalid = 134;
+    public const string JointerDateInvalidMessage = "The 'jointer date ' invalid.";
 }
