@@ -128,17 +128,13 @@ public class SubmissionStatusClientTests
         var blobName = Guid.NewGuid().ToString();
         var fileId = Guid.NewGuid();
         var userId = Guid.NewGuid();
-        var organisationId = Guid.NewGuid();
-        var complianceSchemeId = Guid.NewGuid();
 
         var antivirusEvent = new SubsidiariesBulkUploadCompleteEvent
         {
             BlobName = blobName,
             BlobContainerName = blobContainerName,
             FileName = fileName,
-            UserId = userId,
-            OrganisationId = organisationId,
-            ComplianceSchemeId = complianceSchemeId,
+            UserId = userId
         };
 
         _httpMessageHandler.Protected().Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())

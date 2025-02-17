@@ -282,9 +282,7 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
             BlobContainerName = userRequestModel.BlobContainerName,
             FileName = userRequestModel.FileName,
             FileType = FileType.Subsidiaries,
-            OrganisationId = userRequestModel.OrganisationId,
-            UserId = userRequestModel.UserId,
-            ComplianceSchemeId = userRequestModel.ComplianceSchemeId
+            UserId = userRequestModel.UserId
         };
 
         await _submissionStatusClient.CreateEventAsync(completionEvent, userRequestModel.SubmissionId ?? Guid.Empty);

@@ -49,12 +49,13 @@ public class SubmissionStatusClient(
             {
                 _logger.LogInformation("Sending submission to {RequestUri}", requestUri);
                 _logger.LogInformation(
-                    "  submission type '{Type}', user '{UserId}', organisation '{OrganisationId}', blob '{BlobContainerName}'/'{BlobName}'",
+                    "  submission type '{Type}', user '{UserId}', blob '{BlobContainerName}'/'{BlobName}'. file '{FileName} : {FileType}'",
                     subsidiariesCompleteEvent.Type,
                     subsidiariesCompleteEvent.UserId,
-                    subsidiariesCompleteEvent.OrganisationId,
                     subsidiariesCompleteEvent.BlobContainerName,
-                    subsidiariesCompleteEvent.BlobName);
+                    subsidiariesCompleteEvent.BlobName,
+                    subsidiariesCompleteEvent.FileName,
+                    subsidiariesCompleteEvent.FileType);
             }
 
             var response = await _httpClient.PostAsJsonAsync<T>(requestUri, data);

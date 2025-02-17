@@ -124,9 +124,7 @@ public class BulkUploadOrchestrationTests
             BlobName = blobName,
             BlobContainerName = blobContainerName,
             FileName = fileName,
-            UserId = userId,
-            OrganisationId = organisationId,
-            ComplianceSchemeId = complianceSchemeId,
+            UserId = userId
         };
 
         // Act
@@ -140,9 +138,7 @@ public class BulkUploadOrchestrationTests
                     e.Type == EventType.SubsidiariesBulkUploadComplete &&
                     e.FileName == fileName &&
                     e.FileType == FileType.Subsidiaries &&
-                    e.UserId == userId &&
-                    e.OrganisationId == organisationId &&
-                    e.ComplianceSchemeId == complianceSchemeId),
+                    e.UserId == userId),
                 submissionId));
     }
 

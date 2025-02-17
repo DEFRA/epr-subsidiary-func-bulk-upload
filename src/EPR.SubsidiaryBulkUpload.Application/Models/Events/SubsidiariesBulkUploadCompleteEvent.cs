@@ -13,8 +13,4 @@ public class SubsidiariesBulkUploadCompleteEvent : AbstractEvent
     public FileType FileType { get; set; }
 
     public Guid UserId { get; set; }
-
-    public Guid OrganisationId { get; set; }
-
-    public Guid? ComplianceSchemeId { get; set; }
 }
