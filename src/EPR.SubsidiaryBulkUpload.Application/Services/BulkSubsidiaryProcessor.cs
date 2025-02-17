@@ -64,13 +64,6 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         /*Scenario 2: The subsidiary found in RPD. name not match*/
         await ReportCompanies(subWithInvalidName, userRequestModel, BulkUpdateErrors.CompanyNameIsDifferentInRPDMessage, BulkUpdateErrors.CompanyNameIsDifferentInRPD);
 
-        var dateCheck = await subsidiariesAndOrg.Select(s => s.SubsidiaryOrg).ToListAsync();
-        var dateCheckValue = dateCheck[0].OrganisationRelationship?.JoinerDate?.ToString("dd/MM/yyyy");
-
-        var dateCheckInput = await subsidiariesAndOrg.Select(s => s.Subsidiary).ToListAsync();
-        var dateCheckInputValue = dateCheckInput[0].joiner_date;
-        var compareDates = string.Equals(dateCheckInputValue, dateCheckValue, StringComparison.InvariantCulture);
-
         var subsidiariesAndOrgWith_InValidNameAndJoinerDate = subsidiariesAndOrg.Where(sub => sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg?.companiesHouseNumber
             && !string.Equals(sub.Subsidiary.joiner_date, sub.SubsidiaryOrg.OrganisationRelationship?.JoinerDate?.ToString("dd/MM/yyyy"), StringComparison.InvariantCulture));
         var subWithInvalidNameAndJoinerDate = await subsidiariesAndOrgWith_InValidNameAndJoinerDate.Select(s => s.Subsidiary).ToListAsync();

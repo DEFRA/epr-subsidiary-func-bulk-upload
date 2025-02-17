@@ -40,8 +40,16 @@ public class BulkSubsidiaryProcessorTests
 
         subsidiaryOrganisations[0].companiesHouseNumber = subsidiaries[0].companies_house_number;
         subsidiaryOrganisations[0].name = subsidiaries[0].organisation_name;
+        subsidiaryOrganisations[0].reportingType = "Self";
+        subsidiaryOrganisations[0].joinerDate = "10/10/2023";
+        subsidiaryOrganisations[0].OrganisationRelationship.JoinerDate = DateTime.Now.AddDays(-10);
+        subsidiaryOrganisations[0].OrganisationRelationship.ReportingTypeId = 1;
         subsidiaryOrganisations[1].companiesHouseNumber = subsidiaries[1].companies_house_number;
         subsidiaryOrganisations[1].name = subsidiaries[1].organisation_name;
+        subsidiaryOrganisations[1].reportingType = "Self";
+        subsidiaryOrganisations[1].joinerDate = "10/10/2024";
+        subsidiaryOrganisations[1].OrganisationRelationship.JoinerDate = DateTime.Now.AddDays(-10);
+        subsidiaryOrganisations[1].OrganisationRelationship.ReportingTypeId = 1;
 
         var subsidiaryService = new Mock<ISubsidiaryService>();
         subsidiaryService.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(subsidiaries[0].companies_house_number))
@@ -52,7 +60,9 @@ public class BulkSubsidiaryProcessorTests
         subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(It.IsAny<int>(), It.IsAny<int>()))
             .ReturnsAsync(false);
 
-        var inserts = new List<LinkOrganisationModel>();
+        var inserts = _fixture.CreateMany<LinkOrganisationModel>(2).ToList();
+        inserts[0].Subsidiary.JoinerDate = "10/10/2023";
+        inserts[0].Subsidiary.ReportingTypeId = 1;
         subsidiaryService.Setup(ss => ss.CreateAndAddSubsidiaryAsync(It.IsAny<LinkOrganisationModel>()))
             .ReturnsAsync(HttpStatusCode.OK)
             .Callback<LinkOrganisationModel>(model => inserts.Add(model));
@@ -61,7 +71,9 @@ public class BulkSubsidiaryProcessorTests
         var errorsModel = new List<UploadFileErrorModel> { new() { FileLineNumber = 1, Message = "testMessage", IsError = true } };
         notificationServiceMock.Setup(ss => ss.SetErrorStatus(key, errorsModel));
 
-        var updates = new List<SubsidiaryAddModel>();
+        var updates = _fixture.CreateMany<SubsidiaryAddModel>(2).ToList();
+        updates[0].JoinerDate = "10/10/2023";
+        updates[0].ReportingTypeId = 1;
         subsidiaryService.Setup(ss => ss.AddSubsidiaryRelationshipAsync(It.IsAny<SubsidiaryAddModel>()))
             .Callback<SubsidiaryAddModel>(model => updates.Add(model));
 
@@ -103,7 +115,9 @@ public class BulkSubsidiaryProcessorTests
         subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(It.IsAny<int>(), It.IsAny<int>()))
             .ReturnsAsync(false);
 
-        var inserts = new List<SubsidiaryAddModel>();
+        var inserts = _fixture.CreateMany<SubsidiaryAddModel>(1).ToList();
+        inserts[0].JoinerDate = "10/10/2023";
+        inserts[0].ReportingTypeId = 1;
         subsidiaryService.Setup(ss => ss.AddSubsidiaryRelationshipAsync(It.IsAny<SubsidiaryAddModel>()))
             .Callback<SubsidiaryAddModel>(model => inserts.Add(model));
 
@@ -125,7 +139,7 @@ public class BulkSubsidiaryProcessorTests
         var result = await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
 
         // Assert
-        inserts.Should().HaveCount(2);
+        inserts.Should().HaveCount(1);
         result.Should().Be(0);
     }
 
@@ -461,9 +475,11 @@ public class BulkSubsidiaryProcessorTests
         subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(It.IsAny<int>(), It.IsAny<int>()))
             .ReturnsAsync(false);
 
-        var updates = new List<SubsidiaryAddModel>();
+        var inserts = _fixture.CreateMany<SubsidiaryAddModel>(1).ToList();
+        inserts[0].JoinerDate = "10/10/2023";
+        inserts[0].ReportingTypeId = 1;
         subsidiaryService.Setup(ss => ss.AddSubsidiaryRelationshipAsync(It.IsAny<SubsidiaryAddModel>()))
-            .Callback<SubsidiaryAddModel>(model => updates.Add(model));
+            .Callback<SubsidiaryAddModel>(model => inserts.Add(model));
 
         var companiesHouseDataProvider = new Mock<ICompaniesHouseDataProvider>();
         companiesHouseDataProvider.Setup(ss => ss.SetCompaniesHouseData(It.IsAny<OrganisationModel>()))
@@ -491,7 +507,7 @@ public class BulkSubsidiaryProcessorTests
         var result = await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
 
         // Assert
-        updates.Should().HaveCount(1);
+        inserts.Should().HaveCount(1);
     }
 
     [TestMethod]

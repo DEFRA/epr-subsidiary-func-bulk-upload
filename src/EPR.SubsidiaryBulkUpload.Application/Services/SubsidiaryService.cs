@@ -103,18 +103,8 @@ public class SubsidiaryService : ISubsidiaryService
         }
 
         response.EnsureSuccessStatusCode();
-        OrganisationResponseModel[] data = new OrganisationResponseModel[10];
-        try
-        {
-            var orgResponse = await response.Content.ReadFromJsonAsync<OrganisationResponseModel[]>();
-            data = orgResponse;
-        }
-        catch (Exception ex)
-        {
-            throw;
-        }
-
-        return data.FirstOrDefault();
+        var orgResponse = await response.Content.ReadFromJsonAsync<OrganisationResponseModel[]>();
+        return orgResponse.FirstOrDefault();
     }
 
     public async Task<OrganisationResponseModel?> GetCompanyByCompanyName(string companyName)
