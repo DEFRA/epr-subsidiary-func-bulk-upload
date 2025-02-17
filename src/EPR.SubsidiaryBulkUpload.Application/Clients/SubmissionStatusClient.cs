@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using EPR.SubsidiaryBulkUpload.Application.Exceptions;
@@ -6,6 +7,7 @@ using EPR.SubsidiaryBulkUpload.Application.Models.Events;
 using EPR.SubsidiaryBulkUpload.Application.Models.Submission;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Clients;
 
@@ -43,6 +45,11 @@ public class SubmissionStatusClient(
         try
         {
             ConfigureHttpClientAsync();
+
+            var content = JsonContent.Create(data, mediaType: null, null);
+            var json = await content.ReadAsStringAsync();
+            _logger.LogInformation("Sending submission to {RequestUri}", requestUri);
+            _logger.LogInformation(json);
 
             var response = await _httpClient.PostAsJsonAsync<T>(requestUri, data);
 
