@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using EPR.SubsidiaryBulkUpload.Application.Clients;
+using EPR.SubsidiaryBulkUpload.Application.Models.Events;
 using EPR.SubsidiaryBulkUpload.Application.Models.Submission;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using EPR.SubsidiaryBulkUpload.Application.UnitTests.Support;
@@ -58,6 +59,98 @@ public class SubmissionStatusClientTests
 
         // Act
         var responseCode = await submissionClient.CreateSubmissionAsync(submission);
+
+        // Assert
+        responseCode.Should().BeSuccessful();
+        _httpMessageHandler.VerifyRequest(HttpMethod.Post, expectedRequestUri, expectedHeaders, Times.Once());
+    }
+
+    [TestMethod]
+    public async Task ShouldCreateAntivirusEvent()
+    {
+        // Arrange
+        var submissionId = Guid.NewGuid();
+        var expectedRequestUri = new Uri($"https://example.com/submissions/{submissionId}/events");
+
+        var submission = _fixture.Create<CreateSubmission>();
+        var expectedHeaders = new Dictionary<string, string>
+        {
+            { "OrganisationId", _systemOrganisationId.ToString() },
+            { "UserId", _systemUserId.ToString() }
+        };
+
+        var blobContainerName = "test_container";
+        const string fileName = "test.csv";
+        var blobName = Guid.NewGuid().ToString();
+        var fileId = Guid.NewGuid();
+
+        var antivirusEvent = new AntivirusCheckEvent
+        {
+            FileName = fileName,
+            FileType = FileType.CompaniesHouse,
+            FileId = fileId,
+            BlobContainerName = blobContainerName,
+            RegistrationSetId = null
+        };
+
+        _httpMessageHandler.Protected().Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+            });
+
+        var submissionClient = new SubmissionStatusClient(_httpClient, _systemDetailsProvider.Object, NullLogger<SubmissionStatusClient>.Instance);
+
+        // Act
+        var responseCode = await submissionClient.CreateEventAsync(antivirusEvent, submissionId);
+
+        // Assert
+        responseCode.Should().BeSuccessful();
+        _httpMessageHandler.VerifyRequest(HttpMethod.Post, expectedRequestUri, expectedHeaders, Times.Once());
+    }
+
+    [TestMethod]
+    public async Task ShouldCreateSubsidiariesBulkUploadCompleteEvent()
+    {
+        // Arrange
+        var submissionId = Guid.NewGuid();
+        var expectedRequestUri = new Uri($"https://example.com/submissions/{submissionId}/events");
+
+        var submission = _fixture.Create<CreateSubmission>();
+        var expectedHeaders = new Dictionary<string, string>
+        {
+            { "OrganisationId", _systemOrganisationId.ToString() },
+            { "UserId", _systemUserId.ToString() }
+        };
+
+        var blobContainerName = "test_container";
+        const string fileName = "test.csv";
+        var blobName = Guid.NewGuid().ToString();
+        var fileId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var organisationId = Guid.NewGuid();
+        var complianceSchemeId = Guid.NewGuid();
+
+        var antivirusEvent = new SubsidiariesBulkUploadCompleteEvent
+        {
+            BlobName = blobName,
+            BlobContainerName = blobContainerName,
+            FileName = fileName,
+            UserId = userId,
+            OrganisationId = organisationId,
+            ComplianceSchemeId = complianceSchemeId,
+        };
+
+        _httpMessageHandler.Protected().Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+            });
+
+        var submissionClient = new SubmissionStatusClient(_httpClient, _systemDetailsProvider.Object, NullLogger<SubmissionStatusClient>.Instance);
+
+        // Act
+        var responseCode = await submissionClient.CreateEventAsync(antivirusEvent, submissionId);
 
         // Assert
         responseCode.Should().BeSuccessful();
