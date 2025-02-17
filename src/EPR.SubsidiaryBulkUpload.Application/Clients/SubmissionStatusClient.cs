@@ -46,10 +46,18 @@ public class SubmissionStatusClient(
         {
             ConfigureHttpClientAsync();
 
-            var content = JsonContent.Create(data, mediaType: null, null);
-            var json = await content.ReadAsStringAsync();
-            _logger.LogInformation("Sending submission to {RequestUri}", requestUri);
-            _logger.LogInformation(json);
+            var subsidiariesCompleteEvent = data as SubsidiariesBulkUploadCompleteEvent;
+            if (subsidiariesCompleteEvent is not null)
+            {
+                _logger.LogInformation("Sending submission to {RequestUri}", requestUri);
+                _logger.LogInformation(
+                    "  submission type '{Type}', user '{UserId}', organisation '{OrganisationId}', blob '{BlobContainerName}'/'{BlobName}'",
+                    subsidiariesCompleteEvent.Type,
+                    subsidiariesCompleteEvent.UserId,
+                    subsidiariesCompleteEvent.OrganisationId,
+                    subsidiariesCompleteEvent.BlobContainerName,
+                    subsidiariesCompleteEvent.BlobName);
+            }
 
             var response = await _httpClient.PostAsJsonAsync<T>(requestUri, data);
 
