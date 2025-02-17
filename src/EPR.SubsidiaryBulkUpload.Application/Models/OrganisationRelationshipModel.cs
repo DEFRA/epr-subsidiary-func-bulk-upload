@@ -11,7 +11,7 @@ public class OrganisationRelationshipModel
 
     public int OrganisationRelationshipTypeId { get; set; }
 
-    public int OrganisationRegistrationTypeId { get; set; }
+    public int? OrganisationRegistrationTypeId { get; set; }
 
     public DateTime? RelationFromDate { get; set; }
 

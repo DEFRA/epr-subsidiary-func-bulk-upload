@@ -41,7 +41,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         var subsidiariesAndOrgWithValidName = subsidiariesAndOrg
             .Where(sub => sub.SubsidiaryOrg != null && sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg.companiesHouseNumber
-            && string.Equals(sub.Subsidiary.joiner_date, sub.SubsidiaryOrg.OrganisationRelationship?.JoinerDate?.ToString("dd/MM/yyyy"), StringComparison.OrdinalIgnoreCase)
+            && string.Equals(sub.Subsidiary.joiner_date, sub.SubsidiaryOrg.OrganisationRelationship?.JoinerDate?.ToString("dd/MM/yyyy"), StringComparison.InvariantCulture)
             && string.Equals(sub.Subsidiary.organisation_name, sub.SubsidiaryOrg.name, StringComparison.OrdinalIgnoreCase));
 
         var subsidiariesAndOrgWithValidNameProcessStatistics = await ProcessValidNamedOrgs(subsidiariesAndOrgWithValidName, parentOrg, userRequestModel);
@@ -54,14 +54,13 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         await ReportCompanies(subWithInvalidName, userRequestModel, BulkUpdateErrors.CompanyNameIsDifferentInRPDMessage, BulkUpdateErrors.CompanyNameIsDifferentInRPD);
 
         var subsidiariesAndOrgWith_InValidNameAndJoinerDate = subsidiariesAndOrg.Where(sub => sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg?.companiesHouseNumber
-            && !string.Equals(sub.Subsidiary.joiner_date, sub.SubsidiaryOrg.OrganisationRelationship?.JoinerDate?.ToString("dd/MM/yyyy"), StringComparison.OrdinalIgnoreCase)
-            && !string.Equals(sub.Subsidiary.organisation_name, sub.SubsidiaryOrg?.name, StringComparison.OrdinalIgnoreCase));
-        var subWithInvalidNameAndJoinerDate = await subsidiariesAndOrgWith_InValidName.Select(s => s.Subsidiary).ToListAsync();
+            && !string.Equals(sub.Subsidiary.joiner_date, sub.SubsidiaryOrg.OrganisationRelationship?.JoinerDate?.ToString("dd/MM/yyyy"), StringComparison.InvariantCulture));
+        var subWithInvalidNameAndJoinerDate = await subsidiariesAndOrgWith_InValidNameAndJoinerDate.Select(s => s.Subsidiary).ToListAsync();
 
         /*Scenario x: The subsidiary found in RPD. joiner date not match*/
-        await ReportCompanies(subWithInvalidName, userRequestModel, BulkUpdateErrors.JointerDateInvalidMessage, BulkUpdateErrors.JointerDateInvalid);
+        await ReportCompanies(subWithInvalidNameAndJoinerDate, userRequestModel, BulkUpdateErrors.JointerDateInvalidMessage, BulkUpdateErrors.JointerDateInvalid);
 
-        var remainingToProcess = nonNullCompaniesHouseNumberRecords.Except(subWithInvalidName).Except(subsidiariesAndOrgWithValidNameProcessStatistics.NewAddedSubsidiaries).Except(subsidiariesAndOrgWithValidNameProcessStatistics.AlreadyExistCompanies);
+        var remainingToProcess = nonNullCompaniesHouseNumberRecords.Except(subWithInvalidName).Except(subWithInvalidNameAndJoinerDate).Except(subsidiariesAndOrgWithValidNameProcessStatistics.NewAddedSubsidiaries).Except(subsidiariesAndOrgWithValidNameProcessStatistics.AlreadyExistCompanies);
 
         /*Scenario 3: The subsidiary found in Offline data. name matches then Add OR name not match then get it from CH API and name matches with CH API data.*/
         var newSubsidiariesToAdd_DataFromLocalStorageOrCH = subsidiariesAndOrg.Where(co => co.SubsidiaryOrg == null)
