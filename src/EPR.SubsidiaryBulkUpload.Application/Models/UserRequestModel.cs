@@ -11,6 +11,10 @@ public class UserRequestModel
 
     public Guid? ComplianceSchemeId { get; set; }
 
+    public string? BlobName { get; set; }
+
+    public string? BlobContainerName { get; set; }
+
     public string? FileName { get; set; }
 
     public Guid? SubmissionId { get; set; }

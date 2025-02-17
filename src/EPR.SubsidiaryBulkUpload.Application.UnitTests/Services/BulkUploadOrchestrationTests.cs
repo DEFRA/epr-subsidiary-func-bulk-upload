@@ -99,7 +99,9 @@ public class BulkUploadOrchestrationTests
 
         var orchestrator = new BulkUploadOrchestration(_recordExtraction.Object, _subsidiaryService.Object, _bulkSubsidiaryProcessor.Object, _notificationService.Object, _submissionStatusClient.Object, NullLogger<BulkUploadOrchestration>.Instance);
 
+        var blobContainerName = "test_container";
         const string fileName = "test.csv";
+        var blobName = Guid.NewGuid().ToString();
         var fileId = Guid.NewGuid();
         var userId = Guid.NewGuid();
         var organisationId = Guid.NewGuid();
@@ -108,6 +110,8 @@ public class BulkUploadOrchestrationTests
         var submissionId = Guid.NewGuid();
         var userRequestModel = new UserRequestModel
         {
+            BlobName = blobName,
+            BlobContainerName = blobContainerName,
             FileName = fileName,
             UserId = userId,
             OrganisationId = organisationId,
@@ -117,6 +121,8 @@ public class BulkUploadOrchestrationTests
 
         var expectedCompletionEvent = new SubsidiariesBulkUploadCompleteEvent
         {
+            BlobName = blobName,
+            BlobContainerName = blobContainerName,
             FileName = fileName,
             UserId = userId,
             OrganisationId = organisationId,

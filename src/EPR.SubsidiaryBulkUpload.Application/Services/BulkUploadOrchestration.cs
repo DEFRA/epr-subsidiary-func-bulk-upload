@@ -278,6 +278,8 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
     {
         var completionEvent = new SubsidiariesBulkUploadCompleteEvent
         {
+            BlobName = userRequestModel.BlobName,
+            BlobContainerName = userRequestModel.BlobContainerName,
             FileName = userRequestModel.FileName,
             FileType = FileType.Subsidiaries,
             OrganisationId = userRequestModel.OrganisationId,

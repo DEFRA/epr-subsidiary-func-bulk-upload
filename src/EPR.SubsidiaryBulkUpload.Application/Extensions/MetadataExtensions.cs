@@ -4,7 +4,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Extensions;
 
 public static class MetadataExtensions
 {
-    public static UserRequestModel ToUserRequestModel(this IDictionary<string, string> metadata)
+    public static UserRequestModel ToUserRequestModel(this IDictionary<string, string> metadata, string? blobName = null, string? blobContainerName = null)
     {
         if (metadata is null)
         {
@@ -45,6 +45,8 @@ public static class MetadataExtensions
             UserId = userId,
             OrganisationId = organisationId,
             ComplianceSchemeId = complianceSchemeId,
+            BlobName = blobName,
+            BlobContainerName = blobContainerName,
             FileName = metadata.GetFileName(),
             SubmissionId = submissionId
         };
