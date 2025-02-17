@@ -21,7 +21,11 @@ public class AddSubsidiariesFigures
 
     public int NewAddedSubsidiariesRelationships { get; set; }
 
+    public int UpdatedSubsidiariesRelationships { get; set; }
+
     public List<CompaniesHouseCompany> NewAddedSubsidiaries { get; set; }
+
+    public List<CompaniesHouseCompany> UpdatedAddedSubsidiaries { get; set; }
 
     public List<CompaniesHouseCompany> NotAddedSubsidiaries { get; set; }
 

@@ -20,4 +20,6 @@ public interface ISubsidiaryService
     Task<OrganisationResponseModel?> GetCompanyByCompanyName(string companyName);
 
     Task<OrganisationResponseModel?> GetCompanyByReferenceNumber(string referenceNumber);
+
+    Task<HttpStatusCode> UpdateSubsidiaryRelationshipAsync(SubsidiaryAddModel subsidiaryAddModel);
 }
