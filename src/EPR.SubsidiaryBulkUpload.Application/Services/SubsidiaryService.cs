@@ -247,34 +247,4 @@ public class SubsidiaryService : ISubsidiaryService
 
         return await response.Content.ReadFromJsonAsync<UserOrganisation>();
     }
-
-    public async Task<OrganisationRelationshipModel> GetOrganisationRelationships(Guid organisationId)
-    {
-        string organisationSubsidiaryUri = $"organisations/{organisationId}/organisationRelationships";
-        string organisationSubsidiaryViaBULKUri = "api/bulkuploadorganisations/organisationRelationships";
-
-        try
-        {
-            var response = await _httpClient.GetAsync(organisationSubsidiaryUri);
-            if (response.StatusCode == HttpStatusCode.NotFound)
-            {
-                return new();
-            }
-
-            if (!response.IsSuccessStatusCode)
-            {
-                return null;
-            }
-
-            response.EnsureSuccessStatusCode();
-
-            var content = await response.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<OrganisationRelationshipModel>(content);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to retrieve subsidiary data");
-            throw;
-        }
-    }
 }
