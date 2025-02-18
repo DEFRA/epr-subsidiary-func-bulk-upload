@@ -170,7 +170,7 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
                 {
                     errors.Add(
                         CreateError(
-                            lineNumber, rawData, BulkUpdateErrors.JointerDateFormatIncorrectMessage, BulkUpdateErrors.JointerDateFormatIncorrect));
+                            lineNumber, rawData, BulkUpdateErrors.JoinerDateFormatIncorrectMessage, BulkUpdateErrors.JoinerDateFormatIncorrect));
                 }
             }
         }

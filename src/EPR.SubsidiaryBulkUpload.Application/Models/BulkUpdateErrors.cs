@@ -92,9 +92,9 @@ public static class BulkUpdateErrors
     public const int ReportingTypeValidValueCheck = 132;
     public const string ReportingTypeValidValueCheckMessage = "The 'reporting type' column only allowed 'GROUP' or 'SELF'.";
 
-    public const int JointerDateFormatIncorrect = 133;
-    public const string JointerDateFormatIncorrectMessage = "The 'jointer date ' column only allowed British Date Format 'DD/MM/YYYY'.";
+    public const int JoinerDateFormatIncorrect = 133;
+    public const string JoinerDateFormatIncorrectMessage = "The 'joiner date' column only allowed British Date Format 'DD/MM/YYYY'.";
 
-    public const int JointerDateInvalid = 134;
-    public const string JointerDateInvalidMessage = "The 'jointer date ' invalid.";
+    public const int JoinerDateInvalid = 134;
+    public const string JoinerDateInvalidMessage = "The 'joiner date' is invalid.";
 }

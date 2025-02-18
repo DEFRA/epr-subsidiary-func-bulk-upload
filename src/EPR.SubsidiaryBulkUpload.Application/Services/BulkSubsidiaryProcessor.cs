@@ -39,13 +39,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             .ToAsyncEnumerable()
             .SelectAwait(async subsidiary => (Subsidiary: subsidiary, SubsidiaryOrg: await organisationService.GetCompanyByCompaniesHouseNumber(subsidiary.companies_house_number)));
 
-        var subsidiariesAndOrgWithValidName = subsidiariesAndOrg
-            .Where(sub => sub.SubsidiaryOrg != null && sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg.companiesHouseNumber
-            && string.Equals(sub.Subsidiary.joiner_date, sub.SubsidiaryOrg.OrganisationRelationship?.JoinerDate?.ToString("dd/MM/yyyy"), StringComparison.InvariantCulture)
-            && string.Equals(sub.Subsidiary.organisation_name, sub.SubsidiaryOrg.name, StringComparison.OrdinalIgnoreCase)
-            && parentOrg.id == sub.SubsidiaryOrg.OrganisationRelationship?.FirstOrganisationId);
-
-        var subsidiariesAndOrgWithValidNameProcessStatistics = await ProcessValidNamedOrgs(subsidiariesAndOrgWithValidName, parentOrg, userRequestModel);
+        var subsidiariesAndOrgWithValidNameProcessStatistics = await ProcessValidNamedOrgs(subsidiariesAndOrg, parentOrg, userRequestModel);
 
         var subsidiariesAndOrgWithMatchingReportingType = subsidiariesAndOrg
         .Where(sub => sub.SubsidiaryOrg != null && sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg.companiesHouseNumber
@@ -69,7 +63,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         var subWithInvalidNameAndJoinerDate = await subsidiariesAndOrgWith_InValidNameAndJoinerDate.Select(s => s.Subsidiary).ToListAsync();
 
         /*Scenario x: The subsidiary found in RPD. joiner date not match*/
-        await ReportCompanies(subWithInvalidNameAndJoinerDate, userRequestModel, BulkUpdateErrors.JointerDateInvalidMessage, BulkUpdateErrors.JointerDateInvalid);
+        await ReportCompanies(subWithInvalidNameAndJoinerDate, userRequestModel, BulkUpdateErrors.JoinerDateInvalidMessage, BulkUpdateErrors.JoinerDateInvalid);
 
         var remainingToProcess = nonNullCompaniesHouseNumberRecords.Except(subWithInvalidName)
             .Except(subWithInvalidNameAndJoinerDate)
@@ -185,9 +179,9 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         return modelLoaded ? newSubsidiaryModel : null;
     }
 
-    private async Task<HttpStatusCode> AddSubsidiary(OrganisationResponseModel parent, OrganisationResponseModel subsidiary, Guid userId)
+    private async Task<HttpStatusCode> AddSubsidiary(OrganisationResponseModel parent, OrganisationResponseModel subsidiary, CompaniesHouseCompany subsidiaryInput, Guid userId)
     {
-        var reportingTypeEnum = Enum.TryParse<ReportingType>(subsidiary.reportingType, true, out var reportingType) ? reportingType : (ReportingType?)null;
+        var reportingTypeEnum = Enum.TryParse<ReportingType>(subsidiaryInput.reporting_type, true, out var reportingType) ? reportingType : (ReportingType?)null;
 
         var subsidiaryModel = new SubsidiaryAddModel
         {
@@ -196,7 +190,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             ChildOrganisationId = subsidiary.referenceNumber,
             ParentOrganisationExternalId = parent.ExternalId,
             ChildOrganisationExternalId = subsidiary.ExternalId,
-            JoinerDate = subsidiary.joinerDate,
+            JoinerDate = subsidiaryInput.joiner_date,
             ReportingTypeId = (int?)reportingTypeEnum
         };
         var result = await organisationService.AddSubsidiaryRelationshipAsync(subsidiaryModel);
@@ -251,7 +245,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         foreach (var subsidiaryAddModel in knownFranchiseeToAddRelationshipToDB)
         {
-            var status = await AddSubsidiary(parentOrg, subsidiaryAddModel!.SubsidiaryOrg, userRequestModel.UserId);
+            var status = await AddSubsidiary(parentOrg, subsidiaryAddModel!.SubsidiaryOrg, subsidiaryAddModel!.Subsidiary, userRequestModel.UserId);
             subsidiaryAddModel.Subsidiary.StatusCode = status;
         }
 
@@ -330,6 +324,17 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
     private async Task<AddSubsidiariesFigures> ProcessValidNamedOrgs(IAsyncEnumerable<(CompaniesHouseCompany Subsidiary, OrganisationResponseModel SubsidiaryOrg)> subsidiariesAndOrgWithValidName, OrganisationResponseModel parentOrg, UserRequestModel userRequestModel)
     {
+        var subsidiariesAndOrgWithValidName1 = subsidiariesAndOrgWithValidName
+         .Where(sub => sub.SubsidiaryOrg != null && sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg.companiesHouseNumber
+         && string.Equals(sub.Subsidiary.organisation_name, sub.SubsidiaryOrg.name, StringComparison.OrdinalIgnoreCase)
+         && parentOrg.id == sub.SubsidiaryOrg.OrganisationRelationship?.FirstOrganisationId);
+
+        var subsidiariesAndOrgWithValidName2 = subsidiariesAndOrgWithValidName
+            .Where(sub => sub.SubsidiaryOrg != null && sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg.companiesHouseNumber
+            && string.Equals(sub.Subsidiary.joiner_date, sub.SubsidiaryOrg.OrganisationRelationship?.JoinerDate?.ToString("dd/MM/yyyy"), StringComparison.InvariantCulture)
+            && string.Equals(sub.Subsidiary.organisation_name, sub.SubsidiaryOrg.name, StringComparison.OrdinalIgnoreCase)
+            && parentOrg.id == sub.SubsidiaryOrg.OrganisationRelationship?.FirstOrganisationId);
+
         var counts = new AddSubsidiariesFigures();
         var count = 0;
 
@@ -345,7 +350,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         foreach (var subsidiaryAddModel in knownSubsidiariesToAdd)
         {
-            var result = await AddSubsidiary(parentOrg, subsidiaryAddModel!.SubsidiaryOrg, userRequestModel.UserId);
+            var result = await AddSubsidiary(parentOrg, subsidiaryAddModel!.SubsidiaryOrg, subsidiaryAddModel!.Subsidiary, userRequestModel.UserId);
             count = count + (result == HttpStatusCode.OK ? 1 : 0);
             counts.NewAddedSubsidiaries.Add(subsidiaryAddModel.Subsidiary);
         }
