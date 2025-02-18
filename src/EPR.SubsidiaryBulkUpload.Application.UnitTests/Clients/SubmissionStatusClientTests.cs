@@ -69,6 +69,10 @@ public class SubmissionStatusClientTests
     public async Task ShouldCreateAntivirusEvent()
     {
         // Arrange
+        const string blobContainerName = "test_container";
+        const string fileName = "test.csv";
+        var blobName = Guid.NewGuid().ToString();
+        var fileId = Guid.NewGuid();
         var submissionId = Guid.NewGuid();
         var expectedRequestUri = new Uri($"https://example.com/submissions/{submissionId}/events");
 
@@ -78,11 +82,6 @@ public class SubmissionStatusClientTests
             { "OrganisationId", _systemOrganisationId.ToString() },
             { "UserId", _systemUserId.ToString() }
         };
-
-        var blobContainerName = "test_container";
-        const string fileName = "test.csv";
-        var blobName = Guid.NewGuid().ToString();
-        var fileId = Guid.NewGuid();
 
         var antivirusEvent = new AntivirusCheckEvent
         {
@@ -113,21 +112,21 @@ public class SubmissionStatusClientTests
     public async Task ShouldCreateSubsidiariesBulkUploadCompleteEvent()
     {
         // Arrange
+        const string blobContainerName = "test_container";
+        const string fileName = "test.csv";
+        var blobName = Guid.NewGuid().ToString();
+        var fileId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var organisationId = Guid.NewGuid();
         var submissionId = Guid.NewGuid();
         var expectedRequestUri = new Uri($"https://example.com/submissions/{submissionId}/events");
 
         var submission = _fixture.Create<CreateSubmission>();
         var expectedHeaders = new Dictionary<string, string>
         {
-            { "OrganisationId", _systemOrganisationId.ToString() },
-            { "UserId", _systemUserId.ToString() }
+            { "OrganisationId", organisationId.ToString() },
+            { "UserId", userId.ToString() }
         };
-
-        var blobContainerName = "test_container";
-        const string fileName = "test.csv";
-        var blobName = Guid.NewGuid().ToString();
-        var fileId = Guid.NewGuid();
-        var userId = Guid.NewGuid();
 
         var antivirusEvent = new SubsidiariesBulkUploadCompleteEvent
         {
@@ -146,7 +145,7 @@ public class SubmissionStatusClientTests
         var submissionClient = new SubmissionStatusClient(_httpClient, _systemDetailsProvider.Object, NullLogger<SubmissionStatusClient>.Instance);
 
         // Act
-        var responseCode = await submissionClient.CreateEventAsync(antivirusEvent, submissionId);
+        var responseCode = await submissionClient.CreateEventAsync(antivirusEvent, submissionId, userId, organisationId);
 
         // Assert
         responseCode.Should().BeSuccessful();

@@ -285,6 +285,6 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
             UserId = userRequestModel.UserId
         };
 
-        await _submissionStatusClient.CreateEventAsync(completionEvent, userRequestModel.SubmissionId ?? Guid.Empty);
+        await _submissionStatusClient.CreateEventAsync(completionEvent, userRequestModel.SubmissionId ?? Guid.Empty, userRequestModel.UserId, userRequestModel.OrganisationId);
     }
 }

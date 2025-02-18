@@ -131,7 +131,6 @@ public class BulkUploadOrchestrationTests
         await orchestrator.Orchestrate(companyData, userRequestModel);
 
         // Assert
-        _submissionStatusClient.Verify(s => s.CreateEventAsync(It.IsAny<SubsidiariesBulkUploadCompleteEvent>(), submissionId));
         _submissionStatusClient.Verify(s =>
             s.CreateEventAsync(
                 It.Is<SubsidiariesBulkUploadCompleteEvent>(e =>
@@ -139,7 +138,9 @@ public class BulkUploadOrchestrationTests
                     e.FileName == fileName &&
                     e.FileType == FileType.Subsidiaries &&
                     e.UserId == userId),
-                submissionId));
+                submissionId,
+                userId,
+                organisationId));
     }
 
     [TestMethod]
