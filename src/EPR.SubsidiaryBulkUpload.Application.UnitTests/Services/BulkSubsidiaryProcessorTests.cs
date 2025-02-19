@@ -88,6 +88,64 @@ public class BulkSubsidiaryProcessorTests
     }
 
     [TestMethod]
+    public async Task ShouldUpdateRelationshipsWhereSubsidiaryExistsInRpd()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var organisationId = Guid.NewGuid();
+        var userRequestModel = new UserRequestModel
+        {
+            UserId = userId,
+            OrganisationId = organisationId
+        };
+
+        var parent = _fixture.Create<CompaniesHouseCompany>();
+        var parentOrganisation = _fixture.Create<OrganisationResponseModel>();
+        var subsidiaries = _fixture.CreateMany<CompaniesHouseCompany>(1).ToArray();
+        var subsidiaryOrganisations = _fixture.CreateMany<OrganisationResponseModel>(2).ToArray();
+        var notificationServiceMock = new Mock<INotificationService>();
+
+        subsidiaryOrganisations[0].companiesHouseNumber = subsidiaries[0].companies_house_number;
+        subsidiaryOrganisations[0].name = subsidiaries[0].organisation_name;
+        subsidiaryOrganisations[0].reportingType = "Self";
+        subsidiaryOrganisations[0].joinerDate = "10/10/2023";
+        subsidiaryOrganisations[0].OrganisationRelationship.JoinerDate = DateTime.Now.AddDays(-10);
+        subsidiaryOrganisations[0].OrganisationRelationship.ReportingTypeId = 1;
+
+        var subsidiaryService = new Mock<ISubsidiaryService>();
+        subsidiaryService.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(subsidiaries[0].companies_house_number))
+            .ReturnsAsync(subsidiaryOrganisations[0]);
+
+        subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(It.IsAny<int>(), It.IsAny<int>()))
+            .ReturnsAsync(false);
+
+        var companiesHouseDataProvider = new Mock<ICompaniesHouseDataProvider>();
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+
+        // Act
+        await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
+
+        subsidiaryOrganisations[0].companiesHouseNumber = subsidiaries[0].companies_house_number;
+        subsidiaryOrganisations[0].name = subsidiaries[0].organisation_name;
+        subsidiaryOrganisations[0].reportingType = "Self";
+        subsidiaryOrganisations[0].joinerDate = "10/10/2023";
+        subsidiaryOrganisations[0].OrganisationRelationship.JoinerDate = DateTime.Now.AddDays(-10);
+        subsidiaryOrganisations[0].OrganisationRelationship.ReportingTypeId = 2;
+
+        var updates = _fixture.CreateMany<SubsidiaryAddModel>(1).ToList();
+        updates[0].JoinerDate = "10/10/2023";
+        updates[0].ReportingTypeId = 2;
+        subsidiaryService.Setup(ss => ss.UpdateSubsidiaryRelationshipAsync(It.IsAny<SubsidiaryAddModel>()))
+            .Callback<SubsidiaryAddModel>(model => updates.Add(model));
+
+        // Act
+        await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
+
+        // Assert
+        updates.Should().HaveCount(1);
+    }
+
+    [TestMethod]
     public async Task ShouldAddOrganisationRelationshipWhereRelationshipsDoNotExist()
     {
         // Arrange
