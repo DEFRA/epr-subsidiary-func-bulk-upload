@@ -168,7 +168,7 @@ public class BulkSubsidiaryProcessorTests
         subsidiaryOrganisations[0].reportingType = "Self";
         subsidiaryOrganisations[0].joinerDate = "10/10/2023";
         subsidiaryOrganisations[0].OrganisationRelationship.JoinerDate = DateTime.Now.AddDays(-10);
-        subsidiaryOrganisations[0].OrganisationRelationship.ReportingTypeId = 2;
+        subsidiaryOrganisations[0].OrganisationRelationship.ReportingTypeId = 1;
 
         var subsidiaryService = new Mock<ISubsidiaryService>();
         subsidiaryService.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(subsidiaries[0].companies_house_number))
@@ -182,6 +182,16 @@ public class BulkSubsidiaryProcessorTests
 
         // Act
         await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
+
+        subsidiaryOrganisations[0].companiesHouseNumber = subsidiaries[0].companies_house_number;
+        subsidiaryOrganisations[0].name = subsidiaries[0].organisation_name;
+        subsidiaryOrganisations[0].reportingType = "Self";
+        subsidiaryOrganisations[0].joinerDate = "10/10/2023";
+        subsidiaryOrganisations[0].OrganisationRelationship.JoinerDate = DateTime.Now.AddDays(-10);
+        subsidiaryOrganisations[0].OrganisationRelationship.ReportingTypeId = 2;
+
+        subsidiaryService.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(subsidiaries[0].companies_house_number))
+        .ReturnsAsync(subsidiaryOrganisations[0]);
 
         var updates = _fixture.CreateMany<SubsidiaryAddModel>(1).ToList();
         updates[0].JoinerDate = "10/10/2023";
