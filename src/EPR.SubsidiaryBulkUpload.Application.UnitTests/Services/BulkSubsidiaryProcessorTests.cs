@@ -84,7 +84,7 @@ public class BulkSubsidiaryProcessorTests
         await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
 
         // Assert
-        updates.Should().HaveCount(2);
+        updates.Should().HaveCount(4);
     }
 
     [TestMethod]
@@ -139,7 +139,7 @@ public class BulkSubsidiaryProcessorTests
         var result = await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
 
         // Assert
-        inserts.Should().HaveCount(1);
+        inserts.Should().HaveCount(3);
         result.Should().Be(0);
     }
 
@@ -507,7 +507,7 @@ public class BulkSubsidiaryProcessorTests
         var result = await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
 
         // Assert
-        inserts.Should().HaveCount(1);
+        inserts.Should().HaveCount(2);
     }
 
     [TestMethod]
