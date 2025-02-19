@@ -661,6 +661,34 @@ public class SubsidiaryServiceTests
     }
 
     [TestMethod]
+    public async Task UpdateSubsidiaryRelationshipAsync_ReturnsNull_When_NoSuccessResponse()
+    {
+        // Arrange
+        var subsidiaryAddModel = _fixture.Create<SubsidiaryAddModel>();
+        var apiResponse = _fixture.Create<ProblemDetails>();
+
+        var expectedUri = $"{BaseAddress}/{OrganisationAddSubsidiaryUri}";
+        var expectedUriUpdate = $"{BaseAddress}/{OrganisationUpdateSubsidiaryUri}";
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(x => x.RequestUri != null && x.RequestUri.ToString() == expectedUriUpdate),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.Forbidden,
+                Content = apiResponse.ToJsonContent()
+            }).Verifiable();
+
+        // Act
+        var updateResponse = await _sut.UpdateSubsidiaryRelationshipAsync(subsidiaryAddModel);
+
+        // Assert
+        updateResponse.Should().NotBe(HttpStatusCode.OK);
+    }
+
+    [TestMethod]
     public async Task GetSystemUserAndOrganisation_Returns_Expected_Result()
     {
         // Arrange
