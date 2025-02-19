@@ -43,12 +43,11 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         var subsidiariesAndOrgWithMatchingReportingType = subsidiariesAndOrg
         .Where(sub => sub.SubsidiaryOrg != null && sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg.companiesHouseNumber
-        && string.Equals(sub.Subsidiary.joiner_date, sub.SubsidiaryOrg.OrganisationRelationship?.JoinerDate?.ToString("dd/MM/yyyy"), StringComparison.InvariantCulture)
         && !string.Equals(sub.Subsidiary.reporting_type, ((ReportingType)sub.SubsidiaryOrg.OrganisationRelationship.ReportingTypeId).ToString(), StringComparison.OrdinalIgnoreCase)
         && string.Equals(sub.Subsidiary.organisation_name, sub.SubsidiaryOrg.name, StringComparison.OrdinalIgnoreCase)
         && parentOrg.id == sub.SubsidiaryOrg.OrganisationRelationship?.FirstOrganisationId);
 
-        var subsidiariesAndOrgWithValidNameanJointerDateProcessStatistics = await ProcessValidNamedOrgsUpdate(subsidiariesAndOrgWithMatchingReportingType, parentOrg, userRequestModel);
+        var subsidiariesAndOrgWithValidNameanJointerDateProcessStatistics = await ProcessValidNamedOrgsUpdate(subsidiariesAndOrg, parentOrg, userRequestModel);
 
         var subsidiariesAndOrgWith_InValidName = subsidiariesAndOrg.Where(sub => sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg?.companiesHouseNumber
             && !string.Equals(sub.Subsidiary.organisation_name, sub.SubsidiaryOrg?.name, StringComparison.OrdinalIgnoreCase));
