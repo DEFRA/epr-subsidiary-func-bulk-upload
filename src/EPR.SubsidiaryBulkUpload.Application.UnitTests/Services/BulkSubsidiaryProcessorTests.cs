@@ -124,7 +124,7 @@ public class BulkSubsidiaryProcessorTests
 
         subsidiaryOrganisations[0].companiesHouseNumber = subsidiaries[0].companies_house_number;
         subsidiaryOrganisations[0].name = subsidiaries[0].organisation_name;
-        subsidiaryOrganisations[0].reportingType = "Self";
+        subsidiaryOrganisations[0].reportingType = "Group";
         subsidiaryOrganisations[0].joinerDate = "10/10/2023";
         subsidiaryOrganisations[0].OrganisationRelationship.JoinerDate = DateTime.Now.AddDays(-10);
         subsidiaryOrganisations[0].OrganisationRelationship.ReportingTypeId = 2;
@@ -149,7 +149,6 @@ public class BulkSubsidiaryProcessorTests
         };
 
         var parent = _fixture.Create<CompaniesHouseCompany>();
-
         var parentOrganisation = _fixture.Create<OrganisationResponseModel>();
         var subsidiaries = _fixture.CreateMany<CompaniesHouseCompany>(1).ToArray();
         var subsidiaryOrganisations = _fixture.CreateMany<OrganisationResponseModel>(1).ToArray();
@@ -177,6 +176,17 @@ public class BulkSubsidiaryProcessorTests
 
         subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(It.IsAny<int>(), It.IsAny<int>()))
             .ReturnsAsync(true);
+
+        var key = "testKey";
+        var errorsModel = new List<UploadFileErrorModel> { new() { FileLineNumber = 1, Message = "testMessage", IsError = true } };
+        notificationServiceMock.Setup(ss => ss.SetErrorStatus(key, errorsModel));
+
+        var updates = _fixture.CreateMany<SubsidiaryAddModel>(1).ToList();
+        updates[0].JoinerDate = "10/10/2023";
+        updates[0].ReportingTypeId = 2;
+
+        subsidiaryService.Setup(ss => ss.UpdateSubsidiaryRelationshipAsync(It.IsAny<SubsidiaryAddModel>()))
+            .Callback<SubsidiaryAddModel>(model => updates.Add(model));
 
         var companiesHouseDataProvider = new Mock<ICompaniesHouseDataProvider>();
         var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
@@ -576,6 +586,122 @@ public class BulkSubsidiaryProcessorTests
         subsidiaries[0].franchisee_licensee_tenant = "Y";
         subsidiaryOrganisations[0].companiesHouseNumber = subsidiaries[0].companies_house_number;
         subsidiaryOrganisations[0].name = subsidiaries[0].organisation_name;
+
+        // Return an OrganisationResponseModel to simulate the company existing in RPD
+        subsidiaryService.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(subsidiaries[0].companies_house_number))
+            .ReturnsAsync(subsidiaryOrganisations[0]);
+
+        subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(It.IsAny<int>(), It.IsAny<int>()))
+            .ReturnsAsync(false);
+
+        var updates = new List<SubsidiaryAddModel>();
+        subsidiaryService.Setup(ss => ss.AddSubsidiaryRelationshipAsync(It.IsAny<SubsidiaryAddModel>()))
+            .Callback<SubsidiaryAddModel>(model => updates.Add(model));
+
+        var notificationServiceMock = new Mock<INotificationService>();
+        var companiesHouseDataProvider = new Mock<ICompaniesHouseDataProvider>();
+        companiesHouseDataProvider.Setup(ss => ss.SetCompaniesHouseData(It.IsAny<OrganisationModel>()))
+        .ReturnsAsync(true)
+        .Callback<OrganisationModel>(model => model.Error = null);
+
+        subsidiaryService.Setup(ss => ss.GetCompanyByCompanyName(subsidiaries[0].organisation_name))
+         .ReturnsAsync(subsidiaryOrganisations[0]);
+
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+
+        var userRequestModel = new UserRequestModel
+        {
+            UserId = userId,
+            OrganisationId = organisationId
+        };
+
+        // Act
+        var result = await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
+
+        // Assert
+        updates.Should().HaveCount(1);
+    }
+
+    [TestMethod]
+    public async Task ShouldProcessFranchiseeWhenDataExistForFranchiseeY()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var organisationId = Guid.NewGuid();
+        var subsidiaryService = new Mock<ISubsidiaryService>();
+
+        var parent = _fixture.Create<CompaniesHouseCompany>();
+        var parentOrganisation = _fixture.Create<OrganisationResponseModel>();
+
+        var subsidiaries = _fixture
+            .Build<CompaniesHouseCompany>()
+            .With(c => c.Errors, () => new())
+            .CreateMany(1)
+            .ToArray();
+
+        var subsidiaryOrganisations = _fixture.CreateMany<OrganisationResponseModel>(1).ToArray();
+        subsidiaries[0].franchisee_licensee_tenant = "Y";
+        subsidiaryOrganisations[0].companiesHouseNumber = subsidiaries[0].companies_house_number;
+        subsidiaryOrganisations[0].name = subsidiaries[0].organisation_name;
+        subsidiaries[0].Errors = null;
+
+        // Return an OrganisationResponseModel to simulate the company existing in RPD
+        subsidiaryService.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(subsidiaries[0].companies_house_number))
+            .ReturnsAsync(subsidiaryOrganisations[0]);
+
+        subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(It.IsAny<int>(), It.IsAny<int>()))
+            .ReturnsAsync(false);
+
+        var updates = new List<SubsidiaryAddModel>();
+        subsidiaryService.Setup(ss => ss.AddSubsidiaryRelationshipAsync(It.IsAny<SubsidiaryAddModel>()))
+            .Callback<SubsidiaryAddModel>(model => updates.Add(model));
+
+        var notificationServiceMock = new Mock<INotificationService>();
+        var companiesHouseDataProvider = new Mock<ICompaniesHouseDataProvider>();
+        companiesHouseDataProvider.Setup(ss => ss.SetCompaniesHouseData(It.IsAny<OrganisationModel>()))
+        .ReturnsAsync(true)
+        .Callback<OrganisationModel>(model => model.Error = null);
+
+        subsidiaryService.Setup(ss => ss.GetCompanyByCompanyName(subsidiaries[0].organisation_name))
+         .ReturnsAsync(subsidiaryOrganisations[0]);
+
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+
+        var userRequestModel = new UserRequestModel
+        {
+            UserId = userId,
+            OrganisationId = organisationId
+        };
+
+        // Act
+        var result = await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
+
+        // Assert
+        updates.Should().HaveCount(1);
+    }
+
+    [TestMethod]
+    public async Task ShouldProcessFranchiseeWhenDataExistForFranchiseeN()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var organisationId = Guid.NewGuid();
+        var subsidiaryService = new Mock<ISubsidiaryService>();
+
+        var parent = _fixture.Create<CompaniesHouseCompany>();
+        var parentOrganisation = _fixture.Create<OrganisationResponseModel>();
+
+        var subsidiaries = _fixture
+            .Build<CompaniesHouseCompany>()
+            .With(c => c.Errors, () => new())
+            .CreateMany(1)
+            .ToArray();
+
+        var subsidiaryOrganisations = _fixture.CreateMany<OrganisationResponseModel>(1).ToArray();
+        subsidiaries[0].franchisee_licensee_tenant = "N";
+        subsidiaryOrganisations[0].companiesHouseNumber = subsidiaries[0].companies_house_number;
+        subsidiaryOrganisations[0].name = subsidiaries[0].organisation_name;
+        subsidiaries[0].Errors = null;
 
         // Return an OrganisationResponseModel to simulate the company existing in RPD
         subsidiaryService.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(subsidiaries[0].companies_house_number))
