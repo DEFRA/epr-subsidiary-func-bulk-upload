@@ -196,6 +196,65 @@ public class BulkSubsidiaryProcessorTests
     }
 
     [TestMethod]
+    public async Task ShouldShowErroronUpdateRelationshipsWhereJoinerDate_not_matching_SubsidiaryExists()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var organisationId = Guid.NewGuid();
+        var userRequestModel = new UserRequestModel
+        {
+            UserId = userId,
+            OrganisationId = organisationId
+        };
+
+        var parent = _fixture.Create<CompaniesHouseCompany>();
+
+        var parentOrganisation = _fixture.Create<OrganisationResponseModel>();
+        var subsidiaries = _fixture.CreateMany<CompaniesHouseCompany>(1).ToArray();
+        var subsidiaryOrganisations = _fixture.CreateMany<OrganisationResponseModel>(1).ToArray();
+        var notificationServiceMock = new Mock<INotificationService>();
+
+        subsidiaries[0].companies_house_number = "00099405";
+        subsidiaries[0].organisation_name = "WAITROSE LIMITED";
+        subsidiaries[0].reporting_type = "Self";
+        subsidiaries[0].joiner_date = "10/10/2023";
+        subsidiaries[0].parent_child = "Child";
+        subsidiaries[0].Errors = null;
+        subsidiaries[0].franchisee_licensee_tenant = string.Empty;
+
+        subsidiaryOrganisations[0].companiesHouseNumber = subsidiaries[0].companies_house_number;
+        subsidiaryOrganisations[0].name = subsidiaries[0].organisation_name;
+        subsidiaryOrganisations[0].reportingType = subsidiaries[0].reporting_type;
+        subsidiaryOrganisations[0].joinerDate = subsidiaries[0].joiner_date;
+        subsidiaryOrganisations[0].OrganisationRelationship.JoinerDate = DateTime.Now.AddDays(-10);
+        subsidiaryOrganisations[0].OrganisationRelationship.ReportingTypeId = 1;
+
+        subsidiaryOrganisations[0].OrganisationRelationship.FirstOrganisationId = parentOrganisation.id;
+        var subsidiaryService = new Mock<ISubsidiaryService>();
+        subsidiaryService.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(subsidiaries[0].companies_house_number))
+            .ReturnsAsync(subsidiaryOrganisations[0]);
+
+        subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(It.IsAny<int>(), It.IsAny<int>()))
+            .ReturnsAsync(true);
+
+        var companiesHouseDataProvider = new Mock<ICompaniesHouseDataProvider>();
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+
+        subsidiaries[0].companies_house_number = subsidiaryOrganisations[0].companiesHouseNumber;
+        subsidiaries[0].organisation_name = subsidiaryOrganisations[0].name;
+        subsidiaries[0].reporting_type = "Group";
+        subsidiaries[0].joiner_date = "10/10/2024";
+        subsidiaries[0].Errors = null;
+        subsidiaries[0].franchisee_licensee_tenant = string.Empty;
+
+        // Act
+        var result = await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
+
+        // Assert
+        result.Should().Be(0);
+    }
+
+    [TestMethod]
     public async Task ShouldAddOrganisationRelationshipWhereRelationshipsDoNotExist()
     {
         // Arrange
