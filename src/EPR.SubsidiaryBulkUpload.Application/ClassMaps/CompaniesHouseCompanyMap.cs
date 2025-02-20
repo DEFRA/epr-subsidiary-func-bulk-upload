@@ -10,7 +10,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.ClassMaps;
 [ExcludeFromCodeCoverage]
 public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
 {
-    public CompaniesHouseCompanyMap(bool includeSubsidiaryJoinerColumns)
+    public CompaniesHouseCompanyMap()
     {
         Map(m => m.organisation_id).Index(0).Validate(field => !field.Equals(null));
         Map(m => m.subsidiary_id);
@@ -21,7 +21,12 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
         Map(m => m.Errors).Index(6).Convert(args => GetRowValidationErrors(args.Row));
         Map(m => m.RawRow).Convert(args => args.Row.Context.Reader.Parser.RawRecord);
         Map(m => m.FileLineNumber).Convert(args => args.Row.Context.Reader.Parser.Row);
+        IncludeSubsidiaryJoinerColumns = false;
+    }
 
+    public CompaniesHouseCompanyMap(bool includeSubsidiaryJoinerColumns)
+        : this()
+    {
         IncludeSubsidiaryJoinerColumns = includeSubsidiaryJoinerColumns;
 
         if (IncludeSubsidiaryJoinerColumns)
@@ -124,22 +129,22 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
             }
         }
 
-        if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.joiner_date))) && !string.Equals(row.GetField(nameof(CompaniesHouseCompany.parent_child)), "parent", StringComparison.OrdinalIgnoreCase))
-        {
-            errors.Add(
-                CreateError(
-                    lineNumber, rawData, BulkUpdateErrors.JoinerDateRequiredMessage, BulkUpdateErrors.JoinerDateRequired));
-        }
-
-        if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.reporting_type))) && !string.Equals(row.GetField(nameof(CompaniesHouseCompany.parent_child)), "parent", StringComparison.OrdinalIgnoreCase))
-        {
-            errors.Add(
-                CreateError(
-                    lineNumber, rawData, BulkUpdateErrors.ReportingTypeRequiredMessage, BulkUpdateErrors.ReportingTypeRequired));
-        }
-
         if (IncludeSubsidiaryJoinerColumns)
         {
+            if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.joiner_date))) && !string.Equals(row.GetField(nameof(CompaniesHouseCompany.parent_child)), "parent", StringComparison.OrdinalIgnoreCase))
+            {
+                errors.Add(
+                    CreateError(
+                        lineNumber, rawData, BulkUpdateErrors.JoinerDateRequiredMessage, BulkUpdateErrors.JoinerDateRequired));
+            }
+
+            if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.reporting_type))) && !string.Equals(row.GetField(nameof(CompaniesHouseCompany.parent_child)), "parent", StringComparison.OrdinalIgnoreCase))
+            {
+                errors.Add(
+                    CreateError(
+                        lineNumber, rawData, BulkUpdateErrors.ReportingTypeRequiredMessage, BulkUpdateErrors.ReportingTypeRequired));
+            }
+
             if (!string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.reporting_type))) && !string.Equals(row.GetField(nameof(CompaniesHouseCompany.parent_child)), "parent", StringComparison.OrdinalIgnoreCase))
             {
                 var reportingType = row.GetField(nameof(CompaniesHouseCompany.reporting_type));

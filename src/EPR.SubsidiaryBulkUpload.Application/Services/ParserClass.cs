@@ -39,7 +39,15 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             var rows = new List<CompaniesHouseCompany>();
             using var reader = new StreamReader(stream);
             using var csv = new CustomCsvReader(reader, configuration);
-            csv.Context.RegisterClassMap(new CompaniesHouseCompanyMap(includeSubsidiaryJoinerColumns));
+
+            if (includeSubsidiaryJoinerColumns)
+            {
+                csv.Context.RegisterClassMap(new CompaniesHouseCompanyMap(true));
+            }
+            else
+            {
+                csv.Context.RegisterClassMap<CompaniesHouseCompanyMap>();
+            }
 
             try
             {
@@ -75,7 +83,15 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                 return rows;
             }
 
-            csv.ValidateHeader<FileUploadHeader>();
+            if (includeSubsidiaryJoinerColumns)
+            {
+                csv.ValidateHeader<FileUploadHeaderCustom>();
+            }
+            else
+            {
+                csv.ValidateHeader<FileUploadHeader>();
+            }
+
             if (csv.InvalidHeaderErrors is { Count: > 0 })
             {
                 var errorMessage = new StringBuilder();

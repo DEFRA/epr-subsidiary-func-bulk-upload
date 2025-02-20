@@ -1,9 +1,6 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿namespace EPR.SubsidiaryBulkUpload.Application.DTOs;
 
-namespace EPR.SubsidiaryBulkUpload.Application.DTOs;
-
-[ExcludeFromCodeCoverage]
-public class FileUploadHeader
+public class FileUploadHeaderCustom
 {
     public string organisation_id { get; set; }
 
@@ -16,4 +13,8 @@ public class FileUploadHeader
     public string parent_child { get; set; }
 
     public string franchisee_licensee_tenant { get; set; }
+
+    public string joiner_date { get; set; }
+
+    public string reporting_type { get; set; }
 }
