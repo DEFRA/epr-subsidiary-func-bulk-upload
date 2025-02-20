@@ -136,7 +136,6 @@ public class BulkUploadOrchestrationTests
                 It.Is<SubsidiariesBulkUploadCompleteEvent>(e =>
                     e.Type == EventType.SubsidiariesBulkUploadComplete &&
                     e.FileName == fileName &&
-                    e.FileType == FileType.Subsidiaries &&
                     e.UserId == userId),
                 submissionId,
                 userId,

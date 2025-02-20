@@ -3,5 +3,5 @@
 public enum EventType
 {
     AntivirusCheck = 1,
-    SubsidiariesBulkUploadComplete = 15
+    SubsidiariesBulkUploadComplete = 18
 }
