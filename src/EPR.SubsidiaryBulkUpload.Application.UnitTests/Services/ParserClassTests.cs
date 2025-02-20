@@ -12,6 +12,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 [TestClass]
 public class ParserClassTests
 {
+    private const string _csvHeaderWFFALSE = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
     private const string _csvHeader = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,joiner_date,reporting_type\n";
     private const string _csvHeaderWithMissingSubsidiaryId = "organisation_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,joiner_date,reporting_type\n";
     private const string _csvHeaderWithNullValues = "";
@@ -178,6 +179,122 @@ public class ParserClassTests
         parsedResult[1].parent_child.Should().Be("Child");
         parsedResult[1].franchisee_licensee_tenant.Should().Be(string.Empty);
         parsedResult[1].Errors.Should().BeNullOrEmpty();
+    }
+
+    [TestMethod]
+    public void ParseClass_ValidCsvFile_ReturnsCorrectData_With_Flag()
+    {
+        // Arrange
+        _mockFeatureManager.Setup(x => x.IsEnabledAsync(It.IsAny<string>())).ReturnsAsync(true);
+
+        // var enableSubsidiaryJoinerColumns = _mockFeatureManager.IsEnabledAsync(FeatureFlags.EnableSubsidiaryJoinerColumns).GetAwaiter().GetResult();
+        var rawSource = _listDataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant},{s.joiner_date},{s.reporting_type}\n");
+        string[] all = [_csvHeader, .. rawSource];
+
+        using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
+
+        // Act
+        var returnValue = _sut.ParseWithHelper(stream, CsvConfigurations.BulkUploadCsvConfiguration);
+
+        // Assert
+        returnValue.Should().NotBeNull();
+
+        returnValue.ResponseClass.Should().NotBeNull();
+        returnValue.ResponseClass.isDone.Should().BeTrue();
+
+        returnValue.CompaniesHouseCompany.Should().NotBeNull();
+        returnValue.CompaniesHouseCompany.Count.Should().Be(2);
+
+        var parsedResult = returnValue.CompaniesHouseCompany;
+
+        parsedResult[0].organisation_id.Should().Be("23123");
+        parsedResult[0].subsidiary_id.Should().Be(string.Empty);
+        parsedResult[0].organisation_name.Should().Be("OrgA");
+        parsedResult[0].companies_house_number.Should().Be("123456");
+        parsedResult[0].parent_child.Should().Be("Parent");
+        parsedResult[0].franchisee_licensee_tenant.Should().Be(string.Empty);
+        parsedResult[0].Errors.Should().BeNullOrEmpty();
+
+        parsedResult[1].organisation_id.Should().Be("23123");
+        parsedResult[1].subsidiary_id.Should().Be("Sub1");
+        parsedResult[1].organisation_name.Should().Be("OrgB");
+        parsedResult[1].companies_house_number.Should().Be("654321");
+        parsedResult[1].parent_child.Should().Be("Child");
+        parsedResult[1].franchisee_licensee_tenant.Should().Be(string.Empty);
+        parsedResult[1].Errors.Should().BeNullOrEmpty();
+    }
+
+    [TestMethod]
+    public void ParseClass_ValidCsvFile_ReturnsCorrectData_With_Flag_False()
+    {
+        // Arrange
+        _mockFeatureManager.Setup(x => x.IsEnabledAsync(It.IsAny<string>())).ReturnsAsync(false);
+
+        // var enableSubsidiaryJoinerColumns = _mockFeatureManager.IsEnabledAsync(FeatureFlags.EnableSubsidiaryJoinerColumns).GetAwaiter().GetResult();
+        var rawSource = _listDataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
+        string[] all = [_csvHeaderWFFALSE, .. rawSource];
+
+        using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
+
+        // Act
+        var returnValue = _sut.ParseWithHelper(stream, CsvConfigurations.BulkUploadCsvConfiguration);
+
+        // Assert
+        returnValue.Should().NotBeNull();
+
+        returnValue.ResponseClass.Should().NotBeNull();
+        returnValue.ResponseClass.isDone.Should().BeTrue();
+
+        returnValue.CompaniesHouseCompany.Should().NotBeNull();
+        returnValue.CompaniesHouseCompany.Count.Should().Be(2);
+
+        var parsedResult = returnValue.CompaniesHouseCompany;
+
+        parsedResult[0].organisation_id.Should().Be("23123");
+        parsedResult[0].subsidiary_id.Should().Be(string.Empty);
+        parsedResult[0].organisation_name.Should().Be("OrgA");
+        parsedResult[0].companies_house_number.Should().Be("123456");
+        parsedResult[0].parent_child.Should().Be("Parent");
+        parsedResult[0].franchisee_licensee_tenant.Should().Be(string.Empty);
+        parsedResult[0].Errors.Should().BeNullOrEmpty();
+
+        parsedResult[1].organisation_id.Should().Be("23123");
+        parsedResult[1].subsidiary_id.Should().Be("Sub1");
+        parsedResult[1].organisation_name.Should().Be("OrgB");
+        parsedResult[1].companies_house_number.Should().Be("654321");
+        parsedResult[1].parent_child.Should().Be("Child");
+        parsedResult[1].franchisee_licensee_tenant.Should().Be(string.Empty);
+        parsedResult[1].Errors.Should().BeNullOrEmpty();
+    }
+
+    [TestMethod]
+    public void ParseClass_ValidCsvFile_ReturnsCorrectData_With_Flag_False_With_Extra_Column()
+    {
+        // Arrange
+        _mockFeatureManager.Setup(x => x.IsEnabledAsync(It.IsAny<string>())).ReturnsAsync(false);
+
+        // var enableSubsidiaryJoinerColumns = _mockFeatureManager.IsEnabledAsync(FeatureFlags.EnableSubsidiaryJoinerColumns).GetAwaiter().GetResult();
+        var rawSource = _listDataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant},{s.joiner_date},{s.reporting_type}\n");
+        string[] all = [_csvHeader, .. rawSource];
+
+        using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
+
+        // Act
+        var returnValue = _sut.ParseWithHelper(stream, CsvConfigurations.BulkUploadCsvConfiguration);
+
+        // Assert
+        returnValue.Should().NotBeNull();
+
+        returnValue.ResponseClass.Should().NotBeNull();
+        returnValue.ResponseClass.isDone.Should().BeTrue();
+
+        returnValue.CompaniesHouseCompany.Should().NotBeNull();
+        returnValue.CompaniesHouseCompany.Count.Should().Be(1);
+
+        var parsedResult = returnValue.CompaniesHouseCompany;
+
+        parsedResult[0].Errors.Should().NotBeEmpty();
+        parsedResult[0].Errors[0].Message.Should().Contain("The file has additional column headers: The file has too many column headers. Remove these and try again");
     }
 
     [TestMethod]
