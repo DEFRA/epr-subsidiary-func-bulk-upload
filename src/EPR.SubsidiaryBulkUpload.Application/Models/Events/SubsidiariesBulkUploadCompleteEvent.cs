@@ -4,13 +4,11 @@ public class SubsidiariesBulkUploadCompleteEvent : AbstractEvent
 {
     public override EventType Type => EventType.SubsidiariesBulkUploadComplete;
 
-    public string? BlobName { get; set; }
+    public string BlobName { get; set; }
 
-    public string? BlobContainerName { get; set; }
+    public string BlobContainerName { get; set; }
 
-    public string? FileName { get; set; }
-
-    public FileType? FileType { get; set; }
+    public string FileName { get; set; }
 
     public Guid UserId { get; set; }
 }

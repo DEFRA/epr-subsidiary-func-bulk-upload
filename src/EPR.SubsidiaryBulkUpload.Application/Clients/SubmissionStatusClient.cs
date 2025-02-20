@@ -18,7 +18,8 @@ public class SubmissionStatusClient(
     private readonly ISystemDetailsProvider _systemDetailsProvider = systemDetailsProvider;
     private readonly HttpClient _httpClient = httpClient;
 
-    public async Task<HttpStatusCode> CreateEventAsync(AbstractEvent @event, Guid submissionId, Guid? userId = null, Guid? organisationId = null)
+    public async Task<HttpStatusCode> CreateEventAsync<T>(T @event, Guid submissionId, Guid? userId = null, Guid? organisationId = null)
+        where T : AbstractEvent
     {
         return await Post($"submissions/{submissionId}/events", @event, userId, organisationId);
     }
@@ -43,24 +44,6 @@ public class SubmissionStatusClient(
         try
         {
             ConfigureHttpClientAsync(userId, organisationId);
-
-            var subsidiariesCompleteEvent = data as SubsidiariesBulkUploadCompleteEvent;
-            if (subsidiariesCompleteEvent is not null)
-            {
-                _logger.LogInformation("Sending submission to {RequestUri}", requestUri);
-                _logger.LogInformation(
-                    "  submission headers userId '{UserId}', organisationId '{OrganisationId}'",
-                    _httpClient.DefaultRequestHeaders.GetValues("UserId")?.FirstOrDefault(),
-                    _httpClient.DefaultRequestHeaders.GetValues("OrganisationId")?.FirstOrDefault());
-                _logger.LogInformation(
-                    "  submission type '{Type}', user '{UserId}', blob '{BlobContainerName}'/'{BlobName}'. file '{FileName} : {FileType}'",
-                    subsidiariesCompleteEvent.Type,
-                    subsidiariesCompleteEvent.UserId,
-                    subsidiariesCompleteEvent.BlobContainerName,
-                    subsidiariesCompleteEvent.BlobName,
-                    subsidiariesCompleteEvent.FileName,
-                    subsidiariesCompleteEvent.FileType);
-            }
 
             var response = await _httpClient.PostAsJsonAsync<T>(requestUri, data);
 

@@ -281,7 +281,6 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
             BlobName = userRequestModel.BlobName,
             BlobContainerName = userRequestModel.BlobContainerName,
             FileName = userRequestModel.FileName,
-            FileType = FileType.Subsidiaries,
             UserId = userRequestModel.UserId
         };
 

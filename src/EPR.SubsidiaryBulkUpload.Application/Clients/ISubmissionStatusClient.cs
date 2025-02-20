@@ -8,5 +8,6 @@ public interface ISubmissionStatusClient
 {
     Task<HttpStatusCode> CreateSubmissionAsync(CreateSubmission submission);
 
-    Task<HttpStatusCode> CreateEventAsync(AbstractEvent @event, Guid submissionId, Guid? userId = null, Guid? organisationId = null);
+    Task<HttpStatusCode> CreateEventAsync<T>(T @event, Guid submissionId, Guid? userId = null, Guid? organisationId = null)
+        where T : AbstractEvent;
 }
