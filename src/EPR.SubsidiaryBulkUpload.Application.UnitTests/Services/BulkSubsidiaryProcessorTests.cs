@@ -703,6 +703,8 @@ public class BulkSubsidiaryProcessorTests
         subsidiaryOrganisations[0].companiesHouseNumber = subsidiaries[0].companies_house_number;
         subsidiaryOrganisations[0].name = subsidiaries[0].organisation_name;
         subsidiaries[0].Errors = null;
+        subsidiaries[0].joiner_date = "10/10/2023";
+        subsidiaries[0].reporting_type = "Group";
 
         // Return an OrganisationResponseModel to simulate the company existing in RPD
         subsidiaryService.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(subsidiaries[0].companies_house_number))

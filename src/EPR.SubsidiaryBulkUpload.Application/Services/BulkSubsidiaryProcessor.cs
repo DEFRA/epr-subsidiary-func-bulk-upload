@@ -251,6 +251,8 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         foreach (var subsidiaryAddModel in subsidiariesAndOrgNonExistsInTheDB)
         {
+            var reportingTypeEnum = Enum.TryParse<ReportingType>(subsidiaryAddModel.Subsidiary.reporting_type, true, out var reportingType) ? reportingType : (ReportingType?)null;
+
             var franchisee = new LinkOrganisationModel()
             {
                 UserId = userRequestModel.UserId,
@@ -267,7 +269,9 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
                     RawContent = subsidiaryAddModel.Subsidiary.RawRow,
                     FileLineNumber = subsidiaryAddModel.Subsidiary.FileLineNumber,
                     Franchisee_Licensee_Tenant = subsidiaryAddModel.Subsidiary.franchisee_licensee_tenant,
-                    Address = new AddressModel()
+                    Address = new AddressModel(),
+                    JoinerDate = subsidiaryAddModel.Subsidiary.joiner_date,
+                    ReportingTypeId = (int?)reportingTypeEnum
                 },
                 ParentOrganisationId = parentOrg.ExternalId.Value
             };
