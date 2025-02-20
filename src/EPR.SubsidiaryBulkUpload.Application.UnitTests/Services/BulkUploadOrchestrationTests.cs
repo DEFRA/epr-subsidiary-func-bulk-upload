@@ -351,7 +351,7 @@ public class BulkUploadOrchestrationTests
         _subsidiaryService.Setup(se => se.GetCompanyByCompaniesHouseNumber(It.IsAny<string>())).ReturnsAsync(subsidiaries[0]);
         _subsidiaryService.Setup(se => se.GetCompanyByCompaniesHouseNumber(It.IsAny<string>())).ReturnsAsync(subsidiaries[1]);
         _subsidiaryService.Setup(se => se.GetCompanyByCompaniesHouseNumber(It.IsAny<string>())).ReturnsAsync(subsidiaries[2]);
-        var orchestrator = new BulkUploadOrchestration(_recordExtraction.Object, _subsidiaryService.Object, _bulkSubsidiaryProcessor.Object, _notificationService.Object, NullLogger<BulkUploadOrchestration>.Instance);
+        var orchestrator = new BulkUploadOrchestration(_recordExtraction.Object, _subsidiaryService.Object, _bulkSubsidiaryProcessor.Object, _notificationService.Object, _submissionStatusClient.Object, NullLogger<BulkUploadOrchestration>.Instance);
 
         var userId = Guid.NewGuid();
         var organisationId = Guid.NewGuid();
