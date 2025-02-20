@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using EPR.SubsidiaryBulkUpload.Application.Constants;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Options;
@@ -6,6 +7,7 @@ using EPR.SubsidiaryBulkUpload.Application.Services;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Microsoft.FeatureManagement;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 
@@ -13,11 +15,16 @@ namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 public class BulkSubsidiaryProcessorTests
 {
     private Fixture _fixture;
+    private Mock<IFeatureManager> _mockFeatureManager;
 
     [TestInitialize]
     public void TestInitialize()
     {
         _fixture = new();
+        _mockFeatureManager = new Mock<IFeatureManager>();
+        _mockFeatureManager
+        .Setup(x => x.IsEnabledAsync(FeatureFlags.EnableSubsidiaryJoinerColumns))
+        .ReturnsAsync(true);
     }
 
     [TestMethod]
@@ -78,7 +85,7 @@ public class BulkSubsidiaryProcessorTests
             .Callback<SubsidiaryAddModel>(model => updates.Add(model));
 
         var companiesHouseDataProvider = new Mock<ICompaniesHouseDataProvider>();
-        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
 
         // Act
         await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
@@ -120,7 +127,7 @@ public class BulkSubsidiaryProcessorTests
             .ReturnsAsync(true);
 
         var companiesHouseDataProvider = new Mock<ICompaniesHouseDataProvider>();
-        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
 
         subsidiaries[0].companies_house_number = subsidiaryOrganisations[0].companiesHouseNumber;
         subsidiaries[0].organisation_name = subsidiaryOrganisations[0].name;
@@ -189,7 +196,7 @@ public class BulkSubsidiaryProcessorTests
             .Callback<SubsidiaryAddModel>(model => updates.Add(model));
 
         var companiesHouseDataProvider = new Mock<ICompaniesHouseDataProvider>();
-        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
 
         subsidiaries[0].companies_house_number = subsidiaryOrganisations[0].companiesHouseNumber;
         subsidiaries[0].organisation_name = subsidiaryOrganisations[0].name;
@@ -248,7 +255,7 @@ public class BulkSubsidiaryProcessorTests
             .ReturnsAsync(true);
 
         var companiesHouseDataProvider = new Mock<ICompaniesHouseDataProvider>();
-        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
 
         subsidiaries[0].companies_house_number = subsidiaryOrganisations[0].companiesHouseNumber;
         subsidiaries[0].organisation_name = subsidiaryOrganisations[0].name;
@@ -307,7 +314,7 @@ public class BulkSubsidiaryProcessorTests
             .ReturnsAsync(true);
 
         var companiesHouseDataProvider = new Mock<ICompaniesHouseDataProvider>();
-        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
 
         subsidiaries[0].companies_house_number = subsidiaryOrganisations[0].companiesHouseNumber;
         subsidiaries[0].organisation_name = subsidiaryOrganisations[0].name;
@@ -362,7 +369,7 @@ public class BulkSubsidiaryProcessorTests
 
         var notificationServiceMock = new Mock<INotificationService>();
 
-        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
 
         var organisationId = Guid.NewGuid();
         var userRequestModel = new UserRequestModel
@@ -414,7 +421,7 @@ public class BulkSubsidiaryProcessorTests
         var errorsModel = new List<UploadFileErrorModel> { new() { FileLineNumber = 1, Message = "testMessage", IsError = true } };
         notificationServiceMock.Setup(ss => ss.SetErrorStatus(key, errorsModel));
 
-        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
 
         var organisationId = Guid.NewGuid();
         var userRequestModel = new UserRequestModel
@@ -476,7 +483,7 @@ public class BulkSubsidiaryProcessorTests
         var errorStatus = default(string);
         var key = $"{userId}{organisationId}Subsidiary bulk upload progress";
         var errorKey = $"{userId}{organisationId}Subsidiary bulk upload errors";
-        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
 
         var userRequestModel = new UserRequestModel
         {
@@ -540,7 +547,7 @@ public class BulkSubsidiaryProcessorTests
         var errorStatus = default(string);
         var key = $"{userId}{organisationId}Subsidiary bulk upload progress";
         var errorKey = $"{userId}{organisationId}Subsidiary bulk upload errors";
-        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
 
         var userRequestModel = new UserRequestModel
         {
@@ -611,7 +618,7 @@ public class BulkSubsidiaryProcessorTests
         var errorStatus = default(string);
         var key = $"{userId}{organisationId}Subsidiary bulk upload progress";
         var errorKey = $"{userId}{organisationId}Subsidiary bulk upload errors";
-        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
 
         var userRequestModel = new UserRequestModel
         {
@@ -668,7 +675,7 @@ public class BulkSubsidiaryProcessorTests
         subsidiaryService.Setup(ss => ss.GetCompanyByCompanyName(subsidiaries[0].organisation_name))
          .ReturnsAsync(subsidiaryOrganisations[0]);
 
-        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
 
         var userRequestModel = new UserRequestModel
         {
@@ -728,7 +735,7 @@ public class BulkSubsidiaryProcessorTests
         subsidiaryService.Setup(ss => ss.GetCompanyByCompanyName(subsidiaries[0].organisation_name))
          .ReturnsAsync(subsidiaryOrganisations[0]);
 
-        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
 
         var userRequestModel = new UserRequestModel
         {
@@ -786,7 +793,7 @@ public class BulkSubsidiaryProcessorTests
         subsidiaryService.Setup(ss => ss.GetCompanyByCompanyName(subsidiaries[0].organisation_name))
          .ReturnsAsync(subsidiaryOrganisations[0]);
 
-        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
 
         var userRequestModel = new UserRequestModel
         {
@@ -851,7 +858,7 @@ public class BulkSubsidiaryProcessorTests
         var errorStatus = default(string);
         var key = $"{userId}{organisationId}Subsidiary bulk upload progress";
         var errorKey = $"{userId}{organisationId}Subsidiary bulk upload errors";
-        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
 
         var userRequestModel = new UserRequestModel
         {
@@ -907,7 +914,7 @@ public class BulkSubsidiaryProcessorTests
         var errorStatus = default(string);
         var key = $"{userId}{organisationId}Subsidiary bulk upload progress";
         var errorKey = $"{userId}{organisationId}Subsidiary bulk upload errors";
-        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
 
         var userRequestModel = new UserRequestModel
         {
@@ -989,7 +996,7 @@ public class BulkSubsidiaryProcessorTests
 
         var notificationServiceMock = new Mock<INotificationService>();
 
-        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
 
         var userRequestModel = new UserRequestModel
         {
@@ -1045,7 +1052,7 @@ public class BulkSubsidiaryProcessorTests
         var errorStatus = default(string);
         var key = $"{userId}{organisationId}Subsidiary bulk upload progress";
         var errorKey = $"{userId}{organisationId}Subsidiary bulk upload errors";
-        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
 
         var userRequestModel = new UserRequestModel
         {
@@ -1110,7 +1117,7 @@ public class BulkSubsidiaryProcessorTests
         var errorStatus = default(string);
         var key = $"{userId}{organisationId}Subsidiary bulk upload progress";
         var errorKey = $"{userId}{organisationId}Subsidiary bulk upload errors";
-        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
 
         var userRequestModel = new UserRequestModel
         {

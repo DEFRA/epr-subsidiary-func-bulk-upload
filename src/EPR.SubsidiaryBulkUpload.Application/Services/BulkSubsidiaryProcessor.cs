@@ -1,15 +1,17 @@
 ﻿using System.Net;
 using EPR.SubsidiaryBulkUpload.Application.Comparers;
+using EPR.SubsidiaryBulkUpload.Application.Constants;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Extensions;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Extensions.Logging;
+using Microsoft.FeatureManagement;
 using Pipelines.Sockets.Unofficial.Arenas;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services;
 
-public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICompaniesHouseDataProvider companiesHouseDataProvider, ILogger<BulkSubsidiaryProcessor> logger, INotificationService notificationService)
+public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICompaniesHouseDataProvider companiesHouseDataProvider, ILogger<BulkSubsidiaryProcessor> logger, INotificationService notificationService, IFeatureManager featureManager)
     : IBulkSubsidiaryProcessor
 {
     private readonly ILogger<BulkSubsidiaryProcessor> _logger = logger;
@@ -19,6 +21,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
     public async Task<int> Process(IEnumerable<CompaniesHouseCompany> subsidiaries, CompaniesHouseCompany parent, OrganisationResponseModel parentOrg, UserRequestModel userRequestModel)
     {
+        var enableSubsidiaryJoinerColumns = featureManager.IsEnabledAsync(FeatureFlags.EnableSubsidiaryJoinerColumns).GetAwaiter().GetResult();
         IEnumerable<CompaniesHouseCompany> franchiseeProcessed = [];
         var companiesWithFranchiseeFlagRecords = subsidiaries.Count(ch => ch.franchisee_licensee_tenant == "Y" && (ch.Errors == null || ch.Errors.Count == 0));
         if (companiesWithFranchiseeFlagRecords > 0)
@@ -42,10 +45,18 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         var subsidiariesAndOrgWithValidNameProcessStatistics = await ProcessValidNamedOrgs(subsidiariesAndOrg, parentOrg, userRequestModel);
 
         var subsidiariesAndOrgWithMatchingReportingType = subsidiariesAndOrg
-        .Where(sub => sub.SubsidiaryOrg != null && sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg.companiesHouseNumber
-        && !string.Equals(sub.Subsidiary.reporting_type, ((ReportingType)sub.SubsidiaryOrg.OrganisationRelationship.ReportingTypeId).ToString(), StringComparison.OrdinalIgnoreCase)
-        && string.Equals(sub.Subsidiary.organisation_name, sub.SubsidiaryOrg.name, StringComparison.OrdinalIgnoreCase)
-        && parentOrg.id == sub.SubsidiaryOrg.OrganisationRelationship?.FirstOrganisationId);
+             .Where(sub => sub.SubsidiaryOrg != null && sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg.companiesHouseNumber
+             && string.Equals(sub.Subsidiary.organisation_name, sub.SubsidiaryOrg.name, StringComparison.OrdinalIgnoreCase)
+             && parentOrg.id == sub.SubsidiaryOrg.OrganisationRelationship?.FirstOrganisationId);
+
+        if (enableSubsidiaryJoinerColumns)
+        {
+            subsidiariesAndOrgWithMatchingReportingType = subsidiariesAndOrg
+                 .Where(sub => sub.SubsidiaryOrg != null && sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg.companiesHouseNumber
+                 && !string.Equals(sub.Subsidiary.reporting_type, ((ReportingType)sub.SubsidiaryOrg.OrganisationRelationship.ReportingTypeId).ToString(), StringComparison.OrdinalIgnoreCase)
+                 && string.Equals(sub.Subsidiary.organisation_name, sub.SubsidiaryOrg.name, StringComparison.OrdinalIgnoreCase)
+                 && parentOrg.id == sub.SubsidiaryOrg.OrganisationRelationship?.FirstOrganisationId);
+        }
 
         var subsidiariesAndOrgWithValidNameanJointerDateProcessStatistics = await ProcessValidNamedOrgsUpdate(subsidiariesAndOrgWithMatchingReportingType, parentOrg, userRequestModel);
 
@@ -221,6 +232,8 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
     private async Task<IEnumerable<CompaniesHouseCompany>> ProcessFranchisee(IEnumerable<CompaniesHouseCompany> subsidiaries, OrganisationResponseModel parentOrg, UserRequestModel userRequestModel)
     {
+        var enableSubsidiaryJoinerColumns = featureManager.IsEnabledAsync(FeatureFlags.EnableSubsidiaryJoinerColumns).GetAwaiter().GetResult();
+
         // companies with franchisee flag.
         var companiesWithFranchiseeFlagRecords = subsidiaries.Where(ch => ch.franchisee_licensee_tenant == "Y")
             .ToAsyncEnumerable()
@@ -269,12 +282,16 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
                     RawContent = subsidiaryAddModel.Subsidiary.RawRow,
                     FileLineNumber = subsidiaryAddModel.Subsidiary.FileLineNumber,
                     Franchisee_Licensee_Tenant = subsidiaryAddModel.Subsidiary.franchisee_licensee_tenant,
-                    Address = new AddressModel(),
-                    JoinerDate = subsidiaryAddModel.Subsidiary.joiner_date,
-                    ReportingTypeId = (int?)reportingTypeEnum
+                    Address = new AddressModel()
                 },
                 ParentOrganisationId = parentOrg.ExternalId.Value
             };
+
+            if (enableSubsidiaryJoinerColumns)
+            {
+                franchisee.Subsidiary.JoinerDate = subsidiaryAddModel.Subsidiary.joiner_date;
+                franchisee.Subsidiary.ReportingTypeId = (int?)reportingTypeEnum;
+            }
 
             subsidiaryAddModel.Subsidiary.StatusCode = await organisationService.CreateAndAddSubsidiaryAsync(franchisee);
         }
