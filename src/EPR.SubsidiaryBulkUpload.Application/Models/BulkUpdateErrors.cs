@@ -96,5 +96,5 @@ public static class BulkUpdateErrors
     public const string JoinerDateFormatIncorrectMessage = "The 'joiner date' column only allowed British Date Format 'DD/MM/YYYY'.";
 
     public const int JoinerDateInvalid = 134;
-    public const string JoinerDateInvalidMessage = "The 'joiner date' is invalid.";
+    public const string JoinerDateInvalidMessage = "The subsidiary joiner date is different to the date that was originally entered";
 }

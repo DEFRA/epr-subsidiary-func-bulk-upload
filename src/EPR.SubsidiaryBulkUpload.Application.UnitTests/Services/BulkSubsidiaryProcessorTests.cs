@@ -512,6 +512,8 @@ public class BulkSubsidiaryProcessorTests
         subsidiaries[0].franchisee_licensee_tenant = "Y";
         subsidiaryOrganisations[0].companiesHouseNumber = subsidiaries[0].companies_house_number;
         subsidiaryOrganisations[0].name = subsidiaries[0].organisation_name;
+        subsidiaries[0].joiner_date = "10/10/2023";
+        subsidiaries[0].reporting_type = "Group";
 
         // Return a null OrganisationResponseModel to simulate the company not existing in RPD
         subsidiaryService.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(subsidiaries[0].companies_house_number))
