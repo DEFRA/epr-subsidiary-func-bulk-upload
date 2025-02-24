@@ -1,10 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using CsvHelper.Configuration.Attributes;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 
 namespace EPR.SubsidiaryBulkUpload.Application.DTOs;
 
+[ExcludeFromCodeCoverage]
 public class CompaniesHouseCompany
 {
     private static readonly string[] MemberNames = { "organisation_name" };
@@ -24,6 +26,10 @@ public class CompaniesHouseCompany
     [Optional]
     public string franchisee_licensee_tenant { get; set; }
 
+    required public string joiner_date { get; set; }
+
+    required public string reporting_type { get; set; }
+
     [Optional]
     public OrganisationDto? Organisation { get; init; }
 
@@ -41,6 +47,9 @@ public class CompaniesHouseCompany
 
     [Ignore]
     public List<UploadFileErrorModel> Errors { get; set; }
+
+    [Ignore]
+    public List<UploadFileErrorModel> ErrorsExcluded { get; set; }
 
     public HttpStatusCode? StatusCode { get; set; }
 

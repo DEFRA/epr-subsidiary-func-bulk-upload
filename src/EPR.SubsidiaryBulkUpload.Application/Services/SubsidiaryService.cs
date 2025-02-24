@@ -16,6 +16,7 @@ public class SubsidiaryService : ISubsidiaryService
     private const string OrganisationByCompanyHouseNumberUri = "api/bulkuploadorganisations/";
     private const string OrganisationCreateAddSubsidiaryUri = "api/bulkuploadorganisations/create-subsidiary-and-add-relationship";
     private const string OrganisationAddSubsidiaryUri = "api/bulkuploadorganisations/add-subsidiary-relationship";
+    private const string OrganisationUpdateSubsidiaryUri = "api/bulkuploadorganisations/update-subsidiary-relationship";
     private const string OrganisationRelationshipsByIdUri = "api/bulkuploadorganisations/organisation-by-relationship";
     private const string SystemUserAndOrganisationUri = "api/users/system-user-and-organisation";
     private const string OrganisationByCompanyNameUri = "api/bulkuploadorganisations/organisation-by-name";
@@ -102,7 +103,6 @@ public class SubsidiaryService : ISubsidiaryService
         }
 
         response.EnsureSuccessStatusCode();
-
         var orgResponse = await response.Content.ReadFromJsonAsync<OrganisationResponseModel[]>();
         return orgResponse.FirstOrDefault();
     }
@@ -194,6 +194,29 @@ public class SubsidiaryService : ISubsidiaryService
             if (problemDetails != null)
             {
                 _logger.LogError("Failed to add subsidiary relationship for Parent: {Parent} Subsidiary: {Subsidiary}", subsidiaryAddModel.ParentOrganisationId, subsidiaryAddModel.ChildOrganisationId);
+            }
+
+            return HttpStatusCode.InternalServerError;
+        }
+
+        return response.StatusCode;
+    }
+
+    public async Task<HttpStatusCode> UpdateSubsidiaryRelationshipAsync(SubsidiaryAddModel subsidiaryAddModel)
+    {
+        string json = JsonConvert.SerializeObject(subsidiaryAddModel);
+
+        var httpContent = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+        var response = await _httpClient.PostAsync(OrganisationUpdateSubsidiaryUri, httpContent);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+
+            if (problemDetails != null)
+            {
+                _logger.LogError("Failed to update subsidiary relationship for Parent: {Parent} Subsidiary: {Subsidiary}", subsidiaryAddModel.ParentOrganisationId, subsidiaryAddModel.ChildOrganisationId);
             }
 
             return HttpStatusCode.InternalServerError;

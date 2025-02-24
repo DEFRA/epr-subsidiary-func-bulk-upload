@@ -1,15 +1,33 @@
 ﻿using System.Text;
 using EPR.SubsidiaryBulkUpload.Application.ClassMaps;
+using EPR.SubsidiaryBulkUpload.Application.Constants;
 using EPR.SubsidiaryBulkUpload.Application.CsvReaderConfiguration;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
+using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services;
+using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
+using Microsoft.FeatureManagement;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.ClassMaps;
 
 [TestClass]
 public class CompaniesHouseCompanyMapTests
 {
-    private const string _csvHeader = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
+    private const string _csvHeader = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,joiner_date,reporting_type\n";
+    private Mock<IFeatureManager> _mockFeatureManager;
+    private Mock<ISubsidiaryService> _mockSubsidiaySrevice;
+    private Fixture _fixture;
+
+    [TestInitialize]
+    public void TestInitialize()
+    {
+        _fixture = new();
+        _mockFeatureManager = new Mock<IFeatureManager>();
+        _mockSubsidiaySrevice = new Mock<ISubsidiaryService>();
+        _mockFeatureManager
+            .Setup(x => x.IsEnabledAsync(FeatureFlags.EnableSubsidiaryJoinerColumns))
+            .ReturnsAsync(true);
+    }
 
     [TestMethod]
     [DataRow("123456")]
@@ -19,9 +37,9 @@ public class CompaniesHouseCompanyMapTests
         // Arrange
         var dataModel = new List<CompaniesHouseCompany>
             {
-                new() { organisation_id = "23123",  subsidiary_id = "Sub1", organisation_name = "OrgA", companies_house_number = companyHouseNumber, parent_child = "Parent", franchisee_licensee_tenant = string.Empty, Errors = new() }
+                new() { organisation_id = "23123",  subsidiary_id = "Sub1", organisation_name = "OrgA", companies_house_number = companyHouseNumber, parent_child = "Parent", franchisee_licensee_tenant = string.Empty, joiner_date = "01/10/2024", reporting_type = "SELF", Errors = new() }
             };
-        var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
+        var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant},{s.joiner_date},{s.reporting_type}\n");
         string[] all = [_csvHeader, .. rawSource];
 
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
@@ -29,7 +47,8 @@ public class CompaniesHouseCompanyMapTests
         using var reader = new StreamReader(stream);
         using var csvReader = new CustomCsvReader(reader, CsvConfigurations.BulkUploadCsvConfiguration);
 
-        csvReader.Context.RegisterClassMap<CompaniesHouseCompanyMap>();
+        var map = new CompaniesHouseCompanyMap(true, _mockSubsidiaySrevice.Object);
+        csvReader.Context.RegisterClassMap(map);
 
         // Act
         csvReader.Read();
@@ -54,17 +73,16 @@ public class CompaniesHouseCompanyMapTests
         // Arrange
         var dataModel = new List<CompaniesHouseCompany>
             {
-                new() { organisation_id = "23123",  subsidiary_id = "Sub1", organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Child", franchisee_licensee_tenant = "Y", Errors = new() }
+                new() { organisation_id = "23123",  subsidiary_id = "Sub1", organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Child", franchisee_licensee_tenant = "Y", joiner_date = "01/10/2024", reporting_type = "SELF", Errors = new() }
             };
-        var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
+        var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant},{s.joiner_date},{s.reporting_type}\n");
         string[] all = [_csvHeader, .. rawSource];
 
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
-
         using var reader = new StreamReader(stream);
         using var csvReader = new CustomCsvReader(reader, CsvConfigurations.BulkUploadCsvConfiguration);
-
-        csvReader.Context.RegisterClassMap<CompaniesHouseCompanyMap>();
+        var map = new CompaniesHouseCompanyMap(true, _mockSubsidiaySrevice.Object);
+        csvReader.Context.RegisterClassMap(map);
 
         // Act
         csvReader.Read();
@@ -89,9 +107,9 @@ public class CompaniesHouseCompanyMapTests
         // Arrange
         var dataModel = new List<CompaniesHouseCompany>
             {
-                new() { organisation_id = "23123",  subsidiary_id = "Sub1", organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Parent", franchisee_licensee_tenant = string.Empty, Errors = new() }
+                new() { organisation_id = "23123",  subsidiary_id = "Sub1", organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Parent", franchisee_licensee_tenant = string.Empty, joiner_date = "01/10/2024", reporting_type = "SELF", Errors = new() }
             };
-        var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
+        var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant},{s.joiner_date},{s.reporting_type}\n");
         string[] all = [_csvHeader, .. rawSource];
 
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
@@ -99,7 +117,8 @@ public class CompaniesHouseCompanyMapTests
         using var reader = new StreamReader(stream);
         using var csvReader = new CustomCsvReader(reader, CsvConfigurations.BulkUploadCsvConfiguration);
 
-        csvReader.Context.RegisterClassMap<CompaniesHouseCompanyMap>();
+        var map = new CompaniesHouseCompanyMap(true, _mockSubsidiaySrevice.Object);
+        csvReader.Context.RegisterClassMap(map);
 
         // Act
         csvReader.Read();
@@ -119,15 +138,24 @@ public class CompaniesHouseCompanyMapTests
     }
 
     [TestMethod]
-    [DataRow("", "", "OrgA", "123456", "Child", "", "The 'organisation id' column is missing.")]
-    [DataRow("23123", "", "", "123456", "Child", "", "The 'organisation name' column is missing.")]
-    [DataRow("23123", "", "OrgA", "", "Child", "", "The 'companies house number' column is missing.")]
-    [DataRow("23123", "", "OrgA", " ", "Child", "", "The 'companies house number' column is missing.")]
-    [DataRow("23123", "", "OrgA", "123456", "", "", "The 'parent or child' column is missing.")]
-    [DataRow("23123", "", "OrgA", "123456789", "Child", "", "Your Companies House number must be 8 characters or fewer.")]
-    [DataRow("23123", "", "OrgA", " 123 456", "Child", "", "Spaces in Companies House Number not allowed. Invalid Number.")]
-    [DataRow("23123", "", "OrgA", "A123 456 ", "Child", "", "Spaces in Companies House Number not allowed. Invalid Number.")]
-    [DataRow("23123", "", "OrgA", "B123 456", "Child", "", "Spaces in Companies House Number not allowed. Invalid Number.")]
+    [DataRow("", "", "OrgA", "123456", "Child", "", "10/10/2024", "SELF", "The 'organisation id' column is missing.")]
+    [DataRow("23123", "", "", "123456", "Child", "", "10/10/2024", "SELF", "The 'organisation name' column is missing.")]
+    [DataRow("23123", "", "OrgA", "", "Child", "", "10/10/2024", "SELF", "The 'companies house number' column is missing.")]
+    [DataRow("23123", "", "OrgA", " ", "Child", "", "10/10/2024", "SELF", "The 'companies house number' column is missing.")]
+    [DataRow("23123", "", "OrgA", "123456", "", "", "10/10/2024", "SELF", "The 'parent or child' column is missing.")]
+    [DataRow("23123", "", "OrgA", "123456789", "Child", "", "10/10/2024", "SELF", "Your Companies House number must be 8 characters or fewer.")]
+    [DataRow("23123", "", "OrgA", " 123 456", "Child", "", "10/10/2024", "SELF", "Spaces in Companies House Number not allowed. Invalid Number.")]
+    [DataRow("23123", "", "OrgA", "A123 456 ", "Child", "", "10/10/2024", "SELF", "Spaces in Companies House Number not allowed. Invalid Number.")]
+    [DataRow("23123", "", "OrgA", "B123 456", "Child", "", "10/10/2024", "SELF", "Spaces in Companies House Number not allowed. Invalid Number.")]
+    [DataRow("23123", "", "OrgA", "B123 456", "Child", "", "10/10/2024", "Self", "Spaces in Companies House Number not allowed. Invalid Number.")]
+    [DataRow("23123", "", "OrgA", "B123 456", "Child", "", "10/10/2024", "Group", "Spaces in Companies House Number not allowed. Invalid Number.")]
+    [DataRow("23123", "", "OrgA", "B123 456", "Child", "", "10/10/2024", "self", "Spaces in Companies House Number not allowed. Invalid Number.")]
+    [DataRow("23123", "", "OrgA", "B123 456", "Child", "", "10/10/2024", "group", "Spaces in Companies House Number not allowed. Invalid Number.")]
+    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "", "SELF", "The 'joiner date' column is missing.")]
+    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "GROUPA", "The 'reporting type' column only allowed 'GROUP' or 'SELF'.")]
+    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "Group1", "The 'reporting type' column only allowed 'GROUP' or 'SELF'.")]
+    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "salfi", "The 'reporting type' column only allowed 'GROUP' or 'SELF'.")]
+    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "salfum", "The 'reporting type' column only allowed 'GROUP' or 'SELF'")]
     public void ClassMap_Returns_Error(
         string organisationId,
         string subsidiaryId,
@@ -135,22 +163,37 @@ public class CompaniesHouseCompanyMapTests
         string companiesHouseNumber,
         string parentChild,
         string franchiseeLicenseeTenant,
+        string joinerDate,
+        string reportingType,
         string expectedErrorMessage)
     {
         // Arrange
         var dataModel = new List<CompaniesHouseCompany>
             {
-                new() { organisation_id = organisationId,  subsidiary_id = subsidiaryId, organisation_name = organisationName, companies_house_number = companiesHouseNumber, parent_child = parentChild, franchisee_licensee_tenant = franchiseeLicenseeTenant, Errors = new() },
+                new() { organisation_id = organisationId,  subsidiary_id = subsidiaryId, organisation_name = organisationName, companies_house_number = companiesHouseNumber, parent_child = parentChild, franchisee_licensee_tenant = franchiseeLicenseeTenant, joiner_date = joinerDate, reporting_type = reportingType, Errors = new() },
             };
-        var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
+        var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant},{s.joiner_date},{s.reporting_type}\n");
         string[] all = [_csvHeader, .. rawSource];
 
-        using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
+        var subsidiaries = _fixture.CreateMany<CompaniesHouseCompany>(1).ToArray();
+        var subsidiaryOrganisations = _fixture.CreateMany<OrganisationResponseModel>(1).ToArray();
 
+        subsidiaryOrganisations[0].companiesHouseNumber = subsidiaries[0].companies_house_number;
+        subsidiaryOrganisations[0].name = subsidiaries[0].organisation_name;
+        subsidiaryOrganisations[0].reportingType = "Self";
+        subsidiaryOrganisations[0].joinerDate = null;
+        subsidiaryOrganisations[0].OrganisationRelationship.JoinerDate = DateTime.Now.AddDays(-10);
+        subsidiaryOrganisations[0].OrganisationRelationship.ReportingTypeId = 1;
+
+        using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
         using var reader = new StreamReader(stream);
         using var csvReader = new CustomCsvReader(reader, CsvConfigurations.BulkUploadCsvConfiguration);
 
-        csvReader.Context.RegisterClassMap<CompaniesHouseCompanyMap>();
+        _mockSubsidiaySrevice.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(It.IsAny<string>()))
+            .ReturnsAsync(subsidiaryOrganisations[0]);
+
+        var map = new CompaniesHouseCompanyMap(true, _mockSubsidiaySrevice.Object);
+        csvReader.Context.RegisterClassMap(map);
 
         // Act
         csvReader.Read();
@@ -164,26 +207,83 @@ public class CompaniesHouseCompanyMapTests
     }
 
     [TestMethod]
-    [DataRow("23123", "", "OrgA", "", "Child", "", "The 'companies house number' column is missing.")]
-    [DataRow("23123", "", "OrgA", "123456", "Child", "NO", "You can only enter 'Y' to the 'franchisee licensee tenant' column, or leave it blank.")]
-    [DataRow("23123", "", "OrgA", "123456", "", "", "The 'parent or child' column is missing.")]
-    [DataRow("23123", "", "OrgA", "123456789", "Child", "", "Your Companies House number must be 8 characters or fewer.")]
-    [DataRow("23123", "", "OrgA", " 123 456", "Child", "", "Spaces in Companies House Number not allowed. Invalid Number.")]
-    public void ClassMap_ValidationChecks_Returns_Error(
+    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "", "SELF", "The 'joiner date' column is missing.")]
+    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "GROUPA", "The 'reporting type' column only allowed 'GROUP' or 'SELF'.")]
+    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "Group1", "The 'reporting type' column only allowed 'GROUP' or 'SELF'.")]
+    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "salfi", "The 'reporting type' column only allowed 'GROUP' or 'SELF'.")]
+    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "salfum", "The 'reporting type' column only allowed 'GROUP' or 'SELF'")]
+    public void ClassMap_JoinerDate_Returns_Error(
+        string organisationId,
+        string subsidiaryId,
+        string organisationName,
+        string companiesHouseNumber,
+        string parentChild,
+        string franchiseeLicenseeTenant,
+        string joinerDate,
+        string reportingType,
+        string expectedErrorMessage)
+    {
+        // Arrange
+        var dataModel = new List<CompaniesHouseCompany>
+            {
+                new() { organisation_id = organisationId,  subsidiary_id = subsidiaryId, organisation_name = organisationName, companies_house_number = companiesHouseNumber, parent_child = parentChild, franchisee_licensee_tenant = franchiseeLicenseeTenant, joiner_date = joinerDate, reporting_type = reportingType, Errors = new() },
+            };
+        var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant},{s.joiner_date},{s.reporting_type}\n");
+        string[] all = [_csvHeader, .. rawSource];
+
+        var subsidiaries = _fixture.CreateMany<CompaniesHouseCompany>(1).ToArray();
+        var subsidiaryOrganisations = _fixture.CreateMany<OrganisationResponseModel>(1).ToArray();
+
+        subsidiaryOrganisations[0].companiesHouseNumber = subsidiaries[0].companies_house_number;
+        subsidiaryOrganisations[0].name = subsidiaries[0].organisation_name;
+        subsidiaryOrganisations[0].reportingType = "Self";
+        subsidiaryOrganisations[0].joinerDate = null;
+        subsidiaryOrganisations[0].OrganisationRelationship.JoinerDate = DateTime.Now.AddDays(-10);
+        subsidiaryOrganisations[0].OrganisationRelationship.ReportingTypeId = 1;
+
+        using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
+        using var reader = new StreamReader(stream);
+        using var csvReader = new CustomCsvReader(reader, CsvConfigurations.BulkUploadCsvConfiguration);
+
+        _mockSubsidiaySrevice.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(It.IsAny<string>()))
+            .ReturnsAsync(subsidiaryOrganisations[0]);
+
+        var map = new CompaniesHouseCompanyMap(true, _mockSubsidiaySrevice.Object);
+        csvReader.Context.RegisterClassMap(map);
+
+        // Act
+        csvReader.Read();
+        csvReader.ReadHeader();
+        var rows = csvReader.GetRecords<CompaniesHouseCompany>().ToList();
+
+        // Assert
+        rows.Should().NotBeNullOrEmpty();
+        rows[0].Errors.Should().HaveCount(1);
+        rows[0].Errors[0].Message.Should().Contain(expectedErrorMessage);
+    }
+
+    [TestMethod]
+    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "GROUPA", "The 'reporting type' column only allowed 'GROUP' or 'SELF'.")]
+    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "Group1", "The 'reporting type' column only allowed 'GROUP' or 'SELF'.")]
+    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "salfi", "The 'reporting type' column only allowed 'GROUP' or 'SELF'.")]
+    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "salfum", "The 'reporting type' column only allowed 'GROUP' or 'SELF'")]
+    public void ClassMap_Returns_Error_When_Wrong_ReportingType_Input(
        string organisationId,
        string subsidiaryId,
        string organisationName,
        string companiesHouseNumber,
        string parentChild,
        string franchiseeLicenseeTenant,
+       string joinerDate,
+       string reportingType,
        string expectedErrorMessage)
     {
         // Arrange
         var dataModel = new List<CompaniesHouseCompany>
             {
-                new() { organisation_id = organisationId,  subsidiary_id = subsidiaryId, organisation_name = organisationName, companies_house_number = companiesHouseNumber, parent_child = parentChild, franchisee_licensee_tenant = franchiseeLicenseeTenant, Errors = new() },
+                new() { organisation_id = organisationId,  subsidiary_id = subsidiaryId, organisation_name = organisationName, companies_house_number = companiesHouseNumber, parent_child = parentChild, franchisee_licensee_tenant = franchiseeLicenseeTenant, joiner_date = joinerDate, reporting_type = reportingType, Errors = new() },
             };
-        var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
+        var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant},{s.joiner_date},{s.reporting_type}\n");
         string[] all = [_csvHeader, .. rawSource];
 
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
@@ -191,7 +291,52 @@ public class CompaniesHouseCompanyMapTests
         using var reader = new StreamReader(stream);
         using var csvReader = new CustomCsvReader(reader, CsvConfigurations.BulkUploadCsvConfiguration);
 
-        csvReader.Context.RegisterClassMap<CompaniesHouseCompanyMap>();
+        var map = new CompaniesHouseCompanyMap(true, _mockSubsidiaySrevice.Object);
+        csvReader.Context.RegisterClassMap(map);
+
+        // Act
+        csvReader.Read();
+        csvReader.ReadHeader();
+        var rows = csvReader.GetRecords<CompaniesHouseCompany>().ToList();
+
+        // Assert
+        rows.Should().NotBeNullOrEmpty();
+        rows[0].Errors.Should().HaveCount(1);
+        rows[0].Errors[0].Message.Should().Contain(expectedErrorMessage);
+    }
+
+    [TestMethod]
+    [DataRow("23123", "", "OrgA", "", "Child", "", "10/10/2024", "SELF", "The 'companies house number' column is missing.")]
+    [DataRow("23123", "", "OrgA", "123456", "Child", "NO", "10/10/2024", "SELF", "You can only enter 'Y' to the 'franchisee licensee tenant' column, or leave it blank.")]
+    [DataRow("23123", "", "OrgA", "123456", "", "", "10/10/2024", "SELF", "The 'parent or child' column is missing.")]
+    [DataRow("23123", "", "OrgA", "123456789", "Child", "", "10/10/2024", "SELF", "Your Companies House number must be 8 characters or fewer.")]
+    [DataRow("23123", "", "OrgA", " 123 456", "Child", "", "10/10/2024", "SELF", "Spaces in Companies House Number not allowed. Invalid Number.")]
+    public void ClassMap_ValidationChecks_Returns_Error(
+       string organisationId,
+       string subsidiaryId,
+       string organisationName,
+       string companiesHouseNumber,
+       string parentChild,
+       string franchiseeLicenseeTenant,
+       string joinerDate,
+       string reportingType,
+       string expectedErrorMessage)
+    {
+        // Arrange
+        var dataModel = new List<CompaniesHouseCompany>
+            {
+                new() { organisation_id = organisationId,  subsidiary_id = subsidiaryId, organisation_name = organisationName, companies_house_number = companiesHouseNumber, parent_child = parentChild, franchisee_licensee_tenant = franchiseeLicenseeTenant, joiner_date = joinerDate, reporting_type = reportingType, Errors = new() },
+            };
+        var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant},{s.joiner_date},{s.reporting_type}\n");
+        string[] all = [_csvHeader, .. rawSource];
+
+        using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
+
+        using var reader = new StreamReader(stream);
+        using var csvReader = new CustomCsvReader(reader, CsvConfigurations.BulkUploadCsvConfiguration);
+
+        var map = new CompaniesHouseCompanyMap(true, _mockSubsidiaySrevice.Object);
+        csvReader.Context.RegisterClassMap(map);
 
         // Act
         csvReader.Read();
@@ -210,9 +355,9 @@ public class CompaniesHouseCompanyMapTests
         // Arrange
         var dataModel = new List<CompaniesHouseCompany>
             {
-                new() { organisation_id = "23123",  subsidiary_id = "Sub1", organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Parent", franchisee_licensee_tenant = string.Empty, Errors = new() }
+                new() { organisation_id = "23123",  subsidiary_id = "Sub1", organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Parent", franchisee_licensee_tenant = string.Empty, joiner_date = "01/10/2024", reporting_type = "SELF", Errors = new() }
             };
-        var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
+        var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant},{s.joiner_date},{s.reporting_type}\n");
         string[] all = [
             _csvHeader,
             rawSource.First(),
@@ -226,7 +371,8 @@ public class CompaniesHouseCompanyMapTests
         using var reader = new StreamReader(stream);
         using var csvReader = new CustomCsvReader(reader, CsvConfigurations.BulkUploadCsvConfiguration);
 
-        csvReader.Context.RegisterClassMap<CompaniesHouseCompanyMap>();
+        var map = new CompaniesHouseCompanyMap(true, _mockSubsidiaySrevice.Object);
+        csvReader.Context.RegisterClassMap(map);
 
         // Act
         csvReader.Read();

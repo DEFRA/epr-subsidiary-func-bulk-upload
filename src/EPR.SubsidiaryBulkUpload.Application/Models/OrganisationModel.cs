@@ -38,4 +38,8 @@ public class OrganisationModel
     public int FileLineNumber { get; set; }
 
     public string Franchisee_Licensee_Tenant { get; set; }
+
+    public string? JoinerDate { get; set; }
+
+    public int? ReportingTypeId { get; set; }
 }

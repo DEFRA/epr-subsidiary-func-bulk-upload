@@ -16,4 +16,8 @@ public class SubsidiaryAddModel
     public Guid? UserId { get; set; }
 
     public string? SubsidiaryOrganisationId { get; set; }
+
+    public string? JoinerDate { get; set; }
+
+    public int? ReportingTypeId { get; set; }
 }
