@@ -2,6 +2,7 @@
 using EPR.SubsidiaryBulkUpload.Application.Constants;
 using EPR.SubsidiaryBulkUpload.Application.CsvReaderConfiguration;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
+using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using EPR.SubsidiaryBulkUpload.Application.UnitTests.Mocks;
@@ -233,7 +234,6 @@ public class ParserClassTests
         // Arrange
         _mockFeatureManager.Setup(x => x.IsEnabledAsync(It.IsAny<string>())).ReturnsAsync(false);
 
-        // var enableSubsidiaryJoinerColumns = _mockFeatureManager.IsEnabledAsync(FeatureFlags.EnableSubsidiaryJoinerColumns).GetAwaiter().GetResult();
         var rawSource = _listDataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
         string[] all = [_csvHeaderWFFALSE, .. rawSource];
 
@@ -312,6 +312,19 @@ public class ParserClassTests
 
         var rawSource = badDataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant}\n");
         string[] all = [_csvHeader, .. rawSource];
+
+        var subsidiaries = _fixture.CreateMany<CompaniesHouseCompany>(1).ToArray();
+        var subsidiaryOrganisations = _fixture.CreateMany<OrganisationResponseModel>(1).ToArray();
+
+        subsidiaryOrganisations[0].companiesHouseNumber = subsidiaries[0].companies_house_number;
+        subsidiaryOrganisations[0].name = subsidiaries[0].organisation_name;
+        subsidiaryOrganisations[0].reportingType = "Self";
+        subsidiaryOrganisations[0].joinerDate = null;
+        subsidiaryOrganisations[0].OrganisationRelationship.JoinerDate = DateTime.Now.AddDays(-10);
+        subsidiaryOrganisations[0].OrganisationRelationship.ReportingTypeId = 1;
+
+        _mockSubsidiaySrevice.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(It.IsAny<string>()))
+            .ReturnsAsync(subsidiaryOrganisations[0]);
 
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
 

@@ -15,6 +15,7 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
 
     public CompaniesHouseCompanyMap(bool includeSubsidiaryJoinerColumns, ISubsidiaryService organisationService)
     {
+        IncludeSubsidiaryJoinerColumns = includeSubsidiaryJoinerColumns;
         _organisationService = organisationService;
         Map(m => m.organisation_id).Index(0).Validate(field => !field.Equals(null));
         Map(m => m.subsidiary_id);
@@ -26,7 +27,6 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
         Map(m => m.Errors).Index(6).Convert(args => GetRowValidationErrors(args.Row));
         Map(m => m.RawRow).Convert(args => args.Row.Context.Reader.Parser.RawRecord);
         Map(m => m.FileLineNumber).Convert(args => args.Row.Context.Reader.Parser.Row);
-        IncludeSubsidiaryJoinerColumns = includeSubsidiaryJoinerColumns;
 
         if (IncludeSubsidiaryJoinerColumns)
         {
@@ -200,7 +200,7 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
         var lineNumber = row.Context.Reader.Parser.Row;
         var rawData = row.Context.Reader.Parser.RawRecord;
 
-        if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.joiner_date))) && string.Equals(row.GetField(nameof(CompaniesHouseCompany.parent_child)), "child", StringComparison.OrdinalIgnoreCase))
+        if (IncludeSubsidiaryJoinerColumns && string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.joiner_date))) && string.Equals(row.GetField(nameof(CompaniesHouseCompany.parent_child)), "child", StringComparison.OrdinalIgnoreCase))
         {
             var companies_house_number = row.GetField(nameof(CompaniesHouseCompany.companies_house_number));
             var response = _organisationService.GetCompanyByCompaniesHouseNumber(companies_house_number).GetAwaiter().GetResult();
