@@ -82,4 +82,22 @@ public static class BulkUpdateErrors
 
     public const int OrganisationIdIsForAnotherOrganisation = 129;
     public const string OrganisationIdIsForAnotherOrganisationMessage = "The organisation id is for another organisation";
+
+    public const int JoinerDateRequired = 130;
+    public const string JoinerDateRequiredMessage = "The 'joiner date' column is missing.";
+
+    public const int ReportingTypeRequired = 131;
+    public const string ReportingTypeRequiredMessage = "The 'reporting type' column is missing.";
+
+    public const int ReportingTypeValidValueCheck = 132;
+    public const string ReportingTypeValidValueCheckMessage = "The 'reporting type' column only allowed 'GROUP' or 'SELF'.";
+
+    public const int JoinerDateFormatIncorrect = 133;
+    public const string JoinerDateFormatIncorrectMessage = "The 'joiner date' column only allowed British Date Format 'DD/MM/YYYY'.";
+
+    public const int JoinerDateInvalid = 134;
+    public const string JoinerDateInvalidMessage = "The subsidiary joiner date is different to the date that was originally entered";
+
+    public const int JoinerDateNotRequiredToValidateForExistingRecord = 135;
+    public const string JoinerDateNotRequiredToValidateForExistingRecordMessage = "JoinerDateNotRequiredToValidateForExistingRecord";
 }

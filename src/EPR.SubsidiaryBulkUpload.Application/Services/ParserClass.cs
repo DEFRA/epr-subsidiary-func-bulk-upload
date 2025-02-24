@@ -1,25 +1,29 @@
 ﻿using System.Text;
 using CsvHelper.Configuration;
 using EPR.SubsidiaryBulkUpload.Application.ClassMaps;
+using EPR.SubsidiaryBulkUpload.Application.Constants;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Extensions.Logging;
+using Microsoft.FeatureManagement;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services
 {
-    public class ParserClass(ILogger<ParserClass> logger) : IParserClass
+    public class ParserClass(ILogger<ParserClass> logger, IFeatureManager featureManager, ISubsidiaryService organisationService) : IParserClass
     {
         private readonly ILogger<ParserClass> _logger = logger;
+        private readonly ISubsidiaryService _organisationService = organisationService;
 
         public (ResponseClass ResponseClass, List<CompaniesHouseCompany> CompaniesHouseCompany) ParseWithHelper(Stream stream, IReaderConfiguration configuration)
         {
             var response = new ResponseClass { isDone = false, Messages = "None" };
             var rows = new List<CompaniesHouseCompany>();
+            var enableSubsidiaryJoinerColumns = featureManager.IsEnabledAsync(FeatureFlags.EnableSubsidiaryJoinerColumns).GetAwaiter().GetResult();
 
             try
             {
-                rows = ParseFileData(stream, configuration);
+                rows = ParseFileData(stream, configuration, enableSubsidiaryJoinerColumns);
                 response = new ResponseClass { isDone = true, Messages = "All Done!" };
             }
             catch (Exception ex)
@@ -31,13 +35,12 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             return (response, rows);
         }
 
-        private List<CompaniesHouseCompany> ParseFileData(Stream stream, IReaderConfiguration configuration)
+        private List<CompaniesHouseCompany> ParseFileData(Stream stream, IReaderConfiguration configuration, bool includeSubsidiaryJoinerColumns)
         {
             var rows = new List<CompaniesHouseCompany>();
             using var reader = new StreamReader(stream);
             using var csv = new CustomCsvReader(reader, configuration);
-
-            csv.Context.RegisterClassMap<CompaniesHouseCompanyMap>();
+            csv.Context.RegisterClassMap(new CompaniesHouseCompanyMap(includeSubsidiaryJoinerColumns, _organisationService));
 
             try
             {
@@ -53,6 +56,8 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                     organisation_name = string.Empty,
                     organisation_id = string.Empty,
                     parent_child = string.Empty,
+                    joiner_date = string.Empty,
+                    reporting_type = string.Empty,
                     Errors = new List<Models.UploadFileErrorModel>()
                 };
 
@@ -71,7 +76,15 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                 return rows;
             }
 
-            csv.ValidateHeader<FileUploadHeader>();
+            if (includeSubsidiaryJoinerColumns)
+            {
+                csv.ValidateHeader<FileUploadHeaderCustom>();
+            }
+            else
+            {
+                csv.ValidateHeader<FileUploadHeader>();
+            }
+
             if (csv.InvalidHeaderErrors is { Count: > 0 })
             {
                 var errorMessage = new StringBuilder();
@@ -83,6 +96,8 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                     organisation_name = string.Empty,
                     organisation_id = string.Empty,
                     parent_child = string.Empty,
+                    joiner_date = string.Empty,
+                    reporting_type = string.Empty,
                     Errors = new List<Models.UploadFileErrorModel>()
                 };
 
@@ -111,6 +126,8 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                     organisation_name = string.Empty,
                     organisation_id = string.Empty,
                     parent_child = string.Empty,
+                    joiner_date = string.Empty,
+                    reporting_type = string.Empty,
                     Errors = new List<Models.UploadFileErrorModel>()
                 };
 
@@ -129,6 +146,21 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             }
 
             rows = csv.GetRecords<CompaniesHouseCompany>().ToList();
+
+            foreach (var companyRow in rows)
+            {
+                if (companyRow!.ErrorsExcluded!.Count > 0 && companyRow!.Errors.Count > 0)
+                {
+                    var errorsNotRequired = companyRow.Errors.Where(e => e.ErrorNumber == BulkUpdateErrors.JoinerDateRequired).ToList();
+                    if (errorsNotRequired.Count > 0)
+                    {
+                        foreach (var errorToRemove in errorsNotRequired)
+                        {
+                            companyRow.Errors.Remove(errorToRemove);
+                        }
+                    }
+                }
+            }
 
             return rows;
         }

@@ -18,4 +18,6 @@ public class UserRequestModel
     public string? FileName { get; set; }
 
     public Guid? SubmissionId { get; set; }
+
+    public bool? IncludeSubsidiaryJoinerColumns { get; set; }
 }

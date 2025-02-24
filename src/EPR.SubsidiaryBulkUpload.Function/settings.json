@@ -33,6 +33,8 @@
     "Redis__TimeToLiveInMinutes": 720,
     "SubmissionApi__BaseUrl": "https://localhost:7206",
     "TableStorage__ConnectionString": "UseDevelopmentStorage=true",
-    "TableStorage__CompaniesHouseOfflineDataTableName": "CompaniesHouseData"
+    "TableStorage__CompaniesHouseOfflineDataTableName": "CompaniesHouseData",
+    "FeatureManagement__EnableSubsidiaryJoinerAndLeaverColumns": true,
+    "FeatureManagement__UseBoomiOAuth": false
   }
 }

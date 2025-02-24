@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using EPR.SubsidiaryBulkUpload.Application.Constants;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Options;
@@ -6,6 +7,7 @@ using EPR.SubsidiaryBulkUpload.Application.Services;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Microsoft.FeatureManagement;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 
@@ -13,11 +15,16 @@ namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 public class BulkSubsidiaryProcessorTests
 {
     private Fixture _fixture;
+    private Mock<IFeatureManager> _mockFeatureManager;
 
     [TestInitialize]
     public void TestInitialize()
     {
         _fixture = new();
+        _mockFeatureManager = new Mock<IFeatureManager>();
+        _mockFeatureManager
+        .Setup(x => x.IsEnabledAsync(FeatureFlags.EnableSubsidiaryJoinerColumns))
+        .ReturnsAsync(true);
     }
 
     [TestMethod]
@@ -40,8 +47,16 @@ public class BulkSubsidiaryProcessorTests
 
         subsidiaryOrganisations[0].companiesHouseNumber = subsidiaries[0].companies_house_number;
         subsidiaryOrganisations[0].name = subsidiaries[0].organisation_name;
+        subsidiaryOrganisations[0].reportingType = "Self";
+        subsidiaryOrganisations[0].joinerDate = "10/10/2023";
+        subsidiaryOrganisations[0].OrganisationRelationship.JoinerDate = DateTime.Now.AddDays(-10);
+        subsidiaryOrganisations[0].OrganisationRelationship.ReportingTypeId = 1;
         subsidiaryOrganisations[1].companiesHouseNumber = subsidiaries[1].companies_house_number;
         subsidiaryOrganisations[1].name = subsidiaries[1].organisation_name;
+        subsidiaryOrganisations[1].reportingType = "Self";
+        subsidiaryOrganisations[1].joinerDate = "10/10/2024";
+        subsidiaryOrganisations[1].OrganisationRelationship.JoinerDate = DateTime.Now.AddDays(-10);
+        subsidiaryOrganisations[1].OrganisationRelationship.ReportingTypeId = 1;
 
         var subsidiaryService = new Mock<ISubsidiaryService>();
         subsidiaryService.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(subsidiaries[0].companies_house_number))
@@ -52,7 +67,9 @@ public class BulkSubsidiaryProcessorTests
         subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(It.IsAny<int>(), It.IsAny<int>()))
             .ReturnsAsync(false);
 
-        var inserts = new List<LinkOrganisationModel>();
+        var inserts = _fixture.CreateMany<LinkOrganisationModel>(2).ToList();
+        inserts[0].Subsidiary.JoinerDate = "10/10/2023";
+        inserts[0].Subsidiary.ReportingTypeId = 1;
         subsidiaryService.Setup(ss => ss.CreateAndAddSubsidiaryAsync(It.IsAny<LinkOrganisationModel>()))
             .ReturnsAsync(HttpStatusCode.OK)
             .Callback<LinkOrganisationModel>(model => inserts.Add(model));
@@ -61,18 +78,256 @@ public class BulkSubsidiaryProcessorTests
         var errorsModel = new List<UploadFileErrorModel> { new() { FileLineNumber = 1, Message = "testMessage", IsError = true } };
         notificationServiceMock.Setup(ss => ss.SetErrorStatus(key, errorsModel));
 
-        var updates = new List<SubsidiaryAddModel>();
+        var updates = _fixture.CreateMany<SubsidiaryAddModel>(2).ToList();
+        updates[0].JoinerDate = "10/10/2023";
+        updates[0].ReportingTypeId = 1;
         subsidiaryService.Setup(ss => ss.AddSubsidiaryRelationshipAsync(It.IsAny<SubsidiaryAddModel>()))
             .Callback<SubsidiaryAddModel>(model => updates.Add(model));
 
         var companiesHouseDataProvider = new Mock<ICompaniesHouseDataProvider>();
-        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
 
         // Act
         await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
 
         // Assert
-        updates.Should().HaveCount(2);
+        updates.Should().HaveCount(4);
+    }
+
+    [TestMethod]
+    public async Task ShouldUpdateRelationshipsWhereSubsidiaryExistsInRpd()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var organisationId = Guid.NewGuid();
+        var userRequestModel = new UserRequestModel
+        {
+            UserId = userId,
+            OrganisationId = organisationId
+        };
+
+        var parent = _fixture.Create<CompaniesHouseCompany>();
+        var parentOrganisation = _fixture.Create<OrganisationResponseModel>();
+        var subsidiaries = _fixture.CreateMany<CompaniesHouseCompany>(1).ToArray();
+        var subsidiaryOrganisations = _fixture.CreateMany<OrganisationResponseModel>(2).ToArray();
+        var notificationServiceMock = new Mock<INotificationService>();
+
+        subsidiaryOrganisations[0].companiesHouseNumber = subsidiaries[0].companies_house_number;
+        subsidiaryOrganisations[0].name = subsidiaries[0].organisation_name;
+        subsidiaryOrganisations[0].reportingType = "Self";
+        subsidiaryOrganisations[0].joinerDate = "12/12/2023";
+        subsidiaryOrganisations[0].OrganisationRelationship.JoinerDate = DateTime.Now.AddDays(-10);
+        subsidiaryOrganisations[0].OrganisationRelationship.ReportingTypeId = 1;
+
+        var subsidiaryService = new Mock<ISubsidiaryService>();
+        subsidiaryService.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(subsidiaries[0].companies_house_number))
+            .ReturnsAsync(subsidiaryOrganisations[0]);
+
+        subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(It.IsAny<int>(), It.IsAny<int>()))
+            .ReturnsAsync(true);
+
+        var companiesHouseDataProvider = new Mock<ICompaniesHouseDataProvider>();
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
+
+        subsidiaries[0].companies_house_number = subsidiaryOrganisations[0].companiesHouseNumber;
+        subsidiaries[0].organisation_name = subsidiaryOrganisations[0].name;
+        subsidiaries[0].reporting_type = "Group";
+        subsidiaries[0].joiner_date = subsidiaryOrganisations[0].joinerDate;
+        subsidiaries[0].Errors = null;
+        subsidiaries[0].franchisee_licensee_tenant = string.Empty;
+
+        // Act
+        var result = await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
+
+        // Assert
+        result.Should().Be(0);
+    }
+
+    [TestMethod]
+    public async Task ShouldUpdateRelationshipsWhereSubsidiaryExists()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var organisationId = Guid.NewGuid();
+        var userRequestModel = new UserRequestModel
+        {
+            UserId = userId,
+            OrganisationId = organisationId
+        };
+
+        var parent = _fixture.Create<CompaniesHouseCompany>();
+        var parentOrganisation = _fixture.Create<OrganisationResponseModel>();
+        var subsidiaries = _fixture.CreateMany<CompaniesHouseCompany>(1).ToArray();
+        var subsidiaryOrganisations = _fixture.CreateMany<OrganisationResponseModel>(1).ToArray();
+        var notificationServiceMock = new Mock<INotificationService>();
+
+        subsidiaries[0].companies_house_number = "00099405";
+        subsidiaries[0].organisation_name = "WAITROSE LIMITED";
+        subsidiaries[0].reporting_type = "Self";
+        subsidiaries[0].joiner_date = "10/10/2023";
+        subsidiaries[0].parent_child = "Child";
+        subsidiaries[0].Errors = null;
+        subsidiaries[0].franchisee_licensee_tenant = string.Empty;
+
+        subsidiaryOrganisations[0].companiesHouseNumber = subsidiaries[0].companies_house_number;
+        subsidiaryOrganisations[0].name = subsidiaries[0].organisation_name;
+        subsidiaryOrganisations[0].reportingType = subsidiaries[0].reporting_type;
+        subsidiaryOrganisations[0].joinerDate = subsidiaries[0].joiner_date;
+        subsidiaryOrganisations[0].OrganisationRelationship.JoinerDate = DateTime.Now.AddDays(-10);
+        subsidiaryOrganisations[0].OrganisationRelationship.ReportingTypeId = 1;
+
+        subsidiaryOrganisations[0].OrganisationRelationship.FirstOrganisationId = parentOrganisation.id;
+        var subsidiaryService = new Mock<ISubsidiaryService>();
+        subsidiaryService.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(subsidiaries[0].companies_house_number))
+            .ReturnsAsync(subsidiaryOrganisations[0]);
+
+        subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(It.IsAny<int>(), It.IsAny<int>()))
+            .ReturnsAsync(true);
+
+        var key = "testKey";
+        var errorsModel = new List<UploadFileErrorModel> { new() { FileLineNumber = 1, Message = "testMessage", IsError = true } };
+        notificationServiceMock.Setup(ss => ss.SetErrorStatus(key, errorsModel));
+
+        var updates = _fixture.CreateMany<SubsidiaryAddModel>(1).ToList();
+        updates[0].JoinerDate = "10/10/2023";
+        updates[0].ReportingTypeId = 2;
+
+        subsidiaryService.Setup(ss => ss.UpdateSubsidiaryRelationshipAsync(It.IsAny<SubsidiaryAddModel>()))
+            .Callback<SubsidiaryAddModel>(model => updates.Add(model));
+
+        var companiesHouseDataProvider = new Mock<ICompaniesHouseDataProvider>();
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
+
+        subsidiaries[0].companies_house_number = subsidiaryOrganisations[0].companiesHouseNumber;
+        subsidiaries[0].organisation_name = subsidiaryOrganisations[0].name;
+        subsidiaries[0].reporting_type = "Group";
+        subsidiaries[0].joiner_date = subsidiaryOrganisations[0].joinerDate;
+        subsidiaries[0].Errors = null;
+        subsidiaries[0].franchisee_licensee_tenant = string.Empty;
+
+        // Act
+        var result = await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
+
+        // Assert
+        result.Should().Be(0);
+    }
+
+    [TestMethod]
+    public async Task ShouldShowErroronUpdateRelationshipsWhereJoinerDate_not_matching_SubsidiaryExists()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var organisationId = Guid.NewGuid();
+        var userRequestModel = new UserRequestModel
+        {
+            UserId = userId,
+            OrganisationId = organisationId
+        };
+
+        var parent = _fixture.Create<CompaniesHouseCompany>();
+
+        var parentOrganisation = _fixture.Create<OrganisationResponseModel>();
+        var subsidiaries = _fixture.CreateMany<CompaniesHouseCompany>(1).ToArray();
+        var subsidiaryOrganisations = _fixture.CreateMany<OrganisationResponseModel>(1).ToArray();
+        var notificationServiceMock = new Mock<INotificationService>();
+
+        subsidiaries[0].companies_house_number = "00099405";
+        subsidiaries[0].organisation_name = "WAITROSE LIMITED";
+        subsidiaries[0].reporting_type = "Self";
+        subsidiaries[0].joiner_date = "10/10/2023";
+        subsidiaries[0].parent_child = "Child";
+        subsidiaries[0].Errors = null;
+        subsidiaries[0].franchisee_licensee_tenant = string.Empty;
+
+        subsidiaryOrganisations[0].companiesHouseNumber = subsidiaries[0].companies_house_number;
+        subsidiaryOrganisations[0].name = subsidiaries[0].organisation_name;
+        subsidiaryOrganisations[0].reportingType = subsidiaries[0].reporting_type;
+        subsidiaryOrganisations[0].joinerDate = subsidiaries[0].joiner_date;
+        subsidiaryOrganisations[0].OrganisationRelationship.JoinerDate = DateTime.Now.AddDays(-10);
+        subsidiaryOrganisations[0].OrganisationRelationship.ReportingTypeId = 1;
+
+        subsidiaryOrganisations[0].OrganisationRelationship.FirstOrganisationId = parentOrganisation.id;
+        var subsidiaryService = new Mock<ISubsidiaryService>();
+        subsidiaryService.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(subsidiaries[0].companies_house_number))
+            .ReturnsAsync(subsidiaryOrganisations[0]);
+
+        subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(It.IsAny<int>(), It.IsAny<int>()))
+            .ReturnsAsync(true);
+
+        var companiesHouseDataProvider = new Mock<ICompaniesHouseDataProvider>();
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
+
+        subsidiaries[0].companies_house_number = subsidiaryOrganisations[0].companiesHouseNumber;
+        subsidiaries[0].organisation_name = subsidiaryOrganisations[0].name;
+        subsidiaries[0].reporting_type = "Group";
+        subsidiaries[0].joiner_date = "10/10/2024";
+        subsidiaries[0].Errors = null;
+        subsidiaries[0].franchisee_licensee_tenant = string.Empty;
+
+        // Act
+        var result = await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
+
+        // Assert
+        result.Should().Be(0);
+    }
+
+    [TestMethod]
+    public async Task ShouldShowErroronUpdateRelationshipsWhereJoinerDate_matching_SubsidiaryExists()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var organisationId = Guid.NewGuid();
+        var userRequestModel = new UserRequestModel
+        {
+            UserId = userId,
+            OrganisationId = organisationId
+        };
+
+        var parent = _fixture.Create<CompaniesHouseCompany>();
+
+        var parentOrganisation = _fixture.Create<OrganisationResponseModel>();
+        var subsidiaries = _fixture.CreateMany<CompaniesHouseCompany>(1).ToArray();
+        var subsidiaryOrganisations = _fixture.CreateMany<OrganisationResponseModel>(1).ToArray();
+        var notificationServiceMock = new Mock<INotificationService>();
+
+        subsidiaries[0].companies_house_number = "00099405";
+        subsidiaries[0].organisation_name = "WAITROSE LIMITED";
+        subsidiaries[0].reporting_type = "Self";
+        subsidiaries[0].joiner_date = "10/10/2023";
+        subsidiaries[0].parent_child = "Child";
+        subsidiaries[0].Errors = null;
+        subsidiaries[0].franchisee_licensee_tenant = string.Empty;
+
+        subsidiaryOrganisations[0].companiesHouseNumber = subsidiaries[0].companies_house_number;
+        subsidiaryOrganisations[0].name = subsidiaries[0].organisation_name;
+        subsidiaryOrganisations[0].reportingType = subsidiaries[0].reporting_type;
+        subsidiaryOrganisations[0].joinerDate = subsidiaries[0].joiner_date;
+        subsidiaryOrganisations[0].OrganisationRelationship.JoinerDate = DateTime.Now.AddDays(-10);
+        subsidiaryOrganisations[0].OrganisationRelationship.ReportingTypeId = 1;
+
+        subsidiaryOrganisations[0].OrganisationRelationship.FirstOrganisationId = parentOrganisation.id;
+        var subsidiaryService = new Mock<ISubsidiaryService>();
+        subsidiaryService.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(subsidiaries[0].companies_house_number))
+            .ReturnsAsync(subsidiaryOrganisations[0]);
+
+        subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(It.IsAny<int>(), It.IsAny<int>()))
+            .ReturnsAsync(true);
+
+        var companiesHouseDataProvider = new Mock<ICompaniesHouseDataProvider>();
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
+
+        subsidiaries[0].companies_house_number = subsidiaryOrganisations[0].companiesHouseNumber;
+        subsidiaries[0].organisation_name = subsidiaryOrganisations[0].name;
+        subsidiaries[0].reporting_type = "Group";
+        subsidiaries[0].joiner_date = "10/10/2023";
+        subsidiaries[0].Errors = null;
+        subsidiaries[0].franchisee_licensee_tenant = string.Empty;
+
+        // Act
+        var result = await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
+
+        // Assert
+        result.Should().Be(0);
     }
 
     [TestMethod]
@@ -103,7 +358,9 @@ public class BulkSubsidiaryProcessorTests
         subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(It.IsAny<int>(), It.IsAny<int>()))
             .ReturnsAsync(false);
 
-        var inserts = new List<SubsidiaryAddModel>();
+        var inserts = _fixture.CreateMany<SubsidiaryAddModel>(1).ToList();
+        inserts[0].JoinerDate = "10/10/2023";
+        inserts[0].ReportingTypeId = 1;
         subsidiaryService.Setup(ss => ss.AddSubsidiaryRelationshipAsync(It.IsAny<SubsidiaryAddModel>()))
             .Callback<SubsidiaryAddModel>(model => inserts.Add(model));
 
@@ -112,7 +369,7 @@ public class BulkSubsidiaryProcessorTests
 
         var notificationServiceMock = new Mock<INotificationService>();
 
-        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
 
         var organisationId = Guid.NewGuid();
         var userRequestModel = new UserRequestModel
@@ -125,7 +382,7 @@ public class BulkSubsidiaryProcessorTests
         var result = await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
 
         // Assert
-        inserts.Should().HaveCount(2);
+        inserts.Should().HaveCount(3);
         result.Should().Be(0);
     }
 
@@ -164,7 +421,7 @@ public class BulkSubsidiaryProcessorTests
         var errorsModel = new List<UploadFileErrorModel> { new() { FileLineNumber = 1, Message = "testMessage", IsError = true } };
         notificationServiceMock.Setup(ss => ss.SetErrorStatus(key, errorsModel));
 
-        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
 
         var organisationId = Guid.NewGuid();
         var userRequestModel = new UserRequestModel
@@ -226,7 +483,7 @@ public class BulkSubsidiaryProcessorTests
         var errorStatus = default(string);
         var key = $"{userId}{organisationId}Subsidiary bulk upload progress";
         var errorKey = $"{userId}{organisationId}Subsidiary bulk upload errors";
-        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
 
         var userRequestModel = new UserRequestModel
         {
@@ -262,6 +519,8 @@ public class BulkSubsidiaryProcessorTests
         subsidiaries[0].franchisee_licensee_tenant = "Y";
         subsidiaryOrganisations[0].companiesHouseNumber = subsidiaries[0].companies_house_number;
         subsidiaryOrganisations[0].name = subsidiaries[0].organisation_name;
+        subsidiaries[0].joiner_date = "10/10/2023";
+        subsidiaries[0].reporting_type = "Group";
 
         // Return a null OrganisationResponseModel to simulate the company not existing in RPD
         subsidiaryService.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(subsidiaries[0].companies_house_number))
@@ -288,7 +547,7 @@ public class BulkSubsidiaryProcessorTests
         var errorStatus = default(string);
         var key = $"{userId}{organisationId}Subsidiary bulk upload progress";
         var errorKey = $"{userId}{organisationId}Subsidiary bulk upload errors";
-        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
 
         var userRequestModel = new UserRequestModel
         {
@@ -359,7 +618,7 @@ public class BulkSubsidiaryProcessorTests
         var errorStatus = default(string);
         var key = $"{userId}{organisationId}Subsidiary bulk upload progress";
         var errorKey = $"{userId}{organisationId}Subsidiary bulk upload errors";
-        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
 
         var userRequestModel = new UserRequestModel
         {
@@ -416,7 +675,125 @@ public class BulkSubsidiaryProcessorTests
         subsidiaryService.Setup(ss => ss.GetCompanyByCompanyName(subsidiaries[0].organisation_name))
          .ReturnsAsync(subsidiaryOrganisations[0]);
 
-        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
+
+        var userRequestModel = new UserRequestModel
+        {
+            UserId = userId,
+            OrganisationId = organisationId
+        };
+
+        // Act
+        var result = await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
+
+        // Assert
+        updates.Should().HaveCount(1);
+    }
+
+    [TestMethod]
+    public async Task ShouldProcessFranchiseeWhenDataExistForFranchiseeY()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var organisationId = Guid.NewGuid();
+        var subsidiaryService = new Mock<ISubsidiaryService>();
+
+        var parent = _fixture.Create<CompaniesHouseCompany>();
+        var parentOrganisation = _fixture.Create<OrganisationResponseModel>();
+
+        var subsidiaries = _fixture
+            .Build<CompaniesHouseCompany>()
+            .With(c => c.Errors, () => new())
+            .CreateMany(1)
+            .ToArray();
+
+        var subsidiaryOrganisations = _fixture.CreateMany<OrganisationResponseModel>(1).ToArray();
+        subsidiaries[0].franchisee_licensee_tenant = "Y";
+        subsidiaryOrganisations[0].companiesHouseNumber = subsidiaries[0].companies_house_number;
+        subsidiaryOrganisations[0].name = subsidiaries[0].organisation_name;
+        subsidiaries[0].Errors = null;
+        subsidiaries[0].joiner_date = "10/10/2023";
+        subsidiaries[0].reporting_type = "Group";
+
+        // Return an OrganisationResponseModel to simulate the company existing in RPD
+        subsidiaryService.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(subsidiaries[0].companies_house_number))
+            .ReturnsAsync(subsidiaryOrganisations[0]);
+
+        subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(It.IsAny<int>(), It.IsAny<int>()))
+            .ReturnsAsync(false);
+
+        var updates = new List<SubsidiaryAddModel>();
+        subsidiaryService.Setup(ss => ss.AddSubsidiaryRelationshipAsync(It.IsAny<SubsidiaryAddModel>()))
+            .Callback<SubsidiaryAddModel>(model => updates.Add(model));
+
+        var notificationServiceMock = new Mock<INotificationService>();
+        var companiesHouseDataProvider = new Mock<ICompaniesHouseDataProvider>();
+        companiesHouseDataProvider.Setup(ss => ss.SetCompaniesHouseData(It.IsAny<OrganisationModel>()))
+        .ReturnsAsync(true)
+        .Callback<OrganisationModel>(model => model.Error = null);
+
+        subsidiaryService.Setup(ss => ss.GetCompanyByCompanyName(subsidiaries[0].organisation_name))
+         .ReturnsAsync(subsidiaryOrganisations[0]);
+
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
+
+        var userRequestModel = new UserRequestModel
+        {
+            UserId = userId,
+            OrganisationId = organisationId
+        };
+
+        // Act
+        var result = await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
+
+        // Assert
+        updates.Should().HaveCount(1);
+    }
+
+    [TestMethod]
+    public async Task ShouldProcessFranchiseeWhenDataExistForFranchiseeN()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var organisationId = Guid.NewGuid();
+        var subsidiaryService = new Mock<ISubsidiaryService>();
+
+        var parent = _fixture.Create<CompaniesHouseCompany>();
+        var parentOrganisation = _fixture.Create<OrganisationResponseModel>();
+
+        var subsidiaries = _fixture
+            .Build<CompaniesHouseCompany>()
+            .With(c => c.Errors, () => new())
+            .CreateMany(1)
+            .ToArray();
+
+        var subsidiaryOrganisations = _fixture.CreateMany<OrganisationResponseModel>(1).ToArray();
+        subsidiaries[0].franchisee_licensee_tenant = "N";
+        subsidiaryOrganisations[0].companiesHouseNumber = subsidiaries[0].companies_house_number;
+        subsidiaryOrganisations[0].name = subsidiaries[0].organisation_name;
+        subsidiaries[0].Errors = null;
+
+        // Return an OrganisationResponseModel to simulate the company existing in RPD
+        subsidiaryService.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(subsidiaries[0].companies_house_number))
+            .ReturnsAsync(subsidiaryOrganisations[0]);
+
+        subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(It.IsAny<int>(), It.IsAny<int>()))
+            .ReturnsAsync(false);
+
+        var updates = new List<SubsidiaryAddModel>();
+        subsidiaryService.Setup(ss => ss.AddSubsidiaryRelationshipAsync(It.IsAny<SubsidiaryAddModel>()))
+            .Callback<SubsidiaryAddModel>(model => updates.Add(model));
+
+        var notificationServiceMock = new Mock<INotificationService>();
+        var companiesHouseDataProvider = new Mock<ICompaniesHouseDataProvider>();
+        companiesHouseDataProvider.Setup(ss => ss.SetCompaniesHouseData(It.IsAny<OrganisationModel>()))
+        .ReturnsAsync(true)
+        .Callback<OrganisationModel>(model => model.Error = null);
+
+        subsidiaryService.Setup(ss => ss.GetCompanyByCompanyName(subsidiaries[0].organisation_name))
+         .ReturnsAsync(subsidiaryOrganisations[0]);
+
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
 
         var userRequestModel = new UserRequestModel
         {
@@ -461,9 +838,11 @@ public class BulkSubsidiaryProcessorTests
         subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(It.IsAny<int>(), It.IsAny<int>()))
             .ReturnsAsync(false);
 
-        var updates = new List<SubsidiaryAddModel>();
+        var inserts = _fixture.CreateMany<SubsidiaryAddModel>(1).ToList();
+        inserts[0].JoinerDate = "10/10/2023";
+        inserts[0].ReportingTypeId = 1;
         subsidiaryService.Setup(ss => ss.AddSubsidiaryRelationshipAsync(It.IsAny<SubsidiaryAddModel>()))
-            .Callback<SubsidiaryAddModel>(model => updates.Add(model));
+            .Callback<SubsidiaryAddModel>(model => inserts.Add(model));
 
         var companiesHouseDataProvider = new Mock<ICompaniesHouseDataProvider>();
         companiesHouseDataProvider.Setup(ss => ss.SetCompaniesHouseData(It.IsAny<OrganisationModel>()))
@@ -479,7 +858,7 @@ public class BulkSubsidiaryProcessorTests
         var errorStatus = default(string);
         var key = $"{userId}{organisationId}Subsidiary bulk upload progress";
         var errorKey = $"{userId}{organisationId}Subsidiary bulk upload errors";
-        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
 
         var userRequestModel = new UserRequestModel
         {
@@ -491,7 +870,7 @@ public class BulkSubsidiaryProcessorTests
         var result = await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
 
         // Assert
-        updates.Should().HaveCount(1);
+        inserts.Should().HaveCount(2);
     }
 
     [TestMethod]
@@ -535,7 +914,7 @@ public class BulkSubsidiaryProcessorTests
         var errorStatus = default(string);
         var key = $"{userId}{organisationId}Subsidiary bulk upload progress";
         var errorKey = $"{userId}{organisationId}Subsidiary bulk upload errors";
-        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
 
         var userRequestModel = new UserRequestModel
         {
@@ -617,7 +996,7 @@ public class BulkSubsidiaryProcessorTests
 
         var notificationServiceMock = new Mock<INotificationService>();
 
-        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
 
         var userRequestModel = new UserRequestModel
         {
@@ -673,7 +1052,7 @@ public class BulkSubsidiaryProcessorTests
         var errorStatus = default(string);
         var key = $"{userId}{organisationId}Subsidiary bulk upload progress";
         var errorKey = $"{userId}{organisationId}Subsidiary bulk upload errors";
-        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
 
         var userRequestModel = new UserRequestModel
         {
@@ -738,7 +1117,7 @@ public class BulkSubsidiaryProcessorTests
         var errorStatus = default(string);
         var key = $"{userId}{organisationId}Subsidiary bulk upload progress";
         var errorKey = $"{userId}{organisationId}Subsidiary bulk upload errors";
-        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object);
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
 
         var userRequestModel = new UserRequestModel
         {

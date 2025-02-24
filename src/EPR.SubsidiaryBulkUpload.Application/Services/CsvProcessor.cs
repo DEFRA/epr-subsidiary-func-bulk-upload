@@ -23,7 +23,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
         }
 
         public async Task<IEnumerable<TD>> ProcessStreamWithMapping<TD, TM>(Stream stream, IReaderConfiguration configuration)
-            where TM : ClassMap
+             where TM : ClassMap
         {
             try
             {
