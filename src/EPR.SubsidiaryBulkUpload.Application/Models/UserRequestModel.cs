@@ -10,4 +10,6 @@ public class UserRequestModel
     public Guid OrganisationId { get; set; }
 
     public Guid? ComplianceSchemeId { get; set; }
+
+    public bool? IncludeSubsidiaryJoinerColumns { get; set; }
 }
