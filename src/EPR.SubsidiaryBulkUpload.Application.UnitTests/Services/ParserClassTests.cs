@@ -275,8 +275,6 @@ public class ParserClassTests
     {
         // Arrange
         _mockFeatureManager.Setup(x => x.IsEnabledAsync(It.IsAny<string>())).ReturnsAsync(false);
-
-        // var enableSubsidiaryJoinerColumns = _mockFeatureManager.IsEnabledAsync(FeatureFlags.EnableSubsidiaryJoinerColumns).GetAwaiter().GetResult();
         var rawSource = _listDataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant},{s.joiner_date},{s.reporting_type}\n");
         string[] all = [_csvHeader, .. rawSource];
 
@@ -287,15 +285,11 @@ public class ParserClassTests
 
         // Assert
         returnValue.Should().NotBeNull();
-
         returnValue.ResponseClass.Should().NotBeNull();
         returnValue.ResponseClass.isDone.Should().BeTrue();
-
         returnValue.CompaniesHouseCompany.Should().NotBeNull();
         returnValue.CompaniesHouseCompany.Count.Should().Be(1);
-
         var parsedResult = returnValue.CompaniesHouseCompany;
-
         parsedResult[0].Errors.Should().NotBeEmpty();
         parsedResult[0].Errors[0].Message.Should().Contain("The file has additional column headers: The file has too many column headers. Remove these and try again");
     }
@@ -323,8 +317,14 @@ public class ParserClassTests
         subsidiaryOrganisations[0].OrganisationRelationship.JoinerDate = DateTime.Now.AddDays(-10);
         subsidiaryOrganisations[0].OrganisationRelationship.ReportingTypeId = 1;
 
+        var parent = _fixture.Create<CompaniesHouseCompany>();
+        var parentOrganisation = _fixture.Create<OrganisationResponseModel>();
+
         _mockSubsidiaySrevice.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(It.IsAny<string>()))
             .ReturnsAsync(subsidiaryOrganisations[0]);
+
+        _mockSubsidiaySrevice.Setup(ss => ss.GetCompanyByReferenceNumber(It.IsAny<string>()))
+            .ReturnsAsync(parentOrganisation);
 
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
 
