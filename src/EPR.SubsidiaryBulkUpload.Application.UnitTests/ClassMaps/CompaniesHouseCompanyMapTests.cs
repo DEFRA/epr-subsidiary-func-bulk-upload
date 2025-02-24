@@ -3,6 +3,7 @@ using EPR.SubsidiaryBulkUpload.Application.ClassMaps;
 using EPR.SubsidiaryBulkUpload.Application.CsvReaderConfiguration;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Services;
+using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.ClassMaps;
 
@@ -10,6 +11,13 @@ namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.ClassMaps;
 public class CompaniesHouseCompanyMapTests
 {
     private const string _csvHeader = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,joiner_date,reporting_type\n";
+    private Mock<ISubsidiaryService> _mockSubsidiaySrevice;
+
+    [TestInitialize]
+    public void TestInitialize()
+    {
+        _mockSubsidiaySrevice = new Mock<ISubsidiaryService>();
+    }
 
     [TestMethod]
     [DataRow("123456")]
@@ -29,7 +37,7 @@ public class CompaniesHouseCompanyMapTests
         using var reader = new StreamReader(stream);
         using var csvReader = new CustomCsvReader(reader, CsvConfigurations.BulkUploadCsvConfiguration);
 
-        var map = new CompaniesHouseCompanyMap(true);
+        var map = new CompaniesHouseCompanyMap(true, _mockSubsidiaySrevice.Object);
         csvReader.Context.RegisterClassMap(map);
 
         // Act
@@ -63,7 +71,7 @@ public class CompaniesHouseCompanyMapTests
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
         using var reader = new StreamReader(stream);
         using var csvReader = new CustomCsvReader(reader, CsvConfigurations.BulkUploadCsvConfiguration);
-        var map = new CompaniesHouseCompanyMap(true);
+        var map = new CompaniesHouseCompanyMap(true, _mockSubsidiaySrevice.Object);
         csvReader.Context.RegisterClassMap(map);
 
         // Act
@@ -99,7 +107,7 @@ public class CompaniesHouseCompanyMapTests
         using var reader = new StreamReader(stream);
         using var csvReader = new CustomCsvReader(reader, CsvConfigurations.BulkUploadCsvConfiguration);
 
-        var map = new CompaniesHouseCompanyMap(true);
+        var map = new CompaniesHouseCompanyMap(true, _mockSubsidiaySrevice.Object);
         csvReader.Context.RegisterClassMap(map);
 
         // Act
@@ -162,7 +170,7 @@ public class CompaniesHouseCompanyMapTests
         using var reader = new StreamReader(stream);
         using var csvReader = new CustomCsvReader(reader, CsvConfigurations.BulkUploadCsvConfiguration);
 
-        var map = new CompaniesHouseCompanyMap(true);
+        var map = new CompaniesHouseCompanyMap(true, _mockSubsidiaySrevice.Object);
         csvReader.Context.RegisterClassMap(map);
 
         // Act
@@ -205,7 +213,7 @@ public class CompaniesHouseCompanyMapTests
         using var reader = new StreamReader(stream);
         using var csvReader = new CustomCsvReader(reader, CsvConfigurations.BulkUploadCsvConfiguration);
 
-        var map = new CompaniesHouseCompanyMap(true);
+        var map = new CompaniesHouseCompanyMap(true, _mockSubsidiaySrevice.Object);
         csvReader.Context.RegisterClassMap(map);
 
         // Act
@@ -249,7 +257,7 @@ public class CompaniesHouseCompanyMapTests
         using var reader = new StreamReader(stream);
         using var csvReader = new CustomCsvReader(reader, CsvConfigurations.BulkUploadCsvConfiguration);
 
-        var map = new CompaniesHouseCompanyMap(true);
+        var map = new CompaniesHouseCompanyMap(true, _mockSubsidiaySrevice.Object);
         csvReader.Context.RegisterClassMap(map);
 
         // Act
@@ -285,7 +293,7 @@ public class CompaniesHouseCompanyMapTests
         using var reader = new StreamReader(stream);
         using var csvReader = new CustomCsvReader(reader, CsvConfigurations.BulkUploadCsvConfiguration);
 
-        var map = new CompaniesHouseCompanyMap(true);
+        var map = new CompaniesHouseCompanyMap(true, _mockSubsidiaySrevice.Object);
         csvReader.Context.RegisterClassMap(map);
 
         // Act

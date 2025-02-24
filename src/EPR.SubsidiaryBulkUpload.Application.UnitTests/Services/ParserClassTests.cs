@@ -3,6 +3,7 @@ using EPR.SubsidiaryBulkUpload.Application.Constants;
 using EPR.SubsidiaryBulkUpload.Application.CsvReaderConfiguration;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Services;
+using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using EPR.SubsidiaryBulkUpload.Application.UnitTests.Mocks;
 using Microsoft.Extensions.Logging;
 using Microsoft.FeatureManagement;
@@ -24,6 +25,7 @@ public class ParserClassTests
     private Mock<ILogger<ParserClass>> _loggerMock;
     private ParserClass _sut;
     private Mock<IFeatureManager> _mockFeatureManager;
+    private Mock<ISubsidiaryService> _mockSubsidiaySrevice;
 
     [TestInitialize]
     public void TestInitialize()
@@ -32,6 +34,7 @@ public class ParserClassTests
 
         _loggerMock = new Mock<ILogger<ParserClass>>();
         _mockFeatureManager = new Mock<IFeatureManager>();
+        _mockSubsidiaySrevice = new Mock<ISubsidiaryService>();
         _mockFeatureManager
             .Setup(x => x.IsEnabledAsync(FeatureFlags.EnableSubsidiaryJoinerColumns))
             .ReturnsAsync(true);
@@ -42,7 +45,7 @@ public class ParserClassTests
                 new() { organisation_id = "23123", subsidiary_id = "Sub1", organisation_name = "OrgB", companies_house_number = "654321", parent_child = "Child", franchisee_licensee_tenant = string.Empty, joiner_date = "01/10/2024", reporting_type = "SELF", Errors = new() }
             };
 
-        _sut = new ParserClass(_loggerMock.Object, _mockFeatureManager.Object);
+        _sut = new ParserClass(_loggerMock.Object, _mockFeatureManager.Object, _mockSubsidiaySrevice.Object);
     }
 
     [TestMethod]

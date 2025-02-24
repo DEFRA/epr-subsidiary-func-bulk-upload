@@ -10,9 +10,10 @@ using Microsoft.FeatureManagement;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services
 {
-    public class ParserClass(ILogger<ParserClass> logger, IFeatureManager featureManager) : IParserClass
+    public class ParserClass(ILogger<ParserClass> logger, IFeatureManager featureManager, ISubsidiaryService organisationService) : IParserClass
     {
         private readonly ILogger<ParserClass> _logger = logger;
+        private readonly ISubsidiaryService _organisationService = organisationService;
 
         public (ResponseClass ResponseClass, List<CompaniesHouseCompany> CompaniesHouseCompany) ParseWithHelper(Stream stream, IReaderConfiguration configuration)
         {
@@ -39,7 +40,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             var rows = new List<CompaniesHouseCompany>();
             using var reader = new StreamReader(stream);
             using var csv = new CustomCsvReader(reader, configuration);
-            csv.Context.RegisterClassMap(new CompaniesHouseCompanyMap(includeSubsidiaryJoinerColumns));
+            csv.Context.RegisterClassMap(new CompaniesHouseCompanyMap(includeSubsidiaryJoinerColumns, _organisationService));
 
             try
             {
@@ -145,6 +146,21 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             }
 
             rows = csv.GetRecords<CompaniesHouseCompany>().ToList();
+
+            foreach (var companyRow in rows)
+            {
+                if (companyRow!.ErrorsExcluded!.Count > 0 && companyRow!.Errors.Count > 0)
+                {
+                    var errorsNotRequired = companyRow.Errors.Where(e => e.ErrorNumber == BulkUpdateErrors.JoinerDateRequired).ToList();
+                    if (errorsNotRequired.Count > 0)
+                    {
+                        foreach (var errorToRemove in errorsNotRequired)
+                        {
+                            companyRow.Errors.Remove(errorToRemove);
+                        }
+                    }
+                }
+            }
 
             return rows;
         }
