@@ -48,6 +48,9 @@ public class CompaniesHouseCompany
     [Ignore]
     public List<UploadFileErrorModel> Errors { get; set; }
 
+    [Ignore]
+    public List<UploadFileErrorModel> ErrorsExcluded { get; set; }
+
     public HttpStatusCode? StatusCode { get; set; }
 
     public static ValidationResult ValidateName(string organisation_name, ValidationContext context)

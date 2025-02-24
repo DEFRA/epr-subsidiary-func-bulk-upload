@@ -97,4 +97,7 @@ public static class BulkUpdateErrors
 
     public const int JoinerDateInvalid = 134;
     public const string JoinerDateInvalidMessage = "The subsidiary joiner date is different to the date that was originally entered";
+
+    public const int JoinerDateNotRequiredToValidateForExistingRecord = 135;
+    public const string JoinerDateNotRequiredToValidateForExistingRecordMessage = "JoinerDateNotRequiredToValidateForExistingRecord";
 }

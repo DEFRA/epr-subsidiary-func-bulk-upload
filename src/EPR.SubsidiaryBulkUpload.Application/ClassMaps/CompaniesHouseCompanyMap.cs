@@ -4,18 +4,23 @@ using CsvHelper;
 using CsvHelper.Configuration;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Models;
+using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 
 namespace EPR.SubsidiaryBulkUpload.Application.ClassMaps;
 
 [ExcludeFromCodeCoverage]
 public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
 {
-    public CompaniesHouseCompanyMap(bool includeSubsidiaryJoinerColumns)
+    private readonly ISubsidiaryService _organisationService = null;
+
+    public CompaniesHouseCompanyMap(bool includeSubsidiaryJoinerColumns, ISubsidiaryService organisationService)
     {
+        _organisationService = organisationService;
         Map(m => m.organisation_id).Index(0).Validate(field => !field.Equals(null));
         Map(m => m.subsidiary_id);
         Map(m => m.organisation_name).Validate(field => !field.Equals(string.Empty));
         Map(m => m.companies_house_number).Validate(field => !field.Equals(string.Empty));
+        Map(m => m.ErrorsExcluded).Convert(args => GetRowValidationErrorsNotRequired(args.Row));
         Map(m => m.parent_child).Validate(field => !field.Equals(string.Empty));
         Map(m => m.franchisee_licensee_tenant);
         Map(m => m.Errors).Index(6).Convert(args => GetRowValidationErrors(args.Row));
@@ -187,5 +192,27 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
             ErrorNumber = errorNumber,
             IsError = true
         };
+    }
+
+    private List<UploadFileErrorModel> GetRowValidationErrorsNotRequired(IReaderRow row)
+    {
+        var errors = new List<UploadFileErrorModel>();
+        var lineNumber = row.Context.Reader.Parser.Row;
+        var rawData = row.Context.Reader.Parser.RawRecord;
+
+        if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.joiner_date))) && string.Equals(row.GetField(nameof(CompaniesHouseCompany.parent_child)), "child", StringComparison.OrdinalIgnoreCase))
+        {
+            var companies_house_number = row.GetField(nameof(CompaniesHouseCompany.companies_house_number));
+            var response = _organisationService.GetCompanyByCompaniesHouseNumber(companies_house_number).GetAwaiter().GetResult();
+
+            if (string.IsNullOrEmpty(response.joinerDate))
+            {
+                errors.Add(
+                    CreateError(
+                        lineNumber, rawData, BulkUpdateErrors.JoinerDateNotRequiredToValidateForExistingRecordMessage, BulkUpdateErrors.JoinerDateNotRequiredToValidateForExistingRecord));
+            }
+        }
+
+        return errors;
     }
 }
