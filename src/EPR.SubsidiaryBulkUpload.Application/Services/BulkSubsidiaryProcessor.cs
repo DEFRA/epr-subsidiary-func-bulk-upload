@@ -7,7 +7,6 @@ using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.FeatureManagement;
-using Pipelines.Sockets.Unofficial.Arenas;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services;
 
@@ -57,10 +56,6 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
                  && parentOrg.id == sub.SubsidiaryOrg.OrganisationRelationship?.FirstOrganisationId);
         }
 
-        /*               && sub.SubsidiaryOrg.OrganisationRelationship != null
-                         && sub.SubsidiaryOrg.OrganisationRelationship.ReportingTypeId != null
-                         && !string.Equals(sub.Subsidiary.reporting_type, ((ReportingType)sub.SubsidiaryOrg.OrganisationRelationship.ReportingTypeId).ToString(), StringComparison.OrdinalIgnoreCase)
-        */
         var subsidiariesAndOrgWithValidNameanJointerDateProcessStatistics = await ProcessValidNamedOrgsUpdate(subsidiariesAndOrgWithMatchingReportingType, parentOrg, userRequestModel);
 
         var subsidiariesAndOrgWith_InValidName = subsidiariesAndOrg.Where(sub => sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg?.companiesHouseNumber
