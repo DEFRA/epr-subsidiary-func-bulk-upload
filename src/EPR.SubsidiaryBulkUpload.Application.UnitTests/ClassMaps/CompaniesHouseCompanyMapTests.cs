@@ -189,8 +189,14 @@ public class CompaniesHouseCompanyMapTests
         using var reader = new StreamReader(stream);
         using var csvReader = new CustomCsvReader(reader, CsvConfigurations.BulkUploadCsvConfiguration);
 
+        var parent = _fixture.Create<CompaniesHouseCompany>();
+        var parentOrganisation = _fixture.Create<OrganisationResponseModel>();
+
         _mockSubsidiaySrevice.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(It.IsAny<string>()))
             .ReturnsAsync(subsidiaryOrganisations[0]);
+
+        _mockSubsidiaySrevice.Setup(ss => ss.GetCompanyByReferenceNumber(It.IsAny<string>()))
+            .ReturnsAsync(parentOrganisation);
 
         var map = new CompaniesHouseCompanyMap(true, _mockSubsidiaySrevice.Object);
         csvReader.Context.RegisterClassMap(map);
@@ -240,6 +246,17 @@ public class CompaniesHouseCompanyMapTests
         subsidiaryOrganisations[0].joinerDate = null;
         subsidiaryOrganisations[0].OrganisationRelationship.JoinerDate = DateTime.Now.AddDays(-10);
         subsidiaryOrganisations[0].OrganisationRelationship.ReportingTypeId = 1;
+
+        var parent = _fixture.Create<CompaniesHouseCompany>();
+        var parentOrganisation = _fixture.Create<OrganisationResponseModel>();
+
+        subsidiaryOrganisations[0].OrganisationRelationship.FirstOrganisationId = parentOrganisation.id;
+
+        _mockSubsidiaySrevice.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(It.IsAny<string>()))
+            .ReturnsAsync(subsidiaryOrganisations[0]);
+
+        _mockSubsidiaySrevice.Setup(ss => ss.GetCompanyByReferenceNumber(It.IsAny<string>()))
+            .ReturnsAsync(parentOrganisation);
 
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
         using var reader = new StreamReader(stream);
