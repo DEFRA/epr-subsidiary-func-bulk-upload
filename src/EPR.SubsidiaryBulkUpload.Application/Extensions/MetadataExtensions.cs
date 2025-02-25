@@ -4,7 +4,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Extensions;
 
 public static class MetadataExtensions
 {
-    public static UserRequestModel ToUserRequestModel(this IDictionary<string, string> metadata)
+    public static UserRequestModel ToUserRequestModel(this IDictionary<string, string> metadata, string? blobName = null, string? blobContainerName = null)
     {
         if (metadata is null)
         {
@@ -34,11 +34,21 @@ public static class MetadataExtensions
             complianceSchemeId = Guid.TryParse(complianceSchemeIdString, out var complianceSchemeIdRetrieved) ? complianceSchemeIdRetrieved : null;
         }
 
+        Guid? submissionId = null;
+        if (caseInsensitiveMetadata.TryGetValue("SubmissionId", out var submissionIdString))
+        {
+            submissionId = Guid.TryParse(submissionIdString, out var submissionIdRetrieved) ? submissionIdRetrieved : null;
+        }
+
         return new UserRequestModel
         {
             UserId = userId,
             OrganisationId = organisationId,
-            ComplianceSchemeId = complianceSchemeId
+            ComplianceSchemeId = complianceSchemeId,
+            BlobName = blobName,
+            BlobContainerName = blobContainerName,
+            FileName = metadata.GetFileName(),
+            SubmissionId = submissionId
         };
     }
 

@@ -45,7 +45,7 @@ public class CompaniesHouseFilePostServiceTests
         var antivirusClient = new Mock<IAntivirusClient>();
 
         submissionStatusClient.Setup(ssc => ssc.CreateSubmissionAsync(It.IsAny<CreateSubmission>())).ReturnsAsync(HttpStatusCode.OK);
-        submissionStatusClient.Setup(ssc => ssc.CreateEventAsync(It.IsAny<AntivirusCheckEvent>(), It.IsAny<Guid>())).ReturnsAsync(HttpStatusCode.OK);
+        submissionStatusClient.Setup(ssc => ssc.CreateEventAsync(It.IsAny<AntivirusCheckEvent>(), It.IsAny<Guid>(), null, null)).ReturnsAsync(HttpStatusCode.OK);
         antivirusClient.Setup(avc => avc.SendFileAsync(It.IsAny<FileDetails>(), filePath, stream)).ReturnsAsync(HttpStatusCode.OK);
 
         var filePostService = new CompaniesHouseFilePostService(
@@ -74,7 +74,7 @@ public class CompaniesHouseFilePostServiceTests
         var antivirusClient = new Mock<IAntivirusClient>();
 
         submissionStatusClient.Setup(ssc => ssc.CreateSubmissionAsync(It.IsAny<CreateSubmission>())).ReturnsAsync(badResponse);
-        submissionStatusClient.Setup(ssc => ssc.CreateEventAsync(It.IsAny<AntivirusCheckEvent>(), It.IsAny<Guid>())).ReturnsAsync(HttpStatusCode.OK);
+        submissionStatusClient.Setup(ssc => ssc.CreateEventAsync(It.IsAny<AntivirusCheckEvent>(), It.IsAny<Guid>(), null, null)).ReturnsAsync(HttpStatusCode.OK);
         antivirusClient.Setup(avc => avc.SendFileAsync(It.IsAny<FileDetails>(), filePath, stream)).ReturnsAsync(HttpStatusCode.OK);
 
         var filePostService = new CompaniesHouseFilePostService(
@@ -85,7 +85,7 @@ public class CompaniesHouseFilePostServiceTests
 
         // Assert
         response.Should().Be(badResponse);
-        submissionStatusClient.Verify(ssc => ssc.CreateEventAsync(It.IsAny<AntivirusCheckEvent>(), It.IsAny<Guid>()), Times.Never);
+        submissionStatusClient.Verify(ssc => ssc.CreateEventAsync(It.IsAny<AntivirusCheckEvent>(), It.IsAny<Guid>(), It.IsAny<Guid?>(), It.IsAny<Guid?>()), Times.Never);
         antivirusClient.Verify(avc => avc.SendFileAsync(It.IsAny<FileDetails>(), filePath, stream), Times.Never);
     }
 
@@ -105,7 +105,7 @@ public class CompaniesHouseFilePostServiceTests
         var antivirusClient = new Mock<IAntivirusClient>();
 
         submissionStatusClient.Setup(ssc => ssc.CreateSubmissionAsync(It.IsAny<CreateSubmission>())).ReturnsAsync(HttpStatusCode.OK);
-        submissionStatusClient.Setup(ssc => ssc.CreateEventAsync(It.IsAny<AntivirusCheckEvent>(), It.IsAny<Guid>())).ReturnsAsync(badResponse);
+        submissionStatusClient.Setup(ssc => ssc.CreateEventAsync(It.IsAny<AntivirusCheckEvent>(), It.IsAny<Guid>(), null, null)).ReturnsAsync(badResponse);
         antivirusClient.Setup(avc => avc.SendFileAsync(It.IsAny<FileDetails>(), filePath, stream)).ReturnsAsync(HttpStatusCode.OK);
 
         var filePostService = new CompaniesHouseFilePostService(
@@ -165,7 +165,7 @@ public class CompaniesHouseFilePostServiceTests
         submissionStatusClient.Setup(ssc => ssc.CreateSubmissionAsync(It.IsAny<CreateSubmission>()))
             .ReturnsAsync(HttpStatusCode.OK)
             .Callback<CreateSubmission>(submission => fileGuid = submission.Id);
-        submissionStatusClient.Setup(ssc => ssc.CreateEventAsync(It.IsAny<AntivirusCheckEvent>(), It.IsAny<Guid>())).ReturnsAsync(HttpStatusCode.OK);
+        submissionStatusClient.Setup(ssc => ssc.CreateEventAsync(It.IsAny<AntivirusCheckEvent>(), It.IsAny<Guid>(), null, null)).ReturnsAsync(HttpStatusCode.OK);
         antivirusClient.Setup(avc => avc.SendFileAsync(It.IsAny<FileDetails>(), filePath, stream)).ReturnsAsync(HttpStatusCode.OK);
 
         var filePostService = new CompaniesHouseFilePostService(
@@ -176,7 +176,7 @@ public class CompaniesHouseFilePostServiceTests
 
         // Assert
         response.Should().BeSuccessful();
-        submissionStatusClient.Verify(ssc => ssc.CreateEventAsync(It.IsAny<AntivirusCheckEvent>(), fileGuid));
+        submissionStatusClient.Verify(ssc => ssc.CreateEventAsync(It.IsAny<AntivirusCheckEvent>(), fileGuid, null, null));
         antivirusClient.Verify(avc => avc.SendFileAsync(It.Is<FileDetails>(fd => fd.Key == fileGuid), filePath, stream));
     }
 }

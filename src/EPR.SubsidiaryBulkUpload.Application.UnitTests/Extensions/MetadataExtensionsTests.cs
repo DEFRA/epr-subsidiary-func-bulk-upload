@@ -149,6 +149,25 @@ public class MetadataExtensionsTests
     }
 
     [TestMethod]
+    public void ToUserRequestModel_ReturnsNull_WhenInvalidSubmissionId()
+    {
+        // Arrange
+        var metadata = new Dictionary<string, string>
+            {
+                { "UserId", "d2c12e8a-0d47-4cd9-b8e1-1f766a5c6e4b" },
+                { "OrganisationId", "f2c12e8a-1d47-4cd9-b8e1-2f766a5c6e4c" },
+                { "ComplianceSchemeId", "033593e1-98d3-4451-84a5-465482ed4b53" },
+                { "Submission", "InvalidGUID" }
+            };
+
+        // Act
+        var result = metadata.ToUserRequestModel();
+
+        // Assert
+        result.Should().NotBeNull();
+    }
+
+    [TestMethod]
     public void ToUserRequestModel_ReturnsUserRequestModel_WhenValidGuids()
     {
         // Arrange
@@ -156,7 +175,9 @@ public class MetadataExtensionsTests
             {
                 { "UserId", "d2c12e8a-0d47-4cd9-b8e1-1f766a5c6e4b" },
                 { "OrganisationId", "f2c12e8a-1d47-4cd9-b8e1-2f766a5c6e4c" },
-                { "ComplianceSchemeId", "033593e1-98d3-4451-84a5-465482ed4b53" }
+                { "ComplianceSchemeId", "033593e1-98d3-4451-84a5-465482ed4b53" },
+                { "fileName", "test.csv" },
+                { "SubmissionId", "9b71d582-52a7-4b28-b389-e0898dc6f196" }
             };
 
         // Act
@@ -166,6 +187,9 @@ public class MetadataExtensionsTests
         result.Should().NotBeNull();
         result.UserId.Should().Be("d2c12e8a-0d47-4cd9-b8e1-1f766a5c6e4b");
         result.OrganisationId.Should().Be("f2c12e8a-1d47-4cd9-b8e1-2f766a5c6e4c");
+        result.ComplianceSchemeId.Should().Be("033593e1-98d3-4451-84a5-465482ed4b53");
+        result.FileName.Should().Be("test.csv");
+        result.SubmissionId.Should().Be("9b71d582-52a7-4b28-b389-e0898dc6f196");
     }
 
     [TestMethod]

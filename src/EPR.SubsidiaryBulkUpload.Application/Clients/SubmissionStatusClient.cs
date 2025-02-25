@@ -18,9 +18,10 @@ public class SubmissionStatusClient(
     private readonly ISystemDetailsProvider _systemDetailsProvider = systemDetailsProvider;
     private readonly HttpClient _httpClient = httpClient;
 
-    public async Task<HttpStatusCode> CreateEventAsync(AntivirusCheckEvent antivirusEvent, Guid submissionId)
+    public async Task<HttpStatusCode> CreateEventAsync<T>(T @event, Guid submissionId, Guid? userId = null, Guid? organisationId = null)
+        where T : AbstractEvent
     {
-        return await Post($"submissions/{submissionId}/events", antivirusEvent);
+        return await Post($"submissions/{submissionId}/events", @event, userId, organisationId);
     }
 
     public async Task<HttpStatusCode> CreateSubmissionAsync(CreateSubmission submission)
@@ -36,13 +37,13 @@ public class SubmissionStatusClient(
         }
     }
 
-    private async Task<HttpStatusCode> Post<T>(string requestUri, T data)
+    private async Task<HttpStatusCode> Post<T>(string requestUri, T data, Guid? userId = null, Guid? organisationId = null)
     {
         HttpStatusCode statusCode;
 
         try
         {
-            ConfigureHttpClientAsync();
+            ConfigureHttpClientAsync(userId, organisationId);
 
             var response = await _httpClient.PostAsJsonAsync<T>(requestUri, data);
 
@@ -67,12 +68,26 @@ public class SubmissionStatusClient(
         return statusCode;
     }
 
-    private void ConfigureHttpClientAsync()
+    private void ConfigureHttpClientAsync(Guid? userId = null, Guid? organisationId = null)
     {
-        var systemUserId = _systemDetailsProvider.SystemUserId?.ToString() ?? throw new MissingSystemDetailsException("System user id was not found");
-        var systemOrganisationId = _systemDetailsProvider.SystemOrganisationId?.ToString() ?? throw new MissingSystemDetailsException("System organisation id was not found");
+        if(userId is not null)
+        {
+            AddIfMissing(_httpClient.DefaultRequestHeaders, "UserId", userId.Value.ToString());
+        }
+        else
+        {
+            var systemUserId = _systemDetailsProvider.SystemUserId?.ToString() ?? throw new MissingSystemDetailsException("System user id was not found");
+            AddIfMissing(_httpClient.DefaultRequestHeaders, "UserId", systemUserId);
+        }
 
-        AddIfMissing(_httpClient.DefaultRequestHeaders, "OrganisationId", systemOrganisationId);
-        AddIfMissing(_httpClient.DefaultRequestHeaders, "UserId", systemUserId);
+        if (organisationId is not null)
+        {
+            AddIfMissing(_httpClient.DefaultRequestHeaders, "OrganisationId", organisationId.Value.ToString());
+        }
+        else
+        {
+            var systemOrganisationId = _systemDetailsProvider.SystemOrganisationId?.ToString() ?? throw new MissingSystemDetailsException("System organisation id was not found");
+            AddIfMissing(_httpClient.DefaultRequestHeaders, "OrganisationId", systemOrganisationId);
+        }
     }
 }

@@ -45,7 +45,7 @@ public class BulkUploadFunction
             }
         }
 
-        var userRequestModel = metaData.ToUserRequestModel();
+        var userRequestModel = metaData.ToUserRequestModel(client.Name, client.BlobContainerName);
         if (userRequestModel != null)
         {
             await _orchestration.NotifyStart(userRequestModel);

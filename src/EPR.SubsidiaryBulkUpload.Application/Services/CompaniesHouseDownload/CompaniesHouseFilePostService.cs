@@ -49,7 +49,7 @@ public class CompaniesHouseFilePostService(
             ComplianceSchemeId = null
         };
 
-        var antiVirusEvent = new AntivirusCheckEvent
+        var @event = new AntivirusCheckEvent
         {
             FileName = fileName,
             FileType = FileType.CompaniesHouse,
@@ -69,7 +69,7 @@ public class CompaniesHouseFilePostService(
         };
 
         var statusCode = await submissionStatusClient.CreateSubmissionAsync(submission)
-            .ThenIfIsSuccessStatusCode(() => submissionStatusClient.CreateEventAsync(antiVirusEvent, fileId))
+            .ThenIfIsSuccessStatusCode(() => submissionStatusClient.CreateEventAsync(@event, fileId))
             .ThenIfIsSuccessStatusCode(() => antivirusClient.SendFileAsync(fileDetails, fileName, stream));
 
         return statusCode;

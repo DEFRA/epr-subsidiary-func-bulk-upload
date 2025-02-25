@@ -1,8 +1,8 @@
 ﻿namespace EPR.SubsidiaryBulkUpload.Application.Models.Events;
 
-public class AntivirusCheckEvent
+public class AntivirusCheckEvent : AbstractEvent
 {
-    public EventType Type { get; init; } = EventType.AntivirusCheck;
+    public override EventType Type => EventType.AntivirusCheck;
 
     public Guid FileId { get; set; }
 
