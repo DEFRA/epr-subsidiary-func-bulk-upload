@@ -202,10 +202,13 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
 
         if (IncludeSubsidiaryJoinerColumns && string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.joiner_date))) && string.Equals(row.GetField(nameof(CompaniesHouseCompany.parent_child)), "child", StringComparison.OrdinalIgnoreCase))
         {
+            var orgReferenceNumber = row.GetField(nameof(CompaniesHouseCompany.organisation_id));
             var companies_house_number = row.GetField(nameof(CompaniesHouseCompany.companies_house_number));
-            var response = _organisationService.GetCompanyByCompaniesHouseNumber(companies_house_number).GetAwaiter().GetResult();
+            var responseParent = _organisationService.GetCompanyByReferenceNumber(orgReferenceNumber).GetAwaiter().GetResult();
+            var responseChild = _organisationService.GetCompanyByCompaniesHouseNumber(companies_house_number).GetAwaiter().GetResult();
+            var orgRelationship = responseChild?.OrganisationRelationship;
 
-            if (string.IsNullOrEmpty(response.joinerDate))
+            if (orgRelationship != null && orgRelationship.FirstOrganisationId == responseParent.id && orgRelationship.JoinerDate == null)
             {
                 errors.Add(
                     CreateError(
