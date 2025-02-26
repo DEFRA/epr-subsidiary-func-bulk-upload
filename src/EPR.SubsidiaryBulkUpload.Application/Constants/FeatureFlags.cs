@@ -3,5 +3,5 @@
 public static class FeatureFlags
 {
     public const string UseBoomiOAuth = "UseBoomiOAuth";
-    public const string EnableSubsidiaryJoinerColumns = "EnableSubsidiaryJoinerAndLeaverColumns";
+    public const string EnableSubsidiaryJoinerColumns = "EnableSubsidiaryUploadJoinerColumns";
 }
