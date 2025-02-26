@@ -48,16 +48,6 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
              && string.Equals(sub.Subsidiary.organisation_name, sub.SubsidiaryOrg.name, StringComparison.OrdinalIgnoreCase)
              && parentOrg.id == sub.SubsidiaryOrg.OrganisationRelationship?.FirstOrganisationId);
 
-        if (enableSubsidiaryJoinerColumns)
-        {
-            subsidiariesAndOrgWithMatchingReportingType = subsidiariesAndOrg
-                 .Where(sub => sub.SubsidiaryOrg != null && sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg.companiesHouseNumber
-                 && string.Equals(sub.Subsidiary.organisation_name, sub.SubsidiaryOrg.name, StringComparison.OrdinalIgnoreCase)
-                 && parentOrg.id == sub.SubsidiaryOrg.OrganisationRelationship?.FirstOrganisationId);
-        }
-
-        var subsidiariesAndOrgWithValidNameanJointerDateProcessStatistics = await ProcessValidNamedOrgsUpdate(subsidiariesAndOrgWithMatchingReportingType, parentOrg, userRequestModel);
-
         var subsidiariesAndOrgWith_InValidName = subsidiariesAndOrg.Where(sub => sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg?.companiesHouseNumber
             && !string.Equals(sub.Subsidiary.organisation_name, sub.SubsidiaryOrg?.name, StringComparison.OrdinalIgnoreCase));
         var subWithInvalidName = await subsidiariesAndOrgWith_InValidName.Select(s => s.Subsidiary).ToListAsync();
@@ -75,8 +65,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         var remainingToProcess = nonNullCompaniesHouseNumberRecords.Except(subWithInvalidName)
             .Except(subWithInvalidNameAndJoinerDate)
             .Except(subsidiariesAndOrgWithValidNameProcessStatistics.NewAddedSubsidiaries)
-            .Except(subsidiariesAndOrgWithValidNameProcessStatistics.AlreadyExistCompanies)
-            .Except(subsidiariesAndOrgWithValidNameanJointerDateProcessStatistics.UpdatedAddedSubsidiaries);
+            .Except(subsidiariesAndOrgWithValidNameProcessStatistics.AlreadyExistCompanies);
 
         /*Scenario 3: The subsidiary found in Offline data. name matches then Add OR name not match then get it from CH API and name matches with CH API data.*/
         var newSubsidiariesToAdd_DataFromLocalStorageOrCH = subsidiariesAndOrg.Where(co => co.SubsidiaryOrg == null)
@@ -363,31 +352,6 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         counts.AlreadyExistCompanies = knownSubsidiariesToAddCheck.Select(org => org.Subsidiary).ToList();
         counts.NewAddedSubsidiariesRelationships = count;
-        return counts;
-    }
-
-    private async Task<AddSubsidiariesFigures> ProcessValidNamedOrgsUpdate(IAsyncEnumerable<(CompaniesHouseCompany Subsidiary, OrganisationResponseModel SubsidiaryOrg)> subsidiariesAndOrgWithValidName, OrganisationResponseModel parentOrg, UserRequestModel userRequestModel)
-    {
-        var counts = new AddSubsidiariesFigures();
-        counts.UpdatedAddedSubsidiaries = new List<CompaniesHouseCompany>();
-        var count = 0;
-
-        var knownSubsidiariesToUpdateCheck = await subsidiariesAndOrgWithValidName.Where(co => co.SubsidiaryOrg != null)
-        .SelectAwait(async co =>
-            (Subsidiary: co.Subsidiary,
-             SubsidiaryOrg: co.SubsidiaryOrg,
-             RelationshipExists: await organisationService.GetSubsidiaryRelationshipAsync(parentOrg.id, co.SubsidiaryOrg.id))).ToListAsync();
-
-        var knownSubsidiariesToUpdate = knownSubsidiariesToUpdateCheck.Where(co => co.RelationshipExists);
-        foreach (var subsidiaryAddModel in knownSubsidiariesToUpdate)
-        {
-            var result = await UpdateSubsidiaryRelationship(parentOrg, subsidiaryAddModel!.SubsidiaryOrg, subsidiaryAddModel!.Subsidiary, userRequestModel.UserId);
-            count = count + (result == HttpStatusCode.OK ? 1 : 0);
-            counts.UpdatedAddedSubsidiaries.Add(subsidiaryAddModel.Subsidiary);
-        }
-
-        counts.AlreadyExistCompanies = knownSubsidiariesToUpdateCheck.Select(org => org.Subsidiary).ToList();
-        counts.UpdatedSubsidiariesRelationships = count;
         return counts;
     }
 }
