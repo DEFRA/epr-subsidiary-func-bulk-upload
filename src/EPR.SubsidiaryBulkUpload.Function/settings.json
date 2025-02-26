@@ -34,7 +34,7 @@
     "SubmissionApi__BaseUrl": "https://localhost:7206",
     "TableStorage__ConnectionString": "UseDevelopmentStorage=true",
     "TableStorage__CompaniesHouseOfflineDataTableName": "CompaniesHouseData",
-    "FeatureManagement__EnableSubsidiaryJoinerAndLeaverColumns": true,
+    "FeatureManagement__EnableSubsidiaryUploadJoinerColumns": false,
     "FeatureManagement__UseBoomiOAuth": false
   }
 }

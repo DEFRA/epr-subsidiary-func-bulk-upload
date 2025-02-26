@@ -47,7 +47,7 @@ The structure of the application settings can be found in the repository. Exampl
 | CompaniesHouseDownload__RetryPolicyMaxRetries         | The number of times to retry failing calls to the Companies House downloads |
 | CompaniesHouseDownload__RetryPolicyInitialWaitTime    | The time to wait when calls to the Companies House downloads fail for the first time       |
 | FeatureManagement__UseBoomiOAuth                      | Feature flag used to determine whether OAuth should be used instead of a certificate  |
-| FeatureManagement__EnableSubsidiaryJoinerAndLeaverColumns | Feature flag used to determine whether joiner or leavier columns should be included |
+| FeatureManagement__EnableSubsidiaryUploadJoinerColumns | Feature flag used to determine whether joiner or leavier columns should be included |
 | Redis__ConnectionString                               | Connection string for Redis                                                |
 | Redis__TimeToLiveInMinutes                            | Time to live (expiry) for Redis keysConnection string for Redis            |
 | SubmissionApi__BaseUrl                                | The base URL for the Submission Status API WebApp                          |
@@ -109,7 +109,7 @@ To run locally, create a file `local.settings.json`. This file is in `.gitignore
     "SubmissionApi__BaseUrl": "https://localhost:7206",
     "TableStorage__ConnectionString": "UseDevelopmentStorage=true",
     "TableStorage__CompaniesHouseOfflineDataTableName": "CompaniesHouseData",
-    "FeatureManagement__EnableSubsidiaryJoinerAndLeaverColumns": false,
+    "FeatureManagement__EnableSubsidiaryUploadJoinerColumns": false,
     "FeatureManagement__UseBoomiOAuth": true
   }
 }
