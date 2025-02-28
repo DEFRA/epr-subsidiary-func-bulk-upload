@@ -59,11 +59,13 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             && sub.SubsidiaryOrg.OrganisationRelationship?.JoinerDate != null && !string.Equals(sub.Subsidiary.joiner_date, sub.SubsidiaryOrg.OrganisationRelationship?.JoinerDate?.ToString("dd/MM/yyyy"), StringComparison.InvariantCulture));
         var subWithInvalidNameAndJoinerDate = await subsidiariesAndOrgWith_InValidNameAndJoinerDate.Select(s => s.Subsidiary).ToListAsync();
 
-        /*Scenario x: The subsidiary found in RPD. joiner date not match*/
-        await ReportCompanies(subWithInvalidNameAndJoinerDate, userRequestModel, BulkUpdateErrors.JoinerDateInvalidMessage, BulkUpdateErrors.JoinerDateInvalid);
+        if (enableSubsidiaryJoinerColumns)
+        {
+            /*Scenario x: The subsidiary found in RPD. joiner date not match*/
+            await ReportCompanies(subWithInvalidNameAndJoinerDate, userRequestModel, BulkUpdateErrors.JoinerDateInvalidMessage, BulkUpdateErrors.JoinerDateInvalid);
+        }
 
         var remainingToProcess = nonNullCompaniesHouseNumberRecords.Except(subWithInvalidName)
-            .Except(subWithInvalidNameAndJoinerDate)
             .Except(subsidiariesAndOrgWithValidNameProcessStatistics.NewAddedSubsidiaries)
             .Except(subsidiariesAndOrgWithValidNameProcessStatistics.AlreadyExistCompanies);
 
