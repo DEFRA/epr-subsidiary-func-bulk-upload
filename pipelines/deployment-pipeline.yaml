@@ -23,6 +23,7 @@ parameters:
     - DEV14
     - tst
     - preprod
+    - preprod2
     - prod
 
 
@@ -35,6 +36,7 @@ parameters:
     - development
     - tst
     - preprod
+    - preprod2
     - prod
 - name: imageTag
   displayName: Enter Tag for the Image (Docker tag) or Release name (Git repo tag)
@@ -53,6 +55,10 @@ variables:
   - ${{ elseif eq(parameters.envToDeploy, 'preprod') }}:
     - name: env
       value: PRE1
+    - template: vars/${{ parameters.envToDeploy }}.yaml
+  - ${{ elseif eq(parameters.envToDeploy, 'preprod2') }}:
+    - name: env
+      value: PRE2
     - template: vars/${{ parameters.envToDeploy }}.yaml
   - ${{ elseif eq(parameters.envToDeploy, 'prod') }}:
     - name: env
