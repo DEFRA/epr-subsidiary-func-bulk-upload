@@ -15,7 +15,6 @@ The structure of the application settings can be found in the repository. Exampl
 | ApiConfig__Timeout                                    | Number of seconds before timing out request to Accounts API                |
 | ApiConfig__CompaniesHouseLookupBaseUrl                | Url for the gateway to Companies House data                                |
 | ApiConfig__AccountServiceClientId                     | Accounts API client ID                                                     | 
-| ApiConfig__Certificate                                | Certificate for authenticating calls to the Companies House API gateway    |
 | ApiConfig__CompaniesHouseDirectBaseUri                | Url for direct access to Companies House data                              |
 | ApiConfig__CompaniesHouseDirectApiKey                 | API key for the Companies House API - used for direct access only          |
 | ApiConfig__UseDirectCompaniesHouseLookup              | Whether or not to access Companies House API directly                      |
@@ -46,7 +45,6 @@ The structure of the application settings can be found in the repository. Exampl
 | CompaniesHouseDownload__DownloadPage                  | The page used for downloading Companies House data                         |
 | CompaniesHouseDownload__RetryPolicyMaxRetries         | The number of times to retry failing calls to the Companies House downloads |
 | CompaniesHouseDownload__RetryPolicyInitialWaitTime    | The time to wait when calls to the Companies House downloads fail for the first time       |
-| FeatureManagement__UseBoomiOAuth                      | Feature flag used to determine whether OAuth should be used instead of a certificate  |
 | FeatureManagement__EnableSubsidiaryUploadJoinerColumns | Feature flag used to determine whether joiner or leavier columns should be included |
 | Redis__ConnectionString                               | Connection string for Redis                                                |
 | Redis__TimeToLiveInMinutes                            | Time to live (expiry) for Redis keysConnection string for Redis            |
@@ -109,8 +107,7 @@ To run locally, create a file `local.settings.json`. This file is in `.gitignore
     "SubmissionApi__BaseUrl": "https://localhost:7206",
     "TableStorage__ConnectionString": "UseDevelopmentStorage=true",
     "TableStorage__CompaniesHouseOfflineDataTableName": "CompaniesHouseData",
-    "FeatureManagement__EnableSubsidiaryUploadJoinerColumns": false,
-    "FeatureManagement__UseBoomiOAuth": true
+    "FeatureManagement__EnableSubsidiaryUploadJoinerColumns": false
   }
 }
 ```

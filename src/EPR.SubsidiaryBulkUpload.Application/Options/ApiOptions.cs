@@ -23,8 +23,6 @@ public class ApiOptions : ApiResilienceOptions
 
     public string TenantId { get; set; }
 
-    public string Certificate { get; set; } = null!;
-
     public int Timeout { get; set; }
 
     public string AccountServiceClientId { get; set; } = null!;

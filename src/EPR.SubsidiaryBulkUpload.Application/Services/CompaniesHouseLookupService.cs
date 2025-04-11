@@ -1,33 +1,26 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
-using EPR.SubsidiaryBulkUpload.Application.Constants;
 using EPR.SubsidiaryBulkUpload.Application.DTOs;
 using EPR.SubsidiaryBulkUpload.Application.Models;
 using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using Microsoft.Extensions.Logging;
-using Microsoft.FeatureManagement;
 
 namespace EPR.SubsidiaryBulkUpload.Application.Services;
 public class CompaniesHouseLookupService : ICompaniesHouseLookupService
 {
+    private const string CompaniesHouseEndpoint = "companies";
+
     private readonly ILogger<CompaniesHouseLookupService> _logger;
     private readonly HttpClient _httpClient;
 
     public CompaniesHouseLookupService(
         HttpClient httpClient,
-        IFeatureManager featureManager,
         ILogger<CompaniesHouseLookupService> logger)
     {
         _httpClient = httpClient;
 
-        CompaniesHouseEndpoint = featureManager.IsEnabledAsync(FeatureFlags.UseBoomiOAuth).GetAwaiter().GetResult()
-            ? "companies"
-            : "CompaniesHouse/companies";
-
         _logger = logger;
     }
-
-    private string CompaniesHouseEndpoint { get; init; }
 
     public async Task<Company?> GetCompaniesHouseResponseAsync(string id)
     {
