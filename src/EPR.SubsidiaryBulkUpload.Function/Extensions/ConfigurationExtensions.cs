@@ -15,7 +15,6 @@ using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Microsoft.FeatureManagement;
 using StackExchange.Redis;
 
 [ExcludeFromCodeCoverage]
@@ -53,8 +52,6 @@ public static class ConfigurationExtensions
         var serviceProvider = services.BuildServiceProvider();
         var apiOptions = serviceProvider.GetRequiredService<IOptions<ApiOptions>>().Value;
         var antivirusOptions = serviceProvider.GetRequiredService<IOptions<AntivirusApiOptions>>().Value;
-
-        var featureManager = serviceProvider.GetRequiredService<IFeatureManager>();
 
         services.AddHttpClient<ISubmissionStatusClient, SubmissionStatusClient>((sp, client) =>
         {
