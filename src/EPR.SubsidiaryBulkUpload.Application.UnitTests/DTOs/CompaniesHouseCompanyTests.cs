@@ -14,7 +14,7 @@ public class CompaniesHouseCompanyTests
         parent_child = "Child",
         joiner_date = "01/10/2024",
         reporting_type = "SELF",
-        nation_code = NationCode.EN
+        nation_code = "EN"
     };
 
     [TestMethod]

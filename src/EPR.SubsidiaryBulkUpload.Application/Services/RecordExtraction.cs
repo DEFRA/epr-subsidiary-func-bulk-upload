@@ -15,7 +15,7 @@ public class RecordExtraction : IRecordExtraction
 
             if (parent == null)
             {
-                parent = new CompaniesHouseCompany() { organisation_id = group.Key, organisation_name = "orphan", parent_child = "child", joiner_date = string.Empty, reporting_type = string.Empty, nation_code = NationCode.EN };
+                parent = new CompaniesHouseCompany() { organisation_id = group.Key, organisation_name = "orphan", parent_child = "child", joiner_date = string.Empty, reporting_type = string.Empty, nation_code = "EN" };
             }
 
             var subsidiaries = group.Where(g => !string.Equals(g.parent_child, "parent", StringComparison.OrdinalIgnoreCase));

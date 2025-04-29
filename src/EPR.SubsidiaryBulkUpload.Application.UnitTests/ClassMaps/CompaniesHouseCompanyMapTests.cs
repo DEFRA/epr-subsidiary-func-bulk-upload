@@ -37,7 +37,7 @@ public class CompaniesHouseCompanyMapTests
         // Arrange
         var dataModel = new List<CompaniesHouseCompany>
             {
-                new() { organisation_id = "23123",  subsidiary_id = "Sub1", organisation_name = "OrgA", companies_house_number = companyHouseNumber, parent_child = "Parent", franchisee_licensee_tenant = string.Empty, joiner_date = "01/10/2024", reporting_type = "SELF", nation_code = NationCode.EN, Errors = new() }
+                new() { organisation_id = "23123",  subsidiary_id = "Sub1", organisation_name = "OrgA", companies_house_number = companyHouseNumber, parent_child = "Parent", franchisee_licensee_tenant = string.Empty, joiner_date = "01/10/2024", reporting_type = "SELF", nation_code = "EN", Errors = new() }
             };
         var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant},{s.joiner_date},{s.reporting_type},{s.nation_code}\n");
         string[] all = [_csvHeader, .. rawSource];
@@ -73,7 +73,7 @@ public class CompaniesHouseCompanyMapTests
         // Arrange
         var dataModel = new List<CompaniesHouseCompany>
             {
-                new() { organisation_id = "23123",  subsidiary_id = "Sub1", organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Child", franchisee_licensee_tenant = "Y", joiner_date = "01/10/2024", reporting_type = "SELF", nation_code = NationCode.EN, Errors = new() }
+                new() { organisation_id = "23123",  subsidiary_id = "Sub1", organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Child", franchisee_licensee_tenant = "Y", joiner_date = "01/10/2024", reporting_type = "SELF", nation_code = "EN", Errors = new() }
             };
         var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant},{s.joiner_date},{s.reporting_type},{s.nation_code}\n");
         string[] all = [_csvHeader, .. rawSource];
@@ -98,7 +98,7 @@ public class CompaniesHouseCompanyMapTests
         rows[0].companies_house_number.Should().Be("123456");
         rows[0].parent_child.Should().Be("Child");
         rows[0].franchisee_licensee_tenant.Should().Be("Y");
-        rows[0].nation_code.Should().Be(NationCode.EN);
+        rows[0].nation_code.Should().Be("EN");
         rows[0].Errors.Should().BeEmpty();
     }
 
@@ -108,7 +108,7 @@ public class CompaniesHouseCompanyMapTests
         // Arrange
         var dataModel = new List<CompaniesHouseCompany>
             {
-                new() { organisation_id = "23123",  subsidiary_id = "Sub1", organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Parent", franchisee_licensee_tenant = string.Empty, joiner_date = "01/10/2024", reporting_type = "SELF", nation_code = NationCode.EN, Errors = new() }
+                new() { organisation_id = "23123",  subsidiary_id = "Sub1", organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Parent", franchisee_licensee_tenant = string.Empty, joiner_date = "01/10/2024", reporting_type = "SELF", nation_code = "EN", Errors = new() }
             };
         var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant},{s.joiner_date},{s.reporting_type},{s.nation_code}\n");
         string[] all = [_csvHeader, .. rawSource];
@@ -135,29 +135,29 @@ public class CompaniesHouseCompanyMapTests
         rows[0].companies_house_number.Should().Be("123456");
         rows[0].parent_child.Should().Be("Parent");
         rows[0].franchisee_licensee_tenant.Should().Be(string.Empty);
-        rows[0].nation_code.Should().Be(NationCode.EN);
+        rows[0].nation_code.Should().Be("EN");
         rows[0].Errors.Should().BeEmpty();
     }
 
     [TestMethod]
-    [DataRow("", "", "OrgA", "123456", "Child", "", "10/10/2024", "SELF", NationCode.EN, "The 'organisation id' column is missing.")]
-    [DataRow("23123", "", "", "123456", "Child", "", "10/10/2024", "SELF", NationCode.EN, "The 'organisation name' column is missing.")]
-    [DataRow("23123", "", "OrgA", "", "Child", "", "10/10/2024", "SELF", NationCode.EN, "The 'companies house number' column is missing.")]
-    [DataRow("23123", "", "OrgA", " ", "Child", "", "10/10/2024", "SELF", NationCode.EN, "The 'companies house number' column is missing.")]
-    [DataRow("23123", "", "OrgA", "123456", "", "", "10/10/2024", "SELF", NationCode.EN, "The 'parent or child' column is missing.")]
-    [DataRow("23123", "", "OrgA", "123456789", "Child", "", "10/10/2024", "SELF", NationCode.EN, "Your Companies House number must be 8 characters or fewer.")]
-    [DataRow("23123", "", "OrgA", " 123 456", "Child", "", "10/10/2024", "SELF", NationCode.EN, "Spaces in Companies House Number not allowed. Invalid Number.")]
-    [DataRow("23123", "", "OrgA", "A123 456 ", "Child", "", "10/10/2024", "SELF", NationCode.EN, "Spaces in Companies House Number not allowed. Invalid Number.")]
-    [DataRow("23123", "", "OrgA", "B123 456", "Child", "", "10/10/2024", "SELF", NationCode.EN, "Spaces in Companies House Number not allowed. Invalid Number.")]
-    [DataRow("23123", "", "OrgA", "B123 456", "Child", "", "10/10/2024", "Self", NationCode.EN, "Spaces in Companies House Number not allowed. Invalid Number.")]
-    [DataRow("23123", "", "OrgA", "B123 456", "Child", "", "10/10/2024", "Group", NationCode.EN, "Spaces in Companies House Number not allowed. Invalid Number.")]
-    [DataRow("23123", "", "OrgA", "B123 456", "Child", "", "10/10/2024", "self", NationCode.EN, "Spaces in Companies House Number not allowed. Invalid Number.")]
-    [DataRow("23123", "", "OrgA", "B123 456", "Child", "", "10/10/2024", "group", NationCode.EN, "Spaces in Companies House Number not allowed. Invalid Number.")]
-    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "", "SELF", NationCode.EN, "The 'joiner date' column is missing.")]
-    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "GROUPA", NationCode.EN, "The 'reporting type' column only allowed 'GROUP' or 'SELF'.")]
-    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "Group1", NationCode.EN, "The 'reporting type' column only allowed 'GROUP' or 'SELF'.")]
-    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "salfi", NationCode.EN, "The 'reporting type' column only allowed 'GROUP' or 'SELF'.")]
-    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "salfum", NationCode.EN, "The 'reporting type' column only allowed 'GROUP' or 'SELF'")]
+    [DataRow("", "", "OrgA", "123456", "Child", "", "10/10/2024", "SELF", "EN", "The 'organisation id' column is missing.")]
+    [DataRow("23123", "", "", "123456", "Child", "", "10/10/2024", "SELF", "EN", "The 'organisation name' column is missing.")]
+    [DataRow("23123", "", "OrgA", "", "Child", "", "10/10/2024", "SELF", "EN", "The 'companies house number' column is missing.")]
+    [DataRow("23123", "", "OrgA", " ", "Child", "", "10/10/2024", "SELF", "EN", "The 'companies house number' column is missing.")]
+    [DataRow("23123", "", "OrgA", "123456", "", "", "10/10/2024", "SELF", "EN", "The 'parent or child' column is missing.")]
+    [DataRow("23123", "", "OrgA", "123456789", "Child", "", "10/10/2024", "SELF", "EN", "Your Companies House number must be 8 characters or fewer.")]
+    [DataRow("23123", "", "OrgA", " 123 456", "Child", "", "10/10/2024", "SELF", "EN", "Spaces in Companies House Number not allowed. Invalid Number.")]
+    [DataRow("23123", "", "OrgA", "A123 456 ", "Child", "", "10/10/2024", "SELF", "EN", "Spaces in Companies House Number not allowed. Invalid Number.")]
+    [DataRow("23123", "", "OrgA", "B123 456", "Child", "", "10/10/2024", "SELF", "EN", "Spaces in Companies House Number not allowed. Invalid Number.")]
+    [DataRow("23123", "", "OrgA", "B123 456", "Child", "", "10/10/2024", "Self", "EN", "Spaces in Companies House Number not allowed. Invalid Number.")]
+    [DataRow("23123", "", "OrgA", "B123 456", "Child", "", "10/10/2024", "Group", "EN", "Spaces in Companies House Number not allowed. Invalid Number.")]
+    [DataRow("23123", "", "OrgA", "B123 456", "Child", "", "10/10/2024", "self", "EN", "Spaces in Companies House Number not allowed. Invalid Number.")]
+    [DataRow("23123", "", "OrgA", "B123 456", "Child", "", "10/10/2024", "group", "EN", "Spaces in Companies House Number not allowed. Invalid Number.")]
+    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "", "SELF", "EN", "The 'joiner date' column is missing.")]
+    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "GROUPA", "EN", "The 'reporting type' column only allowed 'GROUP' or 'SELF'.")]
+    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "Group1", "EN", "The 'reporting type' column only allowed 'GROUP' or 'SELF'.")]
+    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "salfi", "EN", "The 'reporting type' column only allowed 'GROUP' or 'SELF'.")]
+    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "salfum", "EN", "The 'reporting type' column only allowed 'GROUP' or 'SELF'")]
     public void ClassMap_Returns_Error(
         string organisationId,
         string subsidiaryId,
@@ -167,7 +167,7 @@ public class CompaniesHouseCompanyMapTests
         string franchiseeLicenseeTenant,
         string joinerDate,
         string reportingType,
-        NationCode nationCode,
+        string nationCode,
         string expectedErrorMessage)
     {
         // Arrange
@@ -216,11 +216,11 @@ public class CompaniesHouseCompanyMapTests
     }
 
     [TestMethod]
-    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "", "SELF", NationCode.EN, "The 'joiner date' column is missing.")]
-    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "GROUPA", NationCode.EN, "The 'reporting type' column only allowed 'GROUP' or 'SELF'.")]
-    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "Group1", NationCode.EN, "The 'reporting type' column only allowed 'GROUP' or 'SELF'.")]
-    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "salfi", NationCode.EN, "The 'reporting type' column only allowed 'GROUP' or 'SELF'.")]
-    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "salfum", NationCode.EN, "The 'reporting type' column only allowed 'GROUP' or 'SELF'")]
+    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "", "SELF", "EN", "The 'joiner date' column is missing.")]
+    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "GROUPA", "EN", "The 'reporting type' column only allowed 'GROUP' or 'SELF'.")]
+    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "Group1", "EN", "The 'reporting type' column only allowed 'GROUP' or 'SELF'.")]
+    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "salfi", "EN", "The 'reporting type' column only allowed 'GROUP' or 'SELF'.")]
+    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "salfum", "EN", "The 'reporting type' column only allowed 'GROUP' or 'SELF'")]
     public void ClassMap_JoinerDate_Returns_Error(
         string organisationId,
         string subsidiaryId,
@@ -230,7 +230,7 @@ public class CompaniesHouseCompanyMapTests
         string franchiseeLicenseeTenant,
         string joinerDate,
         string reportingType,
-        NationCode nationCode,
+        string nationCode,
         string expectedErrorMessage)
     {
         // Arrange
@@ -284,10 +284,10 @@ public class CompaniesHouseCompanyMapTests
     }
 
     [TestMethod]
-    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "GROUPA", NationCode.EN, "The 'reporting type' column only allowed 'GROUP' or 'SELF'.")]
-    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "Group1", NationCode.EN, "The 'reporting type' column only allowed 'GROUP' or 'SELF'.")]
-    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "salfi", NationCode.EN, "The 'reporting type' column only allowed 'GROUP' or 'SELF'.")]
-    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "salfum", NationCode.EN, "The 'reporting type' column only allowed 'GROUP' or 'SELF'")]
+    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "GROUPA", "EN", "The 'reporting type' column only allowed 'GROUP' or 'SELF'.")]
+    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "Group1", "EN", "The 'reporting type' column only allowed 'GROUP' or 'SELF'.")]
+    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "salfi", "EN", "The 'reporting type' column only allowed 'GROUP' or 'SELF'.")]
+    [DataRow("23123", "", "OrgA", "B123456", "Child", "", "10/10/2024", "salfum", "EN", "The 'reporting type' column only allowed 'GROUP' or 'SELF'")]
     public void ClassMap_Returns_Error_When_Wrong_ReportingType_Input(
        string organisationId,
        string subsidiaryId,
@@ -297,7 +297,7 @@ public class CompaniesHouseCompanyMapTests
        string franchiseeLicenseeTenant,
        string joinerDate,
        string reportingType,
-       NationCode nationCode,
+       string nationCode,
        string expectedErrorMessage)
     {
         // Arrange
@@ -328,11 +328,11 @@ public class CompaniesHouseCompanyMapTests
     }
 
     [TestMethod]
-    [DataRow("23123", "", "OrgA", "", "Child", "", "10/10/2024", "SELF", NationCode.EN, "The 'companies house number' column is missing.")]
-    [DataRow("23123", "", "OrgA", "123456", "Child", "NO", "10/10/2024", "SELF", NationCode.EN, "You can only enter 'Y' to the 'franchisee licensee tenant' column, or leave it blank.")]
-    [DataRow("23123", "", "OrgA", "123456", "", "", "10/10/2024", "SELF", NationCode.EN, "The 'parent or child' column is missing.")]
-    [DataRow("23123", "", "OrgA", "123456789", "Child", "", "10/10/2024", "SELF", NationCode.EN, "Your Companies House number must be 8 characters or fewer.")]
-    [DataRow("23123", "", "OrgA", " 123 456", "Child", "", "10/10/2024", "SELF", NationCode.EN, "Spaces in Companies House Number not allowed. Invalid Number.")]
+    [DataRow("23123", "", "OrgA", "", "Child", "", "10/10/2024", "SELF", "EN", "The 'companies house number' column is missing.")]
+    [DataRow("23123", "", "OrgA", "123456", "Child", "NO", "10/10/2024", "SELF", "EN", "You can only enter 'Y' to the 'franchisee licensee tenant' column, or leave it blank.")]
+    [DataRow("23123", "", "OrgA", "123456", "", "", "10/10/2024", "SELF", "EN", "The 'parent or child' column is missing.")]
+    [DataRow("23123", "", "OrgA", "123456789", "Child", "", "10/10/2024", "SELF", "EN", "Your Companies House number must be 8 characters or fewer.")]
+    [DataRow("23123", "", "OrgA", " 123 456", "Child", "", "10/10/2024", "SELF", "EN", "Spaces in Companies House Number not allowed. Invalid Number.")]
     public void ClassMap_ValidationChecks_Returns_Error(
        string organisationId,
        string subsidiaryId,
@@ -342,7 +342,7 @@ public class CompaniesHouseCompanyMapTests
        string franchiseeLicenseeTenant,
        string joinerDate,
        string reportingType,
-       NationCode nationCode,
+       string nationCode,
        string expectedErrorMessage)
     {
         // Arrange
@@ -416,10 +416,21 @@ public class CompaniesHouseCompanyMapTests
     }
 
     [TestMethod]
-    public void ClassMap_ValidationChecks_Returns_NationCodeInvalidError()
+    [DataRow("en")]
+    [DataRow("En")]
+    [DataRow("EN")]
+    [DataRow("ni")]
+    [DataRow("Ni")]
+    [DataRow("NI")]
+    [DataRow("sc")]
+    [DataRow("Sc")]
+    [DataRow("SC")]
+    [DataRow("ws")]
+    [DataRow("Ws")]
+    [DataRow("WS")]
+    public void ClassMap_ValidationChecks_Returns_NationCodeValidNoError(string nationCode)
     {
         // Arrange
-        const string expectedErrorMessage = "The file must contain a column for nation code.";
         var dataModel = new List<CompaniesHouseCompany>
         {
             new()
@@ -432,11 +443,56 @@ public class CompaniesHouseCompanyMapTests
                 franchisee_licensee_tenant = string.Empty,
                 joiner_date = "10/10/2024",
                 reporting_type = "SELF",
-                nation_code = NationCode.EN,
+                nation_code = nationCode,
                 Errors = new()
             },
         };
-        var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant},{s.joiner_date},{s.reporting_type},XX\n");
+        var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant},{s.joiner_date},{s.reporting_type},{s.nation_code}\n");
+        string[] all = [_csvHeader, .. rawSource];
+
+        using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
+
+        using var reader = new StreamReader(stream);
+        using var csvReader = new CustomCsvReader(reader, CsvConfigurations.BulkUploadCsvConfiguration);
+
+        var map = new CompaniesHouseCompanyMap(true, _mockSubsidiaySrevice.Object, true);
+        csvReader.Context.RegisterClassMap(map);
+
+        // Act
+        csvReader.Read();
+        csvReader.ReadHeader();
+        var rows = csvReader.GetRecords<CompaniesHouseCompany>().ToList();
+
+        // Assert
+        rows.Should().NotBeNullOrEmpty();
+        rows[0].Errors.Should().HaveCount(0);
+    }
+
+    [TestMethod]
+    [DataRow("ENG")]
+    [DataRow("Wales")]
+    [DataRow("XXX")]
+    public void ClassMap_ValidationChecks_Returns_NationCodeInvalidError(string nationCode)
+    {
+        // Arrange
+        const string expectedErrorMessage = "Nation code must be either EN, NI, SC or WS, for England, Northern Ireland, Scotland or Wales.";
+        var dataModel = new List<CompaniesHouseCompany>
+        {
+            new()
+            {
+                organisation_id = "23123",
+                subsidiary_id = string.Empty,
+                organisation_name = "OrgA",
+                companies_house_number = "123456",
+                parent_child = "Child",
+                franchisee_licensee_tenant = string.Empty,
+                joiner_date = "10/10/2024",
+                reporting_type = "SELF",
+                nation_code = nationCode,
+                Errors = new()
+            },
+        };
+        var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant},{s.joiner_date},{s.reporting_type},{s.nation_code}\n");
         string[] all = [_csvHeader, .. rawSource];
 
         using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
@@ -464,7 +520,7 @@ public class CompaniesHouseCompanyMapTests
         // Arrange
         var dataModel = new List<CompaniesHouseCompany>
             {
-                new() { organisation_id = "23123",  subsidiary_id = "Sub1", organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Parent", franchisee_licensee_tenant = string.Empty, joiner_date = "01/10/2024", reporting_type = "SELF", nation_code = NationCode.EN, Errors = new() }
+                new() { organisation_id = "23123",  subsidiary_id = "Sub1", organisation_name = "OrgA", companies_house_number = "123456", parent_child = "Parent", franchisee_licensee_tenant = string.Empty, joiner_date = "01/10/2024", reporting_type = "SELF", nation_code = "EN", Errors = new() }
             };
         var rawSource = dataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant},{s.joiner_date},{s.reporting_type},{s.nation_code}\n");
         string[] all = [

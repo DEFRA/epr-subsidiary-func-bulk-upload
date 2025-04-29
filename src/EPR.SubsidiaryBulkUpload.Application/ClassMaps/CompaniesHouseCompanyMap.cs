@@ -11,6 +11,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.ClassMaps;
 [ExcludeFromCodeCoverage]
 public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
 {
+    private static readonly string[] ValidNationCodes = new[] { "EN", "NI", "SC", "WS" };
     private readonly ISubsidiaryService _organisationService = null;
 
     public CompaniesHouseCompanyMap(bool includeSubsidiaryJoinerColumns, ISubsidiaryService organisationService, bool enableNationInSub)
@@ -123,8 +124,8 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
             if (row.ColumnCount > CsvFileValidationConditions.MaxNumberOfColumnsAllowed)
             {
                 errors.Add(
-                       CreateError(
-                           lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
+                    CreateError(
+                        lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
             }
         }
         else
@@ -153,8 +154,8 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
                 if (row.ColumnCount > 6)
                 {
                     errors.Add(
-                           CreateError(
-                               lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
+                        CreateError(
+                            lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
                 }
             }
         }
@@ -220,7 +221,8 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
             }
             else
             {
-                if (!Enum.TryParse(typeof(NationCode), row.GetField(nameof(CompaniesHouseCompany.nation_code)), ignoreCase: true, out _))
+                var nationCode = row.GetField(nameof(CompaniesHouseCompany.nation_code));
+                if (!ValidNationCodes.Contains(nationCode, StringComparer.InvariantCultureIgnoreCase))
                 {
                     errors.Add(
                         CreateError(

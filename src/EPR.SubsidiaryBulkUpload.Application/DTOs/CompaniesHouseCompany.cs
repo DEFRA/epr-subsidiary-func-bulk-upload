@@ -30,7 +30,7 @@ public class CompaniesHouseCompany
 
     required public string reporting_type { get; set; }
 
-    required public NationCode? nation_code { get; set; }
+    required public string nation_code { get; set; }
 
     [Optional]
     public OrganisationDto? Organisation { get; init; }
