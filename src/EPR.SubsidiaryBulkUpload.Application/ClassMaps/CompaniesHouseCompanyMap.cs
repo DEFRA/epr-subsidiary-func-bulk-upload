@@ -139,8 +139,7 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
                             lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
                 }
             }
-
-            if (EnableNationInSub)
+            else if (EnableNationInSub)
             {
                 if (row.ColumnCount > 7)
                 {

@@ -8,6 +8,7 @@ using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
 using EPR.SubsidiaryBulkUpload.Application.UnitTests.Mocks;
 using Microsoft.Extensions.Logging;
 using Microsoft.FeatureManagement;
+using Pipelines.Sockets.Unofficial.Arenas;
 
 namespace EPR.SubsidiaryBulkUpload.Application.UnitTests.Services;
 
@@ -16,6 +17,8 @@ public class ParserClassTests
 {
     private const string _csvHeaderWFFALSE = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant\n";
     private const string _csvHeader = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,joiner_date,reporting_type,nation_code\n";
+    private const string _csvHeaderWithoutJoinerColumns = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,nation_code\n";
+    private const string _csvHeaderWithoutNationCode = "organisation_id,subsidiary_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,joiner_date,reporting_type\n";
     private const string _csvHeaderWithMissingSubsidiaryId = "organisation_id,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,joiner_date,reporting_type,nation_code\n";
     private const string _csvHeaderWithNullValues = "";
     private const string _badHeader = "organisation,subsidiary,organisation_name,companies_house_number,parent_child,franchisee_licensee_tenant,joiner_date,reporting_type,nation_code\n";
@@ -471,5 +474,93 @@ public class ParserClassTests
         parsedResult[1].Errors[0].Message.Should().Contain("The 'organisation name' column is missing.");
         parsedResult[1].Errors[1].Message.Should().Contain("You can only enter 'Y' to the 'franchisee licensee tenant' column, or leave it blank.");
         parsedResult[1].Errors[2].Message.Should().Contain("The 'reporting type' column is missing.");
+    }
+
+    [TestMethod]
+    public void ParseClass_ValidCsvFileWithNationFlagFalse_ReturnsCorrectData()
+    {
+        // Arrange
+        _mockFeatureManager
+            .Setup(x => x.IsEnabledAsync(FeatureFlags.EnableNationInSub))
+            .ReturnsAsync(false);
+
+        var rawSource = _listDataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant},{s.joiner_date},{s.reporting_type}\n");
+        string[] all = [_csvHeaderWithoutNationCode, .. rawSource];
+
+        using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
+
+        // Act
+        var returnValue = _sut.ParseWithHelper(stream, CsvConfigurations.BulkUploadCsvConfiguration);
+
+        // Assert
+        returnValue.Should().NotBeNull();
+
+        returnValue.ResponseClass.Should().NotBeNull();
+        returnValue.ResponseClass.isDone.Should().BeTrue();
+
+        returnValue.CompaniesHouseCompany.Should().NotBeNull();
+        returnValue.CompaniesHouseCompany.Count.Should().Be(2);
+
+        var parsedResult = returnValue.CompaniesHouseCompany;
+
+        parsedResult[0].organisation_id.Should().Be("23123");
+        parsedResult[0].subsidiary_id.Should().Be(string.Empty);
+        parsedResult[0].organisation_name.Should().Be("OrgA");
+        parsedResult[0].companies_house_number.Should().Be("123456");
+        parsedResult[0].parent_child.Should().Be("Parent");
+        parsedResult[0].franchisee_licensee_tenant.Should().Be(string.Empty);
+        parsedResult[0].Errors.Should().BeNullOrEmpty();
+
+        parsedResult[1].organisation_id.Should().Be("23123");
+        parsedResult[1].subsidiary_id.Should().Be("Sub1");
+        parsedResult[1].organisation_name.Should().Be("OrgB");
+        parsedResult[1].companies_house_number.Should().Be("654321");
+        parsedResult[1].parent_child.Should().Be("Child");
+        parsedResult[1].franchisee_licensee_tenant.Should().Be(string.Empty);
+        parsedResult[1].Errors.Should().BeNullOrEmpty();
+    }
+
+    [TestMethod]
+    public void ParseClass_ValidCsvFileWithIncludeSubsidiaryJoinerColumnsFalseNationFlagTrue_ReturnsCorrectData()
+    {
+        // Arrange
+        _mockFeatureManager
+            .Setup(x => x.IsEnabledAsync(FeatureFlags.EnableSubsidiaryJoinerColumns))
+            .ReturnsAsync(false);
+
+        var rawSource = _listDataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant},{s.nation_code}\n");
+        string[] all = [_csvHeaderWithoutJoinerColumns, .. rawSource];
+
+        using var stream = new MemoryStream(all.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
+
+        // Act
+        var returnValue = _sut.ParseWithHelper(stream, CsvConfigurations.BulkUploadCsvConfiguration);
+
+        // Assert
+        returnValue.Should().NotBeNull();
+
+        returnValue.ResponseClass.Should().NotBeNull();
+        returnValue.ResponseClass.isDone.Should().BeTrue();
+
+        returnValue.CompaniesHouseCompany.Should().NotBeNull();
+        returnValue.CompaniesHouseCompany.Count.Should().Be(2);
+
+        var parsedResult = returnValue.CompaniesHouseCompany;
+
+        parsedResult[0].organisation_id.Should().Be("23123");
+        parsedResult[0].subsidiary_id.Should().Be(string.Empty);
+        parsedResult[0].organisation_name.Should().Be("OrgA");
+        parsedResult[0].companies_house_number.Should().Be("123456");
+        parsedResult[0].parent_child.Should().Be("Parent");
+        parsedResult[0].franchisee_licensee_tenant.Should().Be(string.Empty);
+        parsedResult[0].Errors.Should().BeNullOrEmpty();
+
+        parsedResult[1].organisation_id.Should().Be("23123");
+        parsedResult[1].subsidiary_id.Should().Be("Sub1");
+        parsedResult[1].organisation_name.Should().Be("OrgB");
+        parsedResult[1].companies_house_number.Should().Be("654321");
+        parsedResult[1].parent_child.Should().Be("Child");
+        parsedResult[1].franchisee_licensee_tenant.Should().Be(string.Empty);
+        parsedResult[1].Errors.Should().BeNullOrEmpty();
     }
 }
