@@ -20,10 +20,11 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             var response = new ResponseClass { isDone = false, Messages = "None" };
             var rows = new List<CompaniesHouseCompany>();
             var enableSubsidiaryJoinerColumns = featureManager.IsEnabledAsync(FeatureFlags.EnableSubsidiaryJoinerColumns).GetAwaiter().GetResult();
+            var enableNationInSub = featureManager.IsEnabledAsync(FeatureFlags.EnableNationInSub).GetAwaiter().GetResult();
 
             try
             {
-                rows = ParseFileData(stream, configuration, enableSubsidiaryJoinerColumns);
+                rows = ParseFileData(stream, configuration, enableSubsidiaryJoinerColumns, enableNationInSub);
                 response = new ResponseClass { isDone = true, Messages = "All Done!" };
             }
             catch (Exception ex)
@@ -35,12 +36,12 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             return (response, rows);
         }
 
-        private List<CompaniesHouseCompany> ParseFileData(Stream stream, IReaderConfiguration configuration, bool includeSubsidiaryJoinerColumns)
+        private List<CompaniesHouseCompany> ParseFileData(Stream stream, IReaderConfiguration configuration, bool includeSubsidiaryJoinerColumns, bool enableNationInSub)
         {
             var rows = new List<CompaniesHouseCompany>();
             using var reader = new StreamReader(stream);
             using var csv = new CustomCsvReader(reader, configuration);
-            csv.Context.RegisterClassMap(new CompaniesHouseCompanyMap(includeSubsidiaryJoinerColumns, _organisationService));
+            csv.Context.RegisterClassMap(new CompaniesHouseCompanyMap(includeSubsidiaryJoinerColumns, _organisationService, enableNationInSub));
 
             try
             {
@@ -58,6 +59,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                     parent_child = string.Empty,
                     joiner_date = string.Empty,
                     reporting_type = string.Empty,
+                    nation_code = null,
                     Errors = new List<Models.UploadFileErrorModel>()
                 };
 
@@ -76,9 +78,17 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                 return rows;
             }
 
-            if (includeSubsidiaryJoinerColumns)
+            if (includeSubsidiaryJoinerColumns && enableNationInSub)
             {
-                csv.ValidateHeader<FileUploadHeaderCustom>();
+                csv.ValidateHeader<FileUploadHeaderWithSubsidiaryJoinerAndNationCodeColumns>();
+            }
+            else if (includeSubsidiaryJoinerColumns)
+            {
+                csv.ValidateHeader<FileUploadHeaderWithSubsidiaryJoinerColumns>();
+            }
+            else if (enableNationInSub)
+            {
+                csv.ValidateHeader<FileUploadHeaderWithNationCodeColumn>();
             }
             else
             {
@@ -98,6 +108,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                     parent_child = string.Empty,
                     joiner_date = string.Empty,
                     reporting_type = string.Empty,
+                    nation_code = null,
                     Errors = new List<Models.UploadFileErrorModel>()
                 };
 
@@ -128,6 +139,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
                     parent_child = string.Empty,
                     joiner_date = string.Empty,
                     reporting_type = string.Empty,
+                    nation_code = null,
                     Errors = new List<Models.UploadFileErrorModel>()
                 };
 

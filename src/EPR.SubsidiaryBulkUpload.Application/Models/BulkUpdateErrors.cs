@@ -100,4 +100,10 @@ public static class BulkUpdateErrors
 
     public const int JoinerDateNotRequiredToValidateForExistingRecord = 135;
     public const string JoinerDateNotRequiredToValidateForExistingRecordMessage = "JoinerDateNotRequiredToValidateForExistingRecord";
+
+    public const int NationCodeRequired = 136;
+    public const string NationCodeRequiredMessage = "The file must contain a column for nation code.";
+
+    public const int NationCodeValidValueCheck = 137;
+    public const string NationCodeValidValueCheckMessage = "Nation code must be either EN, NI, SC or WS, for England, Northern Ireland, Scotland or Wales.";
 }

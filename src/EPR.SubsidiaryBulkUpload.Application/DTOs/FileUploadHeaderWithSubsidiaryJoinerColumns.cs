@@ -3,7 +3,7 @@
 namespace EPR.SubsidiaryBulkUpload.Application.DTOs;
 [ExcludeFromCodeCoverage]
 
-public class FileUploadHeaderCustom : FileUploadHeader
+public class FileUploadHeaderWithSubsidiaryJoinerColumns : FileUploadHeader
 {
     public string joiner_date { get; set; }
 

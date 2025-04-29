@@ -13,7 +13,8 @@ public class CompaniesHouseCompanyTests
         organisation_name = "Test organisation",
         parent_child = "Child",
         joiner_date = "01/10/2024",
-        reporting_type = "SELF"
+        reporting_type = "SELF",
+        nation_code = NationCode.EN
     };
 
     [TestMethod]

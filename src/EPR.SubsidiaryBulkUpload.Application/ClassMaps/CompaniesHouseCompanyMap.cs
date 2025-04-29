@@ -13,9 +13,11 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
 {
     private readonly ISubsidiaryService _organisationService = null;
 
-    public CompaniesHouseCompanyMap(bool includeSubsidiaryJoinerColumns, ISubsidiaryService organisationService)
+    public CompaniesHouseCompanyMap(bool includeSubsidiaryJoinerColumns, ISubsidiaryService organisationService, bool enableNationInSub)
     {
         IncludeSubsidiaryJoinerColumns = includeSubsidiaryJoinerColumns;
+        EnableNationInSub = enableNationInSub;
+
         _organisationService = organisationService;
         Map(m => m.organisation_id).Index(0).Validate(field => !field.Equals(null));
         Map(m => m.subsidiary_id);
@@ -33,9 +35,16 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
             Map(m => m.joiner_date);
             Map(m => m.reporting_type);
         }
+
+        if (EnableNationInSub)
+        {
+            Map(m => m.nation_code);
+        }
     }
 
     private static bool IncludeSubsidiaryJoinerColumns { get; set; }
+
+    private static bool EnableNationInSub { get; set; }
 
     private static List<UploadFileErrorModel> GetRowValidationErrors(IReaderRow row)
     {
@@ -109,7 +118,7 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
             }
         }
 
-        if (IncludeSubsidiaryJoinerColumns)
+        if (IncludeSubsidiaryJoinerColumns && EnableNationInSub)
         {
             if (row.ColumnCount > CsvFileValidationConditions.MaxNumberOfColumnsAllowed)
             {
@@ -120,11 +129,33 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
         }
         else
         {
-            if (row.ColumnCount > 6)
+            if (IncludeSubsidiaryJoinerColumns)
             {
-                errors.Add(
-                       CreateError(
-                           lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
+                if (row.ColumnCount > 8)
+                {
+                    errors.Add(
+                        CreateError(
+                            lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
+                }
+            }
+
+            if (EnableNationInSub)
+            {
+                if (row.ColumnCount > 7)
+                {
+                    errors.Add(
+                        CreateError(
+                            lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
+                }
+            }
+            else
+            {
+                if (row.ColumnCount > 6)
+                {
+                    errors.Add(
+                           CreateError(
+                               lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
+                }
             }
         }
 
@@ -175,6 +206,25 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
                     errors.Add(
                         CreateError(
                             lineNumber, rawData, BulkUpdateErrors.JoinerDateFormatIncorrectMessage, BulkUpdateErrors.JoinerDateFormatIncorrect));
+                }
+            }
+        }
+
+        if (EnableNationInSub)
+        {
+            if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.nation_code))))
+            {
+                errors.Add(
+                    CreateError(
+                        lineNumber, rawData, BulkUpdateErrors.NationCodeRequiredMessage, BulkUpdateErrors.NationCodeRequired));
+            }
+            else
+            {
+                if (!Enum.TryParse(typeof(NationCode), row.GetField(nameof(CompaniesHouseCompany.nation_code)), ignoreCase: true, out _))
+                {
+                    errors.Add(
+                        CreateError(
+                            lineNumber, rawData, BulkUpdateErrors.NationCodeValidValueCheckMessage, BulkUpdateErrors.NationCodeValidValueCheck));
                 }
             }
         }
