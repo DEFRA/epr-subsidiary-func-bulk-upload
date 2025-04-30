@@ -14,10 +14,10 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
     private static readonly string[] ValidNationCodes = new[] { "EN", "NI", "SC", "WS" };
     private readonly ISubsidiaryService _organisationService = null;
 
-    public CompaniesHouseCompanyMap(bool includeSubsidiaryJoinerColumns, ISubsidiaryService organisationService, bool enableNationInSub)
+    public CompaniesHouseCompanyMap(bool includeSubsidiaryJoinerColumns, ISubsidiaryService organisationService, bool enableSubsidiaryNationColumn)
     {
         IncludeSubsidiaryJoinerColumns = includeSubsidiaryJoinerColumns;
-        EnableNationInSub = enableNationInSub;
+        EnableSubsidiaryNationColumn = enableSubsidiaryNationColumn;
 
         _organisationService = organisationService;
         Map(m => m.organisation_id).Index(0).Validate(field => !field.Equals(null));
@@ -37,7 +37,7 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
             Map(m => m.reporting_type);
         }
 
-        if (EnableNationInSub)
+        if (EnableSubsidiaryNationColumn)
         {
             Map(m => m.nation_code);
         }
@@ -45,7 +45,7 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
 
     private static bool IncludeSubsidiaryJoinerColumns { get; set; }
 
-    private static bool EnableNationInSub { get; set; }
+    private static bool EnableSubsidiaryNationColumn { get; set; }
 
     private static List<UploadFileErrorModel> GetRowValidationErrors(IReaderRow row)
     {
@@ -119,7 +119,7 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
             }
         }
 
-        if (IncludeSubsidiaryJoinerColumns && EnableNationInSub)
+        if (IncludeSubsidiaryJoinerColumns && EnableSubsidiaryNationColumn)
         {
             if (row.ColumnCount > CsvFileValidationConditions.MaxNumberOfColumnsAllowed)
             {
@@ -139,7 +139,7 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
                             lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
                 }
             }
-            else if (EnableNationInSub)
+            else if (EnableSubsidiaryNationColumn)
             {
                 if (row.ColumnCount > 7)
                 {
@@ -210,7 +210,7 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
             }
         }
 
-        if (EnableNationInSub)
+        if (EnableSubsidiaryNationColumn)
         {
             if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.nation_code))))
             {

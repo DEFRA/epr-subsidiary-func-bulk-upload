@@ -44,7 +44,7 @@ public class ParserClassTests
             .ReturnsAsync(true);
 
         _mockFeatureManager
-            .Setup(x => x.IsEnabledAsync(FeatureFlags.EnableNationInSub))
+            .Setup(x => x.IsEnabledAsync(FeatureFlags.EnableSubsidiaryNationColumn))
             .ReturnsAsync(true);
 
         _listDataModel = new List<CompaniesHouseCompany>
@@ -481,7 +481,7 @@ public class ParserClassTests
     {
         // Arrange
         _mockFeatureManager
-            .Setup(x => x.IsEnabledAsync(FeatureFlags.EnableNationInSub))
+            .Setup(x => x.IsEnabledAsync(FeatureFlags.EnableSubsidiaryNationColumn))
             .ReturnsAsync(false);
 
         var rawSource = _listDataModel.Select(s => $"{s.organisation_id},{s.subsidiary_id},{s.organisation_name},{s.companies_house_number},{s.parent_child},{s.franchisee_licensee_tenant},{s.joiner_date},{s.reporting_type}\n");
