@@ -35,6 +35,6 @@
         "TableStorage__ConnectionString": "UseDevelopmentStorage=true",
         "TableStorage__CompaniesHouseOfflineDataTableName": "CompaniesHouseData",
         "FeatureManagement__EnableSubsidiaryUploadJoinerColumns": false,
-        "FeatureManagement__EnableNationCodeFeature": false
+        "FeatureManagement__EnableSubsidiaryNationColumn": false
     }
 }

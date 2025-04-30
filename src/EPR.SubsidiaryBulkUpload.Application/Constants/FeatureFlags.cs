@@ -3,5 +3,5 @@
 public static class FeatureFlags
 {
     public const string EnableSubsidiaryJoinerColumns = "EnableSubsidiaryUploadJoinerColumns";
-    public const string EnableNationInSub = "EnableNationInSub";
+    public const string EnableSubsidiaryNationColumn = "EnableSubsidiaryNationColumn";
 }
