@@ -560,6 +560,11 @@ public class BulkSubsidiaryProcessorTests
 
         // Assert
         result.Should().BeGreaterThanOrEqualTo(1);
+
+        subsidiaryService.Verify(
+            cp => cp.CreateAndAddSubsidiaryAsync(It.Is<LinkOrganisationModel>(model => model.Subsidiary.Nation == Nation.NotSet)),
+            Times.AtLeastOnce,
+            $"Expected Nation to be mapped to NotSet for nation_code '{subsidiaries[0].nation_code}'");
     }
 
     [TestMethod]
@@ -631,6 +636,10 @@ public class BulkSubsidiaryProcessorTests
 
         // Assert
         result.Should().BeGreaterThanOrEqualTo(2);
+        subsidiaryService.Verify(
+            cp => cp.CreateAndAddSubsidiaryAsync(It.Is<LinkOrganisationModel>(model => model.Subsidiary.Nation == Nation.NotSet)),
+            Times.AtLeastOnce,
+            $"Expected Nation to be mapped to NotSet for nation_code '{subsidiaries[0].nation_code}'");
     }
 
     [TestMethod]
