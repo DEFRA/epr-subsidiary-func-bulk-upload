@@ -266,7 +266,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
                     OrganisationType = OrganisationType.NonCompaniesHouseCompany,
                     ProducerType = ProducerType.Other,
                     IsComplianceScheme = false,
-                    Nation = Nation.NotSet,
+                    Nation = MapNationCode(subsidiaryAddModel.Subsidiary.nation_code),
                     SubsidiaryOrganisationId = subsidiaryAddModel.Subsidiary.subsidiary_id,
                     RawContent = subsidiaryAddModel.Subsidiary.RawRow,
                     FileLineNumber = subsidiaryAddModel.Subsidiary.FileLineNumber,
