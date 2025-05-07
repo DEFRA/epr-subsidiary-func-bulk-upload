@@ -162,7 +162,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
                 OrganisationType = OrganisationType.CompaniesHouseCompany,
                 ProducerType = ProducerType.Other,
                 IsComplianceScheme = false,
-                Nation = Nation.NotSet,
+                Nation = MapNationCode(subsidiary.nation_code),
                 SubsidiaryOrganisationId = subsidiary.subsidiary_id,
                 RawContent = subsidiary.RawRow,
                 FileLineNumber = subsidiary.FileLineNumber,
@@ -266,7 +266,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
                     OrganisationType = OrganisationType.NonCompaniesHouseCompany,
                     ProducerType = ProducerType.Other,
                     IsComplianceScheme = false,
-                    Nation = Nation.NotSet,
+                    Nation = MapNationCode(subsidiaryAddModel.Subsidiary.nation_code),
                     SubsidiaryOrganisationId = subsidiaryAddModel.Subsidiary.subsidiary_id,
                     RawContent = subsidiaryAddModel.Subsidiary.RawRow,
                     FileLineNumber = subsidiaryAddModel.Subsidiary.FileLineNumber,
@@ -355,5 +355,17 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         counts.AlreadyExistCompanies = knownSubsidiariesToAddCheck.Select(org => org.Subsidiary).ToList();
         counts.NewAddedSubsidiariesRelationships = count;
         return counts;
+    }
+
+    private Nation MapNationCode(string? nationCode)
+    {
+        return nationCode?.Trim().ToUpperInvariant() switch
+        {
+            "EN" => Nation.England,
+            "WS" => Nation.Wales,
+            "NI" => Nation.NorthernIreland,
+            "SC" => Nation.Scotland,
+            _ => Nation.NotSet
+        };
     }
 }

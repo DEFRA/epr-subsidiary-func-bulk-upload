@@ -560,6 +560,11 @@ public class BulkSubsidiaryProcessorTests
 
         // Assert
         result.Should().BeGreaterThanOrEqualTo(1);
+
+        subsidiaryService.Verify(
+            cp => cp.CreateAndAddSubsidiaryAsync(It.Is<LinkOrganisationModel>(model => model.Subsidiary.Nation == Nation.NotSet)),
+            Times.AtLeastOnce,
+            $"Expected Nation to be mapped to NotSet for nation_code '{subsidiaries[0].nation_code}'");
     }
 
     [TestMethod]
@@ -631,6 +636,10 @@ public class BulkSubsidiaryProcessorTests
 
         // Assert
         result.Should().BeGreaterThanOrEqualTo(2);
+        subsidiaryService.Verify(
+            cp => cp.CreateAndAddSubsidiaryAsync(It.Is<LinkOrganisationModel>(model => model.Subsidiary.Nation == Nation.NotSet)),
+            Times.AtLeastOnce,
+            $"Expected Nation to be mapped to NotSet for nation_code '{subsidiaries[0].nation_code}'");
     }
 
     [TestMethod]
@@ -1130,5 +1139,70 @@ public class BulkSubsidiaryProcessorTests
 
         // Assert
         result.Should().Be(0);
+    }
+
+    [DataTestMethod]
+    [DataRow("EN", Nation.England)]
+    [DataRow("NI", Nation.NorthernIreland)]
+    [DataRow("WS", Nation.Wales)]
+    [DataRow("SC", Nation.Scotland)]
+    [DataRow("", Nation.NotSet)]
+    [DataRow(null, Nation.NotSet)]
+    [DataRow("XX", Nation.NotSet)]
+    public async Task ShouldMapNationCodeCorrectly_WhenProcessingSubsidiaries(string nationCode, Nation expectedNation)
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+
+        var parent = _fixture.Create<CompaniesHouseCompany>();
+        var parentOrganisation = _fixture.Create<OrganisationResponseModel>();
+
+        var subsidiaries = _fixture.CreateMany<CompaniesHouseCompany>(1).ToArray();
+        subsidiaries[0].nation_code = nationCode;
+        var subsidiaryOrganisations = _fixture.CreateMany<OrganisationResponseModel>(1).ToArray();
+        var subsidiaryService = new Mock<ISubsidiaryService>();
+
+        subsidiaryOrganisations[0].companiesHouseNumber = subsidiaries[0].companies_house_number;
+        subsidiaryOrganisations[0].name = subsidiaries[0].organisation_name;
+
+        // Return a null OrganisationResponseModel to simulate the company not existing in RPD
+        subsidiaryService.Setup(ss => ss.GetCompanyByCompaniesHouseNumber(subsidiaries[0].companies_house_number))
+            .ReturnsAsync((OrganisationResponseModel?)null);
+
+        subsidiaryService.Setup(ss => ss.GetSubsidiaryRelationshipAsync(It.IsAny<int>(), It.IsAny<int>()))
+            .ReturnsAsync(false);
+
+        var inserts = new List<SubsidiaryAddModel>();
+        subsidiaryService.Setup(ss => ss.AddSubsidiaryRelationshipAsync(It.IsAny<SubsidiaryAddModel>()))
+            .Callback<SubsidiaryAddModel>(model => inserts.Add(model));
+
+        var companiesHouseDataProvider = new Mock<ICompaniesHouseDataProvider>();
+        companiesHouseDataProvider.Setup(cp => cp.SetCompaniesHouseData(It.IsAny<OrganisationModel>())).ReturnsAsync(true);
+
+        var notificationServiceMock = new Mock<INotificationService>();
+        var key = "testKey";
+        var errorsModel = new List<UploadFileErrorModel> { new() { FileLineNumber = 1, Message = "testMessage", IsError = true } };
+        notificationServiceMock.Setup(ss => ss.SetErrorStatus(key, errorsModel));
+
+        var processor = new BulkSubsidiaryProcessor(subsidiaryService.Object, companiesHouseDataProvider.Object, NullLogger<BulkSubsidiaryProcessor>.Instance, notificationServiceMock.Object, _mockFeatureManager.Object);
+
+        var organisationId = Guid.NewGuid();
+        var userRequestModel = new UserRequestModel
+        {
+            UserId = userId,
+            OrganisationId = organisationId
+        };
+
+        // Act
+        var result = await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
+
+        // Assert
+        inserts.Should().HaveCount(0);
+        result.Should().Be(0);
+
+        companiesHouseDataProvider.Verify(
+            cp => cp.SetCompaniesHouseData(It.Is<OrganisationModel>(model => model.Nation == expectedNation)),
+            Times.AtLeastOnce,
+            $"Expected Nation to be mapped to {expectedNation} for nation_code '{nationCode}'");
     }
 }
