@@ -11,11 +11,14 @@ namespace EPR.SubsidiaryBulkUpload.Application.ClassMaps;
 [ExcludeFromCodeCoverage]
 public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
 {
+    private static readonly string[] ValidNationCodes = new[] { "EN", "NI", "SC", "WS" };
     private readonly ISubsidiaryService _organisationService = null;
 
-    public CompaniesHouseCompanyMap(bool includeSubsidiaryJoinerColumns, ISubsidiaryService organisationService)
+    public CompaniesHouseCompanyMap(bool includeSubsidiaryJoinerColumns, ISubsidiaryService organisationService, bool enableSubsidiaryNationColumn)
     {
         IncludeSubsidiaryJoinerColumns = includeSubsidiaryJoinerColumns;
+        EnableSubsidiaryNationColumn = enableSubsidiaryNationColumn;
+
         _organisationService = organisationService;
         Map(m => m.organisation_id).Index(0).Validate(field => !field.Equals(null));
         Map(m => m.subsidiary_id);
@@ -33,9 +36,16 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
             Map(m => m.joiner_date);
             Map(m => m.reporting_type);
         }
+
+        if (EnableSubsidiaryNationColumn)
+        {
+            Map(m => m.nation_code);
+        }
     }
 
     private static bool IncludeSubsidiaryJoinerColumns { get; set; }
+
+    private static bool EnableSubsidiaryNationColumn { get; set; }
 
     private static List<UploadFileErrorModel> GetRowValidationErrors(IReaderRow row)
     {
@@ -109,22 +119,43 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
             }
         }
 
-        if (IncludeSubsidiaryJoinerColumns)
+        if (IncludeSubsidiaryJoinerColumns && EnableSubsidiaryNationColumn)
         {
             if (row.ColumnCount > CsvFileValidationConditions.MaxNumberOfColumnsAllowed)
             {
                 errors.Add(
-                       CreateError(
-                           lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
+                    CreateError(
+                        lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
             }
         }
         else
         {
-            if (row.ColumnCount > 6)
+            if (IncludeSubsidiaryJoinerColumns)
             {
-                errors.Add(
-                       CreateError(
-                           lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
+                if (row.ColumnCount > 8)
+                {
+                    errors.Add(
+                        CreateError(
+                            lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
+                }
+            }
+            else if (EnableSubsidiaryNationColumn)
+            {
+                if (row.ColumnCount > 7)
+                {
+                    errors.Add(
+                        CreateError(
+                            lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
+                }
+            }
+            else
+            {
+                if (row.ColumnCount > 6)
+                {
+                    errors.Add(
+                        CreateError(
+                            lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
+                }
             }
         }
 
@@ -175,6 +206,26 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
                     errors.Add(
                         CreateError(
                             lineNumber, rawData, BulkUpdateErrors.JoinerDateFormatIncorrectMessage, BulkUpdateErrors.JoinerDateFormatIncorrect));
+                }
+            }
+        }
+
+        if (EnableSubsidiaryNationColumn)
+        {
+            if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.nation_code))))
+            {
+                errors.Add(
+                    CreateError(
+                        lineNumber, rawData, BulkUpdateErrors.NationCodeRequiredMessage, BulkUpdateErrors.NationCodeRequired));
+            }
+            else
+            {
+                var nationCode = row.GetField(nameof(CompaniesHouseCompany.nation_code));
+                if (!ValidNationCodes.Contains(nationCode, StringComparer.InvariantCultureIgnoreCase))
+                {
+                    errors.Add(
+                        CreateError(
+                            lineNumber, rawData, BulkUpdateErrors.NationCodeValidValueCheckMessage, BulkUpdateErrors.NationCodeValidValueCheck));
                 }
             }
         }

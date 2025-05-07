@@ -63,8 +63,8 @@ public class BulkUploadFunctionTests
 
         var companies = new List<CompaniesHouseCompany>
             {
-                new() { companies_house_number = "test", organisation_id = "test", organisation_name = "test", parent_child = "test", subsidiary_id = "test", joiner_date = "01/10/2024", reporting_type = "SELF", },
-                new() { companies_house_number = "test2", organisation_id = "test2", organisation_name = "test2", parent_child = "test2", subsidiary_id = "test2", joiner_date = "01/10/2024", reporting_type = "SELF", },
+                new() { companies_house_number = "test", organisation_id = "test", organisation_name = "test", parent_child = "test", subsidiary_id = "test", joiner_date = "01/10/2024", reporting_type = "SELF", nation_code = "EN" },
+                new() { companies_house_number = "test2", organisation_id = "test2", organisation_name = "test2", parent_child = "test2", subsidiary_id = "test2", joiner_date = "01/10/2024", reporting_type = "SELF", nation_code = "EN" },
             };
 
         _csvProcessorMock.Setup(x => x.ProcessStreamWithMapping<CompaniesHouseCompany, CompaniesHouseCompanyMap>(It.IsAny<Stream>(), It.IsAny<CsvConfiguration>()))
