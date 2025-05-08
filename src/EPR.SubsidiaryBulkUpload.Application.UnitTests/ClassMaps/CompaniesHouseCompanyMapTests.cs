@@ -376,7 +376,7 @@ public class CompaniesHouseCompanyMapTests
     public void ClassMap_ValidationChecks_Returns_NationCodeAbsentError()
     {
         // Arrange
-        const string expectedErrorMessage = "The file must contain a column for nation code.";
+        const string expectedErrorMessage = "You must enter a nation code.";
         var dataModel = new List<CompaniesHouseCompany>
         {
             new()
