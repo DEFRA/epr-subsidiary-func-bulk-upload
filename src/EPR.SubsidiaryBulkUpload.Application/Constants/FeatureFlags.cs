@@ -4,4 +4,5 @@ public static class FeatureFlags
 {
     public const string EnableSubsidiaryJoinerColumns = "EnableSubsidiaryUploadJoinerColumns";
     public const string EnableSubsidiaryNationColumn = "EnableSubsidiaryNationColumn";
+    public const string EnableSyncSubsidiariesFromRegistrationFile = "EnableSyncSubsidiariesFromRegistrationFile";
 }
