@@ -80,6 +80,14 @@ public static class ConfigurationExtensions
         })
             .AddHttpMessageHandler<AccountServiceAuthorisationHandler>();
 
+        services.AddHttpClient<IOrganisationService, OrganisationService>((sp, c) =>
+        {
+            var config = sp.GetRequiredService<IOptions<ApiOptions>>().Value;
+            c.BaseAddress = new Uri(config.SubsidiaryServiceBaseUrl);
+            c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        })
+            .AddHttpMessageHandler<AccountServiceAuthorisationHandler>();
+
         if (apiOptions.UseDirectCompaniesHouseLookup)
         {
             services.AddHttpClient<ICompaniesHouseLookupService, CompaniesHouseLookupDirectService>((sp, client) =>
@@ -150,6 +158,7 @@ public static class ConfigurationExtensions
         services.AddTransient<IRecordExtraction, RecordExtraction>();
         services.AddTransient<ISubsidiaryService, SubsidiaryService>();
         services.AddTransient<ISubmissionStatusClient, SubmissionStatusClient>();
+        services.AddTransient<IOrganisationService, OrganisationService>();
 
         return services;
     }

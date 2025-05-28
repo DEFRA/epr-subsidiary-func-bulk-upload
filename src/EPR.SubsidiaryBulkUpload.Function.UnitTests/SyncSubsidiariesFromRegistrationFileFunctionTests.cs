@@ -1,4 +1,5 @@
-﻿using Microsoft.Azure.Functions.Worker;
+﻿using EPR.SubsidiaryBulkUpload.Application.Services.Interfaces;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.FeatureManagement;
 using Moq;
@@ -11,6 +12,7 @@ public class SyncSubsidiariesFromRegistrationFileFunctionTests
     private const string LogPrefix = nameof(SyncSubsidiariesFromRegistrationFileFunction);
     private Mock<IFeatureManager> _featureManagerMock = null!;
     private Mock<ILogger<SyncSubsidiariesFromRegistrationFileFunction>> _loggerMock = null!;
+    private Mock<IOrganisationService> _organisationServiceMock = null!;
     private SyncSubsidiariesFromRegistrationFileFunction _function = null!;
 
     [TestInitialize]
@@ -18,7 +20,8 @@ public class SyncSubsidiariesFromRegistrationFileFunctionTests
     {
         _featureManagerMock = new Mock<IFeatureManager>();
         _loggerMock = new Mock<ILogger<SyncSubsidiariesFromRegistrationFileFunction>>();
-        _function = new SyncSubsidiariesFromRegistrationFileFunction(_featureManagerMock.Object, _loggerMock.Object);
+        _organisationServiceMock = new Mock<IOrganisationService>();
+        _function = new SyncSubsidiariesFromRegistrationFileFunction(_organisationServiceMock.Object, _featureManagerMock.Object, _loggerMock.Object);
     }
 
     [TestMethod]
@@ -41,6 +44,7 @@ public class SyncSubsidiariesFromRegistrationFileFunctionTests
         await _function.Run(timerInfo);
 
         // Assert
+        _organisationServiceMock.Verify(service => service.SyncStagingToAccounts(), Times.Never);
         _featureManagerMock.Verify(f => f.IsEnabledAsync("EnableSyncSubsidiariesFromRegistrationFile"), Times.Once());
         _loggerMock.VerifyLog(x => x.LogInformation("{LogPrefix} Function is disabled by feature flag.", LogPrefix), Times.Once());
         _loggerMock.VerifyNoOtherCalls();
@@ -70,5 +74,6 @@ public class SyncSubsidiariesFromRegistrationFileFunctionTests
         _featureManagerMock.Verify(f => f.IsEnabledAsync("EnableSyncSubsidiariesFromRegistrationFile"), Times.Once());
         _loggerMock.VerifyLog(x => x.LogInformation(It.Is<string>(m => m.StartsWith($"{LogPrefix} Starting Sync Subsidiaries from Registration File to Accounts DB at")), Times.Once()));
         _loggerMock.VerifyLog(x => x.LogInformation("{LogPrefix} Next Sync Subsidiaries job scheduled at {NextTime}", LogPrefix, nextScheduledTime), Times.Once);
+        _organisationServiceMock.Verify(service => service.SyncStagingToAccounts(), Times.Once);
     }
 }
