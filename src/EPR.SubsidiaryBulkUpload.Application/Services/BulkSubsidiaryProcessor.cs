@@ -21,7 +21,6 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
     public async Task<int> Process(IEnumerable<CompaniesHouseCompany> subsidiaries, CompaniesHouseCompany parent, OrganisationResponseModel parentOrg, UserRequestModel userRequestModel)
     {
         var enableSubsidiaryJoinerColumns = featureManager.IsEnabledAsync(FeatureFlags.EnableSubsidiaryJoinerColumns).GetAwaiter().GetResult();
-        /*var enableSubsidiaryRenamedLogic = featureManager.IsEnabledAsync(FeatureFlags.EnableSubsidiaryJoinerColumns).GetAwaiter().GetResult();*/
 
         IEnumerable<CompaniesHouseCompany> franchiseeProcessed = [];
         var companiesWithFranchiseeFlagRecords = subsidiaries.Count(ch => ch.franchisee_licensee_tenant == "Y" && (ch.Errors == null || ch.Errors.Count == 0));
@@ -65,7 +64,6 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             await ReportCompanies(subWithInvalidNameAndJoinerDate, userRequestModel, BulkUpdateErrors.JoinerDateInvalidMessage, BulkUpdateErrors.JoinerDateInvalid);
         }
 
-        // Except(subWithInvalidName)
         var remainingToProcess = nonNullCompaniesHouseNumberRecords.Except(subsidiariesAndOrgWithValidNameProcessStatistics.NewAddedSubsidiaries)
             .Except(subsidiariesAndOrgWithValidNameProcessStatistics.AlreadyExistCompanies);
 
