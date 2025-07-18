@@ -21,6 +21,8 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
     public async Task<int> Process(IEnumerable<CompaniesHouseCompany> subsidiaries, CompaniesHouseCompany parent, OrganisationResponseModel parentOrg, UserRequestModel userRequestModel)
     {
         var enableSubsidiaryJoinerColumns = featureManager.IsEnabledAsync(FeatureFlags.EnableSubsidiaryJoinerColumns).GetAwaiter().GetResult();
+        var enableSubsidiaryRenamedLogic = featureManager.IsEnabledAsync(FeatureFlags.EnableSubsidiaryJoinerColumns).GetAwaiter().GetResult();
+
         IEnumerable<CompaniesHouseCompany> franchiseeProcessed = [];
         var companiesWithFranchiseeFlagRecords = subsidiaries.Count(ch => ch.franchisee_licensee_tenant == "Y" && (ch.Errors == null || ch.Errors.Count == 0));
         if (companiesWithFranchiseeFlagRecords > 0)
@@ -50,13 +52,18 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         var subsidiariesAndOrgWith_InValidName = subsidiariesAndOrg.Where(sub => sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg?.companiesHouseNumber
             && !string.Equals(sub.Subsidiary.organisation_name, sub.SubsidiaryOrg?.name, StringComparison.OrdinalIgnoreCase));
+
         var subWithInvalidName = await subsidiariesAndOrgWith_InValidName.Select(s => s.Subsidiary).ToListAsync();
 
-        /*Scenario 2: The subsidiary found in RPD. name not match*/
-        await ReportCompanies(subWithInvalidName, userRequestModel, BulkUpdateErrors.CompanyNameIsDifferentInRPDMessage, BulkUpdateErrors.CompanyNameIsDifferentInRPD);
+        // this to flag if name changed. // these are possible name change records subsidiariesAndOrgWith_InValidName
+        if (!enableSubsidiaryRenamedLogic)
+        {
+            /*Scenario 2: The subsidiary found in RPD. name not match*/
+            await ReportCompanies(subWithInvalidName, userRequestModel, BulkUpdateErrors.CompanyNameIsDifferentInRPDMessage, BulkUpdateErrors.CompanyNameIsDifferentInRPD);
+        }
 
         var subsidiariesAndOrgWith_InValidNameAndJoinerDate = subsidiariesAndOrg.Where(sub => sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg?.companiesHouseNumber
-            && sub.SubsidiaryOrg.OrganisationRelationship?.JoinerDate != null && !string.Equals(sub.Subsidiary.joiner_date, sub.SubsidiaryOrg.OrganisationRelationship?.JoinerDate?.ToString("dd/MM/yyyy"), StringComparison.InvariantCulture));
+                && sub.SubsidiaryOrg.OrganisationRelationship?.JoinerDate != null && !string.Equals(sub.Subsidiary.joiner_date, sub.SubsidiaryOrg.OrganisationRelationship?.JoinerDate?.ToString("dd/MM/yyyy"), StringComparison.InvariantCulture));
         var subWithInvalidNameAndJoinerDate = await subsidiariesAndOrgWith_InValidNameAndJoinerDate.Select(s => s.Subsidiary).ToListAsync();
 
         if (enableSubsidiaryJoinerColumns)
@@ -65,8 +72,8 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             await ReportCompanies(subWithInvalidNameAndJoinerDate, userRequestModel, BulkUpdateErrors.JoinerDateInvalidMessage, BulkUpdateErrors.JoinerDateInvalid);
         }
 
-        var remainingToProcess = nonNullCompaniesHouseNumberRecords.Except(subWithInvalidName)
-            .Except(subsidiariesAndOrgWithValidNameProcessStatistics.NewAddedSubsidiaries)
+        // Except(subWithInvalidName)
+        var remainingToProcess = nonNullCompaniesHouseNumberRecords.Except(subsidiariesAndOrgWithValidNameProcessStatistics.NewAddedSubsidiaries)
             .Except(subsidiariesAndOrgWithValidNameProcessStatistics.AlreadyExistCompanies);
 
         /*Scenario 3: The subsidiary found in Offline data. name matches then Add OR name not match then get it from CH API and name matches with CH API data.*/
@@ -79,7 +86,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         var remainingToProcessAfterAPIChecks = remainingToProcess.Except(companyHouseAPIProcessStatistics.CompaniesHouseAPIErrorListReported);
         var remainingToProcessAfterLocalSubAdditions = remainingToProcessAfterAPIChecks.Except(companyHouseAPIProcessStatistics.NewAddedSubsidiaries).Except(companyHouseAPIProcessStatistics.DuplicateSubsidiaries).Except(companyHouseAPIProcessStatistics.NotAddedSubsidiaries);
 
-        /*Scenario 4: The subsidiary found in Offline data. name not match. get it from CH API and name not matches with CH API data. Report Error.*/
+        /*Scenario 4: The subsidiary found in Offline data. name not match. get it from CH API and name not matches with CH API data either. Report Error.*/
         var newSubsidiariesToAdd_DataFromLocalStorageOrCompaniesHouse_NameNoMatch = newSubsidiariesToAdd_DataFromLocalStorageOrCH
             .Where(subAndLink => subAndLink.LinkModel != null && subAndLink.LinkModel.Subsidiary.Error == null
             && !string.Equals(subAndLink.Subsidiary.organisation_name, subAndLink.LinkModel.Subsidiary.CompaniesHouseCompanyName, StringComparison.OrdinalIgnoreCase));
