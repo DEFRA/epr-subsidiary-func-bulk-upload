@@ -944,7 +944,7 @@ public class BulkSubsidiaryProcessorTests
         var result = await processor.Process(subsidiaries, parent, parentOrganisation, userRequestModel);
 
         // Assert
-        // inserts.Should().HaveCount(2);
+        result.Should().NotBe(null);
     }
 
     [TestMethod]

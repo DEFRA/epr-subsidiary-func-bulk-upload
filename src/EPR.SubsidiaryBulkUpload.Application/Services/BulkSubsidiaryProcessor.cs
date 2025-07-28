@@ -331,17 +331,6 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             }
         }
 
-        /*Renaming scenaio*/
-        /*var newSubsidiariesToUpdate_DataFromLocalStorageOrCH = subsidiariesAndOrg.Where(co => co.SubsidiaryOrg != null)
-        .SelectAwait(async subsidiary =>
-            (Subsidiary: subsidiary.Subsidiary, LinkModel: await GetLinkModelForCompaniesHouseData(subsidiary.Subsidiary, parentOrg, userRequestModel.UserId)))
-            .Where(subAndLink => subAndLink.LinkModel != null);
-
-        companyHouseAPIProcessStatistics = await ProcessCompanyHouseAPI(
-            newSubsidiariesToUpdate_DataFromLocalStorageOrCH,
-            userRequestModel);
-        */
-
         return counts;
     }
 
