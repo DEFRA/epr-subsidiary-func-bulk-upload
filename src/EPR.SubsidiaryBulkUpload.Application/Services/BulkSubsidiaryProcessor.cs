@@ -68,12 +68,15 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             .Except(subsidiariesAndOrgWithValidNameProcessStatistics.AlreadyExistCompanies);
 
         /*Scenario 3: The subsidiary found in Offline data. name matches then Add OR name not match then get it from CH API and name matches with CH API data.*/
-        var newSubsidiariesToAdd_DataFromLocalStorageOrCH = subsidiariesAndOrg.Where(co => co.SubsidiaryOrg == null)
+        var newSubsidiariesToAdd_DataFromLocalStorageOrCH = subsidiariesAndOrg
         .SelectAwait(async subsidiary =>
             (Subsidiary: subsidiary.Subsidiary, LinkModel: await GetLinkModelForCompaniesHouseData(subsidiary.Subsidiary, parentOrg, userRequestModel.UserId)))
             .Where(subAndLink => subAndLink.LinkModel != null);
 
-        var companyHouseAPIProcessStatistics = await ProcessCompanyHouseAPI(newSubsidiariesToAdd_DataFromLocalStorageOrCH, userRequestModel);
+        var companyHouseAPIProcessStatistics = await ProcessCompanyHouseAPI(
+            newSubsidiariesToAdd_DataFromLocalStorageOrCH,
+            userRequestModel);
+
         var remainingToProcessAfterAPIChecks = remainingToProcess.Except(companyHouseAPIProcessStatistics.CompaniesHouseAPIErrorListReported);
         var remainingToProcessAfterLocalSubAdditions = remainingToProcessAfterAPIChecks.Except(companyHouseAPIProcessStatistics.NewAddedSubsidiaries).Except(companyHouseAPIProcessStatistics.DuplicateSubsidiaries).Except(companyHouseAPIProcessStatistics.NotAddedSubsidiaries);
 
@@ -288,7 +291,10 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         return subsNewlyAdded.Concat(knowFranchiseeRelationshipsAdded);
     }
 
-    private async Task<AddSubsidiariesFigures> ProcessCompanyHouseAPI(IAsyncEnumerable<(CompaniesHouseCompany Subsidiary, LinkOrganisationModel LinkModel)> newSubsidiariesToAdd_DataFromLocalStorageOrCH, UserRequestModel userRequestModel)
+    private async Task<AddSubsidiariesFigures> ProcessCompanyHouseAPI(
+        IAsyncEnumerable<(CompaniesHouseCompany Subsidiary,
+                            LinkOrganisationModel LinkModel)> newSubsidiariesToAdd_DataFromLocalStorageOrCH,
+        UserRequestModel userRequestModel)
     {
         /*Scenario : Companies house API Errors*/
         var counts = new AddSubsidiariesFigures();
@@ -325,10 +331,25 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             }
         }
 
+        /*Renaming scenaio*/
+        /*var newSubsidiariesToUpdate_DataFromLocalStorageOrCH = subsidiariesAndOrg.Where(co => co.SubsidiaryOrg != null)
+        .SelectAwait(async subsidiary =>
+            (Subsidiary: subsidiary.Subsidiary, LinkModel: await GetLinkModelForCompaniesHouseData(subsidiary.Subsidiary, parentOrg, userRequestModel.UserId)))
+            .Where(subAndLink => subAndLink.LinkModel != null);
+
+        companyHouseAPIProcessStatistics = await ProcessCompanyHouseAPI(
+            newSubsidiariesToUpdate_DataFromLocalStorageOrCH,
+            userRequestModel);
+        */
+
         return counts;
     }
 
-    private async Task<AddSubsidiariesFigures> ProcessValidNamedOrgs(IAsyncEnumerable<(CompaniesHouseCompany Subsidiary, OrganisationResponseModel SubsidiaryOrg)> subsidiariesAndOrgWithValidName, OrganisationResponseModel parentOrg, UserRequestModel userRequestModel)
+    private async Task<AddSubsidiariesFigures> ProcessValidNamedOrgs(
+        IAsyncEnumerable<(CompaniesHouseCompany Subsidiary,
+        OrganisationResponseModel SubsidiaryOrg)> subsidiariesAndOrgWithValidName,
+        OrganisationResponseModel parentOrg,
+        UserRequestModel userRequestModel)
     {
         var counts = new AddSubsidiariesFigures();
         var count = 0;
