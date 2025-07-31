@@ -37,9 +37,10 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         var nonNullCompaniesHouseNumberRecords = nonFranchiseeSubsidiaries.Where(ch => !string.IsNullOrEmpty(ch.companies_house_number));
 
-        var subsidiariesAndOrg = nonNullCompaniesHouseNumberRecords
+        var subsidiariesAndOrg = await nonNullCompaniesHouseNumberRecords
             .ToAsyncEnumerable()
-            .SelectAwait(async subsidiary => (Subsidiary: subsidiary, SubsidiaryOrg: await organisationService.GetCompanyByCompaniesHouseNumber(subsidiary.companies_house_number)));
+            .SelectAwait(async subsidiary => (Subsidiary: subsidiary, SubsidiaryOrg: await organisationService.GetCompanyByCompaniesHouseNumber(subsidiary.companies_house_number)))
+            .ToListAsync();
 
         var subsidiariesAndOrgWithValidNameProcessStatistics = await ProcessValidNamedOrgs(subsidiariesAndOrg, parentOrg, userRequestModel);
 
@@ -50,14 +51,16 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         var subsidiariesAndOrgWith_InValidName = subsidiariesAndOrg.Where(sub => sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg?.companiesHouseNumber
             && !string.Equals(sub.Subsidiary.organisation_name, sub.SubsidiaryOrg?.name, StringComparison.OrdinalIgnoreCase));
-        var subWithInvalidName = await subsidiariesAndOrgWith_InValidName.Select(s => s.Subsidiary).ToListAsync();
+
+        var subWithInvalidName = subsidiariesAndOrgWith_InValidName.Select(s => s.Subsidiary).ToList();
 
         /*Scenario 2: The subsidiary found in RPD. name not match*/
         await ReportCompanies(subWithInvalidName, userRequestModel, BulkUpdateErrors.CompanyNameIsDifferentInRPDMessage, BulkUpdateErrors.CompanyNameIsDifferentInRPD);
 
         var subsidiariesAndOrgWith_InValidNameAndJoinerDate = subsidiariesAndOrg.Where(sub => sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg?.companiesHouseNumber
             && sub.SubsidiaryOrg.OrganisationRelationship?.JoinerDate != null && !string.Equals(sub.Subsidiary.joiner_date, sub.SubsidiaryOrg.OrganisationRelationship?.JoinerDate?.ToString("dd/MM/yyyy"), StringComparison.InvariantCulture));
-        var subWithInvalidNameAndJoinerDate = await subsidiariesAndOrgWith_InValidNameAndJoinerDate.Select(s => s.Subsidiary).ToListAsync();
+
+        var subWithInvalidNameAndJoinerDate = subsidiariesAndOrgWith_InValidNameAndJoinerDate.Select(s => s.Subsidiary).ToList();
 
         if (enableSubsidiaryJoinerColumns)
         {
@@ -71,8 +74,9 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         /*Scenario 3: The subsidiary found in Offline data. name matches then Add OR name not match then get it from CH API and name matches with CH API data.*/
         var newSubsidiariesToAdd_DataFromLocalStorageOrCH = subsidiariesAndOrg.Where(co => co.SubsidiaryOrg == null)
-        .SelectAwait(async subsidiary =>
-            (Subsidiary: subsidiary.Subsidiary, LinkModel: await GetLinkModelForCompaniesHouseData(subsidiary.Subsidiary, parentOrg, userRequestModel.UserId)))
+            .ToAsyncEnumerable()
+            .SelectAwait(async subsidiary =>
+                (Subsidiary: subsidiary.Subsidiary, LinkModel: await GetLinkModelForCompaniesHouseData(subsidiary.Subsidiary, parentOrg, userRequestModel.UserId)))
             .Where(subAndLink => subAndLink.LinkModel != null);
 
         var companyHouseAPIProcessStatistics = await ProcessCompanyHouseAPI(newSubsidiariesToAdd_DataFromLocalStorageOrCH, userRequestModel);
@@ -330,12 +334,13 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         return counts;
     }
 
-    private async Task<AddSubsidiariesFigures> ProcessValidNamedOrgs(IAsyncEnumerable<(CompaniesHouseCompany Subsidiary, OrganisationResponseModel SubsidiaryOrg)> subsidiariesAndOrgWithValidName, OrganisationResponseModel parentOrg, UserRequestModel userRequestModel)
+    private async Task<AddSubsidiariesFigures> ProcessValidNamedOrgs(IEnumerable<(CompaniesHouseCompany Subsidiary, OrganisationResponseModel SubsidiaryOrg)> subsidiariesAndOrgWithValidName, OrganisationResponseModel parentOrg, UserRequestModel userRequestModel)
     {
         var counts = new AddSubsidiariesFigures();
         var count = 0;
 
         var knownSubsidiariesToAddCheck = await subsidiariesAndOrgWithValidName.Where(co => co.SubsidiaryOrg != null)
+        .ToAsyncEnumerable()
         .SelectAwait(async co =>
             (Subsidiary: co.Subsidiary,
              SubsidiaryOrg: co.SubsidiaryOrg,
