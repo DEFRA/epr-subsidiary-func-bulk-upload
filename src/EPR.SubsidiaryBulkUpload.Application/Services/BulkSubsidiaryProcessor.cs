@@ -204,6 +204,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         return result;
     }
+
     private async Task<IEnumerable<CompaniesHouseCompany>> ProcessFranchisee(IEnumerable<CompaniesHouseCompany> subsidiaries, OrganisationResponseModel parentOrg, UserRequestModel userRequestModel)
     {
         var enableSubsidiaryJoinerColumns = featureManager.IsEnabledAsync(FeatureFlags.EnableSubsidiaryJoinerColumns).GetAwaiter().GetResult();
