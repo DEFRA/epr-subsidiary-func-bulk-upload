@@ -262,7 +262,7 @@ public class DownloadStatusStorageTests
         var downloadStatusStorage = new DownloadStatusStorage(_tableServiceClient.Object, _timeProvider, _loggerMock.Object);
 
         // Act & Assert
-        await Assert.ThrowsExceptionAsync<FileDownloadException>(async () =>
+        await Assert.ThrowsExactlyAsync<FileDownloadException>(async () =>
             await downloadStatusStorage.CreateCompaniesHouseFileDownloadLogAsync(partitionKey, 7));
 
         _tableClient.Verify(tc => tc.CreateIfNotExistsAsync(It.IsAny<CancellationToken>()));

@@ -662,7 +662,7 @@ public class TableStorageProcessorTests
             .ThrowsAsync(exception);
 
         // Act & Assert
-        await Assert.ThrowsExceptionAsync<Exception>(async () =>
+        await Assert.ThrowsExactlyAsync<Exception>(async () =>
             await _processor.WriteToAzureTableStorage(records, "TestTable", "TestPartitionKey"));
 
         _mockTableClient.Verify(x => x.DeleteEntityAsync(It.Is<CompanyHouseTableEntity>(e => e.PartitionKey == "Latest CH Data" && e.RowKey == "Current Ingestion"), It.IsAny<ETag>(), default), Times.Once);
@@ -691,7 +691,7 @@ public class TableStorageProcessorTests
             .ThrowsAsync(exception);
 
         // Act & Assert
-        await Assert.ThrowsExceptionAsync<Exception>(async () =>
+        await Assert.ThrowsExactlyAsync<Exception>(async () =>
             await _processor.WriteToAzureTableStorage(records, "TestTable", "TestPartitionKey", 1, 2));
 
         _mockTableClient.Verify(x => x.DeleteEntityAsync(It.Is<CompanyHouseTableEntity>(e => e.PartitionKey == "Latest CH Data" && e.RowKey == "Current Ingestion"), It.IsAny<ETag>(), default), Times.Once);

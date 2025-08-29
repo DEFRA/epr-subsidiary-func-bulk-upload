@@ -43,11 +43,6 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         var subsidiariesAndOrgWithValidNameProcessStatistics = await ProcessValidNamedOrgs(subsidiariesAndOrg, parentOrg, userRequestModel);
 
-        var subsidiariesAndOrgWithMatchingReportingType = subsidiariesAndOrg
-             .Where(sub => sub.SubsidiaryOrg != null && sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg.companiesHouseNumber
-             && string.Equals(sub.Subsidiary.organisation_name, sub.SubsidiaryOrg.name, StringComparison.OrdinalIgnoreCase)
-             && parentOrg.id == sub.SubsidiaryOrg.OrganisationRelationship?.FirstOrganisationId);
-
         var subsidiariesAndOrgWith_InValidName = subsidiariesAndOrg.Where(sub => sub.Subsidiary.companies_house_number == sub.SubsidiaryOrg?.companiesHouseNumber
             && !string.Equals(sub.Subsidiary.organisation_name, sub.SubsidiaryOrg?.name, StringComparison.OrdinalIgnoreCase));
         var subWithInvalidName = await subsidiariesAndOrgWith_InValidName.Select(s => s.Subsidiary).ToListAsync();
@@ -96,6 +91,18 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         await ReportCompanies(remainingAfterProcessingAllData.Except(allAddedNewSubsPlusExisting), userRequestModel, BulkUpdateErrors.CompanyNameNotFoundAnywhereMessage, BulkUpdateErrors.CompanyNameNotFoundAnywhere);
 
         return allAddedNewSubsPlusExisting.Count + franchiseeProcessed.Count() + subsidiariesAndOrgWithValidNameProcessStatistics.NewAddedSubsidiariesRelationships + companyHouseAPIProcessStatistics.NewAddedSubsidiaries.Count;
+    }
+
+    private static Nation MapNationCode(string? nationCode)
+    {
+        return nationCode?.Trim().ToUpperInvariant() switch
+        {
+            "EN" => Nation.England,
+            "WS" => Nation.Wales,
+            "NI" => Nation.NorthernIreland,
+            "SC" => Nation.Scotland,
+            _ => Nation.NotSet
+        };
     }
 
     private async Task ReportCompanies(IEnumerable<LinkOrganisationModel> linkSubsidiaries, UserRequestModel userRequestModel)
@@ -197,28 +204,6 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         return result;
     }
-
-    private async Task<HttpStatusCode> UpdateSubsidiaryRelationship(OrganisationResponseModel parent, OrganisationResponseModel subsidiaryOrg, CompaniesHouseCompany subsidiaryInput, Guid userId)
-    {
-        var reportingTypeEnum = Enum.TryParse<ReportingType>(subsidiaryInput.reporting_type, true, out var reportingType) ? reportingType : (ReportingType?)null;
-
-        var subsidiaryModel = new SubsidiaryAddModel
-        {
-            UserId = userId,
-            ParentOrganisationId = parent.referenceNumber,
-            ChildOrganisationId = subsidiaryOrg.referenceNumber,
-            ParentOrganisationExternalId = parent.ExternalId,
-            ChildOrganisationExternalId = subsidiaryOrg.ExternalId,
-            JoinerDate = subsidiaryOrg.joinerDate,
-            ReportingTypeId = (int?)reportingTypeEnum
-        };
-        var result = await organisationService.UpdateSubsidiaryRelationshipAsync(subsidiaryModel);
-
-        _logger.LogInformation("Subsidiary Company {SubsidiaryReferenceNumber} {SubsidiaryName} linked to {ParentReferenceNumber} in the database.", subsidiaryOrg.referenceNumber, subsidiaryOrg.name, parent.referenceNumber);
-
-        return result;
-    }
-
     private async Task<IEnumerable<CompaniesHouseCompany>> ProcessFranchisee(IEnumerable<CompaniesHouseCompany> subsidiaries, OrganisationResponseModel parentOrg, UserRequestModel userRequestModel)
     {
         var enableSubsidiaryJoinerColumns = featureManager.IsEnabledAsync(FeatureFlags.EnableSubsidiaryJoinerColumns).GetAwaiter().GetResult();
@@ -251,26 +236,26 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         var subsidiariesAndOrgNonExistsInTheDB = await companiesWithFranchiseeFlagRecords.Where(co => co.SubsidiaryOrg == null).ToListAsync();
 
-        foreach (var subsidiaryAddModel in subsidiariesAndOrgNonExistsInTheDB)
+        foreach (var subsidiaryAddModel in subsidiariesAndOrgNonExistsInTheDB.Select(o => o.Subsidiary))
         {
-            var reportingTypeEnum = Enum.TryParse<ReportingType>(subsidiaryAddModel.Subsidiary.reporting_type, true, out var reportingType) ? reportingType : (ReportingType?)null;
+            var reportingTypeEnum = Enum.TryParse<ReportingType>(subsidiaryAddModel.reporting_type, true, out var reportingType) ? reportingType : (ReportingType?)null;
 
             var franchisee = new LinkOrganisationModel()
             {
                 UserId = userRequestModel.UserId,
                 Subsidiary = new OrganisationModel()
                 {
-                    ReferenceNumber = subsidiaryAddModel.Subsidiary.organisation_id,
-                    Name = subsidiaryAddModel.Subsidiary.organisation_name,
-                    CompaniesHouseNumber = subsidiaryAddModel.Subsidiary.companies_house_number,
+                    ReferenceNumber = subsidiaryAddModel.organisation_id,
+                    Name = subsidiaryAddModel.organisation_name,
+                    CompaniesHouseNumber = subsidiaryAddModel.companies_house_number,
                     OrganisationType = OrganisationType.NonCompaniesHouseCompany,
                     ProducerType = ProducerType.Other,
                     IsComplianceScheme = false,
-                    Nation = MapNationCode(subsidiaryAddModel.Subsidiary.nation_code),
-                    SubsidiaryOrganisationId = subsidiaryAddModel.Subsidiary.subsidiary_id,
-                    RawContent = subsidiaryAddModel.Subsidiary.RawRow,
-                    FileLineNumber = subsidiaryAddModel.Subsidiary.FileLineNumber,
-                    Franchisee_Licensee_Tenant = subsidiaryAddModel.Subsidiary.franchisee_licensee_tenant,
+                    Nation = MapNationCode(subsidiaryAddModel.nation_code),
+                    SubsidiaryOrganisationId = subsidiaryAddModel.subsidiary_id,
+                    RawContent = subsidiaryAddModel.RawRow,
+                    FileLineNumber = subsidiaryAddModel.FileLineNumber,
+                    Franchisee_Licensee_Tenant = subsidiaryAddModel.franchisee_licensee_tenant,
                     Address = new AddressModel()
                 },
                 ParentOrganisationId = parentOrg.ExternalId.Value
@@ -278,11 +263,11 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
             if (enableSubsidiaryJoinerColumns)
             {
-                franchisee.Subsidiary.JoinerDate = subsidiaryAddModel.Subsidiary.joiner_date;
+                franchisee.Subsidiary.JoinerDate = subsidiaryAddModel.joiner_date;
                 franchisee.Subsidiary.ReportingTypeId = (int?)reportingTypeEnum;
             }
 
-            subsidiaryAddModel.Subsidiary.StatusCode = await organisationService.CreateAndAddSubsidiaryAsync(franchisee);
+            subsidiaryAddModel.StatusCode = await organisationService.CreateAndAddSubsidiaryAsync(franchisee);
         }
 
         var knowFranchiseeRelationshipsAdded = knownFranchiseeToAddRelationshipToDB.Where(s => s.Subsidiary.StatusCode == System.Net.HttpStatusCode.OK).Select(s => s.Subsidiary).ToList();
@@ -355,17 +340,5 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         counts.AlreadyExistCompanies = knownSubsidiariesToAddCheck.Select(org => org.Subsidiary).ToList();
         counts.NewAddedSubsidiariesRelationships = count;
         return counts;
-    }
-
-    private Nation MapNationCode(string? nationCode)
-    {
-        return nationCode?.Trim().ToUpperInvariant() switch
-        {
-            "EN" => Nation.England,
-            "WS" => Nation.Wales,
-            "NI" => Nation.NorthernIreland,
-            "SC" => Nation.Scotland,
-            _ => Nation.NotSet
-        };
     }
 }
