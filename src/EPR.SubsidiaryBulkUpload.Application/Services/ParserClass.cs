@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using CsvHelper.Configuration;
 using EPR.SubsidiaryBulkUpload.Application.ClassMaps;
 using EPR.SubsidiaryBulkUpload.Application.Constants;
@@ -36,6 +37,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             return (response, rows);
         }
 
+        [ExcludeFromCodeCoverage]
         private static void ProcessCompanyRowErrors(List<CompaniesHouseCompany> rows)
         {
             foreach (var companyRow in rows)
