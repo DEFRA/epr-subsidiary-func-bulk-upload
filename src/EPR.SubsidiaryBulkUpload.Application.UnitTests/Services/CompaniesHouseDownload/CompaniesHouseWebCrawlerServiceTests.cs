@@ -108,7 +108,7 @@ public class CompaniesHouseWebCrawlerServiceTests
         var companiesHouseWebCrawlerService = new CompaniesHouseWebCrawlerService(_loggerMock.Object, htmlWebMock.Object);
 
         // Act & Assert
-        await Assert.ThrowsExceptionAsync<FileDownloadException>(async () =>
+        await Assert.ThrowsExactlyAsync<FileDownloadException>(async () =>
             await companiesHouseWebCrawlerService.GetCompaniesHouseFileDownloadCount(brokenDownloadPath));
     }
 }

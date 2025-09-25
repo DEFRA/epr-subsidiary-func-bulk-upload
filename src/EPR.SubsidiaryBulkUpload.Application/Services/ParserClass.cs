@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using CsvHelper.Configuration;
 using EPR.SubsidiaryBulkUpload.Application.ClassMaps;
 using EPR.SubsidiaryBulkUpload.Application.Constants;
@@ -34,6 +35,25 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
             }
 
             return (response, rows);
+        }
+
+        [ExcludeFromCodeCoverage]
+        private static void ProcessCompanyRowErrors(List<CompaniesHouseCompany> rows)
+        {
+            foreach (var companyRow in rows)
+            {
+                if (companyRow!.ErrorsExcluded!.Count > 0 && companyRow!.Errors.Count > 0)
+                {
+                    var errorsNotRequired = companyRow.Errors.Where(e => e.ErrorNumber == BulkUpdateErrors.JoinerDateRequired).ToList();
+                    if (errorsNotRequired.Count > 0)
+                    {
+                        foreach (var errorToRemove in errorsNotRequired)
+                        {
+                            companyRow.Errors.Remove(errorToRemove);
+                        }
+                    }
+                }
+            }
         }
 
         private List<CompaniesHouseCompany> ParseFileData(Stream stream, IReaderConfiguration configuration, bool includeSubsidiaryJoinerColumns, bool enableSubsidiaryNationColumn)
@@ -159,20 +179,7 @@ namespace EPR.SubsidiaryBulkUpload.Application.Services
 
             rows = csv.GetRecords<CompaniesHouseCompany>().ToList();
 
-            foreach (var companyRow in rows)
-            {
-                if (companyRow!.ErrorsExcluded!.Count > 0 && companyRow!.Errors.Count > 0)
-                {
-                    var errorsNotRequired = companyRow.Errors.Where(e => e.ErrorNumber == BulkUpdateErrors.JoinerDateRequired).ToList();
-                    if (errorsNotRequired.Count > 0)
-                    {
-                        foreach (var errorToRemove in errorsNotRequired)
-                        {
-                            companyRow.Errors.Remove(errorToRemove);
-                        }
-                    }
-                }
-            }
+            ProcessCompanyRowErrors(rows);
 
             return rows;
         }

@@ -217,7 +217,7 @@ public class PipelineTests
         var request = new HttpRequestMessage(HttpMethod.Get, "/any");
 
         // Act & Assert
-        await Assert.ThrowsExceptionAsync<NotSupportedException>(async () => await sut.SendAsync(request));
+        await Assert.ThrowsExactlyAsync<NotSupportedException>(async () => await sut.SendAsync(request));
         attempts.Should().Be(0);
     }
 

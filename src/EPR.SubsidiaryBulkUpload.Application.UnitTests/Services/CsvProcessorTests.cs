@@ -90,7 +90,7 @@ public class CsvProcessorTests
         var processor = new CsvProcessor(parserClass.Object, _mockLogger.Object);
 
         // Act & Assert
-        await Assert.ThrowsExceptionAsync<Exception>(() =>
+        await Assert.ThrowsExactlyAsync<Exception>(() =>
             processor.ProcessStreamWithMapping<CompaniesHouseCompany, CompaniesHouseCompanyMap>(stream, configuration));
 
         // Assert
