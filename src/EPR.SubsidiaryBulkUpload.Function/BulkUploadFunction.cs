@@ -24,7 +24,7 @@ public class BulkUploadFunction
 
     [Function(nameof(BulkUploadFunction))]
     public async Task Run(
-        [BlobTrigger("%BlobStorage__SubsidiaryContainerName%/{name}", Connection = "BlobStorage__ConnectionString")]
+        [BlobTrigger("%BlobStorage:SubsidiaryContainerName%/{name}", Connection = "BlobStorage__ConnectionString")]
         BlobClient client)
     {
         var downloadStreamingResult = await client.DownloadStreamingAsync();
