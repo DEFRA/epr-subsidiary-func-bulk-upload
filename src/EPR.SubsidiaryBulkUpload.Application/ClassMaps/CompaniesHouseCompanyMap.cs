@@ -160,32 +160,37 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
         }
         else
         {
-            if (IncludeSubsidiaryJoinerColumns)
+            ValidateColumnCountIndividually(row, errors, lineNumber, rawData);
+        }
+    }
+
+    private static void ValidateColumnCountIndividually(IReaderRow row, List<UploadFileErrorModel> errors, int lineNumber, string rawData)
+    {
+        if (IncludeSubsidiaryJoinerColumns)
+        {
+            if (row.ColumnCount > 8)
             {
-                if (row.ColumnCount > 8)
-                {
-                    errors.Add(
-                        CreateError(
-                            lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
-                }
+                errors.Add(
+                    CreateError(
+                        lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
             }
-            else if (EnableSubsidiaryNationColumn)
+        }
+        else if (EnableSubsidiaryNationColumn)
+        {
+            if (row.ColumnCount > 7)
             {
-                if (row.ColumnCount > 7)
-                {
-                    errors.Add(
-                        CreateError(
-                            lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
-                }
+                errors.Add(
+                    CreateError(
+                        lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
             }
-            else
+        }
+        else
+        {
+            if (row.ColumnCount > 6)
             {
-                if (row.ColumnCount > 6)
-                {
-                    errors.Add(
-                        CreateError(
-                            lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
-                }
+                errors.Add(
+                    CreateError(
+                        lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
             }
         }
     }
