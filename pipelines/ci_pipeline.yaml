@@ -37,6 +37,8 @@ variables:
     value: true
   - name: dotnetVersion
     value: dotnetVersion8
+  - name: runIntegrationTests
+    value: true
 
 resources:
   repositories:
@@ -62,3 +64,5 @@ extends:
     serviceName: $(serviceName)
     dotnetVersion: ${{ variables.dotnetVersion }}
     sonarqubeInstance: ${{ parameters.sonarqubeInstance }}
+    runIntegrationTests: ${{ variables.runIntegrationTests }}
+

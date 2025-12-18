@@ -79,7 +79,7 @@ To run locally, create a file `local.settings.json`. This file is in `.gitignore
 
     "ApiConfig__CompaniesHouseDirectBaseUri": "https://api.company-information.service.gov.uk/",
     "ApiConfig__CompaniesHouseDirectApiKey": "",
-    "ApiConfig__Timeout": 30
+    "ApiConfig__Timeout": 30,
     "ApiConfig__RetryPolicyMaxRetries": "3",
     "ApiConfig__RetryPolicyInitialWaitTime": "1",
     "ApiConfig__RetryPolicyTooManyAttemptsMaxRetries": "4",
@@ -97,7 +97,7 @@ To run locally, create a file `local.settings.json`. This file is in `.gitignore
     "AntivirusApi__RetryPolicyInitialWaitTime": "5",
     "AntivirusApi__RetryPolicyMaxRetries": "4",
     "AntivirusApi__TimeUnits": "Seconds",
-    "CompaniesHouseDownload__Schedule": "0 * 1 * * *"
+    "CompaniesHouseDownload__Schedule": "0 * 1 * * *",
     "CompaniesHouseDownload__DataDownloadUrl": "https://download.companieshouse.gov.uk/",
     "CompaniesHouseDownload__DownloadPage": "en_output.html",
     "CompaniesHouseDownload__RetryPolicyInitialWaitTime": "10",
