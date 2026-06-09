@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS installer-env
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS installer-env
 
 # Copy everything
 COPY NuGet.Config ./
@@ -12,7 +12,7 @@ COPY EPR.SubsidiaryBulkUpload.Function/. ./EPR.SubsidiaryBulkUpload.Function/.
 RUN dotnet publish EPR.SubsidiaryBulkUpload.Function/*.csproj --output /home/site/wwwroot
 
 # Use the Azure Functions image as the final image
-FROM mcr.microsoft.com/azure-functions/dotnet-isolated:4-dotnet-isolated8.0
+FROM mcr.microsoft.com/azure-functions/dotnet-isolated:4-dotnet-isolated10.0
 
 # Create a non-root user and set permissions
 RUN groupadd -r dotnet && \

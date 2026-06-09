@@ -125,12 +125,11 @@ public class TableStorageProcessor(
                     select: new List<string> { "PartitionKey", "RowKey" },
                     maxPerPage: 1000);
 
-            await entities.AsPages()
-                .ForEachAwaitAsync(async page =>
-                {
-                    var responses = await BatchManipulateEntities(tableClient, page.Values, TableTransactionActionType.Delete).ConfigureAwait(false);
-                    deleted += responses.Sum(response => response?.Value?.Count ?? 0);
-                });
+            await foreach (var page in entities.AsPages())
+            {
+                var responses = await BatchManipulateEntities(tableClient, page.Values, TableTransactionActionType.Delete).ConfigureAwait(false);
+                deleted += responses.Sum(response => response?.Value?.Count ?? 0);
+            }
         }
         catch (RequestFailedException fex)
         {
