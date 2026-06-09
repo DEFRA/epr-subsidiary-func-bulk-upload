@@ -1,6 +1,6 @@
 trigger: none
 pr: none
-pool: DEFRA-COMMON-ubuntu2204-SSV3
+pool: DEFRA-COMMON-UBUNTU-SSV3
 appendCommitMessageToRunName: false
 name: 'Deploy code to $(serviceName)'
 
@@ -13,7 +13,6 @@ parameters:
     - DEV1
     - DEV2
     - DEV3
-    - DEV5
     - DEV6
     - DEV7
     - DEV8
