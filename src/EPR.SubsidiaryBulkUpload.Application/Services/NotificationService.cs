@@ -46,7 +46,7 @@ public class NotificationService(
             }
             else
             {
-                var response = JsonSerializer.Deserialize<UploadFileErrorResponse>(previousErrors, _caseInsensitiveJsonSerializerOptions);
+                var response = JsonSerializer.Deserialize<UploadFileErrorResponse>(previousErrors.ToString(), _caseInsensitiveJsonSerializerOptions);
                 errors = response.Errors;
                 errors.AddRange(errorsModel);
             }
@@ -77,7 +77,7 @@ public class NotificationService(
 
         _logger.LogInformation("Redis errors response key: {Key} errors: {Value}", key, value);
 
-        return JsonSerializer.Deserialize<UploadFileErrorResponse>(value, _caseInsensitiveJsonSerializerOptions);
+        return JsonSerializer.Deserialize<UploadFileErrorResponse>(value.ToString(), _caseInsensitiveJsonSerializerOptions);
     }
 
     public async Task ClearRedisKeyAsync(string key)

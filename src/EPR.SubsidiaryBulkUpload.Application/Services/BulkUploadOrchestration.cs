@@ -89,8 +89,8 @@ public class BulkUploadOrchestration : IBulkUploadOrchestration
         var subsidiaryGroupsWithValidParents = subsidiaryGroups.Where(p => p.Parent.organisation_name != "orphan");
 
         // this will fetch data from the org database for all the parents and filter to keep the valid ones (org exists in RPD)
-        var subsidiaryGroupsAndParentOrg = await subsidiaryGroupsWithValidParents.SelectAwait(
-            async sg => (SubsidiaryGroup: sg, parentOrg: await _organisationService.GetCompanyByReferenceNumber(sg.Parent.organisation_id))).ToListAsync();
+        var subsidiaryGroupsAndParentOrg = await subsidiaryGroupsWithValidParents.Select(
+            async (ParentAndSubsidiaries sg, CancellationToken ct) => (SubsidiaryGroup: sg, parentOrg: await _organisationService.GetCompanyByReferenceNumber(sg.Parent.organisation_id))).ToListAsync();
 
         // filter the non CS parents
         var dataRefinedAfterNonComplianceSchemeFilter = await FilterNonComplianceSchemeParentSubsidiaries(userRequestModel, subsidiaryGroupsAndParentOrg);

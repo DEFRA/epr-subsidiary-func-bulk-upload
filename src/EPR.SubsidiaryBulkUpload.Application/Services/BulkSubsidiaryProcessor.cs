@@ -39,7 +39,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         var subsidiariesAndOrg = await nonNullCompaniesHouseNumberRecords
             .ToAsyncEnumerable()
-            .SelectAwait(async subsidiary => (Subsidiary: subsidiary, SubsidiaryOrg: await organisationService.GetCompanyByCompaniesHouseNumber(subsidiary.companies_house_number)))
+            .Select(async (CompaniesHouseCompany subsidiary, CancellationToken ct) => (Subsidiary: subsidiary, SubsidiaryOrg: await organisationService.GetCompanyByCompaniesHouseNumber(subsidiary.companies_house_number)))
             .ToListAsync();
 
         var subsidiariesAndOrgWithValidNameProcessStatistics = await ProcessValidNamedOrgs(subsidiariesAndOrg, parentOrg, userRequestModel);
@@ -70,7 +70,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         /*Scenario 3: The subsidiary found in Offline data. name matches then Add OR name not match then get it from CH API and name matches with CH API data.*/
         var newSubsidiariesToAdd_DataFromLocalStorageOrCH = subsidiariesAndOrg.Where(co => co.SubsidiaryOrg == null)
             .ToAsyncEnumerable()
-            .SelectAwait(async subsidiary =>
+            .Select(async ((CompaniesHouseCompany Subsidiary, OrganisationResponseModel SubsidiaryOrg) subsidiary, CancellationToken ct) =>
                 (Subsidiary: subsidiary.Subsidiary, LinkModel: await GetLinkModelForCompaniesHouseData(subsidiary.Subsidiary, parentOrg, userRequestModel.UserId)))
             .Where(subAndLink => subAndLink.LinkModel != null);
 
@@ -216,7 +216,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
         // companies with franchisee flag.
         var companiesWithFranchiseeFlagRecords = subsidiaries.Where(ch => ch.franchisee_licensee_tenant == "Y")
             .ToAsyncEnumerable()
-            .SelectAwait(async subsidiary => (Subsidiary: subsidiary, SubsidiaryOrg: await organisationService.GetCompanyByCompanyName(subsidiary.organisation_name)));
+            .Select(async (CompaniesHouseCompany subsidiary, CancellationToken ct) => (Subsidiary: subsidiary, SubsidiaryOrg: await organisationService.GetCompanyByCompanyName(subsidiary.organisation_name)));
 
         // check if the incoming file company name is matching with the one in db. name to match.
         var subsidiariesAndOrgExistsInTheDB = companiesWithFranchiseeFlagRecords
@@ -225,7 +225,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
             && NullOrEmptyStringEqualityComparer.CaseInsensitiveComparer.Equals(sub.Subsidiary.companies_house_number, sub.SubsidiaryOrg.companiesHouseNumber));
 
         var knownFranchiseeToAddRelationship = subsidiariesAndOrgExistsInTheDB.Where(co => co.SubsidiaryOrg != null)
-          .SelectAwait(async co =>
+          .Select(async ((CompaniesHouseCompany Subsidiary, OrganisationResponseModel SubsidiaryOrg) co, CancellationToken ct) =>
               (Subsidiary: co.Subsidiary,
                SubsidiaryOrg: co.SubsidiaryOrg,
                RelationshipExists: await organisationService.GetSubsidiaryRelationshipAsync(parentOrg.id, co.SubsidiaryOrg.id)))
@@ -327,7 +327,7 @@ public class BulkSubsidiaryProcessor(ISubsidiaryService organisationService, ICo
 
         var knownSubsidiariesToAddCheck = await subsidiariesAndOrgWithValidName.Where(co => co.SubsidiaryOrg != null)
         .ToAsyncEnumerable()
-        .SelectAwait(async co =>
+        .Select(async ((CompaniesHouseCompany Subsidiary, OrganisationResponseModel SubsidiaryOrg) co, CancellationToken ct) =>
             (Subsidiary: co.Subsidiary,
              SubsidiaryOrg: co.SubsidiaryOrg,
              RelationshipExists: await organisationService.GetSubsidiaryRelationshipAsync(parentOrg.id, co.SubsidiaryOrg.id))).ToListAsync();
