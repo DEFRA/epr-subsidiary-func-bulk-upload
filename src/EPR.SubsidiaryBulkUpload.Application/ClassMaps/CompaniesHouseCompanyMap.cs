@@ -59,20 +59,41 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
             return errors;
         }
 
+        ValidateOrganisationId(row, errors, lineNumber, rawData);
+        ValidateOrganisationName(row, errors, lineNumber, rawData);
+        ValidateCompaniesHouseNumber(row, errors, lineNumber, rawData);
+        ValidateParentChild(row, errors, lineNumber, rawData);
+        ValidateFranchiseeLicenseeTentant(row, errors, lineNumber, rawData);
+        ValidateColumnCounts(row, errors, lineNumber, rawData);
+
+        ValidateIfFeatureEnabled(IncludeSubsidiaryJoinerColumns, () => ValidateSubsidiaryJoinerColumn(row, errors, lineNumber, rawData));
+        ValidateIfFeatureEnabled(EnableSubsidiaryNationColumn,  () => ValidateSubsidiaryNation(row, errors, lineNumber, rawData));
+
+        return errors;
+    }
+
+    private static void ValidateOrganisationId(IReaderRow row, List<UploadFileErrorModel> errors, int lineNumber, string rawData)
+    {
         if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.organisation_id))))
         {
             errors.Add(
                 CreateError(
                     lineNumber, rawData, BulkUpdateErrors.OrganisationIdRequiredMessage, BulkUpdateErrors.OrganisationIdRequired));
         }
+    }
 
+    private static void ValidateOrganisationName(IReaderRow row, List<UploadFileErrorModel> errors, int lineNumber, string rawData)
+    {
         if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.organisation_name))))
         {
             errors.Add(
                 CreateError(
                     lineNumber, rawData, BulkUpdateErrors.OrganisationNameRequiredMessage, BulkUpdateErrors.OrganisationNameRequired));
         }
+    }
 
+    private static void ValidateCompaniesHouseNumber(IReaderRow row, List<UploadFileErrorModel> errors, int lineNumber, string rawData)
+    {
         if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.companies_house_number))) && string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.franchisee_licensee_tenant))) && !string.Equals(row.GetField(nameof(CompaniesHouseCompany.parent_child)), "parent", StringComparison.OrdinalIgnoreCase))
         {
             errors.Add(
@@ -100,14 +121,20 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
                 CreateError(
                     lineNumber, rawData, BulkUpdateErrors.SpacesInCompaniesHouseNumberErrorMessage, BulkUpdateErrors.SpacesInCompaniesHouseNumberError));
         }
+    }
 
+    private static void ValidateParentChild(IReaderRow row, List<UploadFileErrorModel> errors, int lineNumber, string rawData)
+    {
         if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.parent_child))))
         {
             errors.Add(
                 CreateError(
                     lineNumber, rawData, BulkUpdateErrors.ParentOrChildRequiredMessage, BulkUpdateErrors.ParentOrChildRequired));
         }
+    }
 
+    private static void ValidateFranchiseeLicenseeTentant(IReaderRow row, List<UploadFileErrorModel> errors, int lineNumber, string rawData)
+    {
         if (!string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.franchisee_licensee_tenant))))
         {
             var franchiseeVal = row.GetField(nameof(CompaniesHouseCompany.franchisee_licensee_tenant));
@@ -118,7 +145,10 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
                         lineNumber, rawData, BulkUpdateErrors.FranchiseeLicenseeTenantInvalidMessage, BulkUpdateErrors.FranchiseeLicenseeTenantInvalid));
             }
         }
+    }
 
+    private static void ValidateColumnCounts(IReaderRow row, List<UploadFileErrorModel> errors, int lineNumber, string rawData)
+    {
         if (IncludeSubsidiaryJoinerColumns && EnableSubsidiaryNationColumn)
         {
             if (row.ColumnCount > CsvFileValidationConditions.MaxNumberOfColumnsAllowed)
@@ -130,107 +160,118 @@ public class CompaniesHouseCompanyMap : ClassMap<CompaniesHouseCompany>
         }
         else
         {
-            if (IncludeSubsidiaryJoinerColumns)
-            {
-                if (row.ColumnCount > 8)
-                {
-                    errors.Add(
-                        CreateError(
-                            lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
-                }
-            }
-            else if (EnableSubsidiaryNationColumn)
-            {
-                if (row.ColumnCount > 7)
-                {
-                    errors.Add(
-                        CreateError(
-                            lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
-                }
-            }
-            else
-            {
-                if (row.ColumnCount > 6)
-                {
-                    errors.Add(
-                        CreateError(
-                            lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
-                }
-            }
+            ValidateColumnCountIndividually(row, errors, lineNumber, rawData);
         }
+    }
 
+    private static void ValidateColumnCountIndividually(IReaderRow row, List<UploadFileErrorModel> errors, int lineNumber, string rawData)
+    {
         if (IncludeSubsidiaryJoinerColumns)
         {
-            if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.joiner_date))) && !string.Equals(row.GetField(nameof(CompaniesHouseCompany.parent_child)), "parent", StringComparison.OrdinalIgnoreCase))
+            if (row.ColumnCount > 8)
             {
                 errors.Add(
                     CreateError(
-                        lineNumber, rawData, BulkUpdateErrors.JoinerDateRequiredMessage, BulkUpdateErrors.JoinerDateRequired));
-            }
-
-            if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.reporting_type))) && !string.Equals(row.GetField(nameof(CompaniesHouseCompany.parent_child)), "parent", StringComparison.OrdinalIgnoreCase))
-            {
-                errors.Add(
-                    CreateError(
-                        lineNumber, rawData, BulkUpdateErrors.ReportingTypeRequiredMessage, BulkUpdateErrors.ReportingTypeRequired));
-            }
-
-            if (!string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.reporting_type))) && !string.Equals(row.GetField(nameof(CompaniesHouseCompany.parent_child)), "parent", StringComparison.OrdinalIgnoreCase))
-            {
-                var reportingType = row.GetField(nameof(CompaniesHouseCompany.reporting_type));
-
-                switch (reportingType)
-                {
-                    case "SELF":
-                    case "GROUP":
-                    case "Self":
-                    case "Group":
-                    case "self":
-                    case "group":
-                        break;
-                    default:
-                        errors.Add(
-                            CreateError(
-                                lineNumber, rawData, BulkUpdateErrors.ReportingTypeValidValueCheckMessage, BulkUpdateErrors.ReportingTypeValidValueCheck));
-                        break;
-                }
-            }
-
-            string[] formats = { "dd/MM/yyyy", "dd/MMM/yyyy" };
-            DateTime dateValue;
-            if (!string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.joiner_date))))
-            {
-                var jointerDate = row.GetField(nameof(CompaniesHouseCompany.joiner_date));
-                if (!DateTime.TryParseExact(jointerDate, formats, new CultureInfo("en-GB"), DateTimeStyles.None, out dateValue))
-                {
-                    errors.Add(
-                        CreateError(
-                            lineNumber, rawData, BulkUpdateErrors.JoinerDateFormatIncorrectMessage, BulkUpdateErrors.JoinerDateFormatIncorrect));
-                }
+                        lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
             }
         }
-
-        if (EnableSubsidiaryNationColumn)
+        else if (EnableSubsidiaryNationColumn)
         {
-            if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.nation_code))))
+            if (row.ColumnCount > 7)
             {
                 errors.Add(
                     CreateError(
-                        lineNumber, rawData, BulkUpdateErrors.NationCodeRequiredMessage, BulkUpdateErrors.NationCodeRequired));
+                        lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
             }
-            else
+        }
+        else
+        {
+            if (row.ColumnCount > 6)
             {
-                var nationCode = row.GetField(nameof(CompaniesHouseCompany.nation_code));
-                if (!ValidNationCodes.Contains(nationCode, StringComparer.InvariantCultureIgnoreCase))
-                {
+                errors.Add(
+                    CreateError(
+                        lineNumber, rawData, BulkUpdateErrors.InvalidDataFoundInRowMessage, BulkUpdateErrors.InvalidDataFoundInRow));
+            }
+        }
+    }
+
+    private static void ValidateSubsidiaryJoinerColumn(IReaderRow row, List<UploadFileErrorModel> errors, int lineNumber, string rawData)
+    {
+        if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.joiner_date))) && !string.Equals(row.GetField(nameof(CompaniesHouseCompany.parent_child)), "parent", StringComparison.OrdinalIgnoreCase))
+        {
+            errors.Add(
+                CreateError(
+                    lineNumber, rawData, BulkUpdateErrors.JoinerDateRequiredMessage, BulkUpdateErrors.JoinerDateRequired));
+        }
+
+        if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.reporting_type))) && !string.Equals(row.GetField(nameof(CompaniesHouseCompany.parent_child)), "parent", StringComparison.OrdinalIgnoreCase))
+        {
+            errors.Add(
+                CreateError(
+                    lineNumber, rawData, BulkUpdateErrors.ReportingTypeRequiredMessage, BulkUpdateErrors.ReportingTypeRequired));
+        }
+
+        if (!string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.reporting_type))) && !string.Equals(row.GetField(nameof(CompaniesHouseCompany.parent_child)), "parent", StringComparison.OrdinalIgnoreCase))
+        {
+            var reportingType = row.GetField(nameof(CompaniesHouseCompany.reporting_type));
+
+            switch (reportingType)
+            {
+                case "SELF":
+                case "GROUP":
+                case "Self":
+                case "Group":
+                case "self":
+                case "group":
+                    break;
+                default:
                     errors.Add(
                         CreateError(
-                            lineNumber, rawData, BulkUpdateErrors.NationCodeValidValueCheckMessage, BulkUpdateErrors.NationCodeValidValueCheck));
-                }
+                            lineNumber, rawData, BulkUpdateErrors.ReportingTypeValidValueCheckMessage, BulkUpdateErrors.ReportingTypeValidValueCheck));
+                    break;
             }
         }
 
-        return errors;
+        string[] formats = { "dd/MM/yyyy", "dd/MMM/yyyy" };
+        DateTime dateValue;
+        if (!string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.joiner_date))))
+        {
+            var jointerDate = row.GetField(nameof(CompaniesHouseCompany.joiner_date));
+            if (!DateTime.TryParseExact(jointerDate, formats, new CultureInfo("en-GB"), DateTimeStyles.None, out dateValue))
+            {
+                errors.Add(
+                    CreateError(
+                        lineNumber, rawData, BulkUpdateErrors.JoinerDateFormatIncorrectMessage, BulkUpdateErrors.JoinerDateFormatIncorrect));
+            }
+        }
+    }
+
+    private static void ValidateIfFeatureEnabled(bool feature, Action action)
+    {
+        if (feature)
+        {
+            action();
+        }
+    }
+
+    private static void ValidateSubsidiaryNation(IReaderRow row, List<UploadFileErrorModel> errors, int lineNumber, string rawData)
+    {
+        if (string.IsNullOrEmpty(row.GetField(nameof(CompaniesHouseCompany.nation_code))))
+        {
+            errors.Add(
+                CreateError(
+                    lineNumber, rawData, BulkUpdateErrors.NationCodeRequiredMessage, BulkUpdateErrors.NationCodeRequired));
+        }
+        else
+        {
+            var nationCode = row.GetField(nameof(CompaniesHouseCompany.nation_code));
+            if (!ValidNationCodes.Contains(nationCode, StringComparer.InvariantCultureIgnoreCase))
+            {
+                errors.Add(
+                    CreateError(
+                        lineNumber, rawData, BulkUpdateErrors.NationCodeValidValueCheckMessage, BulkUpdateErrors.NationCodeValidValueCheck));
+            }
+        }
     }
 
     private static UploadFileErrorModel CreateError(int fileLineNumber, string rawDataRow, string message, int errorNumber)
