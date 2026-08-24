@@ -10,6 +10,8 @@ namespace EPR.SubsidiaryBulkUpload.Application.Handlers;
 [ExcludeFromCodeCoverage]
 public class AccountServiceAuthorisationHandler : DelegatingHandler
 {
+    private const string BearerScheme = "Bearer";
+
     private readonly TokenRequestContext _tokenRequestContext;
 
     private readonly DefaultAzureCredential? _credentials;
@@ -30,7 +32,7 @@ public class AccountServiceAuthorisationHandler : DelegatingHandler
         if (_credentials != null)
         {
             var tokenResult = await _credentials.GetTokenAsync(_tokenRequestContext, cancellationToken);
-            request.Headers.Authorization = new AuthenticationHeaderValue(Microsoft.Identity.Web.Constants.Bearer, tokenResult.Token);
+            request.Headers.Authorization = new AuthenticationHeaderValue(BearerScheme, tokenResult.Token);
         }
 
         return await base.SendAsync(request, cancellationToken);
