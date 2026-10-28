@@ -1,6 +1,12 @@
 variables:
-  azureSubscription: 'AZR-RWD-PRE2'
-  docker.imageName: 'subsidiaryupload'
-  acr.azureContainerRegistryName: 'prerwdinfac2401'
-  acr.repositoryName: 'subsidiaryuploadrepository'
-  serviceName: 'PRERWDWEBFA2408'
+- group: ServiceConnections
+- name: azureSubscription
+  value: $(ServiceConnectionPRE2)
+- name: docker.imageName
+  value: 'subsidiaryupload'
+- name: acr.azureContainerRegistryName
+  value: 'prerwdinfac2401'
+- name: acr.repositoryName
+  value: 'subsidiaryuploadrepository'
+- name: serviceName
+  value: 'PRERWDWEBFA2408'

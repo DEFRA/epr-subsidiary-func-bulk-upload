@@ -1,6 +1,12 @@
 variables:
-  azureSubscription: 'AZD-RWD-DEV1'
-  docker.imageName: 'subsidiaryupload'
-  acr.azureContainerRegistryName: 'devrwdinfac1401'
-  acr.repositoryName: 'subsidiaryuploadrepository'
-  serviceName: 'DEVRWDWEBFA1408'
+- group: ServiceConnections
+- name: azureSubscription
+  value: $(ServiceConnectionDEV1)
+- name: docker.imageName
+  value: 'subsidiaryupload'
+- name: acr.azureContainerRegistryName
+  value: 'devrwdinfac1401'
+- name: acr.repositoryName
+  value: 'subsidiaryuploadrepository'
+- name: serviceName
+  value: 'DEVRWDWEBFA1408'
